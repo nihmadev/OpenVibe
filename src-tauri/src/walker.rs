@@ -1,0 +1,193 @@
+use serde::Serialize;
+use std::cmp::Ordering;
+use std::collections::HashMap;
+use std::path::Path;
+use std::sync::Mutex;
+use std::time::{Duration, Instant};
+use std::fs;
+use once_cell::sync::Lazy;
+
+const SKIP_DIRS: &[&str] = &[
+    "node_modules", ".git", "dist", "build", ".next", "out",
+    ".cache", ".turbo", "coverage", ".vite", "target", ".vscode",
+];
+const MAX_FILES: usize = 8000;
+const CACHE_TTL: Duration = Duration::from_secs(10);
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FileMatch {
+    pub path: String,
+    pub rel: String,
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_dir: Option<bool>,
+}
+
+#[derive(Debug, Clone)]
+struct WalkEntry {
+    path: String,
+    is_dir: bool,
+}
+
+struct CacheEntry {
+    files: Vec<WalkEntry>,
+    at: Instant,
+}
+
+static CACHE: Lazy<Mutex<HashMap<String, CacheEntry>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+
+fn relpath(path: &str, base: &str) -> String {
+    let p = Path::new(path);
+    let b = Path::new(base);
+    if let Ok(rel) = p.strip_prefix(b) {
+        rel.to_string_lossy().to_string()
+    } else {
+        path.to_string()
+    }
+}
+
+fn should_skip(name: &str) -> bool {
+    if SKIP_DIRS.contains(&name) {
+        return true;
+    }
+    if name.starts_with('.') && name != ".env" && name != ".gitignore" {
+        return true;
+    }
+    false
+}
+
+fn walk(root: &Path) -> Vec<WalkEntry> {
+    let mut out = Vec::new();
+    let mut dirs = vec![root.to_path_buf()];
+    while let Some(dir) = dirs.pop() {
+        if out.len() >= MAX_FILES {
+            break;
+        }
+        let entries = match fs::read_dir(&dir) {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+        for entry in entries {
+            if out.len() >= MAX_FILES {
+                break;
+            }
+            let entry = match entry {
+                Ok(e) => e,
+                Err(_) => continue,
+            };
+            let name = entry.file_name().to_string_lossy().to_string();
+            if should_skip(&name) {
+                continue;
+            }
+            let path = entry.path();
+            let full = path.to_string_lossy().to_string();
+            if path.is_dir() {
+                out.push(WalkEntry { path: full, is_dir: true });
+                dirs.push(path);
+            } else if path.is_file() {
+                out.push(WalkEntry { path: full, is_dir: false });
+            }
+        }
+    }
+    out
+}
+
+fn ensure_index(root: &str) -> Vec<WalkEntry> {
+    let mut cache = CACHE.lock().unwrap();
+    if let Some(entry) = cache.get(root) {
+        if entry.at.elapsed() < CACHE_TTL {
+            return entry.files.clone();
+        }
+    }
+    let files = walk(Path::new(root));
+    cache.insert(root.to_string(), CacheEntry { files: files.clone(), at: Instant::now() });
+    files
+}
+
+fn score(haystack: &str, needle: &str) -> f64 {
+    if needle.is_empty() {
+        return 1.0;
+    }
+    let h = haystack.to_lowercase();
+    let n = needle.to_lowercase();
+    let base = h.split(|c: char| c == '/' || c == '\\').last().unwrap_or(&h).to_string();
+    if base.contains(&n) {
+        let bonus = if base.starts_with(&n) { 50.0 } else { 0.0 };
+        return 100.0 + bonus - h.len() as f64 / 1000.0;
+    }
+    if h.contains(&n) {
+        return 50.0 - h.len() as f64 / 1000.0;
+    }
+    let mut i = 0;
+    let hb = h.as_bytes();
+    let nb = n.as_bytes();
+    for &c in hb {
+        if i < nb.len() && c == nb[i] {
+            i += 1;
+        }
+    }
+    if i == nb.len() {
+        return 10.0 - (h.len() - n.len()) as f64 / 1000.0;
+    }
+    -1.0
+}
+
+pub fn find_files(root: &str, query: &str, limit: usize) -> Vec<FileMatch> {
+    let entries = ensure_index(root);
+    let mut ranked: Vec<(f64, WalkEntry)> = entries
+        .into_iter()
+        .filter(|e| !e.is_dir)
+        .filter_map(|e| {
+            let r = relpath(&e.path, root);
+            let s = score(&r, query);
+            if s > 0.0 {
+                Some((s, e))
+            } else {
+                None
+            }
+        })
+        .collect();
+    ranked.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(Ordering::Equal));
+    ranked
+        .into_iter()
+        .take(limit)
+        .map(|(_, e)| {
+            let r = relpath(&e.path, root);
+            let name = Path::new(&e.path)
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| e.path.clone());
+            FileMatch { path: e.path, rel: r, name, is_dir: Some(false) }
+        })
+        .collect()
+}
+
+pub fn find_all(root: &str, query: &str, limit: usize) -> Vec<FileMatch> {
+    let entries = ensure_index(root);
+    let mut ranked: Vec<(f64, WalkEntry)> = entries
+        .into_iter()
+        .filter_map(|e| {
+            let r = relpath(&e.path, root);
+            let s = score(&r, query);
+            if s > 0.0 {
+                Some((s, e))
+            } else {
+                None
+            }
+        })
+        .collect();
+    ranked.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(Ordering::Equal));
+    ranked
+        .into_iter()
+        .take(limit)
+        .map(|(_, e)| {
+            let r = relpath(&e.path, root);
+            let name = Path::new(&e.path)
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| e.path.clone());
+            FileMatch { path: e.path, rel: r, name, is_dir: Some(e.is_dir) }
+        })
+        .collect()
+}

@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.log
+.env
+.env.local
+.DS_Store
+.vscode/
+.idea/
+.kiro/
+api/
+src-tauri/target
+my_folder/
+src-tauri/.fastembed_cache
+src-tauri/tests

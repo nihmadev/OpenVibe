@@ -1,0 +1,138 @@
+.titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 38px;
+  min-height: 38px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  padding: 0 0 0 12px;
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.titlebar__left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+  width: 250px; /* Фиксированная ширина для баланса */
+}
+
+.titlebar__center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar__right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  -webkit-app-region: no-drag;
+  justify-content: flex-end;
+  width: 250px; /* Фиксированная ширина для баланса */
+}
+
+.titlebar__nav-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-left: 2px;
+}
+
+.titlebar__action-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.titlebar__action-btn:hover {
+  background: var(--bg-2);
+  color: var(--fg);
+}
+
+.titlebar__action-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+  background: transparent !important;
+}
+
+.titlebar__action-btn--active {
+  color: var(--fg);
+  background: var(--bg-2);
+}
+
+.titlebar__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 12px;
+  height: 28px;
+  min-width: 200px;
+  max-width: 400px;
+  width: 100%;
+  color: var(--fg-dim);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.titlebar__search:hover {
+  background: var(--bg-3);
+  border-color: var(--fg-dim);
+}
+
+.titlebar__search-text {
+  flex: 1;
+}
+
+.titlebar__search-kbd {
+  font-size: 10px;
+  opacity: 0.6;
+  background: var(--bg);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.titlebar__controls {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.titlebar__btn {
+  width: 44px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--fg-muted);
+  border-radius: 0;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.titlebar__btn:hover {
+  background: var(--bg-2);
+  color: var(--fg);
+}
+
+.titlebar__btn--close:hover {
+  background: var(--red);
+  color: var(--white);
+}

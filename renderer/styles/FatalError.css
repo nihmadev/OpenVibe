@@ -1,0 +1,42 @@
+.fatal-error {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.fatal-error__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 20px;
+}
+
+.fatal-error__title {
+  color: var(--fg);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.fatal-error__message {
+  color: var(--fg-dim);
+  max-width: 540px;
+  white-space: pre-wrap;
+  font-size: 12px;
+}
+
+.fatal-error__hint {
+  color: var(--fg-muted);
+  font-size: 11px;
+}
+
+.fatal-error__code {
+  color: var(--fg);
+  border: 1px solid var(--line);
+  padding: 0 5px;
+  border-radius: 3px;
+}

@@ -1,0 +1,98 @@
+/* ===== Context menu ===== */
+.ctxmenu {
+  position: fixed;
+  z-index: 100;
+  min-width: 160px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 6px;
+  font-size: 12.5px;
+  overflow: hidden;
+}
+.ctxmenu__item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 12px;
+  color: var(--fg-dim);
+  cursor: pointer;
+  text-align: left;
+}
+.ctxmenu__item:hover:not(:disabled) {
+  background: var(--bg-3);
+  color: var(--fg);
+}
+.ctxmenu__item--danger {
+  color: var(--fg-dim);
+}
+.ctxmenu__item--disabled,
+.ctxmenu__item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.ctxmenu__shortcut {
+  color: var(--fg-muted);
+  font-size: 11px;
+  margin-left: 16px;
+}
+.ctxmenu__sep {
+  height: 1px;
+  background: var(--line);
+  margin: 4px 8px;
+  border-radius: 1px;
+}
+
+.popup {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 4px);
+  max-height: 240px;
+  overflow: auto;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  z-index: 5;
+}
+.popup__item {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  align-items: center;
+  padding: 6px 12px;
+  cursor: pointer;
+  gap: 12px;
+}
+.popup__item:hover {
+  background: var(--bg-2);
+}
+.popup__item--active {
+  background: var(--bg-3);
+}
+.popup__name {
+  color: var(--fg);
+}
+.popup__desc {
+  color: var(--fg-dim);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Mentions popup variant — paths can be long, allow wider */
+.popup--mentions {
+  max-height: 280px;
+}
+.popup__item--mention {
+  grid-template-columns: minmax(120px, 220px) 1fr;
+}
+.popup__empty {
+  padding: 6px 12px;
+  color: var(--fg-muted);
+  font-size: 12px;
+}

@@ -1,0 +1,157 @@
+.ftree {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-size: 12px;
+}
+
+.ftree__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  gap: 8px;
+}
+
+.ftree__root {
+  color: var(--fg);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ftree__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ftree__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  padding: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--fg-muted);
+  background: transparent;
+  transition: all 0.2s;
+}
+
+.ftree__action:hover {
+  color: var(--bg);
+  background: var(--fg);
+}
+
+.ftree__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+  scrollbar-width: none !important;
+}
+
+.ftree__body::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.ftree__error {
+  color: var(--red);
+  padding: 8px;
+}
+
+.ftree__loading {
+  color: var(--fg-muted);
+  padding: 8px;
+  font-style: italic;
+  animation: pulse 2s infinite;
+}
+
+.ftree__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--fg-dim);
+  white-space: nowrap;
+  transition: background 0.1s, color 0.1s;
+  position: relative;
+}
+
+.ftree__row:hover {
+  background: var(--bg-2);
+  color: var(--fg);
+}
+
+.ftree__row--active {
+  background: var(--bg-2);
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.ftree__row--active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--fg);
+}
+
+.ftree__row--cut {
+  opacity: 0.4;
+}
+
+.ftree__row--drop {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ftree__chev {
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ftree__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ftree__name--dir {
+  font-weight: 500;
+}
+
+.ftree__subtree {
+  display: none;
+}
+
+.ftree__subtree--open {
+  display: block;
+}
+
+.ftree__subtree-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.ftree__line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.05);
+}

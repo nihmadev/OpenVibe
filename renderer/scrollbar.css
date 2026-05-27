@@ -1,0 +1,122 @@
+/* Полное переопределение скроллбара для Electron/Chromium */
+
+/* Глобальные стили для всех элементов */
+::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+  background: transparent !important;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent !important;
+  border: none !important;
+  margin: 0 !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 100px !important;
+  border: none !important;
+  min-height: 30px !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: rgba(255, 255, 255, 0.4) !important;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent !important;
+  display: none !important;
+}
+
+/* Полностью убираем кнопки со стрелками */
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+::-webkit-scrollbar-button:start:decrement,
+::-webkit-scrollbar-button:end:increment {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
+}
+
+/* Применяем ко всем возможным элементам */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+div::-webkit-scrollbar,
+section::-webkit-scrollbar,
+article::-webkit-scrollbar,
+aside::-webkit-scrollbar,
+main::-webkit-scrollbar,
+nav::-webkit-scrollbar,
+ul::-webkit-scrollbar,
+ol::-webkit-scrollbar,
+pre::-webkit-scrollbar,
+code::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+div::-webkit-scrollbar-thumb,
+section::-webkit-scrollbar-thumb,
+article::-webkit-scrollbar-thumb,
+aside::-webkit-scrollbar-thumb,
+main::-webkit-scrollbar-thumb,
+nav::-webkit-scrollbar-thumb,
+ul::-webkit-scrollbar-thumb,
+ol::-webkit-scrollbar-thumb,
+pre::-webkit-scrollbar-thumb,
+code::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 100px !important;
+  border: none !important;
+}
+
+html::-webkit-scrollbar-button,
+body::-webkit-scrollbar-button,
+div::-webkit-scrollbar-button,
+section::-webkit-scrollbar-button,
+article::-webkit-scrollbar-button,
+aside::-webkit-scrollbar-button,
+main::-webkit-scrollbar-button,
+nav::-webkit-scrollbar-button,
+ul::-webkit-scrollbar-button,
+ol::-webkit-scrollbar-button,
+pre::-webkit-scrollbar-button,
+code::-webkit-scrollbar-button {
+  display: none !important;
+}
+
+/* ── Элементы без скроллбара ── */
+.editor-area__tabs,
+.editor-area__breadcrumb {
+  scrollbar-width: none !important;
+}
+
+.editor-area__tabs::-webkit-scrollbar,
+.editor-area__tabs::-webkit-scrollbar-thumb,
+.editor-area__tabs::-webkit-scrollbar-track,
+.editor-area__breadcrumb::-webkit-scrollbar,
+.editor-area__breadcrumb::-webkit-scrollbar-thumb,
+.editor-area__breadcrumb::-webkit-scrollbar-track {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
