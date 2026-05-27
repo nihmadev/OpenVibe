@@ -1,0 +1,401 @@
+ ✓ 1260 modules transformed.
+25
+rendering chunks...
+26
+computing gzip size...
+27
+../dist/renderer/index.html                                                         0.90 kB │ gzip:   0.47 kB
+28
+../dist/renderer/assets/KaTeX_Size3-Regular-CTq5MqoE.woff                           4.42 kB
+29
+../dist/renderer/assets/manrope-vietnamese-400-normal-DHb3EETF.woff2                4.46 kB
+30
+../dist/renderer/assets/source-code-pro-cyrillic-ext-400-normal-DMj7z5uw.woff2      4.52 kB
+31
+../dist/renderer/assets/source-code-pro-vietnamese-400-normal-Cp62Zi-a.woff2        4.75 kB
+32
+../dist/renderer/assets/KaTeX_Size4-Regular-Dl5lxZxV.woff2                          4.93 kB
+33
+../dist/renderer/assets/anonymous-pro-greek-400-normal-DNgbGmaG.woff                4.94 kB
+34
+../dist/renderer/assets/inter-vietnamese-400-normal-DMkecbls.woff2                  4.97 kB
+35
+../dist/renderer/assets/KaTeX_Size2-Regular-Dy4dx90m.woff2                          5.21 kB
+36
+../dist/renderer/assets/inter-greek-ext-400-normal-DGGRlc-M.woff2                   5.26 kB
+37
+../dist/renderer/assets/manrope-greek-400-normal-CM4qok81.woff2                     5.28 kB
+38
+../dist/renderer/assets/fira-code-greek-ext-400-normal-DR7mBgIM.woff2               5.36 kB
+39
+../dist/renderer/assets/fira-code-symbols2-400-normal-_QEZCEwe.woff                 5.37 kB
+40
+../dist/renderer/assets/space-mono-vietnamese-400-normal-B0PMp_xB.woff              5.41 kB
+41
+../dist/renderer/assets/KaTeX_Size1-Regular-mCD8mA8B.woff2                          5.47 kB
+42
+../dist/renderer/assets/source-code-pro-greek-400-normal-loYmywBR.woff2             5.53 kB
+43
+../dist/renderer/assets/ibm-plex-mono-vietnamese-400-normal-DDuiU_S-.woff           5.62 kB
+44
+../dist/renderer/assets/poppins-latin-ext-400-normal-by3JarPu.woff2                 5.64 kB
+45
+../dist/renderer/assets/source-code-pro-cyrillic-ext-400-normal-BlBdefdy.woff       5.77 kB
+46
+../dist/renderer/assets/ibm-plex-mono-cyrillic-ext-400-normal-DMdlQ8Kv.woff         5.82 kB
+47
+
+48
+(!) Some chunks are larger than 500 kB after minification. Consider:
+49
+- Using dynamic import() to code-split the application
+50
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+51
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+52
+../dist/renderer/assets/ibm-plex-mono-vietnamese-400-normal-BulugwFq.woff2          5.87 kB
+53
+../dist/renderer/assets/open-sans-hebrew-400-normal-Cowz_U6T.woff                   5.96 kB
+54
+../dist/renderer/assets/KaTeX_Size4-Regular-BF-4gkZK.woff                           5.98 kB
+55
+../dist/renderer/assets/anonymous-pro-cyrillic-400-normal-BNoQGJOG.woff             6.06 kB
+56
+../dist/renderer/assets/manrope-vietnamese-400-normal-D7E_mLGF.woff                 6.11 kB
+57
+../dist/renderer/assets/nunito-vietnamese-400-normal-BHkVbP3T.woff2                 6.12 kB
+58
+../dist/renderer/assets/KaTeX_Size2-Regular-oD1tc_U0.woff                           6.19 kB
+59
+../dist/renderer/assets/roboto-vietnamese-400-normal-DnpnVwnf.woff                  6.34 kB
+60
+../dist/renderer/assets/source-code-pro-vietnamese-400-normal-CSQ0MR64.woff         6.40 kB
+61
+../dist/renderer/assets/KaTeX_Size1-Regular-C195tn64.woff                           6.50 kB
+62
+../dist/renderer/assets/inter-vietnamese-400-normal-Bbgyi5SW.woff                   6.50 kB
+63
+../dist/renderer/assets/open-sans-vietnamese-400-normal-DCU23d-J.woff               6.62 kB
+64
+../dist/renderer/assets/fira-code-cyrillic-400-normal-UC0NFL4U.woff2                6.68 kB
+65
+../dist/renderer/assets/manrope-greek-400-normal-DuX9RsAR.woff                      6.77 kB
+66
+../dist/renderer/assets/source-code-pro-cyrillic-400-normal-zAQh90eX.woff2          6.79 kB
+67
+../dist/renderer/assets/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2                    6.91 kB
+68
+../dist/renderer/assets/ibm-plex-mono-cyrillic-ext-400-normal-xuaO2J-f.woff2        6.91 kB
+69
+../dist/renderer/assets/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2                       6.91 kB
+70
+../dist/renderer/assets/source-code-pro-greek-400-normal-D-pDoyqc.woff              7.01 kB
+71
+../dist/renderer/assets/inter-greek-ext-400-normal-KugGGMne.woff                    7.06 kB
+72
+../dist/renderer/assets/ibm-plex-mono-cyrillic-400-normal-CEL4l2ZJ.woff             7.20 kB
+73
+../dist/renderer/assets/fira-code-greek-ext-400-normal-DSPUheWg.woff                7.23 kB
+74
+../dist/renderer/assets/space-mono-vietnamese-400-normal-BNOj0Qhp.woff2             7.27 kB
+75
+../dist/renderer/assets/open-sans-greek-400-normal-yVf9KAAO.woff                    7.31 kB
+76
+../dist/renderer/assets/poppins-latin-ext-400-normal-DaBSavcJ.woff                  7.46 kB
+77
+../dist/renderer/assets/KaTeX_Size3-Regular-DgpXs0kz.ttf                            7.59 kB
+78
+../dist/renderer/assets/KaTeX_Caligraphic-Regular-CTRA-rTL.woff                     7.66 kB
+79
+../dist/renderer/assets/roboto-greek-400-normal-Bb5mj_fZ.woff                       7.67 kB
+80
+../dist/renderer/assets/inter-cyrillic-400-normal-obahsSVq.woff2                    7.71 kB
+81
+../dist/renderer/assets/KaTeX_Caligraphic-Bold-BEiXGLvX.woff                        7.72 kB
+82
+../dist/renderer/assets/inter-greek-400-normal-B4URO6DV.woff2                       7.78 kB
+83
+../dist/renderer/assets/fira-code-greek-400-normal-B2Gh_Y8s.woff2                   7.83 kB
+84
+../dist/renderer/assets/manrope-cyrillic-400-normal-BMzJvInZ.woff2                  7.84 kB
+85
+../dist/renderer/assets/fira-code-latin-ext-400-normal-KSMg0QLl.woff2               7.86 kB
+86
+../dist/renderer/assets/poppins-latin-400-normal-cpxAROuN.woff2                     7.88 kB
+87
+../dist/renderer/assets/anonymous-pro-greek-400-normal-B47pWdRJ.woff2               7.91 kB
+88
+../dist/renderer/assets/anonymous-pro-latin-ext-400-normal-2NhRNZCX.woff            7.95 kB
+89
+../dist/renderer/assets/open-sans-hebrew-400-normal-C3uFZKNA.woff2                  7.96 kB
+90
+../dist/renderer/assets/nunito-vietnamese-400-normal-DtOtW02z.woff                  8.25 kB
+91
+../dist/renderer/assets/manrope-latin-ext-400-normal-CMDvPJRp.woff2                 8.29 kB
+92
+../dist/renderer/assets/ibm-plex-mono-cyrillic-400-normal-BSMlKf0J.woff2            8.36 kB
+93
+../dist/renderer/assets/roboto-vietnamese-400-normal-D2PTxGxD.woff2                 8.37 kB
+94
+../dist/renderer/assets/fira-code-cyrillic-400-normal-dc1q3VD7.woff                 8.46 kB
+95
+../dist/renderer/assets/nunito-cyrillic-400-normal-xAOo5cBP.woff2                   8.47 kB
+96
+../dist/renderer/assets/open-sans-vietnamese-400-normal-Dqpvjuft.woff2              8.61 kB
+97
+../dist/renderer/assets/source-code-pro-cyrillic-400-normal-BxAVGXSA.woff           8.64 kB
+98
+../dist/renderer/assets/open-sans-symbols-400-normal-B5VgOMNH.woff                  8.77 kB
+99
+../dist/renderer/assets/roboto-symbols-400-normal-DLYbZahX.woff                     8.97 kB
+100
+../dist/renderer/assets/open-sans-cyrillic-400-normal-XMp_Qeuo.woff                 9.10 kB
+101
+../dist/renderer/assets/open-sans-greek-400-normal-BKm6CSmU.woff2                   9.34 kB
+102
+../dist/renderer/assets/roboto-greek-400-normal-ai2Z1K3C.woff2                      9.56 kB
+103
+../dist/renderer/assets/KaTeX_Script-Regular-D3wIWfF6.woff2                         9.64 kB
+104
+../dist/renderer/assets/inter-cyrillic-400-normal-HOLc17fK.woff                     9.78 kB
+105
+../dist/renderer/assets/anonymous-pro-cyrillic-400-normal-BWiMxftN.woff2            9.79 kB
+106
+../dist/renderer/assets/inter-greek-400-normal-q2sYcFCs.woff                        9.92 kB
+107
+../dist/renderer/assets/fira-code-greek-400-normal-DobhaxvF.woff                    9.99 kB
+108
+../dist/renderer/assets/manrope-cyrillic-400-normal-Dvx59UGC.woff                  10.03 kB
+109
+../dist/renderer/assets/inter-cyrillic-ext-400-normal-BQZuk6qB.woff2               10.23 kB
+110
+../dist/renderer/assets/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2                     10.34 kB
+111
+../dist/renderer/assets/KaTeX_Size4-Regular-DWFBv043.ttf                           10.36 kB
+112
+../dist/renderer/assets/nunito-cyrillic-400-normal-D1j0u8EH.woff                   10.46 kB
+113
+../dist/renderer/assets/roboto-cyrillic-400-normal-Bjg-1-sg.woff                   10.52 kB
+114
+../dist/renderer/assets/poppins-latin-400-normal-BOb3E3N0.woff                     10.53 kB
+115
+../dist/renderer/assets/KaTeX_Script-Regular-D5yQViql.woff                         10.59 kB
+116
+../dist/renderer/assets/fira-code-latin-ext-400-normal-DG73JjOf.woff               10.61 kB
+117
+../dist/renderer/assets/open-sans-symbols-400-normal-OZvd8qMe.woff2                10.63 kB
+118
+../dist/renderer/assets/roboto-symbols-400-normal-CB1Ce4Gk.woff2                   10.74 kB
+119
+../dist/renderer/assets/open-sans-cyrillic-400-normal-DvjyhnTk.woff2               11.11 kB
+120
+../dist/renderer/assets/nunito-cyrillic-ext-400-normal-CuPM9foi.woff2              11.16 kB
+121
+../dist/renderer/assets/manrope-latin-ext-400-normal-C-X6QNXX.woff                 11.32 kB
+122
+../dist/renderer/assets/KaTeX_Fraktur-Regular-CTYiF6lA.woff2                       11.32 kB
+123
+../dist/renderer/assets/KaTeX_Fraktur-Bold-CL6g_b3V.woff2                          11.35 kB
+124
+../dist/renderer/assets/KaTeX_Size2-Regular-B7gKUWhC.ttf                           11.51 kB
+125
+../dist/renderer/assets/source-code-pro-latin-400-normal-DEXWLoHG.woff2            11.66 kB
+126
+../dist/renderer/assets/anonymous-pro-latin-ext-400-normal-wQkI5Rzd.woff2          11.71 kB
+127
+../dist/renderer/assets/anonymous-pro-latin-400-normal-CW1hsQ84.woff               11.73 kB
+128
+../dist/renderer/assets/ibm-plex-mono-latin-ext-400-normal-D3D2R8hC.woff           11.77 kB
+129
+../dist/renderer/assets/fira-code-cyrillic-ext-400-normal-txZ9Fk_1.woff2           11.96 kB
+130
+../dist/renderer/assets/KaTeX_SansSerif-Italic-C3H0VqGB.woff2                      12.03 kB
+131
+../dist/renderer/assets/roboto-cyrillic-400-normal-CBPI_iaY.woff2                  12.11 kB
+132
+../dist/renderer/assets/KaTeX_SansSerif-Bold-D1sUS0GD.woff2                        12.22 kB
+133
+../dist/renderer/assets/KaTeX_Size1-Regular-Dbsnue_I.ttf                           12.23 kB
+134
+../dist/renderer/assets/space-mono-latin-400-normal-_3DlpgIW.woff                  12.31 kB
+135
+../dist/renderer/assets/KaTeX_SansSerif-Regular-CS6fqUqJ.woff                      12.32 kB
+136
+../dist/renderer/assets/KaTeX_Caligraphic-Regular-wX97UBjC.ttf                     12.34 kB
+137
+../dist/renderer/assets/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf                        12.37 kB
+138
+../dist/renderer/assets/space-mono-latin-ext-400-normal-D4cJI_B-.woff              12.61 kB
+139
+../dist/renderer/assets/ibm-plex-mono-latin-400-normal-CvHOgSBP.woff               13.14 kB
+140
+../dist/renderer/assets/KaTeX_Fraktur-Regular-Dxdc4cR9.woff                        13.21 kB
+141
+../dist/renderer/assets/KaTeX_Fraktur-Bold-BsDP51OF.woff                           13.30 kB
+142
+../dist/renderer/assets/inter-cyrillic-ext-400-normal-DQukG94-.woff                13.34 kB
+143
+../dist/renderer/assets/ibm-plex-mono-latin-ext-400-normal-BmRBH3aV.woff2          13.35 kB
+144
+../dist/renderer/assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2                    13.57 kB
+145
+../dist/renderer/assets/open-sans-latin-ext-400-normal-BfzJ9CTS.woff               14.01 kB
+146
+../dist/renderer/assets/manrope-latin-400-normal-PaqtzbVb.woff2                    14.11 kB
+147
+../dist/renderer/assets/nunito-cyrillic-ext-400-normal-xaE7D4Sw.woff               14.11 kB
+148
+../dist/renderer/assets/KaTeX_SansSerif-Italic-DN2j7dab.woff                       14.11 kB
+149
+../dist/renderer/assets/roboto-latin-ext-400-normal-scX0fKtV.woff                  14.31 kB
+150
+../dist/renderer/assets/KaTeX_SansSerif-Bold-DbIhKOiC.woff                         14.41 kB
+151
+../dist/renderer/assets/ibm-plex-mono-latin-400-normal-DMJ8VG8y.woff2              14.71 kB
+152
+../dist/renderer/assets/roboto-latin-ext-400-normal-C3tdtHj3.woff2                 15.04 kB
+153
+../dist/renderer/assets/fira-code-cyrillic-ext-400-normal-Buh61xzB.woff            15.10 kB
+154
+../dist/renderer/assets/source-code-pro-latin-400-normal-Bf_aQirX.woff             15.24 kB
+155
+../dist/renderer/assets/open-sans-latin-ext-400-normal-URAvo6nN.woff2              15.38 kB
+156
+../dist/renderer/assets/space-mono-latin-ext-400-normal-DTLbW2xa.woff2             15.83 kB
+157
+../dist/renderer/assets/nunito-latin-ext-400-normal-i-8OOpdj.woff2                 15.89 kB
+158
+../dist/renderer/assets/open-sans-cyrillic-ext-400-normal-CtkCLoLZ.woff            15.91 kB
+159
+../dist/renderer/assets/KaTeX_Typewriter-Regular-C0xS9mPB.woff                     16.03 kB
+160
+../dist/renderer/assets/nunito-latin-400-normal-r8SDr6Up.woff2                     16.32 kB
+161
+../dist/renderer/assets/roboto-cyrillic-ext-400-normal-CaK1767H.woff               16.34 kB
+162
+../dist/renderer/assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2                       16.40 kB
+163
+../dist/renderer/assets/KaTeX_Math-Italic-t53AETM-.woff2                           16.44 kB
+164
+../dist/renderer/assets/space-mono-latin-400-normal-Rg4St2Dn.woff2                 16.52 kB
+165
+../dist/renderer/assets/KaTeX_Script-Regular-C5JkGWo-.ttf                          16.65 kB
+166
+../dist/renderer/assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2                       16.78 kB
+167
+../dist/renderer/assets/KaTeX_Main-Italic-NWA7e6Wa.woff2                           16.99 kB
+168
+../dist/renderer/assets/open-sans-latin-400-normal-DKniycaP.woff                   17.25 kB
+169
+../dist/renderer/assets/roboto-cyrillic-ext-400-normal-qHufge6k.woff2              17.37 kB
+170
+../dist/renderer/assets/anonymous-pro-latin-400-normal-D6DGvud-.woff2              17.53 kB
+171
+../dist/renderer/assets/source-code-pro-latin-ext-400-normal-C8wU-ygL.woff2        17.75 kB
+172
+../dist/renderer/assets/open-sans-cyrillic-ext-400-normal-B28g4zcY.woff2           18.03 kB
+173
+../dist/renderer/assets/manrope-latin-400-normal-8tf8FM3T.woff                     18.29 kB
+174
+../dist/renderer/assets/open-sans-math-400-normal-Cs0GbA_j.woff                    18.37 kB
+175
+../dist/renderer/assets/open-sans-latin-400-normal-Bk63H6sG.woff2                  18.64 kB
+176
+../dist/renderer/assets/KaTeX_Math-BoldItalic-iY-2wyZ7.woff                        18.67 kB
+177
+../dist/renderer/assets/KaTeX_Math-Italic-DA0__PXp.woff                            18.75 kB
+178
+../dist/renderer/assets/roboto-math-400-normal-C9RxBKAh.woff                       19.23 kB
+179
+../dist/renderer/assets/KaTeX_Main-BoldItalic-SpSLRI95.woff                        19.41 kB
+180
+../dist/renderer/assets/KaTeX_SansSerif-Regular-BNo7hRIc.ttf                       19.44 kB
+181
+../dist/renderer/assets/KaTeX_Fraktur-Regular-CB_wures.ttf                         19.57 kB
+182
+../dist/renderer/assets/KaTeX_Fraktur-Bold-BdnERNNW.ttf                            19.58 kB
+183
+../dist/renderer/assets/KaTeX_Main-Italic-BMLOBm91.woff                            19.68 kB
+184
+../dist/renderer/assets/open-sans-math-400-normal-C76BUjK0.woff2                   19.70 kB
+185
+../dist/renderer/assets/roboto-math-400-normal-BEFej5gc.woff2                      20.09 kB
+186
+../dist/renderer/assets/nunito-latin-400-normal-DKg4f3fz.woff                      20.33 kB
+187
+../dist/renderer/assets/nunito-latin-ext-400-normal-CjMJVfGn.woff                  21.29 kB
+188
+../dist/renderer/assets/roboto-latin-400-normal-DyYNIH4P.woff                      21.78 kB
+189
+../dist/renderer/assets/roboto-latin-400-normal-BqEyEoaF.woff2                     21.88 kB
+190
+../dist/renderer/assets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf                        22.36 kB
+191
+../dist/renderer/assets/fira-code-latin-400-normal-DGosTW8U.woff2                  23.31 kB
+192
+../dist/renderer/assets/inter-latin-400-normal-C38fXH4l.woff2                      23.66 kB
+193
+../dist/renderer/assets/source-code-pro-latin-ext-400-normal-GB-6ZST1.woff         23.66 kB
+194
+../dist/renderer/assets/KaTeX_SansSerif-Bold-CFMepnvq.ttf                          24.50 kB
+195
+../dist/renderer/assets/KaTeX_Main-Bold-Cx986IdX.woff2                             25.32 kB
+196
+../dist/renderer/assets/KaTeX_Main-Regular-B22Nviop.woff2                          26.27 kB
+197
+../dist/renderer/assets/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf                      27.56 kB
+198
+../dist/renderer/assets/KaTeX_AMS-Regular-BQhdFMY1.woff2                           28.08 kB
+199
+../dist/renderer/assets/fira-code-latin-400-normal-C-QZfXAs.woff                   29.84 kB
+200
+../dist/renderer/assets/KaTeX_Main-Bold-Jm3AIy58.woff                              29.91 kB
+201
+../dist/renderer/assets/inter-latin-400-normal-CyCys3Eg.woff                       30.70 kB
+202
+../dist/renderer/assets/KaTeX_Main-Regular-Dr94JaBh.woff                           30.77 kB
+203
+../dist/renderer/assets/KaTeX_Math-BoldItalic-B3XSjfu4.ttf                         31.20 kB
+204
+../dist/renderer/assets/KaTeX_Math-Italic-flOr_0UB.ttf                             31.31 kB
+205
+../dist/renderer/assets/KaTeX_Main-BoldItalic-DzxPMmG6.ttf                         32.97 kB
+206
+../dist/renderer/assets/KaTeX_AMS-Regular-DMm9YOAa.woff                            33.52 kB
+207
+../dist/renderer/assets/KaTeX_Main-Italic-3WenGoN9.ttf                             33.58 kB
+208
+../dist/renderer/assets/inter-latin-ext-400-normal-C1nco2VV.woff2                  35.00 kB
+209
+../dist/renderer/assets/poppins-devanagari-400-normal-CJDn6rn8.woff2               39.66 kB
+210
+../dist/renderer/assets/inter-latin-ext-400-normal-77YHD8bZ.woff                   47.56 kB
+211
+../dist/renderer/assets/KaTeX_Main-Bold-waoOVXN0.ttf                               51.34 kB
+212
+../dist/renderer/assets/poppins-devanagari-400-normal-CqVvlrh5.woff                52.98 kB
+213
+../dist/renderer/assets/KaTeX_Main-Regular-ypZvNtVU.ttf                            53.58 kB
+214
+../dist/renderer/assets/KaTeX_AMS-Regular-DRggAlZN.ttf                             63.63 kB
+215
+../dist/renderer/assets/editor.worker-DX6ApQqM.js                                 231.68 kB
+216
+../dist/renderer/assets/json.worker-CIZWV9vN.js                                   364.09 kB
+217
+../dist/renderer/assets/html.worker-CBI4EQBP.js                                   669.69 kB
+218
+../dist/renderer/assets/css.worker-BRIrhzkG.js                                  1,011.01 kB
+219
+../dist/renderer/assets/ts.worker-Ds4I2Msu.js                                   6,022.42 kB
+220
+../dist/renderer/assets/index-y0mBVXyG.css                                        161.57 kB │ gzip:  48.03 kB
+221
+../dist/renderer/assets/index-h3X4m1gj.js                                           1.50 kB │ gzip:   0.54 kB
+222
+../dist/renderer/assets/vendor-CQJ9fS17.js                                        133.93 kB │ gzip:  43.13 kB
+223
+../dist/renderer/assets/index-BzOsHcT2.js                                         710.32 kB │ gzip: 209.88 kB
+224
+../dist/renderer/assets/markdown-Cwkx3W1g.js                                    1,048.79 kB │ gzip: 351.89 kB

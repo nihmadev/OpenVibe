@@ -6,7 +6,7 @@
   "author": "mt-studio <mt-studio@bk.ru>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mttscode/openvibe"
+    "url": "https://github.com/nihmadev/openvibe-community"
   },
   "type": "module",
   "scripts": {
