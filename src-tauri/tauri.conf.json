@@ -27,15 +27,13 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["dmg", "mas-macos", "app"],
+    "targets": "all",
     "icon": [
       "icons/icon.png",
       "icons/icon.ico"
     ],
     "macOS": {
-      "minimumSystemVersion": "11.0",
-      "frameworks": [],
-      "files": {}
+      "minimumSystemVersion": "11.0"
     }
   }
 }
