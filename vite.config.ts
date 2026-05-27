@@ -21,23 +21,9 @@ export default defineConfig({
             "remark-math",
             "rehype-katex",
           ],
-          monaco: [
-            "monaco-editor",
-            "@monaco-editor/react",
-          ],
         },
       },
     },
-    // Минимизация и оптимизация
-    minify: "terser",
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
-    // Отключить предупреждения о больших чанках (временное решение)
-    chunkSizeWarningLimit: 1000,
   },
   server: {
     host: "127.0.0.1",
