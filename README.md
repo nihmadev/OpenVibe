@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/icon.png" width="100" alt="openvibe" />
+  <img src="src-tauri/icons/icon.png" width="100" alt="openvibe" />
 </p>
 
 <h1 align="center">openvibe</h1>

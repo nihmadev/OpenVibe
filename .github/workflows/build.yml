@@ -43,8 +43,8 @@ jobs:
             target: aarch64-apple-darwin
             artifact-name: openvibe-macos-arm64
             installer-glob: |
-              src-tauri/target/release/bundle/dmg/*
-              src-tauri/target/release/bundle/macos/*
+              src-tauri/target/release/bundle/dmg/*/*
+              src-tauri/target/release/bundle/macos/*/*
 
     runs-on: ${{ matrix.os }}
 
