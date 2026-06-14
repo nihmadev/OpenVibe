@@ -1,0 +1,54 @@
+{
+  "name": "Ayu",
+  "id": "ayu",
+  "light": {
+    "palette": {
+      "neutral": "#F2F2F2",
+      "ink": "#5C6166",
+      "primary": "#22A4E6",
+      "accent": "#F29718",
+      "success": "#86B300",
+      "warning": "#EBA400",
+      "error": "#E65050",
+      "info": "#55B4D4",
+      "diffAdd": "#6CBF43",
+      "diffDelete": "#FF7383"
+    },
+    "overrides": {
+      "syntax-comment": "#ADAEB1",
+      "syntax-keyword": "#FA8532",
+      "syntax-string": "#86B300",
+      "syntax-primitive": "#22A4E6",
+      "syntax-variable": "#5C6166",
+      "syntax-property": "#4CBF99",
+      "syntax-type": "#22A4E6",
+      "syntax-constant": "#A37ACC",
+      "syntax-operator": "#F2A191"
+    }
+  },
+  "dark": {
+    "palette": {
+      "neutral": "#0D1017",
+      "ink": "#BFBDB6",
+      "primary": "#59C2FF",
+      "accent": "#E6B450",
+      "success": "#AAD94C",
+      "warning": "#FFB454",
+      "error": "#D95757",
+      "info": "#95E6CB",
+      "diffAdd": "#70BF56",
+      "diffDelete": "#F26D78"
+    },
+    "overrides": {
+      "syntax-comment": "#5A6673",
+      "syntax-keyword": "#FF8F40",
+      "syntax-string": "#AAD94C",
+      "syntax-primitive": "#59C2FF",
+      "syntax-variable": "#BFBDB6",
+      "syntax-property": "#95E6CB",
+      "syntax-type": "#59C2FF",
+      "syntax-constant": "#D2A6FF",
+      "syntax-operator": "#F29668"
+    }
+  }
+}

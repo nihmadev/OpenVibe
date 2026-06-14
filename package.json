@@ -1,6 +1,6 @@
 {
   "name": "openvibe",
-  "version": "0.1.0",
+  "version": "1.2.0",
   "description": "Open-source agentic coding environment. Bring your own AI model.",
   "license": "SEE LICENSE IN LICENSE",
   "author": "mt-studio <mt-studio@bk.ru>",
@@ -10,10 +10,18 @@
   },
   "type": "module",
   "scripts": {
-    "dev:renderer": "vite",
+    "dev:src": "vite",
     "dev:tauri": "tauri dev",
-    "build:renderer": "vite build",
+    "build:src": "vite build",
     "build:tauri": "tauri build",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "audit": "npm audit --audit-level=moderate",
     "postinstall": "node -e \"const fs=require('fs'); const path=require('path'); const src=path.join('node_modules','monaco-editor','min','vs'); const dest=path.join('public','monaco-editor','min','vs'); if(fs.existsSync(src)){fs.mkdirSync(dest,{recursive:true}); const copyRecursive=(s,d)=>{fs.readdirSync(s).forEach(f=>{const ss=path.join(s,f); const dd=path.join(d,f); if(fs.statSync(ss).isDirectory()){fs.mkdirSync(dd,{recursive:true}); copyRecursive(ss,dd);}else{fs.copyFileSync(ss,dd);}});}; copyRecursive(src,dest); console.log('Monaco assets copied to public/');}\""
   },
   "engines": {
@@ -51,13 +59,23 @@
     "remark-math": "^6.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@tauri-apps/cli": "^2.11.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^18.3.29",
     "@types/react-dom": "^18.3.0",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.8.4",
     "typescript": "^5.4.0",
-    "vite": "^5.4.0"
+    "typescript-eslint": "^8.61.0",
+    "vite": "^5.4.0",
+    "vitest": "^4.1.8"
   },
   "keywords": [
     "agent",

@@ -236,6 +236,7 @@ pub fn run() {
             commands::agent::agent_revert_to,
             commands::agent::agent_set_cwd,
             commands::agent::agent_set_provider,
+            commands::agent::agent_get_sub_trace,
             // FS commands
             commands::fs::fs_list,
             commands::fs::fs_read,
@@ -257,6 +258,9 @@ pub fn run() {
             commands::projects::projects_remove,
             commands::projects::projects_rename,
             commands::projects::projects_close,
+            commands::projects::projects_set_color,
+            commands::projects::projects_set_icon,
+            commands::projects::projects_set_photo,
             // Chat commands
             commands::chats::chats_list,
             commands::chats::chats_list_for_project,
@@ -297,6 +301,7 @@ pub fn run() {
             // LLM commands
             commands::llm::llm_stream,
             commands::llm::llm_abort,
+            commands::llm::estimate_context_tokens,
             // Tool commands
             commands::tools::tools_definitions,
             commands::tools::tools_execute,

@@ -26,12 +26,13 @@ pub fn chats_list_for_project(state: State<AppState>, project_id: String) -> Res
 pub fn chats_new(state: State<AppState>) -> Result<Option<serde_json::Value>, String> {
     let mut active = state.active_chat_id.lock().map_err(|e| e.to_string())?;
 
-    // Check if current chat is already empty
+    // Check if current chat already has real content (user/AI messages, not just system prompt)
     if let Some(ref current_id) = *active {
         let chat = state.chat_store.lock().map_err(|e| e.to_string())?;
         if let Some(ref store) = *chat {
             if let Some(record) = store.get(current_id) {
-                if record.messages.is_empty() {
+                let has_content = record.messages.iter().any(|m| m.role != "system");
+                if !has_content {
                     return Ok(Some(serde_json::json!({
                         "id": record.id,
                         "title": record.title,
@@ -45,12 +46,12 @@ pub fn chats_new(state: State<AppState>) -> Result<Option<serde_json::Value>, St
         drop(chat);
     }
 
-    // Persist current chat if it has messages
+    // Persist current chat if it has any real content
     if active.is_some() {
         let _ = state.persist_active_chat();
     }
 
-    // Create new chat
+    // Create new chat with a fresh ID (old conversation stays in DB)
     let id = format!("c{:x}-{}", chrono_now(), rand_suffix());
     let now = chrono_now();
     let record = ChatRecord {
@@ -70,7 +71,7 @@ pub fn chats_new(state: State<AppState>) -> Result<Option<serde_json::Value>, St
 
     *active = Some(id.clone());
 
-    // Emit chats:updated event
+    // Emit event so frontend can refresh the list (empty chats are filtered out by frontend)
     let app = state.app_handle.lock().map_err(|e| e.to_string())?;
     if let Some(ref handle) = *app {
         let _ = handle.emit("vibe:chats:updated", ());
@@ -163,9 +164,11 @@ pub fn chats_save(state: State<AppState>, id: String, messages: Vec<llm::ChatMes
     let chat = state.chat_store.lock().map_err(|e| e.to_string())?;
     if let Some(ref store) = *chat {
         // Prevent accidental overwrite with empty messages on restart
+        // System messages alone don't count as "content" — agent always has one.
         if messages.is_empty() {
             if let Some(existing) = store.get(&id) {
-                if !existing.messages.is_empty() {
+                let has_content = existing.messages.iter().any(|m| m.role != "system");
+                if has_content {
                     return Ok(());
                 }
             }
@@ -176,6 +179,13 @@ pub fn chats_save(state: State<AppState>, id: String, messages: Vec<llm::ChatMes
             store.save(&record);
         }
     }
+    drop(chat);
+
+    let app = state.app_handle.lock().map_err(|e| e.to_string())?;
+    if let Some(ref handle) = *app {
+        let _ = handle.emit("vibe:chats:updated", ());
+    }
+
     Ok(())
 }
 

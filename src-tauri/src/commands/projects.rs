@@ -75,3 +75,24 @@ pub fn projects_close(state: State<AppState>) -> Result<(), String> {
     state.reset_project_state();
     Ok(())
 }
+
+#[tauri::command]
+pub fn projects_set_color(state: State<AppState>, id: String, color: String) -> Result<(), String> {
+    let store = state.projects.lock().map_err(|e| e.to_string())?;
+    store.set_color(&id, &color);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn projects_set_icon(state: State<AppState>, id: String, icon: Option<String>) -> Result<(), String> {
+    let store = state.projects.lock().map_err(|e| e.to_string())?;
+    store.set_icon(&id, icon.as_deref());
+    Ok(())
+}
+
+#[tauri::command]
+pub fn projects_set_photo(state: State<AppState>, id: String, photo: Option<String>) -> Result<(), String> {
+    let store = state.projects.lock().map_err(|e| e.to_string())?;
+    store.set_photo(&id, photo.as_deref());
+    Ok(())
+}

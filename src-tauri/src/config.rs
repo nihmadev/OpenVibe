@@ -50,7 +50,8 @@ fn derive_provider_id(base_url: &str) -> String {
         ("api.deepseek.com", "deepseek"),
         ("openrouter.ai", "openrouter"),
         ("api.moonshot.cn", "moonshot"),
-        ("api.zai.com", "zai"),
+        ("api.moonshot.ai", "moonshot"),
+        ("api.z.ai", "zai"),
         ("opencode.ai", "opencode"),
         ("models.github.ai", "github"),
         ("localhost:11434", "ollama"),
@@ -91,6 +92,8 @@ pub fn load_config(cwd: &str) -> Config {
     let groq_key = get("GROQ_API_KEY");
     let cerebras_key = get("CEREBRAS_API_KEY");
     let github_key = get("GITHUB_TOKEN");
+    let moonshot_key = get("MOONSHOT_API_KEY");
+    let zai_key = get("ZAI_API_KEY");
 
     let mut provider_id: Option<String> = None;
 
@@ -136,6 +139,28 @@ pub fn load_config(cwd: &str) -> Config {
             model = "gpt-4o-mini".to_string();
         }
         provider_id = Some("github".to_string());
+    }
+
+    if api_key.is_empty() && !moonshot_key.is_empty() {
+        api_key = moonshot_key;
+        if base_url.is_empty() {
+            base_url = "https://api.moonshot.cn/v1".to_string();
+        }
+        if model.is_empty() {
+            model = "moonshot-v1-auto".to_string();
+        }
+        provider_id = Some("moonshot".to_string());
+    }
+
+    if api_key.is_empty() && !zai_key.is_empty() {
+        api_key = zai_key;
+        if base_url.is_empty() {
+            base_url = "https://api.z.ai/api/paas/v4".to_string();
+        }
+        if model.is_empty() {
+            model = "glm-5.1".to_string();
+        }
+        provider_id = Some("zai".to_string());
     }
 
     if base_url.is_empty() {

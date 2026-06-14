@@ -1,7 +1,7 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 use tauri::{AppHandle, Emitter};
 use tokio::sync::oneshot;
@@ -10,6 +10,43 @@ use crate::config::Config;
 use crate::llm;
 
 const MAX_TURNS: usize = 25;
+
+// ── Sub-agent trace storage ──
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubTraceEvent {
+    pub kind: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub text: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub args: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ok: Option<bool>,
+}
+
+fn sub_traces() -> &'static Mutex<HashMap<String, Vec<SubTraceEvent>>> {
+    static TRACES: OnceLock<Mutex<HashMap<String, Vec<SubTraceEvent>>>> = OnceLock::new();
+    TRACES.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+pub fn store_sub_event(call_id: &str, event: SubTraceEvent) {
+    if let Ok(mut traces) = sub_traces().lock() {
+        traces.entry(call_id.to_string()).or_default().push(event);
+    }
+}
+
+pub fn get_sub_trace(call_id: &str) -> Vec<SubTraceEvent> {
+    if let Ok(traces) = sub_traces().lock() {
+        traces.get(call_id).cloned().unwrap_or_default()
+    } else {
+        vec![]
+    }
+}
 
 // ── Events emitted to frontend ──
 
@@ -264,11 +301,41 @@ fn search_codebase_tool() -> llm::ToolDefinition {
     }
 }
 
+fn agent_tool() -> llm::ToolDefinition {
+    llm::ToolDefinition {
+        type_: "function".to_string(),
+        function: llm::ToolDefFunction {
+            name: "agent".to_string(),
+            description: "Explore the codebase for complex research tasks that require multiple steps (searching, reading, analyzing). Use this instead of search_codebase when you need deep investigation — e.g. finding a bug, understanding architecture, or tracing logic across multiple files.".to_string(),
+            parameters: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "task": {
+                        "type": "string",
+                        "description": "The research task to investigate. Be specific about what to find."
+                    }
+                },
+                "required": ["task"]
+            }),
+        },
+    }
+}
+
 fn build_tool_definitions() -> Vec<llm::ToolDefinition> {
     vec![
         read_file_tool(),
         write_file_tool(),
         edit_file_tool(),
+        list_dir_tool(),
+        bash_tool(),
+        search_codebase_tool(),
+        agent_tool(),
+    ]
+}
+
+fn build_readonly_tool_definitions() -> Vec<llm::ToolDefinition> {
+    vec![
+        read_file_tool(),
         list_dir_tool(),
         bash_tool(),
         search_codebase_tool(),
@@ -531,6 +598,193 @@ fn tool_search_codebase(cwd: &str, args: &serde_json::Value) -> Result<String, S
     }
 }
 
+fn agent_system_prompt(cwd: &str) -> String {
+    [
+        "You are an AI research assistant with READ-ONLY access to a codebase.",
+        "Your ONLY job is to investigate and find information — never modify files.",
+        &format!("CURRENT WORKING DIRECTORY: {}", cwd),
+        "",
+        "AVAILABLE TOOLS:",
+        "- read_file: Read file contents.",
+        "- search_codebase: Search for text/patterns in the codebase.",
+        "- list_dir: List directory contents.",
+        "- bash: Run shell commands (read-only). NEVER modify or delete files.",
+        "",
+        "RULES:",
+        "- Do NOT modify any files under any circumstances.",
+        "- Be thorough and methodical. Search first, then read specific files.",
+        "- When you have found the answer, provide a clear, comprehensive summary.",
+        "- If you cannot find the answer, say so clearly.",
+    ]
+    .join("\n")
+}
+
+async fn tool_run_agent(
+    cwd: &str,
+    args: &serde_json::Value,
+    llm_config: &llm::LlmConfig,
+    app: &AppHandle,
+    client: &reqwest::Client,
+    cancel: &AtomicBool,
+    call_id: &str,
+) -> Result<String, String> {
+    let task = args
+        .get("task")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "Missing 'task' argument".to_string())?;
+
+    let sub_system = agent_system_prompt(cwd);
+    let read_only_tools = build_readonly_tool_definitions();
+    let sub_llm_config = llm::LlmConfig {
+        api_key: llm_config.api_key.clone(),
+        base_url: llm_config.base_url.clone(),
+        model: llm_config.model.clone(),
+        api_url: llm_config.api_url.clone(),
+        provider_id: llm_config.provider_id.clone(),
+    };
+
+    let mut sub_messages: Vec<llm::ChatMessage> = vec![
+        llm::ChatMessage {
+            role: "system".to_string(),
+            content: Some(serde_json::Value::String(sub_system)),
+            name: None,
+            tool_call_id: None,
+            tool_calls: None,
+            reasoning_content: None,
+        },
+        llm::ChatMessage {
+            role: "user".to_string(),
+            content: Some(serde_json::Value::String(task.to_string())),
+            name: None,
+            tool_call_id: None,
+            tool_calls: None,
+            reasoning_content: None,
+        },
+    ];
+
+    let mut full_result = String::new();
+
+    for _turn in 0..MAX_TURNS {
+        if cancel.load(Ordering::Relaxed) {
+            return Err("Aborted".to_string());
+        }
+
+        let turn = llm::stream_chat(
+            &sub_llm_config,
+            sub_messages.clone(),
+            read_only_tools.clone(),
+            cancel,
+            client,
+            &|_| {},
+            &|_| {},
+            &|| {},
+            &|_, _| {},
+        )
+        .await?;
+
+        if !turn.content.trim().is_empty() {
+            full_result.push_str(&turn.content);
+            full_result.push('\n');
+            let _ = app.emit(
+                "vibe:agent:tool-chunk",
+                serde_json::json!({ "id": call_id, "args": serde_json::json!({"status": &turn.content}).to_string() }),
+            );
+            store_sub_event(call_id, SubTraceEvent {
+                kind: "chunk".to_string(),
+                text: Some(turn.content.clone()),
+                id: None,
+                name: None,
+                args: None,
+                ok: None,
+            });
+        }
+
+        if turn.tool_calls.is_empty() {
+            store_sub_event(call_id, SubTraceEvent {
+                kind: "done".to_string(),
+                text: None,
+                id: None,
+                name: None,
+                args: None,
+                ok: None,
+            });
+            return Ok(full_result.trim().to_string());
+        }
+
+        for call in &turn.tool_calls {
+            if cancel.load(Ordering::Relaxed) {
+                return Err("Aborted".to_string());
+            }
+
+            let tool_name = &call.function.name;
+            let args_str = &call.function.arguments;
+
+            let parsed_args: serde_json::Value = if args_str.trim().is_empty() {
+                serde_json::Value::Object(serde_json::Map::new())
+            } else {
+                match serde_json::from_str(args_str) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        sub_messages.push(llm::ChatMessage {
+                            role: "tool".to_string(),
+                            content: Some(serde_json::Value::String(format!("Invalid JSON: {e}"))),
+                            name: None,
+                            tool_call_id: Some(call.id.clone()),
+                            tool_calls: None,
+                            reasoning_content: None,
+                        });
+                        continue;
+                    }
+                }
+            };
+
+            store_sub_event(call_id, SubTraceEvent {
+                kind: "tool-call".to_string(),
+                text: None,
+                id: Some(call.id.clone()),
+                name: Some(tool_name.clone()),
+                args: Some(parsed_args.clone()),
+                ok: None,
+            });
+
+            let result = match tool_name.as_str() {
+                "read_file" => tool_read_file(cwd, &parsed_args),
+                "search_codebase" => tool_search_codebase(cwd, &parsed_args),
+                "list_dir" => tool_list_dir(cwd, &parsed_args),
+                "bash" => tool_bash(cwd, &parsed_args),
+                _ => Err(format!("Unknown tool: {tool_name}")),
+            };
+
+            let is_ok = result.is_ok();
+            let result_text = result.unwrap_or_else(|e| e);
+
+            store_sub_event(call_id, SubTraceEvent {
+                kind: "tool-result".to_string(),
+                text: Some(result_text.clone()),
+                id: Some(call.id.clone()),
+                name: None,
+                args: None,
+                ok: Some(is_ok),
+            });
+
+            sub_messages.push(llm::ChatMessage {
+                role: "tool".to_string(),
+                content: Some(serde_json::Value::String(result_text)),
+                name: None,
+                tool_call_id: Some(call.id.clone()),
+                tool_calls: None,
+                reasoning_content: None,
+            });
+        }
+    }
+
+    if full_result.trim().is_empty() {
+        Ok("[Explore agent reached maximum turns without a conclusive result]".to_string())
+    } else {
+        Ok(full_result.trim().to_string())
+    }
+}
+
 // ── Agent ──
 
 pub struct Agent {
@@ -682,8 +936,9 @@ impl Agent {
                     t.push_str(chunk);
                 }
             },
-            &|_: &str| {},
+            &|_| {},
             &|| {},
+            &|_, _| {},
         )
         .await;
 
@@ -812,7 +1067,7 @@ impl Agent {
                 last_emit: std::time::Instant::now(),
             }));
             let app_for_emit = app.clone();
-            let debounce = Duration::from_millis(50);
+            let debounce = Duration::from_millis(100);
 
             let cb_chunk = {
                 let chunk_buf = chunk_buf.clone();
@@ -881,6 +1136,12 @@ impl Agent {
                 &cb_chunk,
                 &cb_reasoning,
                 &cb_reasoning_end,
+                &|tool_id: &str, args: &str| {
+                    let _ = app.emit(
+                        "vibe:agent:tool-chunk",
+                        serde_json::json!({ "id": tool_id, "args": args }),
+                    );
+                },
             )
             .await;
 
@@ -1107,6 +1368,18 @@ impl Agent {
                     "list_dir" => tool_list_dir(&cwd, &parsed_args),
                     "bash" => tool_bash(&cwd, &parsed_args),
                     "search_codebase" => tool_search_codebase(&cwd, &parsed_args),
+                    "agent" => {
+                        tool_run_agent(
+                            &cwd,
+                            &parsed_args,
+                            &llm_config,
+                            &app,
+                            client,
+                            &self.cancel,
+                            &call.id,
+                        )
+                        .await
+                    }
                     _ => Err(format!("Unknown tool: {tool_name}")),
                 };
 

@@ -1,0 +1,192 @@
+import { describe as suite, it, expect } from "vitest";
+import {
+  EXT_COLORS,
+  basename,
+  pickFile,
+  describe as describeItem,
+  formatArgs,
+  ICON_MAP_HISTORY,
+} from "../../components/chat-history/utils";
+import type { HistoryItem } from "../../components/chat-history/types";
+
+suite("EXT_COLORS", () => {
+  it("has entries for common extensions", () => {
+    expect(EXT_COLORS.ts).toBe("ts");
+    expect(EXT_COLORS.js).toBe("js");
+    expect(EXT_COLORS.py).toBe("py");
+    expect(EXT_COLORS.rs).toBe("rs");
+    expect(EXT_COLORS.md).toBe("md");
+  });
+});
+
+suite("ICON_MAP_HISTORY", () => {
+  it("maps extensions to icon filenames", () => {
+    expect(ICON_MAP_HISTORY.ts).toBe("js.png");
+    expect(ICON_MAP_HISTORY.py).toBe("py.png");
+    expect(ICON_MAP_HISTORY.css).toBe("css.png");
+    expect(ICON_MAP_HISTORY.html).toBe("html.png");
+    expect(ICON_MAP_HISTORY.png).toBe("image.png");
+    expect(ICON_MAP_HISTORY.svg).toBe("image.png");
+  });
+});
+
+suite("basename", () => {
+  it("extracts name from path", () => {
+    expect(basename("/a/b/c.ts")).toBe("c.ts");
+    expect(basename("C:\\a\\b\\c.ts")).toBe("c.ts");
+    expect(basename("c.ts")).toBe("c.ts");
+  });
+});
+
+suite("pickFile", () => {
+  it("returns null for non-object input", () => {
+    expect(pickFile(null)).toBeNull();
+    expect(pickFile("string")).toBeNull();
+    expect(pickFile(42)).toBeNull();
+  });
+
+  it("returns null when no path/file field", () => {
+    expect(pickFile({})).toBeNull();
+    expect(pickFile({ foo: "bar" })).toBeNull();
+  });
+
+  it("extracts file info from path field", () => {
+    const result = pickFile({ path: "/home/user/main.ts" });
+    expect(result).toEqual({ name: "main.ts", ext: "ts", cls: "ts" });
+  });
+
+  it("extracts file info from file field", () => {
+    const result = pickFile({ file: "style.css" });
+    expect(result).toEqual({ name: "style.css", ext: "css", cls: "css" });
+  });
+
+  it("handles extension with no color mapping", () => {
+    const result = pickFile({ path: "foo.xyz" });
+    expect(result).toEqual({ name: "foo.xyz", ext: "xyz", cls: "" });
+  });
+
+  it("handles file without extension", () => {
+    const result = pickFile({ path: "/dir/Makefile" });
+    expect(result).toEqual({ name: "Makefile", ext: "", cls: "" });
+  });
+});
+
+suite("describe", () => {
+  const t = (key: string, _params?: Record<string, string>) => key;
+
+  it("describes read_file (pending)", () => {
+    const item = { toolName: "read_file", toolArgs: { path: "/a/b.ts" } } as HistoryItem;
+    const d = describeItem(item, t);
+    expect(d.verb).toBe("reading");
+    expect(d.file).toEqual({ name: "b.ts", ext: "ts", cls: "ts" });
+  });
+
+  it("describes read_file (done)", () => {
+    const item = { toolName: "read_file", toolArgs: { path: "/a/b.ts" }, ok: true } as HistoryItem;
+    const d = describeItem(item, t);
+    expect(d.verb).toBe("read");
+  });
+
+  it("describes write_file (pending)", () => {
+    const item = { toolName: "write_file", toolArgs: { path: "f.ts" } } as HistoryItem;
+    const d = describeItem(item, t);
+    expect(d.verb).toBe("writing");
+  });
+
+  it("describes write_file (failed)", () => {
+    const item = { toolName: "write_file", toolArgs: { path: "f.ts" }, ok: false } as HistoryItem;
+    const d = describeItem(item, t);
+    expect(d.verb).toBe("failedWrite");
+  });
+
+  it("describes edit_file", () => {
+    const item = { toolName: "edit_file", toolArgs: { path: "f.ts" }, ok: true } as HistoryItem;
+    const d = describeItem(item, t);
+    expect(d.verb).toBe("edited");
+  });
+
+  it("describes list_dir (pending)", () => {
+    const item = { toolName: "list_dir", toolArgs: { path: "/src" } } as HistoryItem;
+    const d = describeItem(item, t);
+    expect(d.verb).toBe("listing");
+    expect(d.file).toEqual({ name: "src", ext: "", cls: "dir" });
+  });
+
+  it("describes list_dir (done)", () => {
+    const item = { toolName: "list_dir", toolArgs: { path: "/src" }, ok: true } as HistoryItem;
+    const d = describeItem(item, t);
+    expect(d.verb).toBe("listed");
+  });
+
+  it("describes list_dir with no path", () => {
+    const item = { toolName: "list_dir" } as HistoryItem;
+    const d = describeItem(item, t);
+    expect(d.file?.name).toBe(".");
+  });
+
+  it("describes search_codebase (pending)", () => {
+    const item = { toolName: "search_codebase", toolArgs: { query: "foo" } } as HistoryItem;
+    const d = describeItem(item, t);
+    expect(d.verb).toBe("searchingCodebase");
+    expect(d.suffix).toBe('"foo"');
+    expect(d.file).toBeNull();
+  });
+
+  it("describes search_codebase (done)", () => {
+    const item = { toolName: "search_codebase", toolArgs: { query: "foo" }, ok: true } as HistoryItem;
+    const d = describeItem(item, t);
+    expect(d.verb).toBe("searchedCodebase");
+  });
+
+  it("describes bash (pending)", () => {
+    const item = { toolName: "bash", toolArgs: { command: "ls -la" } } as HistoryItem;
+    const d = describeItem(item, t);
+    expect(d.verb).toBe("running");
+    expect(d.suffix).toBe("ls -la");
+  });
+
+  it("describes bash (done)", () => {
+    const item = { toolName: "bash", toolArgs: { command: "ls -la" }, ok: true } as HistoryItem;
+    const d = describeItem(item, t);
+    expect(d.verb).toBe("ran");
+  });
+
+  it("describes agent (pending)", () => {
+    const item = { toolName: "agent", toolArgs: { task: "find bugs" } } as HistoryItem;
+    const d = describeItem(item, t);
+    expect(d.verb).toBe("exploring");
+    expect(d.suffix).toBe("find bugs");
+  });
+
+  it("describes agent (done)", () => {
+    const item = { toolName: "agent", toolArgs: { task: "find bugs" }, ok: true } as HistoryItem;
+    const d = describeItem(item, t);
+    expect(d.verb).toBe("explored");
+  });
+
+  it("describes unknown tool", () => {
+    const item = { toolName: "custom_tool", toolArgs: { path: "x.txt" } } as HistoryItem;
+    const d = describeItem(item, t);
+    expect(d.verb).toBe("custom_tool");
+    expect(d.file).toEqual({ name: "x.txt", ext: "txt", cls: "" });
+  });
+});
+
+suite("formatArgs", () => {
+  it("returns JSON string of args", () => {
+    expect(formatArgs({ a: 1, b: "hello" })).toBe('{"a":1,"b":"hello"}');
+  });
+
+  it("truncates long strings", () => {
+    const long = "x".repeat(300);
+    const result = formatArgs({ data: long });
+    expect(result).toHaveLength(201);
+    expect(result.endsWith("…")).toBe(true);
+  });
+
+  it("returns empty string for circular reference", () => {
+    const obj: Record<string, unknown> = {};
+    obj.self = obj;
+    expect(formatArgs(obj)).toBe("");
+  });
+});

@@ -1,0 +1,90 @@
+.editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+  min-height: 0;
+  position: relative;
+}
+
+.editor--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-muted);
+  font-size: 12px;
+  background: var(--bg);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.editor--error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--bg);
+  text-align: center;
+  padding: 20px;
+}
+
+.editor__error-title {
+  color: var(--red);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.editor__error-msg {
+  color: var(--fg-dim);
+  font-size: 12px;
+  max-width: 300px;
+}
+
+.editor__retry {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg-dim);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.editor__retry:hover {
+  border-color: var(--fg-muted);
+  color: var(--fg);
+}
+
+/* Floating dirty / saved badges */
+.editor__dirty-badge {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  z-index: 10;
+  font-size: 10px;
+  color: var(--accent);
+  pointer-events: none;
+  user-select: none;
+}
+
+.editor__saved-badge {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  z-index: 10;
+  font-size: 10px;
+  color: var(--green);
+  pointer-events: none;
+  user-select: none;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

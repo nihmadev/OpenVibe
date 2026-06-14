@@ -1,0 +1,127 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  gap: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.app__body {
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sidebar-group {
+  display: flex;
+  flex-direction: row;
+  flex-shrink: 1; /* Allow it to shrink if the window is too small */
+  min-height: 0;
+  align-self: stretch;
+}
+
+.app__content {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.layout {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: row;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.layout__chat {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  padding: 18px 22px 14px;
+  gap: 14px;
+  border-right: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  border-radius: 16px 0 0 0;
+}
+
+.layout__editor {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 100px;
+  overflow: hidden;
+}
+
+/* ── Resize handles ── */
+.resize-handle {
+  flex-shrink: 0;
+  background: transparent;
+  transition: background 0.15s;
+  z-index: 10;
+}
+
+.resize-handle--horizontal {
+  width: 4px;
+  cursor: col-resize;
+}
+
+.resize-handle--horizontal:hover,
+.resize-handle--horizontal:active {
+  background: var(--fg);
+}
+
+.resize-handle--vertical {
+  height: 4px;
+  cursor: row-resize;
+}
+
+.resize-handle--vertical:hover,
+.resize-handle--vertical:active {
+  background: var(--fg);
+}
+
+.chathistory-container,
+.prompt-input-container {
+  max-width: 920px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.terminal-embedded {
+  height: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar {
+  flex-shrink: 1; /* Allow it to shrink if needed */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  transition:
+    flex 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sidebar--closed {
+  overflow: hidden;
+  padding: 0;
+}

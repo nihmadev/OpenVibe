@@ -150,6 +150,22 @@ pub fn build_tool_definitions() -> Vec<ToolDefinition> {
                 }),
             },
         },
+        ToolDefinition {
+            type_: "function".to_string(),
+            function: ToolFunction {
+                name: "agent".to_string(),
+                description:
+                    "Explore the codebase for complex research tasks that require multiple steps — searching, reading, analyzing. Use this instead of search_codebase when you need deep investigation like finding a bug or understanding architecture."
+                        .to_string(),
+                parameters: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "task": { "type": "string", "description": "The research task to investigate." }
+                    },
+                    "required": ["task"]
+                }),
+            },
+        },
     ]
 }
 
@@ -171,8 +187,17 @@ pub async fn execute_tool(
         "list_dir" => tool_list_dir(cwd, args).await,
         "bash" => tool_bash(cwd, args, cancel.unwrap_or(&AtomicBool::new(false))).await,
         "search_codebase" => tool_search_codebase(cwd, args).await,
+        "agent" => tool_agent(cwd, args).await,
         _ => Err(format!("Unknown tool: {name}")),
     }
+}
+
+async fn tool_agent(_cwd: &str, args: &serde_json::Value) -> Result<String, String> {
+    let task = args
+        .get("task")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "Missing 'task' argument".to_string())?;
+    Ok(format!("Exploring: {task}"))
 }
 
 /// ── Tool implementations ──

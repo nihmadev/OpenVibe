@@ -5,6 +5,16 @@ use crate::AppState;
 use crate::llm;
 
 #[tauri::command]
+pub fn estimate_context_tokens(state: State<AppState>) -> Result<llm::ContextUsage, String> {
+    let agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
+    let agent = agent_lock.as_ref().ok_or_else(|| "No agent".to_string())?;
+    let messages = agent.get_messages();
+    let model = agent.get_config().model.clone();
+    let usage = llm::compute_context_usage(messages, &model);
+    Ok(usage)
+}
+
+#[tauri::command]
 pub async fn llm_stream(
     app_handle: AppHandle,
     state: State<'_, AppState>,
@@ -50,6 +60,7 @@ pub async fn llm_stream(
                 serde_json::json!({ "sessionId": &session_id_clone }),
             );
         },
+        &|_, _| {},
     )
     .await;
 

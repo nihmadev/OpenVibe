@@ -1,6 +1,7 @@
+use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, State};
 
-use crate::agent::Agent;
+use crate::agent::{Agent, SubTraceEvent};
 use crate::{config, llm, AppState};
 
 #[tauri::command]
@@ -58,6 +59,34 @@ pub async fn agent_send(
     {
         let mut lock = state.pending_confirms.lock().map_err(|e| e.to_string())?;
         *lock = confirm_senders;
+    }
+
+    // Save messages to the active chat — agent is available here (local variable)
+    // but NOT in state.agent, so the frontend's done-listener can't get them.
+    // Lock order: active_chat_id → chat_store → app_handle (matches chats_new/chats_open)
+    {
+        let msgs = agent.get_messages().to_vec();
+        let ts = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as i64;
+        let active = state.active_chat_id.lock().map_err(|e| e.to_string())?;
+        if let Some(ref id) = *active {
+            let chat_store = state.chat_store.lock().map_err(|e| e.to_string())?;
+            if let Some(ref store) = *chat_store {
+                if let Some(mut record) = store.get(id) {
+                    record.messages = msgs;
+                    record.updated_at = ts;
+                    store.save(&record);
+                }
+            }
+            drop(chat_store);
+        }
+        drop(active);
+        let app = state.app_handle.lock().map_err(|e| e.to_string())?;
+        if let Some(ref handle) = *app {
+            let _ = handle.emit("vibe:chats:updated", ());
+        }
     }
 
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
@@ -138,6 +167,11 @@ pub async fn agent_get_messages(
         .as_ref()
         .ok_or_else(|| "No agent".to_string())?;
     Ok(agent.get_messages().to_vec())
+}
+
+#[tauri::command]
+pub async fn agent_get_sub_trace(call_id: String) -> Vec<SubTraceEvent> {
+    crate::agent::get_sub_trace(&call_id)
 }
 
 #[tauri::command]

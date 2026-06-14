@@ -1,12 +1,12 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-utils/schema.json",
   "productName": "openvibe",
-  "version": "0.1.0",
+  "version": "1.2.0",
   "identifier": "com.openvibe.app",
   "build": {
-    "frontendDist": "../dist/renderer",
+    "frontendDist": "../dist/src",
     "devUrl": "http://127.0.0.1:3000",
-    "beforeDevCommand": "",
+    "beforeDevCommand": "npm run dev:src",
     "beforeBuildCommand": ""
   },
   "app": {
@@ -28,10 +28,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "icon": [
-      "icons/icon.png",
-      "icons/icon.ico"
-    ],
+    "icon": ["icons/icon.png", "icons/icon.ico"],
     "macOS": {
       "minimumSystemVersion": "11.0"
     }

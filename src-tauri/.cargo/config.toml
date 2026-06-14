@@ -1,7 +1,7 @@
 [build]
 
 [target.x86_64-unknown-linux-gnu]
-rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld.exe"
 [target.aarch64-apple-darwin]

@@ -15,6 +15,8 @@ pub struct Project {
     pub name: String,
     pub color: String,
     pub added_at: i64,
+    pub icon: Option<String>,
+    pub photo: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -88,12 +90,17 @@ impl ProjectStore {
                 model_id TEXT PRIMARY KEY
             );",
         )?;
+
+        // Migrate: add icon column if missing
+        conn.execute_batch("ALTER TABLE projects ADD COLUMN icon TEXT DEFAULT NULL").ok();
+        conn.execute_batch("ALTER TABLE projects ADD COLUMN photo TEXT DEFAULT NULL").ok();
+
         Ok(Self { conn, data_dir: base_dir.to_string() })
     }
 
     pub fn list(&self) -> Vec<Project> {
         let mut stmt = self.conn
-            .prepare("SELECT id, path, name, color, added_at FROM projects ORDER BY added_at ASC")
+            .prepare("SELECT id, path, name, color, added_at, icon, photo FROM projects ORDER BY added_at ASC")
             .unwrap();
         let rows = stmt
             .query_map([], |row| {
@@ -103,6 +110,8 @@ impl ProjectStore {
                     name: row.get(2)?,
                     color: row.get(3)?,
                     added_at: row.get(4)?,
+                    icon: row.get(5)?,
+                    photo: row.get(6)?,
                 })
             })
             .unwrap();
@@ -111,7 +120,7 @@ impl ProjectStore {
 
     fn get_by_id(&self, id: &str) -> Option<Project> {
         let mut stmt = self.conn
-            .prepare("SELECT id, path, name, color, added_at FROM projects WHERE id = ?")
+            .prepare("SELECT id, path, name, color, added_at, icon, photo FROM projects WHERE id = ?")
             .unwrap();
         stmt.query_row(params![id], |row| {
             Ok(Project {
@@ -120,6 +129,8 @@ impl ProjectStore {
                 name: row.get(2)?,
                 color: row.get(3)?,
                 added_at: row.get(4)?,
+                icon: row.get(5)?,
+                photo: row.get(6)?,
             })
         })
         .ok()
@@ -137,7 +148,7 @@ impl ProjectStore {
 
     pub fn ensure(&mut self, path: &str) -> Project {
         let existing: Option<Project> = self.conn
-            .prepare("SELECT id, path, name, color, added_at FROM projects WHERE path = ?")
+            .prepare("SELECT id, path, name, color, added_at, icon, photo FROM projects WHERE path = ?")
             .unwrap()
             .query_row(params![path], |row| {
                 Ok(Project {
@@ -146,6 +157,8 @@ impl ProjectStore {
                     name: row.get(2)?,
                     color: row.get(3)?,
                     added_at: row.get(4)?,
+                    icon: row.get(5)?,
+                    photo: row.get(6)?,
                 })
             })
             .ok();
@@ -159,12 +172,14 @@ impl ProjectStore {
             path: path.to_string(),
             name: basename(path),
             color: pick_color(path, &used),
+            icon: None,
+            photo: None,
             added_at: chrono_now(),
         };
         self.conn
             .execute(
-                "INSERT INTO projects (id, path, name, color, added_at) VALUES (?1, ?2, ?3, ?4, ?5)",
-                params![project.id, project.path, project.name, project.color, project.added_at],
+                "INSERT INTO projects (id, path, name, color, added_at, icon, photo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                params![project.id, project.path, project.name, project.color, project.added_at, project.icon, project.photo],
             )
             .unwrap();
         project
@@ -213,6 +228,42 @@ impl ProjectStore {
         self.conn
             .execute("UPDATE projects SET name = ? WHERE id = ?", params![name, id])
             .unwrap();
+    }
+
+    pub fn set_color(&self, id: &str, color: &str) {
+        self.conn
+            .execute("UPDATE projects SET color = ? WHERE id = ?", params![color, id])
+            .unwrap();
+    }
+
+    pub fn set_icon(&self, id: &str, icon: Option<&str>) {
+        match icon {
+            Some(val) => {
+                self.conn
+                    .execute("UPDATE projects SET icon = ? WHERE id = ?", params![val, id])
+                    .unwrap();
+            }
+            None => {
+                self.conn
+                    .execute("UPDATE projects SET icon = NULL WHERE id = ?", params![id])
+                    .unwrap();
+            }
+        }
+    }
+
+    pub fn set_photo(&self, id: &str, photo: Option<&str>) {
+        match photo {
+            Some(val) => {
+                self.conn
+                    .execute("UPDATE projects SET photo = ? WHERE id = ?", params![val, id])
+                    .unwrap();
+            }
+            None => {
+                self.conn
+                    .execute("UPDATE projects SET photo = NULL WHERE id = ?", params![id])
+                    .unwrap();
+            }
+        }
     }
 
     pub fn set_active(&self, id: &str) -> Option<Project> {

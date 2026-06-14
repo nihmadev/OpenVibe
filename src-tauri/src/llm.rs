@@ -66,6 +66,126 @@ pub struct AssistantTurn {
     pub reasoning_content: Option<String>,
 }
 
+// ── Token estimation ──
+
+/// Maximum context tokens for known model families
+pub fn max_context_tokens(model: &str) -> usize {
+    let m = model.to_lowercase();
+    if m.contains("gpt-4o") || m.contains("gpt-4-vision") || m.contains("gpt-4-turbo") {
+        return 128000;
+    }
+    if m.contains("gpt-4") {
+        return 8192;
+    }
+    if m.contains("gpt-3.5") || m.contains("gpt-35") {
+        return 16384;
+    }
+    if m.contains("claude") {
+        return 200000;
+    }
+    if m.contains("gemini") {
+        return 1048576;
+    }
+    if m.contains("deepseek") {
+        return 65536;
+    }
+    if m.contains("llama") {
+        return 128000;
+    }
+    if m.contains("mistral") || m.contains("mixtral") {
+        return 32000;
+    }
+    if m.contains("command-r") || m.contains("command-r7b") || m.contains("command-r+") {
+        return 128000;
+    }
+    // Default fallback
+    128000
+}
+
+fn estimate_text_tokens(text: &str) -> usize {
+    if text.is_empty() {
+        return 0;
+    }
+    // Count whitespace-delimited words (~1.3 tokens/word for English)
+    let word_count = text.split_whitespace().count() as f64;
+    // Non-ASCII chars (Cyrillic, CJK) often consume 2+ tokens each
+    let non_ascii = text.chars().filter(|c| *c > '\u{007F}').count() as f64;
+    // Floor: at minimum ~4 chars per token
+    let min_est = text.len() as f64 / 4.0;
+    let est = word_count * 1.3 + non_ascii * 0.8;
+    est.max(min_est).ceil() as usize
+}
+
+fn estimate_content_tokens(content: &serde_json::Value) -> usize {
+    match content {
+        serde_json::Value::String(s) => estimate_text_tokens(s),
+        serde_json::Value::Array(arr) => arr
+            .iter()
+            .map(|part| {
+                if let Some(text) = part.get("text").and_then(|v| v.as_str()) {
+                    estimate_text_tokens(text)
+                } else if part.get("image_url").is_some() {
+                    // Each image roughly ~1000 tokens
+                    1000
+                } else {
+                    0
+                }
+            })
+            .sum(),
+        _ => 0,
+    }
+}
+
+/// Estimate total tokens used by a list of chat messages
+pub fn estimate_tokens(messages: &[ChatMessage]) -> usize {
+    let mut total = 0usize;
+    for msg in messages {
+        total += 4; // per-message overhead (role label, formatting)
+        if let Some(ref content) = msg.content {
+            total += estimate_content_tokens(content);
+        }
+        if let Some(ref calls) = msg.tool_calls {
+            for call in calls {
+                total += estimate_text_tokens(&call.id);
+                total += estimate_text_tokens(&call.function.name);
+                total += estimate_text_tokens(&call.function.arguments);
+            }
+        }
+        if let Some(ref id) = msg.tool_call_id {
+            total += estimate_text_tokens(id);
+        }
+        if let Some(ref name) = msg.name {
+            total += estimate_text_tokens(name);
+        }
+    }
+    // System prompt overhead
+    total + 10
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ContextUsage {
+    pub used_tokens: usize,
+    pub max_tokens: usize,
+    pub percent: usize,
+}
+
+/// Compute context usage for a set of messages and model
+pub fn compute_context_usage(messages: &[ChatMessage], model: &str) -> ContextUsage {
+    let used = estimate_tokens(messages);
+    let max = max_context_tokens(model);
+    let percent = if max > 0 {
+        ((used as f64 / max as f64) * 100.0).round().clamp(1.0, 100.0) as usize
+    } else {
+        1
+    };
+    ContextUsage {
+        used_tokens: used,
+        max_tokens: max,
+        percent,
+    }
+}
+
 // ── Heuristics ──
 
 pub fn supports_vision(model: &str) -> bool {
@@ -222,6 +342,7 @@ pub async fn stream_chat(
     on_delta: &(dyn Fn(&str) + Send + Sync),
     on_reasoning: &(dyn Fn(&str) + Send + Sync),
     on_reasoning_end: &(dyn Fn() + Send + Sync),
+    on_tool_args: &(dyn Fn(&str, &str) + Send + Sync),
 ) -> Result<AssistantTurn, String> {
     let mut current_messages = if messages.len() > 20 {
         trim_messages(messages, 15)
@@ -308,7 +429,7 @@ pub async fn stream_chat(
                     return Err(format!("LLM request failed: {status}\n{detail}"));
                 }
 
-                return parse_sse_stream(res, cancel, on_delta, on_reasoning, on_reasoning_end).await;
+                return parse_sse_stream(res, cancel, on_delta, on_reasoning, on_reasoning_end, on_tool_args).await;
             }
             Err(e) => {
                 if attempt == max_retries - 1 {
@@ -403,6 +524,7 @@ async fn parse_sse_stream(
     on_delta: &(dyn Fn(&str) + Send + Sync),
     on_reasoning: &(dyn Fn(&str) + Send + Sync),
     on_reasoning_end: &(dyn Fn() + Send + Sync),
+    on_tool_args: &(dyn Fn(&str, &str) + Send + Sync),
 ) -> Result<AssistantTurn, String> {
     let mut content = String::new();
     let mut reasoning_content: Option<String> = None;
@@ -433,6 +555,7 @@ async fn parse_sse_stream(
                         on_delta,
                         on_reasoning,
                         on_reasoning_end,
+                        on_tool_args,
                     );
                 }
             }
@@ -448,6 +571,7 @@ async fn parse_sse_stream(
                         on_delta,
                         on_reasoning,
                         on_reasoning_end,
+                        on_tool_args,
                     );
                 }
                 break;
@@ -489,6 +613,7 @@ fn process_sse_line(
     on_delta: &(dyn Fn(&str) + Send + Sync),
     on_reasoning: &(dyn Fn(&str) + Send + Sync),
     on_reasoning_end: &(dyn Fn() + Send + Sync),
+    on_tool_args: &(dyn Fn(&str, &str) + Send + Sync),
 ) {
     let trimmed = line.trim();
     if trimmed.is_empty() || trimmed == "data: [DONE]" {
@@ -567,6 +692,7 @@ fn process_sse_line(
                 }
                 if let Some(args) = func.get("arguments").and_then(|v| v.as_str()) {
                     entry.arguments.push_str(args);
+                    on_tool_args(&entry.id, &entry.arguments);
                 }
             }
         }
@@ -589,6 +715,7 @@ fn process_sse_line(
         }
         if let Some(args) = fc.get("arguments").and_then(|v| v.as_str()) {
             entry.arguments.push_str(args);
+            on_tool_args(&entry.id, &entry.arguments);
         }
     }
 }
