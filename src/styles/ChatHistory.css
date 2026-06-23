@@ -321,19 +321,6 @@
   line-height: 1.5;
 }
 
-.code-block--accent {
-  margin: 4px 0;
-}
-.code-block--accent pre {
-  color: var(--accent);
-  font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1.5;
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
 .msg--thinking {
   margin-top: 4px;
   display: flex;
@@ -583,10 +570,6 @@
   border: none;
   margin: 0;
   border-radius: 0;
-}
-
-.changes-pill__diff .code-block__header {
-  display: none;
 }
 
 .changes-pill__diff .code-block__body {

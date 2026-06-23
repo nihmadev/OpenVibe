@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import { FileIcon, FolderIcon } from "../icons/file-icons.js";
 import { getFileIcon } from "../icons/utils.js";
+import { Tooltip } from "../Tooltip/Tooltip.js";
+import { CodeBlock } from "../CodeBlock/CodeBlock.js";
 
 // ─── Pre-compiled regexes (module-level, not re-created on each render) ──
 
@@ -174,24 +176,30 @@ function renderInlineHtml(html: string, noFileIcons?: boolean): React.ReactNode[
 
 // ─── Code block ────────────────────────────────────────────────────────────
 
-function renderCodeBlock(lang: string, code: string, asAccent?: boolean): React.ReactElement {
-  if (asAccent) {
-    return (
-      <div className="code-block--accent" key={code.slice(0, 40)}>
-        <pre>{code}</pre>
-      </div>
-    );
-  }
-  const displayLang = lang || "code";
+function AccentCodeBlock({ code }: { code: string }): React.ReactElement {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
   const escaped = escapeHtmlCode(code);
   return (
-    <div className="code-block" key={code.slice(0, 40)}>
-      <div className="code-block__header">
-        <span className="code-block__header-left">
-          <FileIcon name={displayLang} />
-          <span className="code-block__lang">{displayLang}</span>
-        </span>
-      </div>
+    <div className="code-block">
+      <Tooltip text="Copy">
+        <button className="code-block__copy" onClick={handleCopy}>
+          {copied ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          )}
+        </button>
+      </Tooltip>
       <div className="code-block__body">
         <pre className="code-block__pre">
           <code className="code-block__code" dangerouslySetInnerHTML={{ __html: escaped }} />
@@ -199,6 +207,13 @@ function renderCodeBlock(lang: string, code: string, asAccent?: boolean): React.
       </div>
     </div>
   );
+}
+
+function renderCodeBlock(lang: string, code: string, asAccent?: boolean): React.ReactElement {
+  if (asAccent) {
+    return <AccentCodeBlock code={code} />;
+  }
+  return <CodeBlock key={code.slice(0, 40)} language={lang || "code"} code={code} />;
 }
 
 // ─── Math block ───────────────────────────────────────────────────────────

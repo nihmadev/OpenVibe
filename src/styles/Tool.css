@@ -218,9 +218,6 @@
   margin: 0;
   border-radius: 0;
 }
-.tool__diff-block .code-block__header {
-  display: none;
-}
 .tool__diff-block .code-block__body {
   background: transparent;
 }
