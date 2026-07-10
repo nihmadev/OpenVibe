@@ -10,5 +10,5 @@ dist/
 api/
 src-tauri/target
 my_folder/
-src-tauri/.fastembed_cache
+.fastembed_cache
 src-tauri/tests

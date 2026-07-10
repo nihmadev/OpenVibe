@@ -1,0 +1,9 @@
+[workspace]
+resolver = "2"
+members = ["src-tauri", "crates/*"]
+
+[profile.release]
+strip = true
+lto = "thin"
+codegen-units = 1
+opt-level = 2

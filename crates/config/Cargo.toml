@@ -1,0 +1,11 @@
+[package]
+name = "config"
+version = "1.2.0"
+description = "Configuration management for openvibe"
+authors = ["mt-studio"]
+edition = "2021"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+dirs = "5"
+agent = { path = "../agent" }

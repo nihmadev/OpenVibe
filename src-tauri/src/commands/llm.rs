@@ -2,15 +2,20 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 use crate::AppState;
-use crate::llm;
+use agent::config::LlmConfig;
+use agent::chat::ChatMessage;
+use agent::definition::ToolDefinition;
+use agent::request::stream_chat;
+use agent::token::ContextUsage;
+use agent::token::compute_context_usage;
 
 #[tauri::command]
-pub fn estimate_context_tokens(state: State<AppState>) -> Result<llm::ContextUsage, String> {
+pub fn estimate_context_tokens(state: State<AppState>) -> Result<ContextUsage, String> {
     let agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     let agent = agent_lock.as_ref().ok_or_else(|| "No agent".to_string())?;
     let messages = agent.get_messages();
-    let model = agent.get_config().model.clone();
-    let usage = llm::compute_context_usage(messages, &model);
+    let model = agent.config().model.clone();
+    let usage = compute_context_usage(messages, &model);
     Ok(usage)
 }
 
@@ -19,9 +24,9 @@ pub async fn llm_stream(
     app_handle: AppHandle,
     state: State<'_, AppState>,
     session_id: String,
-    config: llm::LlmConfig,
-    messages: Vec<llm::ChatMessage>,
-    tools: Vec<llm::ToolDefinition>,
+    config: LlmConfig,
+    messages: Vec<ChatMessage>,
+    tools: Vec<ToolDefinition>,
 ) -> Result<(), String> {
     let cancel = Arc::new(AtomicBool::new(false));
     {
@@ -29,19 +34,15 @@ pub async fn llm_stream(
         map.insert(session_id.clone(), cancel.clone());
     }
 
-    let client = reqwest::Client::builder()
-        .build()
-        .map_err(|e| e.to_string())?;
-
     let session_id_clone = session_id.clone();
     let app_for_emit = app_handle.clone();
 
-    let result = llm::stream_chat(
+    let result = stream_chat(
         &config,
         messages,
         tools,
         &cancel,
-        &client,
+        &state.http_client,
         &|chunk| {
             let _ = app_for_emit.emit(
                 "vibe:llm:delta",
@@ -64,7 +65,6 @@ pub async fn llm_stream(
     )
     .await;
 
-    // Clean up cancel token
     {
         let mut map = state.llm_cancels.lock().map_err(|e| e.to_string())?;
         map.remove(&session_id);

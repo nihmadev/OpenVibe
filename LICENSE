@@ -7,14 +7,12 @@ of this software, to use, copy, modify, and run the software for personal
 and commercial purposes, subject to the following conditions:
 
 1. CODE LICENSE (MIT-equivalent)
-   The source code (all files in src/, electron/, scripts/, and configuration
-   files) is freely available under standard MIT terms. You may use, modify,
+   The source code is freely available under standard MIT terms. You may use, modify,
    and redistribute the code.
 
 2. DESIGN & UI RESTRICTION
    The visual design, user interface components, stylesheets (renderer/styles.css,
-   landing/style.css), UI component markup (renderer/components/), landing page
-   (landing/), icons (img/, assets/), and overall visual appearance are
+   landing/style.css), UI component markup,landing page, icons, and overall visual appearance are
    proprietary and may NOT be:
    - Copied, reproduced, or redistributed as part of another product
    - Used to create a competing product with substantially similar appearance
@@ -29,4 +27,4 @@ and commercial purposes, subject to the following conditions:
 4. NO WARRANTY
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
-For commercial licensing of the design, contact: mt-studio@bk.ru
+For commercial licensing of the design, contact: lolz@nihmadev.fun or Telegram @nihmadev

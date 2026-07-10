@@ -1,7 +1,7 @@
 use tauri::{Emitter, State};
-use crate::llm;
+use agent::chat::ChatMessage;
+use chats::{ChatRecord, ChatSummary, chrono_now, rand_suffix};
 use crate::AppState;
-use crate::chats::{ChatRecord, ChatSummary};
 
 #[tauri::command]
 pub fn chats_list(state: State<AppState>) -> Result<Vec<ChatSummary>, String> {
@@ -17,7 +17,7 @@ pub fn chats_list_for_project(state: State<AppState>, project_id: String) -> Res
     let store = state.projects.lock().map_err(|e| e.to_string())?;
     let db_path = store.chats_db(&project_id);
     drop(store);
-    let chat_store = crate::chats::ChatStore::new(&db_path).map_err(|e| e.to_string())?;
+    let chat_store = chats::ChatStore::new(&db_path).map_err(|e| e.to_string())?;
     let result = chat_store.list();
     Ok(result)
 }
@@ -160,7 +160,7 @@ pub fn chats_rename(state: State<AppState>, id: String, title: String) -> Result
 }
 
 #[tauri::command]
-pub fn chats_save(state: State<AppState>, id: String, messages: Vec<llm::ChatMessage>) -> Result<(), String> {
+pub fn chats_save(state: State<AppState>, id: String, messages: Vec<ChatMessage>) -> Result<(), String> {
     let chat = state.chat_store.lock().map_err(|e| e.to_string())?;
     if let Some(ref store) = *chat {
         // Prevent accidental overwrite with empty messages on restart
@@ -189,15 +189,4 @@ pub fn chats_save(state: State<AppState>, id: String, messages: Vec<llm::ChatMes
     Ok(())
 }
 
-fn chrono_now() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis() as i64
-}
 
-fn rand_suffix() -> String {
-    use std::time::{SystemTime, UNIX_EPOCH};
-    let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().subsec_nanos();
-    format!("{:05x}", nanos % 0xFFFFF)
-}

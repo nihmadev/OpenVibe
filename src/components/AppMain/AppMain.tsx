@@ -10,7 +10,7 @@ import { Terminals } from "../Terminals/Terminals.js";
 import { EditorArea } from "../Editor/EditorArea.js";
 import { FileTree } from "../FileTree/FileTree.js";
 import { EditProjectPopup } from "../EditProjectPopup/EditProjectPopup.js";
-import type { Project, ChatSummary, VibeConfig } from "../../types.js";
+import type { Project, ChatSummary, VibeConfig, FileSnapshot } from "../../types.js";
 import type { HistoryItem } from "../chat-history/types.js";
 import { recordToItems, localId } from "../../utils.js";
 
@@ -165,6 +165,21 @@ export function AppMain({
     });
   }, []);
 
+  // ── Rollback state ──
+  const [rollbackIndex, setRollbackIndex] = useState<number | null>(null);
+  const [rollbackText, setRollbackText] = useState("");
+  const [rollbackRemovedItems, setRollbackRemovedItems] = useState<any[]>([]);
+  const [rollbackChanged, setRollbackChanged] = useState<FileSnapshot[]>([]);
+  const [rollbackRemoved, setRollbackRemoved] = useState(0);
+
+  const clearRollback = useCallback(() => {
+    setRollbackIndex(null);
+    setRollbackText("");
+    setRollbackRemovedItems([]);
+    setRollbackChanged([]);
+    setRollbackRemoved(0);
+  }, []);
+
   // ── Sub-agent drill-down ──
   const [drillDownId, setDrillDownId] = useState<string | null>(null);
   const [drillItems, setDrillItems] = useState<HistoryItem[]>([]);
@@ -212,6 +227,15 @@ export function AppMain({
     },
     [items],
   );
+
+  const handleUndoRollback = useCallback(async () => {
+    if (rollbackIndex === null) return;
+    try {
+      await window.vibe.revertUndo();
+    } catch { /* ignore */ }
+    setItems((prev: any[]) => [...prev, ...rollbackRemovedItems]);
+    clearRollback();
+  }, [rollbackIndex, rollbackRemovedItems, clearRollback]);
 
   const handleProjectEdit = useCallback((project: Project) => {
     setEditingProject(project);
@@ -317,15 +341,26 @@ export function AppMain({
                   busy={busy && !pending}
                   cwd={cwd}
                   onPickModel={handlePickModel}
-                  onRevert={(id: string) => {
+                  onRevert={async (id: string) => {
                     if (busy) return;
                     const idx = items.findIndex((it) => it.id === id);
                     if (idx < 0) return;
                     const item = items[idx]!;
                     if (item.msgIndex === undefined) return;
-                    window.vibe.revertTo(item.msgIndex).then(() => {
-                      setItems((p) => p.slice(0, idx + 1));
-                    });
+
+                    try {
+                      const result = await window.vibe.instantRevert(item.msgIndex);
+                      const removed = items.slice(idx);
+                      setRollbackRemovedItems(removed);
+                      (window as any).__rollbackRemovedItems = removed;
+                      setItems((prev: any[]) => prev.slice(0, idx));
+                      setRollbackIndex(item.msgIndex);
+                      setRollbackText(item.text);
+                      setRollbackChanged(result.filesChanged);
+                      setRollbackRemoved(result.messagesRemoved);
+                    } catch {
+                      // revert failed silently
+                    }
                   }}
                   onRegenerate={(id: string) => {
                     if (busy) return;
@@ -370,6 +405,13 @@ export function AppMain({
                     currentModel={config.model ?? ""}
                     onPickModel={handlePickModel}
                     onOpenSettings={onOpenSettings}
+                    initialText={rollbackText || undefined}
+                    rollbackActive={rollbackIndex !== null && !pending}
+                    rollbackText={rollbackText}
+                    rollbackFileCount={rollbackChanged.length}
+                    rollbackFilesChanged={rollbackChanged}
+                    rollbackMessagesRemoved={rollbackRemoved}
+                    onRollbackRestore={handleUndoRollback}
                   />
                 )}
               </>

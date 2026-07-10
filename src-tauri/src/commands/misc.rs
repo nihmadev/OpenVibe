@@ -116,7 +116,7 @@ pub fn set_model(state: State<AppState>, model: String) -> Result<(), String> {
     // Also update agent's internal config so the next request uses the new model
     if let Ok(mut agent_lock) = state.agent.lock() {
         if let Some(ref mut agent) = *agent_lock {
-            agent.get_config_mut().model = model;
+            agent.config_mut().model = model;
         }
     }
     Ok(())

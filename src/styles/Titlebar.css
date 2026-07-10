@@ -88,11 +88,21 @@
   color: var(--fg-dim);
   font-size: 12px;
   cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.12s ease;
 }
 
 .titlebar__search:hover {
   background: var(--bg-3);
   border-color: var(--fg-dim);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.titlebar__search:active {
+  transform: scale(0.99);
 }
 
 .titlebar__search-text {

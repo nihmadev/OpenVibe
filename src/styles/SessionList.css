@@ -35,6 +35,10 @@
   transition-duration: 0.05s;
 }
 
+.session-list--open .session-list__inner {
+  animation: slide-up-in 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+}
+
 .session-list__resize-handle {
   position: absolute;
   top: 0;

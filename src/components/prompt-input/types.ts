@@ -1,22 +1,5 @@
 import type { FileMatch } from "../../types.js";
 
-export interface SlashCommand {
-  name: string;
-  description: string;
-}
-
-export function getSlashCommands(t: (key: string) => string): SlashCommand[] {
-  return [
-    { name: "/help", description: t("slashHelp") },
-    { name: "/clear", description: t("slashClear") },
-    { name: "/reset", description: t("slashReset") },
-    { name: "/cwd", description: t("slashPwd") },
-    { name: "/model", description: t("slashModel") },
-    { name: "/test", description: t("slashTest") },
-    { name: "/exit", description: t("slashExit") },
-  ];
-}
-
 export interface Attachment {
   id: string;
   kind: "file" | "image";

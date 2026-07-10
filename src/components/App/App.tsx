@@ -14,6 +14,7 @@ import { useAppInit } from "../../hooks/useAppInit.js";
 import { useAppHandlers } from "../../hooks/useAppHandlers.js";
 import { ThemeProvider } from "../../hooks/useTheme.js";
 import { I18nProvider } from "../../hooks/useI18n.js";
+import { AnimationProvider } from "../../hooks/useAnimations.js";
 import { useShortcuts } from "../../hooks/useShortcuts.js";
 import type { VibeConfig, Project, ChatSummary } from "../../types.js";
 import { recordToItems } from "../../utils.js";
@@ -90,12 +91,7 @@ export function App(): React.ReactElement {
 
   const { handleSubmit } = useAppHandlers({
     setItems,
-    folder,
-    config,
-    connectedModels,
-    handlePickModel,
     pendingAttachments,
-    busy,
   });
 
   useAppInit({
@@ -294,6 +290,7 @@ export function App(): React.ReactElement {
     return (
       <ThemeProvider>
         <I18nProvider lang={lang as any}>
+          <AnimationProvider>
           <div className="app">
             <Titlebar
               chatSideOpen={chatSideOpen}
@@ -353,6 +350,7 @@ export function App(): React.ReactElement {
               onResetBinding={resetBinding}
             />
           </div>
+          </AnimationProvider>
         </I18nProvider>
       </ThemeProvider>
     );
@@ -361,102 +359,104 @@ export function App(): React.ReactElement {
   return (
     <ThemeProvider>
       <I18nProvider lang={lang as any}>
+        <AnimationProvider>
         <div className="app">
-          <Titlebar
-            chatSideOpen={chatSideOpen}
-            onToggleChatSide={() => {
-              setChatSideSticky(!chatSideSticky);
-              setChatSideOpen(!chatSideOpen);
-            }}
-            onNewChat={() => handleNewChat(() => setItems([]))}
-            onSwitchChat={handleSwitchChat}
-            canGoBack={canGoBack}
-            canGoForward={canGoForward}
-            terminalOpen={terminalOpen}
-            onToggleTerminal={() => setTerminalOpen(!terminalOpen)}
-            fileTreeOpen={fileTreeOpen}
-            onToggleFileTree={() => setFileTreeOpen(!fileTreeOpen)}
-            folder={folder}
-            onSearchOpen={handleOpenSearch}
-          />
-          {searchOpen && (
-            <SearchPopup
+            <Titlebar
+              chatSideOpen={chatSideOpen}
+              onToggleChatSide={() => {
+                setChatSideSticky(!chatSideSticky);
+                setChatSideOpen(!chatSideOpen);
+              }}
+              onNewChat={() => handleNewChat(() => setItems([]))}
+              onSwitchChat={handleSwitchChat}
+              canGoBack={canGoBack}
+              canGoForward={canGoForward}
+              terminalOpen={terminalOpen}
+              onToggleTerminal={() => setTerminalOpen(!terminalOpen)}
+              fileTreeOpen={fileTreeOpen}
+              onToggleFileTree={() => setFileTreeOpen(!fileTreeOpen)}
               folder={folder}
-              onClose={handleCloseSearch}
-              onNewChat={() => {
-                handleNewChat(() => setItems([]));
-                setSearchOpen(false);
-              }}
-              onSwitchChat={(dir) => {
-                handleSwitchChat(dir);
-                setSearchOpen(false);
-              }}
-              onToggleTerminal={() => {
-                setTerminalOpen((o) => !o);
-                setSearchOpen(false);
-              }}
-              onOpenFile={handleOpenFile}
-              onRevealFolder={setRevealPath}
+              onSearchOpen={handleOpenSearch}
             />
-          )}
-          <AppMain
-            revealPath={revealPath}
-            projects={projects}
-            activeProject={activeProject}
-            chatSideOpen={chatSideOpen}
-            setChatSideOpen={setChatSideOpen}
-            chatSideSticky={chatSideSticky}
-            setChatSideSticky={setChatSideSticky}
-            handlePickProject={handlePickProject}
-            handleHoverProject={handleHoverProject}
-            hoveredProject={hoveredProject}
-            hoveredChats={hoveredChats}
-            handleAddProject={handleAddProject}
-            handleCloseProject={handleCloseProject}
-            handleRemoveProject={handleRemoveProject}
-            onProjectChange={onProjectChange}
-            setSettingsOpen={setSettingsOpen}
-            onOpenSettings={handleOpenSettings}
-            sidebarWidth={sidebarWidth}
-            handleSidebarResize={setSidebarWidth}
-            chats={chats}
-            activeChat={activeChat}
-            folder={folder}
-            config={config}
-            handlePickChat={handlePickChat}
-            handleNewChat={handleNewChat}
-            handleCloseChat={handleCloseChat}
-            items={items}
-            streamingNow={streamingNow}
-            busy={busy}
-            pending={pending}
-            handlePickModel={handlePickModel}
-            handleSubmit={handleSubmit}
-            onStop={() => window.vibe.stop()}
-            terminalOpen={terminalOpen}
-            setTerminalOpen={setTerminalOpen}
-            fileTreeOpen={fileTreeOpen}
-            connectedModels={connectedModels}
-            openFiles={openFiles}
-            activeFile={activeFile}
-            handleOpenFile={handleOpenFile}
-            handleCloseFile={handleCloseFile}
-            handleActivateFile={handleActivateFile}
-            handleDecide={handleDecide}
-            setItems={setItems}
-            setProjects={setProjects}
-          />
-          <Settings
-            open={settingsOpen}
-            onClose={() => setSettingsOpen(false)}
-            onProviderChanged={(model, baseUrl) => setConfig((c) => (c ? { ...c, model, baseUrl } : c))}
-            initialTab={settingsTab as any}
-            onLanguageChange={setLang}
-            shortcuts={shortcuts}
-            onUpdateBinding={updateBinding}
-            onResetBinding={resetBinding}
-          />
-        </div>
+            {searchOpen && (
+              <SearchPopup
+                folder={folder}
+                onClose={handleCloseSearch}
+                onNewChat={() => {
+                  handleNewChat(() => setItems([]));
+                  setSearchOpen(false);
+                }}
+                onSwitchChat={(dir) => {
+                  handleSwitchChat(dir);
+                  setSearchOpen(false);
+                }}
+                onToggleTerminal={() => {
+                  setTerminalOpen((o) => !o);
+                  setSearchOpen(false);
+                }}
+                onOpenFile={handleOpenFile}
+                onRevealFolder={setRevealPath}
+              />
+            )}
+            <AppMain
+              revealPath={revealPath}
+              projects={projects}
+              activeProject={activeProject}
+              chatSideOpen={chatSideOpen}
+              setChatSideOpen={setChatSideOpen}
+              chatSideSticky={chatSideSticky}
+              setChatSideSticky={setChatSideSticky}
+              handlePickProject={handlePickProject}
+              handleHoverProject={handleHoverProject}
+              hoveredProject={hoveredProject}
+              hoveredChats={hoveredChats}
+              handleAddProject={handleAddProject}
+              handleCloseProject={handleCloseProject}
+              handleRemoveProject={handleRemoveProject}
+              onProjectChange={onProjectChange}
+              setSettingsOpen={setSettingsOpen}
+              onOpenSettings={handleOpenSettings}
+              sidebarWidth={sidebarWidth}
+              handleSidebarResize={setSidebarWidth}
+              chats={chats}
+              activeChat={activeChat}
+              folder={folder}
+              config={config}
+              handlePickChat={handlePickChat}
+              handleNewChat={handleNewChat}
+              handleCloseChat={handleCloseChat}
+              items={items}
+              streamingNow={streamingNow}
+              busy={busy}
+              pending={pending}
+              handlePickModel={handlePickModel}
+              handleSubmit={handleSubmit}
+              onStop={() => window.vibe.stop()}
+              terminalOpen={terminalOpen}
+              setTerminalOpen={setTerminalOpen}
+              fileTreeOpen={fileTreeOpen}
+              connectedModels={connectedModels}
+              openFiles={openFiles}
+              activeFile={activeFile}
+              handleOpenFile={handleOpenFile}
+              handleCloseFile={handleCloseFile}
+              handleActivateFile={handleActivateFile}
+              handleDecide={handleDecide}
+              setItems={setItems}
+              setProjects={setProjects}
+            />
+            <Settings
+              open={settingsOpen}
+              onClose={() => setSettingsOpen(false)}
+              onProviderChanged={(model, baseUrl) => setConfig((c) => (c ? { ...c, model, baseUrl } : c))}
+              initialTab={settingsTab as any}
+              onLanguageChange={setLang}
+              shortcuts={shortcuts}
+              onUpdateBinding={updateBinding}
+              onResetBinding={resetBinding}
+            />
+          </div>
+        </AnimationProvider>
       </I18nProvider>
     </ThemeProvider>
   );

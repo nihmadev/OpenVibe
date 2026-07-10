@@ -1,0 +1,157 @@
+/* ── Rollback section inside PromptInput (seamless) ── */
+
+.prompt-input__rollback {
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.prompt-input__rollback-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.prompt-input__rollback-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.prompt-input__rollback-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.prompt-input__rollback-preview {
+  font-size: 12px;
+  color: var(--text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.prompt-input__rollback-chevron {
+  color: var(--text-3);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  display: flex;
+}
+
+.prompt-input__rollback-chevron--open {
+  transform: rotate(90deg);
+}
+
+/* ── Body (expandable) ── */
+
+.prompt-input__rollback-body {
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.2s ease;
+}
+
+.prompt-input__rollback-body > div {
+  padding: 0 0 8px;
+}
+
+/* ── File changes ── */
+
+.prompt-input__rollback-files {
+  margin-bottom: 6px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+}
+
+.prompt-input__rollback-files-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.prompt-input__rollback-files-chevron {
+  color: var(--text-3);
+  transition: transform 0.2s ease;
+  display: flex;
+}
+
+.prompt-input__rollback-files-chevron--open {
+  transform: rotate(90deg);
+}
+
+.prompt-input__rollback-files-list {
+  padding: 0 10px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.prompt-input__rollback-file-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-1);
+}
+
+.prompt-input__rollback-file-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.prompt-input__rollback-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Text row (full text + restore button) ── */
+
+.prompt-input__rollback-text-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.prompt-input__rollback-text {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  flex: 1;
+  min-width: 0;
+}
+
+.prompt-input__rollback-restore-btn {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--text-1);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.prompt-input__rollback-restore-btn:hover {
+  border-color: var(--text-2);
+  background: var(--bg-1);
+}

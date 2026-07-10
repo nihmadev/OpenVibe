@@ -1,6 +1,6 @@
 use tauri::State;
 use crate::AppState;
-use crate::db::Project;
+use db::Project;
 
 #[tauri::command]
 pub fn projects_list(state: State<AppState>) -> Result<Vec<Project>, String> {

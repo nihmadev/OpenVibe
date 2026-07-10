@@ -1,0 +1,14 @@
+[package]
+name = "agent-tool"
+version = "1.2.0"
+edition = "2021"
+
+[dependencies]
+agent = { path = "../agent" }
+search = { path = "../search" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+regex = "1"
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1"
+reqwest = { version = "0.12", features = ["json", "http2"] }

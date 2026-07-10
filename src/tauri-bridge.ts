@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { open as shellOpen } from "@tauri-apps/plugin-shell";
-import type { VibeEvent, ConfirmPayload, ContentPart } from "./types.js";
+import type { VibeEvent, ConfirmPayload, ContentPart, RollbackPreview } from "./types.js";
 
 let activeChatId: string | null = null;
 let currentConfig: {
@@ -268,8 +268,12 @@ export const vibe = {
     }
   },
 
-  revertTo: async (index: number) => {
-    await invoke("agent_revert_to", { index }).catch(() => {});
+  instantRevert: async (index: number) => {
+    return await invoke<RollbackPreview>("agent_instant_revert", { index });
+  },
+
+  revertUndo: async () => {
+    await invoke("agent_revert_undo").catch(() => {});
   },
 
   reset: async () => {

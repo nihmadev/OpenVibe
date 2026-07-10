@@ -42,7 +42,7 @@ fn make_test_project(root: &str) {
 #[test]
 fn test_model_loading_and_search() -> Result<(), String> {
     println!("\n=== MODEL LOADING TEST ===");
-    openvibe_lib::vector_search::ensure_model()?;
+    search::vector_search::ensure_model()?;
     println!("✅ Model loaded successfully (BGESmallENV15)");
 
     println!("\n=== SEMANTIC SEARCH TEST ===");
@@ -51,29 +51,27 @@ fn test_model_loading_and_search() -> Result<(), String> {
     println!("📁 Test project created at: {}", root);
 
     println!("🔨 Building vector index...");
-    openvibe_lib::vector_search::build_index(&root)?;
+    search::vector_search::build_index(&root)?;
     println!("✅ Index built successfully");
 
-    // Первый поиск
     println!("\n🔍 Searching for: 'adding numbers'");
-    let results1 = openvibe_lib::vector_search::search_codebase_vector("adding numbers", &root, 5)?;
-    
+    let results1 = search::vector_search::search_codebase_vector("adding numbers", &root, 5)?;
+
     println!("📊 Results for 'adding numbers':");
     for (i, r) in results1.iter().enumerate() {
-        println!("  {}. [{:.4}] {}:{} — {}", 
-            i+1, r.score, r.path, r.line, 
+        println!("  {}. [{:.4}] {}:{} — {}",
+            i+1, r.score, r.path, r.line,
             r.content.lines().next().unwrap_or("").trim()
         );
     }
 
-    // Второй поиск
     println!("\n🔍 Searching for: 'click element'");
-    let results2 = openvibe_lib::vector_search::search_codebase_vector("click element", &root, 5)?;
-    
+    let results2 = search::vector_search::search_codebase_vector("click element", &root, 5)?;
+
     println!("📊 Results for 'click element':");
     for (i, r) in results2.iter().enumerate() {
-        println!("  {}. [{:.4}] {}:{} — {}", 
-            i+1, r.score, r.path, r.line, 
+        println!("  {}. [{:.4}] {}:{} — {}",
+            i+1, r.score, r.path, r.line,
             r.content.lines().next().unwrap_or("").trim()
         );
     }
@@ -85,9 +83,9 @@ fn test_model_loading_and_search() -> Result<(), String> {
 #[test]
 fn test_ensure_model_is_singleton() -> Result<(), String> {
     println!("\n=== MODEL SINGLETON TEST ===");
-    openvibe_lib::vector_search::ensure_model()?;
+    search::vector_search::ensure_model()?;
     println!("✅ First ensure_model() call");
-    openvibe_lib::vector_search::ensure_model()?;
+    search::vector_search::ensure_model()?;
     println!("✅ Second ensure_model() call (should be instant)");
     Ok(())
 }

@@ -54,7 +54,7 @@ If you've tried **OpenCode Desktop**, you've probably run into the same issues: 
 - **Terminal:** Multiple tabbed sessions, automatic PowerShell detection (pwsh with fallback), real PTY through node-pty, resize handling
 - **File management:** Project tree with file/folder icons, right-click context menu, drag-and-drop, auto-refresh on disk changes via notify, fuzzy search for @-mention file attachment
 - **Chat & history:** Every conversation auto-saved to SQLite, switch sessions without losing context, regenerate individual responses, navigate back through history
-- **Quality of life:** Slash commands (/help, /clear, /reset, /cwd, /model, /test, /exit), @-mention files, drag images into chat, keyboard shortcuts, project-wide search (Ctrl+K), window zoom, completion sounds, 38 UI languages, 17 themes
+- **Quality of life:** @-mention files, drag images into chat, keyboard shortcuts, project-wide search (Ctrl+K), window zoom, completion sounds, 38 UI languages, 17 themes
 
 ---
 

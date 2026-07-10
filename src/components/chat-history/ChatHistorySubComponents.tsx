@@ -7,10 +7,10 @@ import { invoke } from "@tauri-apps/api/core";
 import { ChevronRightIcon } from "../icons/ui-icons.js";
 import { FileIcon, FolderIcon } from "../icons/file-icons.js";
 import { Markdown } from "../Markdown/Markdown.js";
-import { CodeBlock } from "../CodeBlock/CodeBlock.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
-import { AgentToolView, buildSnippet } from "../AgentToolView/AgentToolView.js";
-import type { DiffSnippet } from "../AgentToolView/AgentToolView.js";
+import { AgentToolView } from "../AgentToolView/AgentToolView.js";
+import { DiffEditor } from "../DiffEditor/DiffEditor.js";
+import { resolveMonacoLang } from "../CodeBlock/CodeBlock.js";
 
 export function FileBadge({ info }: { info: FileBadgeInfo }): React.ReactElement {
   return (
@@ -385,40 +385,43 @@ function getFileChanges(items: HistoryItem[], currentId: string): FileChangeInfo
 
 function FileChangeRow({ change, cwd }: { change: FileChangeInfo; cwd?: string }) {
   const [open, setOpen] = React.useState(false);
-  const [snippet, setSnippet] = React.useState<DiffSnippet | null>(null);
+  const [diffData, setDiffData] = React.useState<{ original: string; modified: string; lang: string } | null>(null);
   const [loading, setLoading] = React.useState(false);
   const relPath = toRelativePath(change.filePath, cwd);
   const info = pickFile(change.item.toolArgs);
-  const lang = info?.ext || "plaintext";
 
   React.useEffect(() => {
     if (!open) return;
-    if (snippet !== null) return;
+    if (diffData !== null) return;
     setLoading(true);
 
     if (change.item.toolName === "edit_file") {
       window.vibe.fs.read(change.filePath).then((r) => {
         if (r.ok) {
-          const result = buildSnippet(change.item.toolArgs as Record<string, unknown>, r.content);
-          setSnippet(result);
+          const args = change.item.toolArgs as Record<string, unknown>;
+          const modified = r.content;
+          const oldStr = typeof args.old_str === "string" ? args.old_str : "";
+          const newStr = typeof args.new_str === "string" ? args.new_str : "";
+          const pos = newStr ? modified.indexOf(newStr) : -1;
+          let original = modified;
+          if (pos !== -1 && oldStr) {
+            original = modified.slice(0, pos) + oldStr + modified.slice(pos + newStr.length);
+          }
+          const lang = resolveMonacoLang(info?.ext || "plaintext");
+          setDiffData({ original, modified, lang });
         }
         setLoading(false);
       });
     } else if (change.item.toolName === "write_file") {
       window.vibe.fs.read(change.filePath).then((r) => {
         if (r.ok) {
-          const lines = r.content.split("\n");
-          const allLines = lines.map((_, i) => ({
-            lineNumber: i + 1,
-            glyphClass: "tool__diff-glyph-add",
-            lineClass: "tool__diff-line-bg-add",
-          }));
-          setSnippet({ code: r.content, lang, decorations: allLines, added: lines.length, removed: 0, modifed: 0 });
+          const lang = resolveMonacoLang(info?.ext || "plaintext");
+          setDiffData({ original: "", modified: r.content, lang });
         }
         setLoading(false);
       });
     }
-  }, [open, change.filePath, change.item.toolName, change.item.toolArgs, snippet, lang]);
+  }, [open, change.filePath, change.item.toolName, change.item.toolArgs, diffData, info?.ext]);
 
   return (
     <div className="changes-pill">
@@ -448,8 +451,8 @@ function FileChangeRow({ change, cwd }: { change: FileChangeInfo; cwd?: string }
       </div>
       <div className={`changes-pill__diff${open ? "" : " changes-pill__diff--hidden"}`}>
         {loading && <div className="tool__diff-loading">Loading diff…</div>}
-        {!loading && snippet && (
-          <CodeBlock language={snippet.lang} code={snippet.code} decorations={snippet.decorations} />
+        {!loading && diffData && (
+          <DiffEditor original={diffData.original} modified={diffData.modified} language={diffData.lang} />
         )}
       </div>
     </div>

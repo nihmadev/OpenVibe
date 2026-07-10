@@ -48,3 +48,52 @@ code {
 ::selection {
   background: rgba(255, 255, 255, 0.2);
 }
+
+/* ── Global animation keyframes ── */
+
+@keyframes loader-wave {
+  0%, 100% { transform: scaleY(0.4); opacity: 0.4; }
+  50%       { transform: scaleY(1);   opacity: 1; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-up-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes project-switch-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Applied to the main content when a project is picked */
+.animate-project-switch {
+  animation: project-switch-in 0.22s cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+/* Generic fade-in for any newly mounted panel */
+.animate-fade-in {
+  animation: fade-in 0.18s ease;
+}
+
+/* Slide up — used for session list items, chat rows, etc */
+.animate-slide-up {
+  animation: slide-up-in 0.18s cubic-bezier(0.2, 0, 0.2, 1);
+}

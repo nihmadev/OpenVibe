@@ -9,7 +9,21 @@
   padding: 6px;
   font-size: 12.5px;
   overflow: hidden;
+  animation: ctxmenu-in 0.12s cubic-bezier(0.2, 0, 0, 1);
+  transform-origin: top left;
 }
+
+@keyframes ctxmenu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 .ctxmenu__item {
   display: flex;
   width: 100%;
@@ -22,6 +36,7 @@
   color: var(--fg-dim);
   cursor: pointer;
   text-align: left;
+  transition: background 0.1s, color 0.1s;
 }
 .ctxmenu__item:hover:not(:disabled) {
   background: var(--bg-3);

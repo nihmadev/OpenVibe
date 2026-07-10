@@ -8,7 +8,7 @@ import { makeMonacoTheme } from "../Themes/monacoThemes.js";
 
 type Monaco = any;
 
-const SHORT_LANG_TO_MONACO: Record<string, string> = {
+export const SHORT_LANG_TO_MONACO: Record<string, string> = {
   ts: "typescript",
   tsx: "typescript",
   js: "javascript",
@@ -76,6 +76,10 @@ const SHORT_LANG_TO_MONACO: Record<string, string> = {
   log: "plaintext",
   diff: "diff",
 };
+
+export function resolveMonacoLang(language: string): string {
+  return SHORT_LANG_TO_MONACO[language.toLowerCase()] ?? language;
+}
 
 interface DecorationDef {
   lineNumber: number;

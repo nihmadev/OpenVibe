@@ -14,7 +14,7 @@
   position: relative;
   padding: 8px 14px;
   border: 1px solid var(--line-strong);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--bg-2);
   max-width: 75%;
   display: table;
@@ -578,6 +578,16 @@
 
 .changes-pill__diff .code-block__container {
   background: var(--bg);
+}
+
+.changes-pill__diff .diff-editor__container {
+  background: var(--bg);
+}
+
+.changes-pill__diff .diff-editor {
+  border: none;
+  margin: 0;
+  border-radius: 0;
 }
 
 /* Tool group (collapsible analysis block) */

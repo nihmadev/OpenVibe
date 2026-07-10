@@ -137,6 +137,11 @@ export function makeMonacoTheme(vars: ThemeVars, isDark: boolean): monaco.editor
       "scrollbarSlider.hoverBackground": hexToArgb(lineStrong, 0.5),
       "scrollbarSlider.activeBackground": hexToArgb(lineStrong, 0.8),
       "editor.selectionHighlightBackground": hexToArgb(accent, 0.1),
+
+      "diffEditor.insertedTextBackground": hexToArgb(green, 0.12),
+      "diffEditor.removedTextBackground": hexToArgb(red, 0.12),
+      "diffEditor.insertedLineBackground": hexToArgb(green, 0.05),
+      "diffEditor.removedLineBackground": hexToArgb(red, 0.05),
     },
   };
 }

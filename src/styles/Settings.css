@@ -6,6 +6,7 @@
   align-items: center;
   justify-content: center;
   z-index: 200;
+  animation: fade-in 0.15s ease;
 }
 
 .settings__container {
@@ -18,6 +19,7 @@
   height: 540px;
   display: flex;
   overflow: hidden;
+  animation: slide-up-in 0.18s cubic-bezier(0.2, 0, 0.2, 1);
 }
 
 /* Sidebar */

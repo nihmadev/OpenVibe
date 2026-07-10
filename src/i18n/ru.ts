@@ -255,15 +255,6 @@ export const ru = {
   processing: "Обработка...",
   vibeAnything: "Напишите что-нибудь...",
 
-  // Slash commands
-  slashHelp: "Показать все слэш-команды",
-  slashClear: "Очистить историю разговора и освободить контекст",
-  slashReset: "Псевдоним для /clear",
-  slashPwd: "Показать текущую рабочую директорию",
-  slashModel: "Показать активную модель и endpoint",
-  slashTest: "Тестировать инструменты и UI мышления",
-  slashExit: "Выйти из vibe",
-
   // ModelSelector
   selectModelFallback: "Выберите модель",
   searchModelPlaceholder: "Поиск моделей...",
@@ -330,6 +321,30 @@ export const ru = {
   manuallyStopped: "Остановлено пользователем",
   back: "Назад",
   recordingNotSupported: "Запись не поддерживается",
+
+  // Design / Animation settings
+  design: "Дизайн",
+  designDesc: "Настройте анимации и переходы интерфейса",
+  animations: "Анимации",
+  animationsDesc: "Выберите стиль анимаций для каждого элемента",
+  animStyleSmooth: "Плавные",
+  animStyleSnappy: "Быстрые",
+  animStyleNone: "Без анимаций",
+  animProjectHover: "Ховер на проекты",
+  animProjectHoverDesc: "Анимация при наведении на тайл проекта",
+  animProjectSwitch: "Переключение проекта",
+  animProjectSwitchDesc: "Переход при открытии нового проекта",
+  animSidebarSlide: "Сайдбар",
+  animSidebarSlideDesc: "Анимация открытия/закрытия боковой панели",
+  animContextMenu: "Контекстное меню",
+  animContextMenuDesc: "Появление контекстных меню",
+  animButtons: "Кнопки",
+  animButtonsDesc: "Интерактивные элементы при наведении",
+  animPanelAppear: "Панели и модалки",
+  animPanelAppearDesc: "Появление настроек, всплывающих окон",
+  preview: "Превью",
+  animPreviewTitle: "Превью анимации",
+  animPreviewClose: "Закрыть",
 };
 
 export type Translations = typeof ru;

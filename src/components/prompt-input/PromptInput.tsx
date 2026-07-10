@@ -3,7 +3,7 @@ import type { FileMatch } from "../../types.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import "../../styles/PromptInput.css";
 
-import { Attachment, EditorPart, MentionState, SendPayload, SlashCommand, getSlashCommands } from "./types.js";
+import { Attachment, EditorPart, MentionState, SendPayload } from "./types.js";
 import { IMAGE_RE } from "./utils.js";
 import { fileToAttachment, newAttachmentId } from "./attachments.js";
 import { createTextFragment, getCursorPosition, setCursorPosition, setRangeEdge } from "./editor-dom.js";
@@ -14,22 +14,28 @@ import { PromptDragOverlay } from "./drag-overlay.js";
 import { PromptContextItems } from "./context-items.js";
 import { PromptImageAttachments } from "./image-attachments.js";
 import { MentionPopup } from "./MentionPopup.js";
-import { SlashPopup } from "./SlashPopup.js";
 import { ModelSelector } from "./ModelSelector.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
+import { RollbackPill } from "../RollbackPill/RollbackPill.js";
 
-export type { Attachment, SendPayload, SlashCommand };
-export { getSlashCommands };
+export type { Attachment, SendPayload };
 
 interface Props {
   disabled: boolean;
   workspace: string;
-  onSubmit: (payload: SendPayload | { slash: string }) => void;
+  onSubmit: (payload: SendPayload) => void;
   onStop: () => void;
   models: Array<{ id: string; name: string }>;
   currentModel: string;
   onPickModel: (id: string) => void;
   onOpenSettings?: (tab?: string) => void;
+  initialText?: string;
+  rollbackActive?: boolean;
+  rollbackText?: string;
+  rollbackFileCount?: number;
+  rollbackFilesChanged?: { path: string; content: string | null }[];
+  rollbackMessagesRemoved?: number;
+  onRollbackRestore?: () => void;
 }
 
 // ─── helpers ─────────────────────────────────────────────
@@ -80,6 +86,13 @@ export function PromptInput({
   currentModel,
   onPickModel,
   onOpenSettings,
+  initialText,
+  rollbackActive,
+  rollbackText,
+  rollbackFileCount,
+  rollbackFilesChanged,
+  rollbackMessagesRemoved,
+  onRollbackRestore,
 }: Props): React.ReactElement {
   const { t } = useI18n();
   const editorRef = useRef<HTMLDivElement | null>(null);
@@ -91,7 +104,7 @@ export function PromptInput({
   const [focused, setFocused] = useState(false);
   const [mode, setMode] = useState<"normal" | "shell">("normal");
   const [composing, setComposing] = useState(false);
-  const [popover, setPopover] = useState<"at" | "slash" | null>(null);
+  const [popover, setPopover] = useState<"at" | null>(null);
   const [dirty, setDirty] = useState(false);
 
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
@@ -106,7 +119,6 @@ export function PromptInput({
     matches: [],
     loading: false,
   });
-  const [slashSelected, setSlashSelected] = useState(0);
 
   // Spring animation for normal ↔ shell mode transition
   const buttonsSpring = useSpring(mode === "normal" ? 1 : 0, [mode]);
@@ -345,12 +357,9 @@ export function PromptInput({
     if (mode === "normal") {
       const cursor = getCursor();
       const atMatch = text.slice(0, cursor).match(/@(\S*)$/);
-      const slashMatch = text.match(/^\/(\S*)$/);
       if (atMatch) {
         onAtInput(atMatch[1]!);
         setPopover("at");
-      } else if (slashMatch) {
-        setPopover("slash");
       } else {
         closeMention();
         setPopover(null);
@@ -471,14 +480,6 @@ export function PromptInput({
     }
     const text = editorText().trim();
     if (!text && attachments.length === 0) return;
-    if (text.startsWith("/")) {
-      clearEditor();
-      setAttachments([]);
-      setDirty(false);
-      setHistoryIndex(-1);
-      onSubmit({ slash: text });
-      return;
-    }
     const parts: import("../../types.js").ContentPart[] = [];
     if (text) parts.push({ type: "text", text });
     for (const a of attachments) {
@@ -529,30 +530,12 @@ export function PromptInput({
     [historyEntries, historyIndex, savedText, editorText, setEditorText, clearEditor],
   );
 
-  // ─── slash commands ─────────────────────────────────────
-
-  const slashMatches = useMemo<SlashCommand[]>(() => {
-    if (popover === "at") return [];
-    const text = editorText();
-    if (!text.startsWith("/")) return [];
-    const q = text.slice(1).toLowerCase();
-    return getSlashCommands(t).filter((c) => c.name.slice(1).toLowerCase().startsWith(q));
-  }, [popover, editorText, t]);
-
   const selectPopoverActive = useCallback(() => {
     if (popover === "at") {
       const m = mentionState.matches[mentionState.selected];
       if (m) applyMention(m);
-      return;
     }
-    if (popover === "slash") {
-      const cmd = slashMatches[slashSelected];
-      if (cmd) {
-        setEditorText(cmd.name + " ");
-        focusEditorEnd();
-      }
-    }
-  }, [popover, mentionState, slashMatches, slashSelected, applyMention, setEditorText, focusEditorEnd]);
+  }, [popover, mentionState, applyMention]);
 
   // ─── key handling ───────────────────────────────────────
 
@@ -623,20 +606,6 @@ export function PromptInput({
               if (m) applyMention(m);
             }
           }
-          if (popover === "slash") {
-            const len = Math.max(slashMatches.length, 1);
-            if (event.key === "ArrowDown" || (ctrl && event.key === "n")) setSlashSelected((s) => (s + 1) % len);
-            else if (event.key === "ArrowUp" || (ctrl && event.key === "p"))
-              setSlashSelected((s) => (s - 1 + len) % len);
-            else if (event.key === "Enter") {
-              const cmd = slashMatches[slashSelected];
-              if (cmd) {
-                setEditorText(cmd.name + " ");
-                setSlashSelected(0);
-                focusEditorEnd();
-              }
-            }
-          }
           return;
         }
       }
@@ -665,13 +634,9 @@ export function PromptInput({
       navigateHistory,
       submit,
       mentionState,
-      slashMatches,
-      slashSelected,
       historyIndex,
       isImeComposing,
       selectPopoverActive,
-      setEditorText,
-      focusEditorEnd,
     ],
   );
 
@@ -768,6 +733,14 @@ export function PromptInput({
     if (!disabled) editorRef.current?.focus();
   }, [disabled]);
 
+  useEffect(() => {
+    if (initialText !== undefined) {
+      setEditorText(initialText);
+      setDirty(true);
+      focusEditorEnd();
+    }
+  }, [initialText, setEditorText, focusEditorEnd]);
+
   // ─── derived state ──────────────────────────────────────
 
   const imageAttachments = useMemo(
@@ -794,17 +767,6 @@ export function PromptInput({
     <div className="prompt-input-container">
       {/* Popovers positioned above the form */}
       <MentionPopup mention={mentionState} onSelect={applyMention} onHover={setMentionSelected} />
-      <SlashPopup
-        visible={popover === "slash"}
-        matches={slashMatches}
-        selectedIndex={slashSelected}
-        onSelect={(cmd) => {
-          setEditorText(cmd.name + " ");
-          setSlashSelected(0);
-          editorRef.current?.focus();
-        }}
-        onHover={setSlashSelected}
-      />
 
       {/* ── DockShellForm ── */}
       <form
@@ -834,6 +796,17 @@ export function PromptInput({
             onOpen={(att) => window.open(att.dataUrl)}
             onRemove={(id) => setAttachments((prev) => prev.filter((a) => a.id !== id))}
             removeLabel={t("remove")}
+          />
+        )}
+
+        {/* ── Rollback section ── */}
+        {rollbackActive && onRollbackRestore && (
+          <RollbackPill
+            messageText={rollbackText ?? ""}
+            fileCount={rollbackFileCount ?? 0}
+            filesChanged={rollbackFilesChanged ?? []}
+            messagesRemoved={rollbackMessagesRemoved ?? 0}
+            onRestore={onRollbackRestore}
           />
         )}
 

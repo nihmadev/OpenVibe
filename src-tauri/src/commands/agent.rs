@@ -1,8 +1,12 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, State};
 
-use crate::agent::{Agent, SubTraceEvent};
-use crate::{config, llm, AppState};
+use agent::chat::ChatMessage;
+use agent::snapshot::RollbackPreview;
+use agent::sub_trace::{SubTraceEvent, get_sub_trace};
+use agent::Agent;
+use crate::AppState;
+use config::Config;
 
 #[tauri::command]
 pub async fn agent_new(state: State<'_, AppState>, cwd: String) -> Result<(), String> {
@@ -11,7 +15,7 @@ pub async fn agent_new(state: State<'_, AppState>, cwd: String) -> Result<(), St
         config_lock
             .as_ref()
             .cloned()
-            .unwrap_or_else(|| config::Config {
+            .unwrap_or_else(|| Config {
                 api_key: String::new(),
                 base_url: "https://api.openai.com/v1".to_string(),
                 model: "gpt-4o-mini".to_string(),
@@ -22,7 +26,8 @@ pub async fn agent_new(state: State<'_, AppState>, cwd: String) -> Result<(), St
             })
     };
 
-    let agent = Agent::new(cfg);
+    let agent_cfg = cfg.to_agent_config();
+    let agent = Agent::new(agent_cfg);
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     *agent_lock = Some(agent);
     Ok(())
@@ -41,31 +46,27 @@ pub async fn agent_send(
     }
     .ok_or_else(|| "No agent created yet. Call agent_new first.".to_string())?;
 
-    let client = reqwest::Client::builder()
-        .build()
-        .map_err(|e| e.to_string())?;
-
-    // Take the confirms map out so we don't hold the MutexGuard across await
     let mut confirm_senders = {
         let mut lock = state.pending_confirms.lock().map_err(|e| e.to_string())?;
         std::mem::take(&mut *lock)
     };
 
+    let executor = agent_tool::AgentToolExecutor::new();
+    let emit = |event: &str, data: serde_json::Value| {
+        let _ = app_handle.emit(event, data);
+    };
+
     agent
-        .send(input, content_parts, &app_handle, &mut confirm_senders, &client)
+        .send(input, content_parts, &executor, &state.http_client, &emit, &mut confirm_senders)
         .await;
 
-    // Put back the confirms map (may have been modified with new confirm channels)
     {
         let mut lock = state.pending_confirms.lock().map_err(|e| e.to_string())?;
         *lock = confirm_senders;
     }
 
-    // Save messages to the active chat — agent is available here (local variable)
-    // but NOT in state.agent, so the frontend's done-listener can't get them.
-    // Lock order: active_chat_id → chat_store → app_handle (matches chats_new/chats_open)
     {
-        let msgs = agent.get_messages().to_vec();
+        let msgs = agent.messages.clone();
         let ts = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
@@ -121,14 +122,10 @@ pub async fn agent_summarize(state: State<'_, AppState>) -> Result<String, Strin
     let (messages, cfg) = {
         let agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
         let agent = agent_lock.as_ref().ok_or_else(|| "No agent".to_string())?;
-        (agent.get_messages().to_vec(), agent.get_config().clone())
+        (agent.get_messages().to_vec(), agent.config().clone())
     };
 
-    let client = reqwest::Client::builder()
-        .build()
-        .map_err(|e| e.to_string())?;
-
-    let title = Agent::summarize_with(cfg, messages, &client).await;
+    let title = Agent::summarize_with(cfg, messages, &state.http_client).await;
 
     Ok(title)
 }
@@ -149,7 +146,7 @@ pub async fn agent_confirm(
 #[tauri::command]
 pub async fn agent_set_messages(
     state: State<'_, AppState>,
-    messages: Vec<llm::ChatMessage>,
+    messages: Vec<ChatMessage>,
 ) -> Result<(), String> {
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     if let Some(ref mut agent) = *agent_lock {
@@ -161,7 +158,7 @@ pub async fn agent_set_messages(
 #[tauri::command]
 pub async fn agent_get_messages(
     state: State<'_, AppState>,
-) -> Result<Vec<llm::ChatMessage>, String> {
+) -> Result<Vec<ChatMessage>, String> {
     let agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     let agent = agent_lock
         .as_ref()
@@ -171,16 +168,34 @@ pub async fn agent_get_messages(
 
 #[tauri::command]
 pub async fn agent_get_sub_trace(call_id: String) -> Vec<SubTraceEvent> {
-    crate::agent::get_sub_trace(&call_id)
+    get_sub_trace(&call_id)
 }
 
 #[tauri::command]
-pub async fn agent_revert_to(state: State<'_, AppState>, index: usize) -> Result<(), String> {
+pub async fn agent_revert_preview(
+    state: State<'_, AppState>,
+    index: usize,
+) -> Result<RollbackPreview, String> {
+    let agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
+    let agent = agent_lock.as_ref().ok_or_else(|| "No agent".to_string())?;
+    Ok(agent.prepare_revert(index))
+}
+
+#[tauri::command]
+pub async fn agent_instant_revert(
+    state: State<'_, AppState>,
+    index: usize,
+) -> Result<RollbackPreview, String> {
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
-    if let Some(ref mut agent) = *agent_lock {
-        agent.revert_to(index);
-    }
-    Ok(())
+    let agent = agent_lock.as_mut().ok_or_else(|| "No agent".to_string())?;
+    agent.instant_revert(index)
+}
+
+#[tauri::command]
+pub async fn agent_revert_undo(state: State<'_, AppState>) -> Result<(), String> {
+    let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
+    let agent = agent_lock.as_mut().ok_or_else(|| "No agent".to_string())?;
+    agent.undo_revert()
 }
 
 #[tauri::command]
@@ -200,7 +215,6 @@ pub async fn agent_set_provider(
     model: String,
     provider_id: Option<String>,
 ) -> Result<(), String> {
-    // Update both AppState config and agent's internal config
     if let Ok(mut config) = state.config.lock() {
         if let Some(ref mut c) = *config {
             c.api_key = api_key.clone();
@@ -209,9 +223,16 @@ pub async fn agent_set_provider(
             c.provider_id = provider_id.clone();
         }
     }
+
+    // Обновляем URL для connection warmer
+    {
+        let mut url = state.provider_url.lock().await;
+        *url = base_url.clone();
+    }
+
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     if let Some(ref mut agent) = *agent_lock {
-        let cfg = agent.get_config_mut();
+        let cfg = agent.config_mut();
         cfg.api_key = api_key;
         cfg.base_url = base_url;
         cfg.model = model;

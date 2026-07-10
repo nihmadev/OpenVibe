@@ -278,6 +278,7 @@
   left: 0;
   right: 0;
   pointer-events: none;
+  border-radius: 0 0 12px 12px;
 }
 
 /* ── Submit area (bottom-right) ── */

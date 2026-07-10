@@ -1,6 +1,6 @@
 use tauri::State;
 use crate::AppState;
-use crate::db::Provider;
+use db::Provider;
 
 #[tauri::command]
 pub fn providers_list(state: State<AppState>) -> Result<Vec<Provider>, String> {

@@ -211,7 +211,7 @@ function AccentCodeBlock({ code }: { code: string }): React.ReactElement {
 
 function renderCodeBlock(lang: string, code: string, asAccent?: boolean): React.ReactElement {
   if (asAccent) {
-    return <AccentCodeBlock code={code} />;
+    return <AccentCodeBlock key={code.slice(0, 40)} code={code} />;
   }
   return <CodeBlock key={code.slice(0, 40)} language={lang || "code"} code={code} />;
 }

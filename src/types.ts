@@ -97,11 +97,22 @@ export interface Provider {
   addedAt: number;
 }
 
+export interface FileSnapshot {
+  path: string;
+  content: string | null;
+}
+
+export interface RollbackPreview {
+  filesChanged: FileSnapshot[];
+  messagesRemoved: number;
+}
+
 export interface VibeApi {
   init: () => Promise<{ ok: true; config: VibeConfig } | { ok: false; error: string }>;
   send: (text: string) => Promise<{ ok: boolean; error?: string }>;
   sendParts: (parts: ContentPart[], display?: string) => Promise<{ ok: boolean; error?: string }>;
-  revertTo: (msgIndex: number) => Promise<void>;
+  instantRevert: (msgIndex: number) => Promise<RollbackPreview>;
+  revertUndo: () => Promise<void>;
   reset: () => Promise<void>;
   stop: () => Promise<void>;
   decide: (id: string, decision: "yes" | "no" | "always") => Promise<void>;

@@ -1,9 +1,7 @@
 use std::fs;
 use std::path::Path;
 use serde::Serialize;
-use crate::walker;
-
-const TEXT_FILE_LIMIT: u64 = 2 * 1024 * 1024;
+use search::walker;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -21,7 +19,7 @@ pub fn fs_list(dir: String) -> Result<Vec<FsEntry>, String> {
         .filter_map(|e| e.ok())
         .filter(|e| {
             let name = e.file_name().to_string_lossy().to_string();
-            !name.starts_with('.') || name == ".env" || name == ".gitignore"
+            !search::config::should_skip(&name)
         })
         .map(|e| {
             let path = e.path();
@@ -45,7 +43,8 @@ pub fn fs_list(dir: String) -> Result<Vec<FsEntry>, String> {
 pub async fn fs_read(path: String) -> Result<String, String> {
     let p = Path::new(&path);
     let meta = p.metadata().map_err(|e| e.to_string())?;
-    if meta.len() > TEXT_FILE_LIMIT {
+    let limit: u64 = 2 * 1024 * 1024;
+    if meta.len() > limit {
         return Err(format!("File too large ({} bytes)", meta.len()));
     }
     fs::read_to_string(p).map_err(|e| e.to_string())
@@ -101,12 +100,12 @@ pub async fn fs_create_dir(dir: String, name: String) -> Result<String, String> 
 }
 
 #[tauri::command]
-pub async fn fs_find(root: String, query: String, limit: Option<usize>) -> Result<Vec<walker::FileMatch>, String> {
+pub async fn fs_find(root: String, query: String, limit: Option<usize>) -> Result<Vec<search::types::FileMatch>, String> {
     Ok(walker::find_files(&root, &query, limit.unwrap_or(30)))
 }
 
 #[tauri::command]
-pub async fn fs_find_all(root: String, query: String, limit: Option<usize>) -> Result<Vec<walker::FileMatch>, String> {
+pub async fn fs_find_all(root: String, query: String, limit: Option<usize>) -> Result<Vec<search::types::FileMatch>, String> {
     Ok(walker::find_all(&root, &query, limit.unwrap_or(50)))
 }
 

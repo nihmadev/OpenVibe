@@ -1,13 +1,7 @@
-mod agent;
 mod commands;
-mod config;
-mod db;
-mod chats;
-mod terminal;
-mod tools;
-pub mod vector_search;
-mod walker;
-mod llm;
+mod http_client;
+
+use config::{Config, load_config};
 
 use std::sync::Mutex;
 use std::sync::Arc;
@@ -16,18 +10,22 @@ use std::collections::HashMap;
 use std::path::Path;
 use notify::{Config as NotifyConfig, Event, RecommendedWatcher, RecursiveMode, Watcher};
 use tauri::{AppHandle, Emitter, Manager};
-use tokio::sync::oneshot;
+use tokio::sync::{oneshot, watch};
+use chats::ChatStore;
 
 pub struct AppState {
     pub projects: Mutex<db::ProjectStore>,
     pub chat_store: Mutex<Option<chats::ChatStore>>,
-    pub terminals: Mutex<terminal::TerminalManager>,
-    pub config: Mutex<Option<config::Config>>,
+    pub terminals: Mutex<terminal::manager::TerminalManager>,
+    pub config: Mutex<Option<Config>>,
     pub active_chat_id: Mutex<Option<String>>,
     pub app_handle: Mutex<Option<AppHandle>>,
     pub llm_cancels: Mutex<HashMap<String, Arc<AtomicBool>>>,
     pub agent: Mutex<Option<agent::Agent>>,
     pub pending_confirms: Mutex<HashMap<String, oneshot::Sender<String>>>,
+    pub http_client: reqwest::Client,
+    pub provider_url: Arc<tokio::sync::Mutex<String>>,
+    pub warmer_stop_tx: Mutex<Option<watch::Sender<bool>>>,
 }
 
 impl AppState {
@@ -46,13 +44,13 @@ impl AppState {
 
         // Create new terminal manager with new cwd
         if let Ok(mut terminals) = self.terminals.lock() {
-            *terminals = terminal::TerminalManager::new(cwd);
+            *terminals = terminal::manager::TerminalManager::new(cwd);
         }
 
         // Update chat store
         if let Ok(projects) = self.projects.lock() {
             let db_path = projects.chats_db(project_id);
-            if let Ok(new_store) = chats::ChatStore::new(&db_path) {
+            if let Ok(new_store) = ChatStore::new(&db_path) {
                 if let Ok(mut chat) = self.chat_store.lock() {
                     *chat = Some(new_store);
                 }
@@ -170,7 +168,7 @@ pub fn run() {
             };
 
             // Load config from project root
-            let mut cfg = config::load_config(&initial_cwd);
+            let mut cfg = load_config(&initial_cwd);
 
             // Setup config with initial cwd
             cfg.cwd = initial_cwd.clone();
@@ -193,13 +191,27 @@ pub fn run() {
             // Setup chat store if project exists
             let chat_store = initial_project_id.as_ref().map(|pid| {
                 let db_path = project_store.chats_db(pid);
-                chats::ChatStore::new(&db_path).ok()
+                ChatStore::new(&db_path).ok()
             }).flatten();
 
             // Setup terminal manager
-            let term_mgr = terminal::TerminalManager::new(&initial_cwd);
+            let term_mgr = terminal::manager::TerminalManager::new(&initial_cwd);
 
             let app_handle = app.handle().clone();
+
+            // Создаём общий HTTP клиент с HTTP/2, keep-alive, tcp_nodelay
+            let shared_client = http_client::create_shared_client();
+            let provider_url = Arc::new(tokio::sync::Mutex::new(
+                cfg.base_url.clone()
+            ));
+            let (warmer_stop_tx, warmer_stop_rx) = watch::channel(false);
+
+            // Запускаем connection warmer (держит соединение с провайдером тёплым)
+            http_client::spawn_connection_warmer(
+                shared_client.clone(),
+                provider_url.clone(),
+                warmer_stop_rx,
+            );
 
             // Create state
             let state = AppState {
@@ -212,6 +224,9 @@ pub fn run() {
                 llm_cancels: Mutex::new(HashMap::new()),
                 agent: Mutex::new(None),
                 pending_confirms: Mutex::new(HashMap::new()),
+                http_client: shared_client,
+                provider_url,
+                warmer_stop_tx: Mutex::new(Some(warmer_stop_tx)),
             };
 
             // Setup watcher if cwd exists
@@ -233,7 +248,9 @@ pub fn run() {
             commands::agent::agent_confirm,
             commands::agent::agent_set_messages,
             commands::agent::agent_get_messages,
-            commands::agent::agent_revert_to,
+            commands::agent::agent_instant_revert,
+            commands::agent::agent_revert_preview,
+            commands::agent::agent_revert_undo,
             commands::agent::agent_set_cwd,
             commands::agent::agent_set_provider,
             commands::agent::agent_get_sub_trace,

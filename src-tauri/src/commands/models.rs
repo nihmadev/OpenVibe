@@ -47,7 +47,7 @@ pub async fn models_fetch(
                     if !api_key.is_empty() {
                         headers.push(("x-api-key".to_string(), api_key.clone()));
                     }
-                    if let Ok(result) = do_fetch(&url, &headers).await {
+                    if let Ok(result) = do_fetch(&url, &headers, &state.http_client).await {
                         return Ok(result);
                     }
                 }
@@ -68,11 +68,10 @@ pub async fn models_fetch(
         headers.push(("Accept".to_string(), "application/vnd.github+json".to_string()));
         headers.push(("X-GitHub-Api-Version".to_string(), "2026-03-10".to_string()));
     }
-    do_fetch(&url, &headers).await
+    do_fetch(&url, &headers, &state.http_client).await
 }
 
-async fn do_fetch(url: &str, headers: &[(String, String)]) -> Result<serde_json::Value, String> {
-    let client = reqwest::Client::new();
+async fn do_fetch(url: &str, headers: &[(String, String)], client: &reqwest::Client) -> Result<serde_json::Value, String> {
     let mut req = client.get(url).timeout(std::time::Duration::from_secs(15));
     for (k, v) in headers {
         req = req.header(k, v);
