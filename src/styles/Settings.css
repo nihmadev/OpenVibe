@@ -291,12 +291,21 @@
   top: 100%;
   left: 0;
   right: 0;
-  z-index: 50;
+  z-index: 9999;
   background: var(--bg-2);
   border: 1px solid var(--line-strong);
   border-top: 0;
   border-radius: 0 0 6px 6px;
   overflow: hidden;
+}
+
+/* portal variant — position set inline via JS */
+.settings__custom-select-dropdown--portal {
+  z-index: 9999;
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
 }
 
 .settings__custom-select-dropdown-body {
@@ -931,4 +940,1051 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ===== Tree connector: General → Design ===== */
+
+.settings__tree-branch {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  margin-top: 4px;
+  margin-bottom: 10px;
+  padding-left: 8px;
+}
+
+/* The vertical line segment */
+.settings__tree-line {
+  flex-shrink: 0;
+  width: 1px;
+  /* height grows to fill the node */
+  align-self: stretch;
+  background: var(--line-strong);
+  margin-right: 0;
+  position: relative;
+}
+
+/* Horizontal elbow at the bottom of the line */
+.settings__tree-line::after {
+  content: "";
+  position: absolute;
+  bottom: 14px;
+  left: 0;
+  width: 10px;
+  height: 1px;
+  background: var(--line-strong);
+}
+
+/* The dot + subsection wrapper */
+.settings__tree-node {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  flex: 1;
+  padding-left: 10px;
+  padding-top: 0;
+  position: relative;
+}
+
+/* Small connector dot */
+.settings__tree-node-dot {
+  position: absolute;
+  left: 4px;
+  top: 14px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  border: 1px solid var(--bg-3);
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+/* ===== Design subsection (child of tree) ===== */
+
+.settings__subsection--design {
+  flex: 1;
+  margin-bottom: 0;
+  padding-top: 0;
+}
+
+.settings__subsection-title--design {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--fg-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.settings__subsection-title--design svg {
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+/* ===== Anim control row: select + preview button ===== */
+
+.settings__anim-control {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.settings__anim-preview-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-2);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.settings__anim-preview-btn:hover {
+  background: var(--line);
+  color: var(--fg);
+  border-color: var(--fg-muted);
+}
+
+.settings__anim-preview-btn svg {
+  display: block;
+}
+
+/* ===== Animation Preview Modal ===== */
+
+.anim-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  animation: fade-in 0.14s ease;
+}
+
+.anim-preview-container {
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slide-up-in 0.18s cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+.anim-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.anim-preview-header__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.anim-preview-header__close {
+  border: 0;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 18px;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.anim-preview-header__close:hover {
+  background: var(--line);
+  color: var(--fg);
+}
+
+/* Stage — the live preview area */
+.anim-preview-stage {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-3);
+  padding: 16px;
+  overflow: hidden;
+}
+
+.anim-preview-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.anim-preview-footer__label {
+  font-size: 11px;
+  color: var(--fg-dim);
+  font-style: italic;
+}
+
+.anim-preview-footer__play {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.anim-preview-footer__play:hover {
+  background: var(--line);
+  border-color: var(--fg-muted);
+}
+
+/* ── Scene containers ── */
+
+.anim-preview-scene {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+}
+
+.anim-preview-scene--full {
+  width: 100%;
+  height: 100%;
+}
+
+.anim-preview-scene--row {
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.anim-preview-scene--buttons {
+  gap: 12px;
+}
+
+/* ── Project tile ── */
+
+.anim-preview-tile {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  flex-shrink: 0;
+}
+
+.anim-preview-tile--hovered {
+  transform: scale(1.12);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+}
+
+.anim-preview-tile__avatar {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  background: var(--avatar-bg, #7c6af7);
+  color: #fff;
+}
+
+/* ── Panel content bars ── */
+
+.anim-preview-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-2);
+  border-radius: 6px;
+}
+
+.anim-preview-panel__bar {
+  height: 8px;
+  background: var(--line-strong);
+  border-radius: 4px;
+  width: 100%;
+}
+
+.anim-preview-panel__bar--short {
+  width: 60%;
+}
+
+/* ── Sidebar ── */
+
+.anim-preview-sidebar {
+  width: 90px;
+  flex-shrink: 0;
+  background: var(--bg-3);
+  border-right: 1px solid var(--line);
+  border-radius: 6px 0 0 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 8px;
+  overflow: hidden;
+}
+
+.anim-preview-sidebar--closed {
+  width: 0;
+  padding: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.anim-preview-sidebar__item {
+  height: 7px;
+  background: var(--line-strong);
+  border-radius: 3px;
+}
+
+.anim-preview-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--bg-2);
+  border-radius: 0 6px 6px 0;
+}
+
+/* ── Context menu ── */
+
+.anim-preview-context-menu {
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  padding: 4px 0;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+}
+
+.anim-preview-context-menu__item {
+  height: 7px;
+  margin: 6px 10px;
+  background: var(--line-strong);
+  border-radius: 3px;
+}
+
+.anim-preview-context-menu__item--danger {
+  background: rgba(248, 113, 113, 0.4);
+}
+
+.anim-preview-context-menu__divider {
+  height: 1px;
+  background: var(--line);
+  margin: 3px 0;
+}
+
+/* ── Buttons ── */
+
+.anim-preview-btn {
+  padding: 7px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--fg);
+  color: var(--bg);
+  border: 0;
+  cursor: default;
+}
+
+.anim-preview-btn--outline {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--line-strong);
+}
+
+/* ── Modal preview ── */
+
+.anim-preview-modal {
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  width: 210px;
+  overflow: hidden;
+}
+
+.anim-preview-modal__header {
+  height: 28px;
+  background: var(--bg-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.anim-preview-modal__body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ===== Animation keyframes used in preview ===== */
+
+/* Fade */
+@keyframes anim-fade-in-preview {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Slide up */
+@keyframes anim-slide-in-preview {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Scale */
+@keyframes anim-scale-in-preview {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Fade + Slide */
+@keyframes anim-fade-slide-in-preview {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Slide (horizontal for sidebar) */
+@keyframes anim-slide-in-x-preview {
+  from { opacity: 0; transform: translateX(-14px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Classes applied to preview elements ── */
+
+.anim-preview--fade {
+  animation: anim-fade-in-preview 0.2s ease both;
+}
+
+.anim-preview--slide {
+  animation: anim-slide-in-preview 0.24s cubic-bezier(0.2, 0, 0.2, 1) both;
+}
+
+.anim-preview--slide.anim-preview-sidebar {
+  animation: anim-slide-in-x-preview 0.24s cubic-bezier(0.2, 0, 0.2, 1) both;
+}
+
+.anim-preview--scale {
+  animation: anim-scale-in-preview 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.anim-preview--fade-slide {
+  animation: anim-fade-slide-in-preview 0.24s cubic-bezier(0.2, 0, 0.2, 1) both;
+}
+
+.anim-preview--none {
+  animation: none;
+}
+
+/* Tile hover uses CSS transition, not keyframes */
+
+/* ===================================================
+   APM — Mini real-component previews in AnimPreviewModal
+   =================================================== */
+
+/* ── Scene wrapper ── */
+.apm-scene {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.apm-scene--full {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Mini ProjectRail ── */
+.apm-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 6px;
+  width: 42px;
+}
+
+.apm-rail__tile {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.apm-rail__tile--active {
+  transform: scale(1.08);
+}
+
+.apm-rail__tile--active::before {
+  content: "";
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  background: var(--fg);
+  border-radius: 0 2px 2px 0;
+}
+
+.apm-rail__avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  transition: border-radius 0.18s;
+}
+
+.apm-rail__tile--active .apm-rail__avatar {
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.5);
+}
+
+.apm-rail__add {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--line-strong);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--fg-muted);
+  margin-top: 2px;
+}
+
+/* ── Mini FileTree ── */
+.apm-ftree {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 10px;
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.apm-ftree__header {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-2);
+}
+
+.apm-ftree__root {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.apm-ftree__body {
+  padding: 2px 0;
+}
+
+.apm-ftree__row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  color: var(--fg-dim);
+  cursor: default;
+  white-space: nowrap;
+  transition: background 0.1s;
+}
+
+.apm-ftree__row--active {
+  background: var(--bg-2);
+  color: var(--fg);
+  position: relative;
+}
+
+.apm-ftree__row--active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--fg);
+}
+
+.apm-ftree__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+}
+
+.apm-ftree__name--dir {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+/* ── Mini ContextMenu ── */
+.apm-ctx-bg {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  position: relative;
+}
+
+.apm-ctx {
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  padding: 3px 0;
+  min-width: 110px;
+  display: flex;
+  flex-direction: column;
+  font-size: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  flex-shrink: 0;
+}
+
+.apm-ctx__item {
+  padding: 4px 10px;
+  color: var(--fg);
+  white-space: nowrap;
+}
+
+.apm-ctx__item:hover {
+  background: var(--line);
+}
+
+.apm-ctx__item--danger {
+  color: var(--red);
+}
+
+.apm-ctx__sep {
+  height: 1px;
+  background: var(--line);
+  margin: 2px 0;
+}
+
+/* ── Mini Panel / Modal ── */
+.apm-panel {
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  width: 200px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
+
+.apm-panel__header {
+  height: 24px;
+  background: var(--bg-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.apm-panel__body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.apm-panel__bar {
+  height: 7px;
+  background: var(--line-strong);
+  border-radius: 3px;
+  width: 100%;
+}
+
+.apm-panel__bar--short {
+  width: 55%;
+}
+
+/* ── Mini Buttons ── */
+.apm-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.apm-btn {
+  padding: 7px 20px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--fg);
+  color: var(--bg);
+  border: 0;
+  cursor: default;
+  white-space: nowrap;
+}
+
+.apm-btn--outline {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--line-strong);
+}
+
+/* ── Mini Sidebar slide layout ── */
+.apm-layout {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.apm-sidebar {
+  width: 80px;
+  flex-shrink: 0;
+  background: var(--bg-3);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 7px;
+  overflow: hidden;
+  transform-origin: left center;
+  /* fixed height so items never blowup */
+  box-sizing: border-box;
+}
+
+.apm-sidebar--closed {
+  width: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.apm-sidebar--open {
+  width: 80px;
+}
+
+/* single authoritative rule — no duplicates below */
+.apm-sidebar__item {
+  display: block;
+  width: 100%;
+  height: 6px;
+  min-height: 6px;
+  max-height: 6px;
+  background: var(--line-strong);
+  border-radius: 3px;
+  font-size: 0;
+  line-height: 0;
+  flex-shrink: 0;
+  flex-grow: 0;
+  flex-basis: 6px;
+}
+
+.apm-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 12px;
+  background: var(--bg-2);
+}
+
+/* ── Anim classes applied to apm elements ── */
+
+.apm-preview--fade {
+  animation: anim-fade-in-preview 0.22s ease both;
+}
+
+.apm-preview--slide {
+  animation: anim-slide-in-preview 0.26s cubic-bezier(0.2, 0, 0.2, 1) both;
+}
+
+.apm-preview--slide.apm-sidebar {
+  animation: anim-slide-in-x-preview 0.26s cubic-bezier(0.2, 0, 0.2, 1) both;
+}
+
+.apm-preview--scale {
+  animation: anim-scale-in-preview 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.apm-preview--fade-slide {
+  animation: anim-fade-slide-in-preview 0.26s cubic-bezier(0.2, 0, 0.2, 1) both;
+}
+
+.apm-preview--none {
+  animation: none;
+}
+
+/* ===================================================
+   Inline animation cards grid (Design tab)
+   =================================================== */
+
+.settings__anim-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.settings__anim-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  transition: border-color 0.15s;
+}
+
+.settings__anim-card:hover {
+  border-color: var(--line-strong);
+}
+
+.settings__anim-card__preview {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 7px 7px 0 0;
+}
+
+.settings__anim-card__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 7px 8px 8px;
+  border-top: 1px solid var(--line);
+  background: var(--bg-2);
+}
+
+.settings__anim-card__label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Make the select full-width inside the card */
+.settings__anim-card .settings__custom-select {
+  min-width: 0;
+  width: 100%;
+}
+
+.settings__anim-card .settings__custom-select-trigger {
+  min-width: 0;
+  width: 100%;
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+/* ── Inline stage ── */
+.apm-inline-stage {
+  width: 100%;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 8px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Scene helpers for inline context */
+.apm-scene--center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Horizontal rail for projectHover */
+.apm-rail--row {
+  flex-direction: row !important;
+  width: calc(100% - 16px);
+  padding: 6px 8px;
+  gap: 5px;
+  border-radius: 8px;
+  justify-content: center;
+}
+
+.apm-rail--row .apm-rail__tile {
+  width: 26px;
+  height: 26px;
+}
+
+.apm-rail--row .apm-rail__avatar {
+  width: 22px;
+  height: 22px;
+  font-size: 9px;
+  border-radius: 5px;
+}
+
+.apm-rail--row .apm-rail__add {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  border-radius: 5px;
+}
+
+.apm-rail--row .apm-rail__tile--active::before {
+  /* horizontal rail: indicator below instead of left */
+  left: 50%;
+  top: auto;
+  bottom: -6px;
+  transform: translateX(-50%) scaleX(1);
+  width: 14px;
+  height: 3px;
+  border-radius: 2px 2px 0 0;
+}
+
+.apm-rail--row .apm-rail__tile--active {
+  transform: scale(1.08) translateY(-2px);
+}
+
+/* Scale down mini components inside inline stage */
+.apm-inline-stage .apm-ftree {
+  font-size: 9px;
+  width: 110px;
+}
+
+.apm-inline-stage .apm-ftree__root {
+  font-size: 9px;
+}
+
+.apm-inline-stage .apm-ftree__row {
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+
+.apm-inline-stage .apm-ctx {
+  min-width: 90px;
+  font-size: 9px;
+}
+
+.apm-inline-stage .apm-ctx__item {
+  padding: 3px 8px;
+}
+
+.apm-inline-stage .apm-panel {
+  width: 140px;
+}
+
+.apm-inline-stage .apm-buttons {
+  gap: 6px;
+}
+
+.apm-inline-stage .apm-btn {
+  padding: 5px 14px;
+  font-size: 10px;
+}
+
+.apm-inline-stage .apm-layout {
+  width: 100%;
+  height: 80px;
+}
+
+.apm-inline-stage .apm-sidebar {
+  width: 60px;
+}
+
+.apm-inline-stage .apm-sidebar--open {
+  width: 60px;
+}
+
+/* ── Inline stage hover state ── */
+
+.apm-inline-stage {
+  position: relative;
+}
+
+.apm-inline-stage--active {
+  background: var(--bg-2);
+}
+
+/* Sidebar bars and panel bars: fixed dimensions, no text rendering */
+/* (single authoritative block — overrides any earlier partial rules) */
+.apm-sidebar__item,
+.apm-panel__bar {
+  display: block;
+  background: var(--line-strong);
+  border-radius: 3px;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  flex-shrink: 0;
+  flex-grow: 0;
+}
+
+.apm-sidebar__item {
+  width: 100%;
+  height: 6px;
+  min-height: 6px;
+  max-height: 6px;
+  flex-basis: 6px;
+}
+
+.apm-panel__bar {
+  width: 100%;
+  height: 7px;
+  min-height: 7px;
+  max-height: 7px;
+  flex-basis: 7px;
+}
+
+.apm-panel__bar--short {
+  width: 55%;
 }

@@ -12,6 +12,9 @@ import { ChevronRightIcon } from "../icons/ui-icons.js";
 import { languageOptions } from "../../i18n/index.js";
 import type { ShortcutDef, KeyCombo } from "../../hooks/useShortcuts.js";
 import { formatCombo, setRecording } from "../../hooks/useShortcuts.js";
+import { useAnimations } from "../../hooks/useAnimations.js";
+import type { AnimKey, AnimStyle } from "../../hooks/useAnimations.js";
+import { InlineAnimPreview } from "./AnimationPreviewModal.js";
 
 interface DiscoveredModel {
   id: string;
@@ -21,7 +24,7 @@ interface DiscoveredModel {
   providerIcon: string;
 }
 
-type Tab = "general" | "providers" | "models" | "hotkeys";
+type Tab = "general" | "design" | "providers" | "models" | "hotkeys";
 
 interface Props {
   open: boolean;
@@ -46,6 +49,7 @@ export function Settings({
 }: Props): React.ReactElement | null {
   const { currentTheme, setTheme, preview, colorScheme, setColorScheme, resolvedScheme } = useTheme();
   const { t } = useI18n();
+  const { settings: animSettings, set: setAnim } = useAnimations();
   const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "general");
   const [recordingId, setRecordingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -309,6 +313,26 @@ export function Settings({
               </svg>,
             )}
             {renderSidebarItem(
+              "design",
+              t("design"),
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+              </svg>,
+            )}
+            {renderSidebarItem(
               "hotkeys",
               t("hotkeys"),
               <svg
@@ -388,11 +412,13 @@ export function Settings({
             <h2>
               {activeTab === "general"
                 ? t("general")
-                : activeTab === "models"
-                  ? t("models")
-                  : activeTab === "providers"
-                    ? t("providers")
-                    : t("hotkeys")}
+                : activeTab === "design"
+                  ? t("design")
+                  : activeTab === "models"
+                    ? t("models")
+                    : activeTab === "providers"
+                      ? t("providers")
+                      : t("hotkeys")}
             </h2>
             <button className="settings__close" onClick={onClose}>
               ×
@@ -461,6 +487,52 @@ export function Settings({
                 </div>
 
                 <div className="settings__subsection">
+                  <div className="settings__subsection-title">{t("soundNotifications")}</div>
+                  <div className="settings__control-group">
+                    <div className="settings__control-row">
+                      <div className="settings__control-info">
+                        <div className="settings__control-label">{t("soundEnabled")}</div>
+                        <div className="settings__control-desc">{t("soundEnabledDesc")}</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        className="settings__checkbox"
+                        checked={general.soundEnabled}
+                        onChange={(e) => updateGeneral("soundEnabled", e.target.checked)}
+                      />
+                    </div>
+                    <div className="settings__control-row">
+                      <div className="settings__control-info">
+                        <div className="settings__control-label">{t("soundOnComplete")}</div>
+                        <div className="settings__control-desc">{t("soundOnCompleteDesc")}</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        className="settings__checkbox"
+                        checked={general.soundOnComplete}
+                        onChange={(e) => updateGeneral("soundOnComplete", e.target.checked)}
+                      />
+                    </div>
+                    <div className="settings__control-row">
+                      <div className="settings__control-info">
+                        <div className="settings__control-label">{t("soundOnStop")}</div>
+                        <div className="settings__control-desc">{t("soundOnStopDesc")}</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        className="settings__checkbox"
+                        checked={general.soundOnStop}
+                        onChange={(e) => updateGeneral("soundOnStop", e.target.checked)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Design section moved to its own tab */}
+              </>
+            ) : activeTab === "design" ? (
+              <>
+                <div className="settings__subsection" style={{ paddingTop: "var(--settings-py)" }}>
                   <div className="settings__subsection-title">{t("appearance")}</div>
                   <div className="settings__control-group">
                     <div className="settings__control-row">
@@ -525,44 +597,38 @@ export function Settings({
                 </div>
 
                 <div className="settings__subsection">
-                  <div className="settings__subsection-title">{t("soundNotifications")}</div>
-                  <div className="settings__control-group">
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("soundEnabled")}</div>
-                        <div className="settings__control-desc">{t("soundEnabledDesc")}</div>
+                  <div className="settings__subsection-title">{t("animations")}</div>
+                  <div className="settings__anim-cards">
+                    {(
+                      [
+                        ["projectHover",  "animProjectHover",  "animProjectHoverDesc"],
+                        ["projectSwitch", "animProjectSwitch", "animProjectSwitchDesc"],
+                        ["sidebarSlide",  "animSidebarSlide",  "animSidebarSlideDesc"],
+                        ["contextMenu",   "animContextMenu",   "animContextMenuDesc"],
+                        ["buttons",       "animButtons",       "animButtonsDesc"],
+                        ["panelAppear",   "animPanelAppear",   "animPanelAppearDesc"],
+                      ] as const
+                    ).map(([key, labelKey, descKey]) => (
+                      <div className="settings__anim-card" key={key}>
+                        <div className="settings__anim-card__preview">
+                          <InlineAnimPreview animKey={key} animStyle={animSettings[key]} />
+                        </div>
+                        <div className="settings__anim-card__footer">
+                          <div className="settings__anim-card__label">{t(labelKey)}</div>
+                          <Select
+                            value={animSettings[key]}
+                            options={[
+                              { value: "fade",       label: t("animStyleFade") },
+                              { value: "slide",      label: t("animStyleSlide") },
+                              { value: "scale",      label: t("animStyleScale") },
+                              { value: "fade-slide", label: t("animStyleFadeSlide") },
+                              { value: "none",       label: t("animStyleNone") },
+                            ]}
+                            onChange={(v) => setAnim(key, v as AnimStyle)}
+                          />
+                        </div>
                       </div>
-                      <input
-                        type="checkbox"
-                        className="settings__checkbox"
-                        checked={general.soundEnabled}
-                        onChange={(e) => updateGeneral("soundEnabled", e.target.checked)}
-                      />
-                    </div>
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("soundOnComplete")}</div>
-                        <div className="settings__control-desc">{t("soundOnCompleteDesc")}</div>
-                      </div>
-                      <input
-                        type="checkbox"
-                        className="settings__checkbox"
-                        checked={general.soundOnComplete}
-                        onChange={(e) => updateGeneral("soundOnComplete", e.target.checked)}
-                      />
-                    </div>
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("soundOnStop")}</div>
-                        <div className="settings__control-desc">{t("soundOnStopDesc")}</div>
-                      </div>
-                      <input
-                        type="checkbox"
-                        className="settings__checkbox"
-                        checked={general.soundOnStop}
-                        onChange={(e) => updateGeneral("soundOnStop", e.target.checked)}
-                      />
-                    </div>
+                    ))}
                   </div>
                 </div>
               </>
@@ -827,8 +893,7 @@ export function Settings({
       </div>
 
       {editing && (
-        <ConnectPopup
-          template={editing.template}
+        <ConnectPopup          template={editing.template}
           custom={editing.custom}
           editId={editing.editId}
           editProvider={editing.editId ? providers.find((p) => p.id === editing.editId) : null}
