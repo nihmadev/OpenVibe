@@ -65,6 +65,7 @@
   background: transparent;
   color: var(--fg);
   font-size: 12px;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
   transition: all 0.2s;
@@ -76,7 +77,6 @@
 
 .settings__sidebar-item.active {
   background: var(--line);
-  font-weight: 500;
 }
 
 .settings__sidebar-item svg {
