@@ -1,5 +1,6 @@
 pub mod agent;
 pub mod chats;
+pub mod editor;
 pub mod fs;
 pub mod llm;
 pub mod misc;

@@ -49,10 +49,6 @@ async function loadTypeDefinitions(m: typeof monaco, cwd: string) {
 
   promise = (async () => {
     try {
-      // Use a project-specific set for loaded libs within this promise scope
-      // to avoid re-loading the same lib multiple times for the same project
-      const projectLoadedLibs = new Set<string>();
-
       // 1. Basic compiler options
       m.typescript.typescriptDefaults.setCompilerOptions({
         target: m.typescript.ScriptTarget.ESNext,
@@ -67,7 +63,6 @@ async function loadTypeDefinitions(m: typeof monaco, cwd: string) {
         esModuleInterop: true,
         isolatedModules: true,
         resolveJsonModule: true,
-        // Important for local imports
         baseUrl: `file:///${cwd.replace(/\\/g, "/")}/`,
         paths: {
           "*": ["*"],
@@ -78,104 +73,24 @@ async function loadTypeDefinitions(m: typeof monaco, cwd: string) {
         strictNullChecks: false,
       });
 
-      const typeNames = new Set<string>();
-
-      // 2. Scan package.json for dependencies
-      const pkgRes = await window.vibe.fs.read(`${cwd}/package.json`);
-      if (pkgRes.ok) {
-        try {
-          const pkg = JSON.parse(pkgRes.content);
-          const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-          Object.keys(deps).forEach((d) => typeNames.add(d));
-        } catch (e) {
-          /* ignore */
-        }
-      }
-
-      // 3. Scan node_modules/@types directly
-      const typesDirRes = await window.vibe.fs.list(`${cwd}/node_modules/@types`);
-      if (typesDirRes.ok) {
-        typesDirRes.entries.forEach((e: any) => {
-          if (e.isDir) {
-            // Handle scoped types (e.g., @types/node)
-            if (e.name.startsWith("__")) {
-              typeNames.add(e.name.replace("__", "/"));
-            } else {
-              typeNames.add(e.name);
-            }
-          }
-        });
-      }
-
-      // 4. Load discovered types
-      for (const typeName of typeNames) {
-        const pathsToTry = [
-          `${cwd}/node_modules/${typeName}/package.json`,
-          `${cwd}/node_modules/@types/${typeName}/package.json`,
-          `${cwd}/node_modules/@types/${typeName.replace("/", "__")}/package.json`,
-          `${cwd}/node_modules/${typeName}/index.d.ts`,
-          `${cwd}/node_modules/@types/${typeName}/index.d.ts`,
-        ];
-
-        for (const p of pathsToTry) {
-          if (projectLoadedLibs.has(p)) break;
-
-          const res = await window.vibe.fs.read(p);
-          if (!res.ok) continue;
-
-          if (p.endsWith("package.json")) {
-            try {
-              const pkg = JSON.parse(res.content);
-              const typesPath = pkg.types || pkg.typings;
-              if (typesPath) {
-                const fullPath = `${cwd}/node_modules/${typeName}/${typesPath.startsWith("./") ? typesPath.slice(2) : typesPath}`;
-                if (!projectLoadedLibs.has(fullPath)) {
-                  const typesRes = await window.vibe.fs.read(fullPath);
-                  if (typesRes.ok) {
-                    m.typescript.typescriptDefaults.addExtraLib(
-                      typesRes.content,
-                      `file:///${fullPath.replace(/\\/g, "/")}`,
-                    );
-                    projectLoadedLibs.add(fullPath);
-                  }
-                }
-              }
-            } catch (e) {
-              /* ignore */
-            }
-          } else {
-            try {
-              m.typescript.typescriptDefaults.addExtraLib(res.content, `file:///${p.replace(/\\/g, "/")}`);
-              projectLoadedLibs.add(p);
-            } catch (e) {
-              /* ignore */
-            }
-            break;
+      // 2. Preload all type definitions in a single Rust call
+      //    (reads package.json, node_modules/@types, and project .d.ts)
+      const res = await window.vibe.editor.preloadTypes(cwd);
+      if (res.ok) {
+        for (const tf of res.types) {
+          try {
+            m.typescript.typescriptDefaults.addExtraLib(
+              tf.content,
+              `file:///${tf.path.replace(/\\/g, "/")}`,
+            );
+          } catch (e) {
+            /* ignore per-file errors */
           }
         }
-      }
-
-      // 5. Scan for local .d.ts files in the project
-      try {
-        const localTypesRes = await window.vibe.fs.find(cwd, "**/*.d.ts", 50);
-        if (localTypesRes.ok) {
-          for (const match of localTypesRes.matches) {
-            const res = await window.vibe.fs.read(match.path);
-            if (res.ok) {
-              const fullPath = match.path.replace(/\\/g, "/");
-              if (!projectLoadedLibs.has(fullPath)) {
-                m.typescript.typescriptDefaults.addExtraLib(res.content, `file:///${fullPath}`);
-                projectLoadedLibs.add(fullPath);
-              }
-            }
-          }
-        }
-      } catch (e) {
-        /* ignore find errors */
       }
     } catch (e) {
       console.error("Failed to load type definitions:", e);
-      TYPES_LOADING_PROMISES.delete(cwd); // Allow retry on failure
+      TYPES_LOADING_PROMISES.delete(cwd);
     }
   })();
 

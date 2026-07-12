@@ -407,6 +407,14 @@ export const vibe = {
     close: () => invoke("projects_close"),
   },
 
+  editor: {
+    preloadTypes: (cwd: string) =>
+      wrap(
+        () => invoke<{ types: Array<{ path: string; content: string }> }>("editor_preload_types", { cwd }),
+        (result) => ({ types: result.types }),
+      ),
+  },
+
   fs: {
     list: (dir: string) =>
       wrap(

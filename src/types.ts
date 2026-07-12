@@ -127,6 +127,15 @@ export interface VibeApi {
     set: (key: string, value: string) => Promise<void>;
   };
 
+  editor: {
+    preloadTypes: (
+      cwd: string,
+    ) => Promise<
+      | { ok: true; types: Array<{ path: string; content: string }> }
+      | { ok: false; error: string }
+    >;
+  };
+
   setModel: (model: string) => Promise<void>;
   setCwd: (cwd: string) => Promise<void>;
   setProvider: (apiKey: string, baseUrl: string, model: string, providerId?: string) => Promise<void>;

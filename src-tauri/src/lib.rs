@@ -276,6 +276,8 @@ pub fn run() {
             commands::fs::fs_find_all,
             commands::fs::fs_project_info,
             commands::fs::whisper_transcribe,
+            // Editor commands
+            commands::editor::editor_preload_types,
             // Project commands
             commands::projects::projects_list,
             commands::projects::projects_active,
