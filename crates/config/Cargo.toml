@@ -7,5 +7,5 @@ edition = "2021"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-dirs = "5"
+dirs = "6"
 agent = { path = "../agent" }
