@@ -14,7 +14,7 @@ export interface VibeConfig {
 export type ContentPart = { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
 
 export type VibeEvent =
-  | { kind: "user"; text: string }
+  | { kind: "user"; text: string; index?: number }
   | { kind: "assistant-start" }
   | { kind: "assistant-chunk"; text: string }
   | { kind: "assistant-end" }

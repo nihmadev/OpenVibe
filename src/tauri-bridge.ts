@@ -63,7 +63,7 @@ async function initVibeBridge() {
 
   tauriUnlistenFns.push(
     await listen<any>("vibe:agent:user", (e) => {
-      emitEvent({ kind: "user", text: e.payload.text ?? "" });
+      emitEvent({ kind: "user", text: e.payload.text ?? "", index: e.payload.index });
     }),
   );
   tauriUnlistenFns.push(

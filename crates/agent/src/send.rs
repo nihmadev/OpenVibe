@@ -135,7 +135,8 @@ impl Agent {
             reasoning_content: None,
         });
 
-        emit("vibe:agent:user", serde_json::json!({"text": display}));
+        let user_index = self.messages.len() - 1;
+        emit("vibe:agent:user", serde_json::json!({"text": display, "index": user_index}));
         emit("vibe:agent:busy", serde_json::json!({"busy": true}));
 
         let tool_defs = executor.definitions();

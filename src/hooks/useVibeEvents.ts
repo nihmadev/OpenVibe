@@ -63,6 +63,7 @@ export function useVibeEvents(onActivity: () => void) {
               id: localId(),
               kind: "user",
               text: e.text,
+              msgIndex: (e as any).index,
               attachments: atts?.length ? atts : undefined,
             },
           ]);

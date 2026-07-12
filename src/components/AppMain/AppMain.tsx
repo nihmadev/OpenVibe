@@ -359,7 +359,8 @@ export function AppMain({
                       setRollbackIndex(item.msgIndex);
                       setRollbackText(item.text);
                       setRollbackChanged(result.filesChanged);
-                      setRollbackRemoved(removed.length);
+                      const removedUserCount = removed.filter((it: any) => it.kind === "user").length;
+                      setRollbackRemoved(removedUserCount);
                     } catch {
                       // revert failed silently
                     }
