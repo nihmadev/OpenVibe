@@ -1,0 +1,9 @@
+target/
+*.tar
+*.gz
+*.zip
+node_modules/
+git/
+**/*.so
+**/*.o
+**/*.a
