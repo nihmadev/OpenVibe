@@ -252,6 +252,68 @@ export function App(): React.ReactElement {
     [projects, handlePickProject, onProjectChange],
   );
 
+  const handleCommand = useCallback(
+    (id: string) => {
+      switch (id) {
+        case "new-session":
+          handleShortcutNewChat();
+          break;
+        case "prev-session":
+          handleSwitchChat("prev");
+          break;
+        case "next-session":
+          handleSwitchChat("next");
+          break;
+        case "toggle-terminal":
+          setTerminalOpen((o) => !o);
+          break;
+        case "close-terminal":
+          window.dispatchEvent(new CustomEvent("vibe:close-terminal"));
+          break;
+        case "new-terminal":
+          window.dispatchEvent(new CustomEvent("vibe:new-terminal"));
+          break;
+        case "show-file-tree":
+          setFileTreeOpen(true);
+          break;
+        case "hide-file-tree":
+          setFileTreeOpen(false);
+          break;
+        case "toggle-file-tree":
+          setFileTreeOpen((o) => !o);
+          break;
+        case "toggle-chat-side":
+          handleToggleChatSide();
+          break;
+        case "open-settings":
+          handleOpenSettings();
+          break;
+        case "close-project":
+          handleShortcutCloseProject();
+          break;
+        case "new-project":
+          handleShortcutNewProject();
+          break;
+        case "close-file":
+          handleCloseActiveFile();
+          break;
+        case "clear-chat":
+          handleShortcutClearChat();
+          break;
+      }
+    },
+    [
+      handleShortcutNewChat,
+      handleSwitchChat,
+      handleToggleChatSide,
+      handleOpenSettings,
+      handleShortcutCloseProject,
+      handleShortcutNewProject,
+      handleCloseActiveFile,
+      handleShortcutClearChat,
+    ],
+  );
+
   const { shortcuts, updateBinding, resetBinding } = useShortcuts({
     newChat: handleShortcutNewChat,
     switchChat: handleSwitchChat,
@@ -327,6 +389,7 @@ export function App(): React.ReactElement {
                   }}
                   onOpenFile={handleOpenFile}
                   onRevealFolder={setRevealPath}
+                  onCommand={handleCommand}
                 />
               )}
               <Welcome
@@ -396,6 +459,7 @@ export function App(): React.ReactElement {
                 }}
                 onOpenFile={handleOpenFile}
                 onRevealFolder={setRevealPath}
+                onCommand={handleCommand}
               />
             )}
             <AppMain

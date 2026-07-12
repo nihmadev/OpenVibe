@@ -60,6 +60,7 @@ export const en: Partial<Translations> = {
   prevSessionTitle: "Previous session",
   nextSessionTitle: "Next session",
   toggleTerminal: "Toggle Terminal",
+  closeTerminal: "Close terminal",
   toggleSessions: "Toggle sessions",
   hideFileTree: "Hide file tree",
   showFileTree: "Show file tree",

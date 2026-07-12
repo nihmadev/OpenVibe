@@ -115,6 +115,7 @@ export const ru = {
   prevSessionTitle: "Предыдущая сессия",
   nextSessionTitle: "Следующая сессия",
   toggleTerminal: "Переключить терминал",
+  closeTerminal: "Закрыть терминал",
   toggleSessions: "Переключить сессии",
   hideFileTree: "Скрыть дерево файлов",
   showFileTree: "Показать дерево файлов",
