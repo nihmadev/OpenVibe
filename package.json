@@ -88,7 +88,7 @@
     "@xterm/xterm": "^6.0.0",
     "katex": "^0.16.47",
     "lucide-react": "^1.24.0",
-    "monaco-editor": "^0.52.2",
+    "monaco-editor": "^0.55.1",
     "react": "^18.3.1",
     "react-dom": "^19.2.7",
     "react-markdown": "^10.1.0",
