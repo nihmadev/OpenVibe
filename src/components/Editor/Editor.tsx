@@ -54,14 +54,14 @@ async function loadTypeDefinitions(m: typeof monaco, cwd: string) {
       const projectLoadedLibs = new Set<string>();
 
       // 1. Basic compiler options
-      m.languages.typescript.typescriptDefaults.setCompilerOptions({
-        target: m.languages.typescript.ScriptTarget.ESNext,
+      m.typescript.typescriptDefaults.setCompilerOptions({
+        target: m.typescript.ScriptTarget.ESNext,
         allowNonTsExtensions: true,
-        moduleResolution: m.languages.typescript.ModuleResolutionKind.NodeJs,
-        module: m.languages.typescript.ModuleKind.ESNext,
+        moduleResolution: m.typescript.ModuleResolutionKind.NodeJs,
+        module: m.typescript.ModuleKind.ESNext,
         noEmit: true,
         typeRoots: ["node_modules/@types"],
-        jsx: m.languages.typescript.JsxEmit.React,
+        jsx: m.typescript.JsxEmit.React,
         allowJs: true,
         reactNamespace: "React",
         esModuleInterop: true,
@@ -132,7 +132,7 @@ async function loadTypeDefinitions(m: typeof monaco, cwd: string) {
                 if (!projectLoadedLibs.has(fullPath)) {
                   const typesRes = await window.vibe.fs.read(fullPath);
                   if (typesRes.ok) {
-                    m.languages.typescript.typescriptDefaults.addExtraLib(
+                    m.typescript.typescriptDefaults.addExtraLib(
                       typesRes.content,
                       `file:///${fullPath.replace(/\\/g, "/")}`,
                     );
@@ -145,7 +145,7 @@ async function loadTypeDefinitions(m: typeof monaco, cwd: string) {
             }
           } else {
             try {
-              m.languages.typescript.typescriptDefaults.addExtraLib(res.content, `file:///${p.replace(/\\/g, "/")}`);
+              m.typescript.typescriptDefaults.addExtraLib(res.content, `file:///${p.replace(/\\/g, "/")}`);
               projectLoadedLibs.add(p);
             } catch (e) {
               /* ignore */
@@ -164,7 +164,7 @@ async function loadTypeDefinitions(m: typeof monaco, cwd: string) {
             if (res.ok) {
               const fullPath = match.path.replace(/\\/g, "/");
               if (!projectLoadedLibs.has(fullPath)) {
-                m.languages.typescript.typescriptDefaults.addExtraLib(res.content, `file:///${fullPath}`);
+                m.typescript.typescriptDefaults.addExtraLib(res.content, `file:///${fullPath}`);
                 projectLoadedLibs.add(fullPath);
               }
             }
