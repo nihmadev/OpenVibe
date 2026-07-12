@@ -105,7 +105,12 @@ code::-webkit-scrollbar-button {
 
 /* ── Элементы без скроллбара ── */
 .editor-area__tabs,
-.editor-area__breadcrumb {
+.editor-area__breadcrumb,
+.search-popup__body,
+.settings__content-body,
+.settings__custom-select-dropdown-body,
+.project-rail__list,
+.session-list__list {
   scrollbar-width: none !important;
 }
 
@@ -114,7 +119,22 @@ code::-webkit-scrollbar-button {
 .editor-area__tabs::-webkit-scrollbar-track,
 .editor-area__breadcrumb::-webkit-scrollbar,
 .editor-area__breadcrumb::-webkit-scrollbar-thumb,
-.editor-area__breadcrumb::-webkit-scrollbar-track {
+.editor-area__breadcrumb::-webkit-scrollbar-track,
+.search-popup__body::-webkit-scrollbar,
+.search-popup__body::-webkit-scrollbar-thumb,
+.search-popup__body::-webkit-scrollbar-track,
+.settings__content-body::-webkit-scrollbar,
+.settings__content-body::-webkit-scrollbar-thumb,
+.settings__content-body::-webkit-scrollbar-track,
+.settings__custom-select-dropdown-body::-webkit-scrollbar,
+.settings__custom-select-dropdown-body::-webkit-scrollbar-thumb,
+.settings__custom-select-dropdown-body::-webkit-scrollbar-track,
+.project-rail__list::-webkit-scrollbar,
+.project-rail__list::-webkit-scrollbar-thumb,
+.project-rail__list::-webkit-scrollbar-track,
+.session-list__list::-webkit-scrollbar,
+.session-list__list::-webkit-scrollbar-thumb,
+.session-list__list::-webkit-scrollbar-track {
   display: none !important;
   width: 0 !important;
   height: 0 !important;

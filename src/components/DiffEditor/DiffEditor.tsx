@@ -106,10 +106,26 @@ export const DiffEditor = React.memo(function DiffEditor({ original, modified, l
 
       cleanupRef.current = () => {
         container.removeEventListener("wheel", onWheel);
-        try { disposable.dispose(); } catch { /* ok */ }
-        try { originalModel.dispose(); } catch { /* ok */ }
-        try { modifiedModel.dispose(); } catch { /* ok */ }
-        try { diffEditor.dispose(); } catch { /* ok */ }
+        try {
+          disposable.dispose();
+        } catch {
+          /* ok */
+        }
+        try {
+          originalModel.dispose();
+        } catch {
+          /* ok */
+        }
+        try {
+          modifiedModel.dispose();
+        } catch {
+          /* ok */
+        }
+        try {
+          diffEditor.dispose();
+        } catch {
+          /* ok */
+        }
         editorRef.current = null;
         monacoRef.current = null;
       };
@@ -130,7 +146,9 @@ export const DiffEditor = React.memo(function DiffEditor({ original, modified, l
     try {
       m.editor.defineTheme(monacoThemeName, makeMonacoTheme(themeVars, isDark));
       m.editor.setTheme(monacoThemeName);
-    } catch { /* editor disposed */ }
+    } catch {
+      /* editor disposed */
+    }
   }, [themeVars, monacoThemeName, isDark]);
 
   useEffect(() => {

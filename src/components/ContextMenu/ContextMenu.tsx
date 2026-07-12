@@ -3,12 +3,10 @@ import "../../styles/ContextMenu.css";
 
 export interface MenuItem {
   label?: string;
-  shortcut?: string;
   onClick?: () => void;
   danger?: boolean;
   disabled?: boolean;
   icon?: React.ReactNode;
-  type?: "separator";
 }
 
 interface Props {
@@ -38,7 +36,6 @@ export function ContextMenu({ x, y, items, onClose }: Props): React.ReactElement
     };
   }, [onClose]);
 
-  // Keep menu inside viewport
   const style: React.CSSProperties = { left: x, top: y };
   useEffect(() => {
     const el = ref.current;
@@ -50,29 +47,24 @@ export function ContextMenu({ x, y, items, onClose }: Props): React.ReactElement
 
   return (
     <div className="ctxmenu" style={style} ref={ref}>
-      {items.map((item, i) =>
-        item.type === "separator" || item.label === "-" ? (
-          <div key={`sep-${i}`} className="ctxmenu__sep" />
-        ) : (
-          <button
-            key={item.label}
-            className={
-              "ctxmenu__item" +
-              (item.danger ? " ctxmenu__item--danger" : "") +
-              (item.disabled ? " ctxmenu__item--disabled" : "")
-            }
-            disabled={item.disabled}
-            onClick={() => {
-              item.onClick?.();
-              onClose();
-            }}
-          >
-            {item.icon ? <span className="ctxmenu__icon">{item.icon}</span> : null}
-            <span className="ctxmenu__label">{item.label}</span>
-            {item.shortcut ? <span className="ctxmenu__shortcut">{item.shortcut}</span> : null}
-          </button>
-        ),
-      )}
+      {items.map((item, i) => (
+        <button
+          key={item.label ?? i}
+          className={
+            "ctxmenu__item" +
+            (item.danger ? " ctxmenu__item--danger" : "") +
+            (item.disabled ? " ctxmenu__item--disabled" : "")
+          }
+          disabled={item.disabled}
+          onClick={() => {
+            item.onClick?.();
+            onClose();
+          }}
+        >
+          {item.icon ? <span className="ctxmenu__icon">{item.icon}</span> : null}
+          {item.label}
+        </button>
+      ))}
     </div>
   );
 }

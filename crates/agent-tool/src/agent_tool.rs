@@ -8,8 +8,8 @@ use agent::request::stream_chat;
 use agent::sub_trace::{store_sub_event, SubTraceEvent};
 use agent::ToolDefinition;
 
-use crate::{bash, list_dir, read, search};
 use crate::definition::build_readonly_tool_definitions;
+use crate::{bash, list_dir, read, search};
 
 const MAX_TURNS: usize = 25;
 
@@ -88,25 +88,31 @@ pub async fn execute(
                 "vibe:agent:tool-chunk",
                 serde_json::json!({"id": "sub-agent", "args": serde_json::json!({"status": &turn.content}).to_string()}),
             );
-            store_sub_event("sub-agent", SubTraceEvent {
-                kind: "chunk".to_string(),
-                text: Some(turn.content.clone()),
-                id: None,
-                name: None,
-                args: None,
-                ok: None,
-            });
+            store_sub_event(
+                "sub-agent",
+                SubTraceEvent {
+                    kind: "chunk".to_string(),
+                    text: Some(turn.content.clone()),
+                    id: None,
+                    name: None,
+                    args: None,
+                    ok: None,
+                },
+            );
         }
 
         if turn.tool_calls.is_empty() {
-            store_sub_event("sub-agent", SubTraceEvent {
-                kind: "done".to_string(),
-                text: None,
-                id: None,
-                name: None,
-                args: None,
-                ok: None,
-            });
+            store_sub_event(
+                "sub-agent",
+                SubTraceEvent {
+                    kind: "done".to_string(),
+                    text: None,
+                    id: None,
+                    name: None,
+                    args: None,
+                    ok: None,
+                },
+            );
             return Ok(full_result.trim().to_string());
         }
 
@@ -137,14 +143,17 @@ pub async fn execute(
                 }
             };
 
-            store_sub_event("sub-agent", SubTraceEvent {
-                kind: "tool-call".to_string(),
-                text: None,
-                id: Some(call.id.clone()),
-                name: Some(tool_name.clone()),
-                args: Some(parsed_args.clone()),
-                ok: None,
-            });
+            store_sub_event(
+                "sub-agent",
+                SubTraceEvent {
+                    kind: "tool-call".to_string(),
+                    text: None,
+                    id: Some(call.id.clone()),
+                    name: Some(tool_name.clone()),
+                    args: Some(parsed_args.clone()),
+                    ok: None,
+                },
+            );
 
             let result = match tool_name.as_str() {
                 "read_file" => read::tool_read_file(cwd, &parsed_args).await,
@@ -157,14 +166,17 @@ pub async fn execute(
             let is_ok = result.is_ok();
             let result_text = result.unwrap_or_else(|e| e);
 
-            store_sub_event("sub-agent", SubTraceEvent {
-                kind: "tool-result".to_string(),
-                text: Some(result_text.clone()),
-                id: Some(call.id.clone()),
-                name: None,
-                args: None,
-                ok: Some(is_ok),
-            });
+            store_sub_event(
+                "sub-agent",
+                SubTraceEvent {
+                    kind: "tool-result".to_string(),
+                    text: Some(result_text.clone()),
+                    id: Some(call.id.clone()),
+                    name: None,
+                    args: None,
+                    ok: Some(is_ok),
+                },
+            );
 
             sub_messages.push(ChatMessage {
                 role: "tool".to_string(),

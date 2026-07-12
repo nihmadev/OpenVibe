@@ -3,8 +3,14 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 const COLORS: &[&str] = &[
-    "#223883ff", "#0e5340ff", "#7c2d12", "#361868ff",
-    "#155e75", "#57142fff", "#162b63ff", "#136428ff",
+    "#223883ff",
+    "#0e5340ff",
+    "#7c2d12",
+    "#361868ff",
+    "#155e75",
+    "#57142fff",
+    "#162b63ff",
+    "#136428ff",
 ];
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -48,7 +54,11 @@ fn pick_color(seed: &str, used: &[String]) -> String {
 
 fn basename(p: &str) -> String {
     let cleaned = p.trim_end_matches(['\\', '/']);
-    cleaned.split(|c: char| c == '\\' || c == '/').last().unwrap_or(cleaned).to_string()
+    cleaned
+        .split(|c: char| c == '\\' || c == '/')
+        .last()
+        .unwrap_or(cleaned)
+        .to_string()
 }
 
 pub struct ProjectStore {
@@ -91,10 +101,15 @@ impl ProjectStore {
             );",
         )?;
 
-        conn.execute_batch("ALTER TABLE projects ADD COLUMN icon TEXT DEFAULT NULL").ok();
-        conn.execute_batch("ALTER TABLE projects ADD COLUMN photo TEXT DEFAULT NULL").ok();
+        conn.execute_batch("ALTER TABLE projects ADD COLUMN icon TEXT DEFAULT NULL")
+            .ok();
+        conn.execute_batch("ALTER TABLE projects ADD COLUMN photo TEXT DEFAULT NULL")
+            .ok();
 
-        Ok(Self { conn, data_dir: base_dir.to_string() })
+        Ok(Self {
+            conn,
+            data_dir: base_dir.to_string(),
+        })
     }
 
     pub fn list(&self) -> Vec<Project> {
@@ -118,8 +133,11 @@ impl ProjectStore {
     }
 
     fn get_by_id(&self, id: &str) -> Option<Project> {
-        let mut stmt = self.conn
-            .prepare("SELECT id, path, name, color, added_at, icon, photo FROM projects WHERE id = ?")
+        let mut stmt = self
+            .conn
+            .prepare(
+                "SELECT id, path, name, color, added_at, icon, photo FROM projects WHERE id = ?",
+            )
             .unwrap();
         stmt.query_row(params![id], |row| {
             Ok(Project {
@@ -136,8 +154,13 @@ impl ProjectStore {
     }
 
     pub fn get_active(&self) -> Option<Project> {
-        let active_id: Option<String> = self.conn
-            .query_row("SELECT value FROM state WHERE key = 'activeId'", [], |row| row.get(0))
+        let active_id: Option<String> = self
+            .conn
+            .query_row(
+                "SELECT value FROM state WHERE key = 'activeId'",
+                [],
+                |row| row.get(0),
+            )
             .ok();
         match active_id {
             Some(id) => self.get_by_id(&id),
@@ -146,8 +169,11 @@ impl ProjectStore {
     }
 
     pub fn ensure(&mut self, path: &str) -> Project {
-        let existing: Option<Project> = self.conn
-            .prepare("SELECT id, path, name, color, added_at, icon, photo FROM projects WHERE path = ?")
+        let existing: Option<Project> = self
+            .conn
+            .prepare(
+                "SELECT id, path, name, color, added_at, icon, photo FROM projects WHERE path = ?",
+            )
             .unwrap()
             .query_row(params![path], |row| {
                 Ok(Project {
@@ -187,7 +213,10 @@ impl ProjectStore {
     pub fn add(&mut self, path: &str) -> Project {
         let project = self.ensure(path);
         self.conn
-            .execute("INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', ?1)", params![project.id])
+            .execute(
+                "INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', ?1)",
+                params![project.id],
+            )
             .unwrap();
         project
     }
@@ -195,24 +224,40 @@ impl ProjectStore {
     pub fn remove(&mut self, id: &str) -> Option<Project> {
         let all = self.list();
         let idx = all.iter().position(|p| p.id == id)?;
-        self.conn.execute("DELETE FROM projects WHERE id = ?", params![id]).unwrap();
+        self.conn
+            .execute("DELETE FROM projects WHERE id = ?", params![id])
+            .unwrap();
 
-        let active_id: Option<String> = self.conn
-            .query_row("SELECT value FROM state WHERE key = 'activeId'", [], |row| row.get(0))
+        let active_id: Option<String> = self
+            .conn
+            .query_row(
+                "SELECT value FROM state WHERE key = 'activeId'",
+                [],
+                |row| row.get(0),
+            )
             .ok();
         let next_active = if active_id.as_deref() == Some(id) {
             let remaining: Vec<&Project> = all.iter().filter(|p| p.id != id).collect();
-            let next = remaining.get(idx).or_else(|| remaining.get(idx.wrapping_sub(1))).or_else(|| remaining.first());
+            let next = remaining
+                .get(idx)
+                .or_else(|| remaining.get(idx.wrapping_sub(1)))
+                .or_else(|| remaining.first());
             match next {
                 Some(p) => {
                     self.conn
-                        .execute("INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', ?1)", params![p.id])
+                        .execute(
+                            "INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', ?1)",
+                            params![p.id],
+                        )
                         .unwrap();
                     Some((*p).clone())
                 }
                 None => {
                     self.conn
-                        .execute("INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', NULL)", params![])
+                        .execute(
+                            "INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', NULL)",
+                            params![],
+                        )
                         .unwrap();
                     None
                 }
@@ -225,13 +270,19 @@ impl ProjectStore {
 
     pub fn rename(&self, id: &str, name: &str) {
         self.conn
-            .execute("UPDATE projects SET name = ? WHERE id = ?", params![name, id])
+            .execute(
+                "UPDATE projects SET name = ? WHERE id = ?",
+                params![name, id],
+            )
             .unwrap();
     }
 
     pub fn set_color(&self, id: &str, color: &str) {
         self.conn
-            .execute("UPDATE projects SET color = ? WHERE id = ?", params![color, id])
+            .execute(
+                "UPDATE projects SET color = ? WHERE id = ?",
+                params![color, id],
+            )
             .unwrap();
     }
 
@@ -239,7 +290,10 @@ impl ProjectStore {
         match icon {
             Some(val) => {
                 self.conn
-                    .execute("UPDATE projects SET icon = ? WHERE id = ?", params![val, id])
+                    .execute(
+                        "UPDATE projects SET icon = ? WHERE id = ?",
+                        params![val, id],
+                    )
                     .unwrap();
             }
             None => {
@@ -254,7 +308,10 @@ impl ProjectStore {
         match photo {
             Some(val) => {
                 self.conn
-                    .execute("UPDATE projects SET photo = ? WHERE id = ?", params![val, id])
+                    .execute(
+                        "UPDATE projects SET photo = ? WHERE id = ?",
+                        params![val, id],
+                    )
                     .unwrap();
             }
             None => {
@@ -268,26 +325,39 @@ impl ProjectStore {
     pub fn set_active(&self, id: &str) -> Option<Project> {
         let p = self.get_by_id(id)?;
         self.conn
-            .execute("INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', ?1)", params![id])
+            .execute(
+                "INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', ?1)",
+                params![id],
+            )
             .unwrap();
         Some(p)
     }
 
     pub fn clear_active(&self) {
         self.conn
-            .execute("INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', NULL)", params![])
+            .execute(
+                "INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', NULL)",
+                params![],
+            )
             .unwrap();
     }
 
     pub fn get_state(&self, key: &str) -> Option<String> {
         self.conn
-            .query_row("SELECT value FROM state WHERE key = ?", params![key], |row| row.get(0))
+            .query_row(
+                "SELECT value FROM state WHERE key = ?",
+                params![key],
+                |row| row.get(0),
+            )
             .ok()
     }
 
     pub fn set_state(&self, key: &str, value: &str) {
         self.conn
-            .execute("INSERT OR REPLACE INTO state (key, value) VALUES (?1, ?2)", params![key, value])
+            .execute(
+                "INSERT OR REPLACE INTO state (key, value) VALUES (?1, ?2)",
+                params![key, value],
+            )
             .unwrap();
     }
 
@@ -320,61 +390,112 @@ impl ProjectStore {
                    name = excluded.name, description = excluded.description,
                    base_url = excluded.base_url, api_key = excluded.api_key,
                    model = excluded.model",
-                params![p.id, p.name, p.description, p.base_url, p.api_key, p.model, p.added_at],
+                params![
+                    p.id,
+                    p.name,
+                    p.description,
+                    p.base_url,
+                    p.api_key,
+                    p.model,
+                    p.added_at
+                ],
             )
             .unwrap();
     }
 
     pub fn delete_provider(&self, id: &str) {
-        self.conn.execute("DELETE FROM providers WHERE id = ?", params![id]).unwrap();
+        self.conn
+            .execute("DELETE FROM providers WHERE id = ?", params![id])
+            .unwrap();
     }
 
     pub fn update_provider_model(&self, id: &str, model: &str) {
         self.conn
-            .execute("UPDATE providers SET model = ? WHERE id = ?", params![model, id])
+            .execute(
+                "UPDATE providers SET model = ? WHERE id = ?",
+                params![model, id],
+            )
             .unwrap();
     }
 
     pub fn list_disabled_models(&self) -> Vec<String> {
-        let mut stmt = self.conn.prepare("SELECT model_id FROM disabled_models").unwrap();
+        let mut stmt = self
+            .conn
+            .prepare("SELECT model_id FROM disabled_models")
+            .unwrap();
         let rows = stmt.query_map([], |row| row.get::<_, String>(0)).unwrap();
         rows.filter_map(|r| r.ok()).collect()
     }
 
     pub fn toggle_disabled_model(&self, model_id: &str) -> bool {
-        let exists: bool = self.conn
-            .query_row("SELECT 1 FROM disabled_models WHERE model_id = ?", params![model_id], |_| Ok(true))
+        let exists: bool = self
+            .conn
+            .query_row(
+                "SELECT 1 FROM disabled_models WHERE model_id = ?",
+                params![model_id],
+                |_| Ok(true),
+            )
             .unwrap_or(false);
         if exists {
-            self.conn.execute("DELETE FROM disabled_models WHERE model_id = ?", params![model_id]).unwrap();
+            self.conn
+                .execute(
+                    "DELETE FROM disabled_models WHERE model_id = ?",
+                    params![model_id],
+                )
+                .unwrap();
             false
         } else {
-            self.conn.execute("INSERT INTO disabled_models (model_id) VALUES (?)", params![model_id]).unwrap();
+            self.conn
+                .execute(
+                    "INSERT INTO disabled_models (model_id) VALUES (?)",
+                    params![model_id],
+                )
+                .unwrap();
             true
         }
     }
 
     pub fn list_enabled_models(&self) -> Vec<String> {
-        let mut stmt = self.conn.prepare("SELECT model_id FROM enabled_models").unwrap();
+        let mut stmt = self
+            .conn
+            .prepare("SELECT model_id FROM enabled_models")
+            .unwrap();
         let rows = stmt.query_map([], |row| row.get::<_, String>(0)).unwrap();
         rows.filter_map(|r| r.ok()).collect()
     }
 
     pub fn toggle_enabled_model(&self, model_id: &str) -> bool {
-        let exists: bool = self.conn
-            .query_row("SELECT 1 FROM enabled_models WHERE model_id = ?", params![model_id], |_| Ok(true))
+        let exists: bool = self
+            .conn
+            .query_row(
+                "SELECT 1 FROM enabled_models WHERE model_id = ?",
+                params![model_id],
+                |_| Ok(true),
+            )
             .unwrap_or(false);
         if exists {
-            self.conn.execute("DELETE FROM enabled_models WHERE model_id = ?", params![model_id]).unwrap();
+            self.conn
+                .execute(
+                    "DELETE FROM enabled_models WHERE model_id = ?",
+                    params![model_id],
+                )
+                .unwrap();
             false
         } else {
-            self.conn.execute("INSERT INTO enabled_models (model_id) VALUES (?)", params![model_id]).unwrap();
+            self.conn
+                .execute(
+                    "INSERT INTO enabled_models (model_id) VALUES (?)",
+                    params![model_id],
+                )
+                .unwrap();
             true
         }
     }
 
     pub fn chats_db(&self, project_id: &str) -> String {
-        let dir = std::path::Path::new(&self.data_dir).join("projects").join(project_id);
+        let dir = std::path::Path::new(&self.data_dir)
+            .join("projects")
+            .join(project_id);
         std::fs::create_dir_all(&dir).ok();
         dir.join("chats.db").to_string_lossy().to_string()
     }
@@ -389,6 +510,9 @@ fn chrono_now() -> i64 {
 
 fn rand_suffix() -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
-    let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().subsec_nanos();
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .subsec_nanos();
     format!("{:05x}", nanos % 0xFFFFF)
 }

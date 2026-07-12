@@ -36,7 +36,7 @@
   height: 24px;
   border: 0;
   padding: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   color: var(--fg-muted);
   background: transparent;
@@ -156,4 +156,5 @@
   bottom: 0;
   width: 1px;
   background: rgba(255, 255, 255, 0.05);
+  z-index: 1;
 }

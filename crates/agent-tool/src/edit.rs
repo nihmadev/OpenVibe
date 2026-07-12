@@ -25,9 +25,7 @@ pub async fn tool_edit_file(cwd: &str, args: &serde_json::Value) -> Result<Strin
         .map_err(|e| format!("Failed to read file: {e}"))?;
 
     if !content.contains(old_str) {
-        return Err(format!(
-            "Could not find exact match for old_str in {path}"
-        ));
+        return Err(format!("Could not find exact match for old_str in {path}"));
     }
 
     let first = content.find(old_str).unwrap();

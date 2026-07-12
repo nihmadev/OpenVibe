@@ -1,7 +1,7 @@
-use tauri::{Emitter, State};
-use agent::chat::ChatMessage;
-use chats::{ChatRecord, ChatSummary, chrono_now, rand_suffix};
 use crate::AppState;
+use agent::chat::ChatMessage;
+use chats::{chrono_now, rand_suffix, ChatRecord, ChatSummary};
+use tauri::{Emitter, State};
 
 #[tauri::command]
 pub fn chats_list(state: State<AppState>) -> Result<Vec<ChatSummary>, String> {
@@ -188,5 +188,3 @@ pub fn chats_save(state: State<AppState>, id: String, messages: Vec<ChatMessage>
 
     Ok(())
 }
-
-

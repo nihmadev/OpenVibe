@@ -15,6 +15,8 @@ import { formatCombo, setRecording } from "../../hooks/useShortcuts.js";
 import { useAnimations } from "../../hooks/useAnimations.js";
 import type { AnimKey, AnimStyle } from "../../hooks/useAnimations.js";
 import { InlineAnimPreview } from "./AnimationPreviewModal.js";
+import { NumberInput } from "./NumberInput.js";
+import { setZoomStep as setZoomStepGlobal, setZoomDefault as setZoomDefaultGlobal } from "../../zoomConfig.js";
 
 interface DiscoveredModel {
   id: string;
@@ -49,7 +51,7 @@ export function Settings({
 }: Props): React.ReactElement | null {
   const { currentTheme, setTheme, preview, colorScheme, setColorScheme, resolvedScheme } = useTheme();
   const { t } = useI18n();
-  const { settings: animSettings, set: setAnim } = useAnimations();
+  const { settings: animSettings, set: setAnim, animMultiplier, setAnimMultiplier } = useAnimations();
   const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "general");
   const [recordingId, setRecordingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -130,6 +132,10 @@ export function Settings({
     soundEnabled: true,
     soundOnComplete: true,
     soundOnStop: true,
+    zoomStep: "0.2",
+    zoomDefault: "1.2",
+    radius: "6",
+    blur: "none",
   } as const;
   type GeneralSettings = typeof defaultGeneral;
   const [general, setGeneral] = useState<GeneralSettings>({ ...defaultGeneral });
@@ -156,6 +162,15 @@ export function Settings({
       setGeneralLoaded(true);
     });
   }, []);
+
+  // Apply saved radius/blur on load
+  useEffect(() => {
+    if (!generalLoaded) return;
+    const r = parseFloat(general.radius) || 6;
+    document.documentElement.style.setProperty("--radius", r + "px");
+    const blurMap: Record<string, string> = { none: "0px", subtle: "8px", strong: "20px" };
+    document.documentElement.style.setProperty("--blur-overlay", blurMap[general.blur] ?? "0px");
+  }, [generalLoaded]);
 
   // Models state
   const [discoveredModels, setDiscoveredModels] = useState<DiscoveredModel[]>([]);
@@ -252,6 +267,16 @@ export function Settings({
     window.vibe.state.set(SETTINGS_PREFIX + key, String(value));
     if (key === "language" && onLanguageChange) {
       onLanguageChange(value as string);
+    }
+    if (key === "zoomStep") setZoomStepGlobal(parseFloat(value as string) || 0.2);
+    if (key === "zoomDefault") setZoomDefaultGlobal(parseFloat(value as string) || 1.2);
+    if (key === "radius") {
+      const v = parseFloat(value as string) || 6;
+      document.documentElement.style.setProperty("--radius", v + "px");
+    }
+    if (key === "blur") {
+      const m: Record<string, string> = { none: "0px", subtle: "8px", strong: "20px" };
+      document.documentElement.style.setProperty("--blur-overlay", m[value as string] ?? "0px");
     }
   }
 
@@ -533,7 +558,6 @@ export function Settings({
             ) : activeTab === "design" ? (
               <>
                 <div className="settings__subsection" style={{ paddingTop: "var(--settings-py)" }}>
-                  <div className="settings__subsection-title">{t("appearance")}</div>
                   <div className="settings__control-group">
                     <div className="settings__control-row">
                       <div className="settings__control-info">
@@ -570,7 +594,7 @@ export function Settings({
                       <Select
                         value={general.font}
                         options={[
-                          { value: "Segoe UI", label: "Segoe UI" },
+                          { value: "Segoe UI", label: "Segoe UI", fontFamily: "Segoe UI" },
                           { value: "System", label: t("systemFont") },
                           ...FONT_OPTIONS,
                         ]}
@@ -585,12 +609,78 @@ export function Settings({
                       <Select
                         value={general.codeFont}
                         options={[
-                          { value: "Cascadia Code", label: "Cascadia Code" },
-                          { value: "Consolas", label: "Consolas" },
-                          { value: "monospace", label: "Monospace" },
+                          { value: "Cascadia Code", label: "Cascadia Code", fontFamily: "Cascadia Code" },
+                          { value: "Consolas", label: "Consolas", fontFamily: "Consolas" },
+                          { value: "monospace", label: "Monospace", fontFamily: "monospace" },
                           ...CODE_FONT_OPTIONS,
                         ]}
                         onChange={(v) => updateGeneral("codeFont", v)}
+                      />
+                    </div>
+                    <div className="settings__control-row">
+                      <div className="settings__control-info">
+                        <div className="settings__control-label">{t("borderRadius")}</div>
+                        <div className="settings__control-desc">{t("borderRadiusDesc")}</div>
+                      </div>
+                      <NumberInput
+                        value={general.radius}
+                        step={1}
+                        min={0}
+                        max={16}
+                        onChange={(v) => updateGeneral("radius", v)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="settings__subsection">
+                  <div className="settings__subsection-title">{t("uiZoom")}</div>
+                  <div className="settings__control-group">
+                    <div className="settings__control-row">
+                      <div className="settings__control-info">
+                        <div className="settings__control-label">{t("zoomStep")}</div>
+                        <div className="settings__control-desc">{t("zoomStepDesc")}</div>
+                      </div>
+                      <NumberInput
+                        value={general.zoomStep}
+                        step={0.05}
+                        min={0.05}
+                        max={1}
+                        onChange={(v) => updateGeneral("zoomStep", v)}
+                      />
+                    </div>
+                    <div className="settings__control-row">
+                      <div className="settings__control-info">
+                        <div className="settings__control-label">{t("zoomDefault")}</div>
+                        <div className="settings__control-desc">{t("zoomDefaultDesc")}</div>
+                      </div>
+                      <NumberInput
+                        value={general.zoomDefault}
+                        step={0.05}
+                        min={0.2}
+                        max={3}
+                        onChange={(v) => updateGeneral("zoomDefault", v)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="settings__subsection">
+                  <div className="settings__subsection-title">{t("windowEffects")}</div>
+                  <div className="settings__control-group">
+                    <div className="settings__control-row">
+                      <div className="settings__control-info">
+                        <div className="settings__control-label">{t("blurOverlay")}</div>
+                        <div className="settings__control-desc">{t("blurOverlayDesc")}</div>
+                      </div>
+                      <Select
+                        value={general.blur}
+                        options={[
+                          { value: "none", label: t("blurNone") },
+                          { value: "subtle", label: t("blurSubtle") },
+                          { value: "strong", label: t("blurStrong") },
+                        ]}
+                        onChange={(v) => updateGeneral("blur", v)}
                       />
                     </div>
                   </div>
@@ -601,12 +691,12 @@ export function Settings({
                   <div className="settings__anim-cards">
                     {(
                       [
-                        ["projectHover",  "animProjectHover",  "animProjectHoverDesc"],
+                        ["projectHover", "animProjectHover", "animProjectHoverDesc"],
                         ["projectSwitch", "animProjectSwitch", "animProjectSwitchDesc"],
-                        ["sidebarSlide",  "animSidebarSlide",  "animSidebarSlideDesc"],
-                        ["contextMenu",   "animContextMenu",   "animContextMenuDesc"],
-                        ["buttons",       "animButtons",       "animButtonsDesc"],
-                        ["panelAppear",   "animPanelAppear",   "animPanelAppearDesc"],
+                        ["sidebarSlide", "animSidebarSlide", "animSidebarSlideDesc"],
+                        ["contextMenu", "animContextMenu", "animContextMenuDesc"],
+                        ["buttons", "animButtons", "animButtonsDesc"],
+                        ["panelAppear", "animPanelAppear", "animPanelAppearDesc"],
                       ] as const
                     ).map(([key, labelKey, descKey]) => (
                       <div className="settings__anim-card" key={key}>
@@ -618,17 +708,32 @@ export function Settings({
                           <Select
                             value={animSettings[key]}
                             options={[
-                              { value: "fade",       label: t("animStyleFade") },
-                              { value: "slide",      label: t("animStyleSlide") },
-                              { value: "scale",      label: t("animStyleScale") },
+                              { value: "fade", label: t("animStyleFade") },
+                              { value: "slide", label: t("animStyleSlide") },
+                              { value: "scale", label: t("animStyleScale") },
                               { value: "fade-slide", label: t("animStyleFadeSlide") },
-                              { value: "none",       label: t("animStyleNone") },
+                              { value: "none", label: t("animStyleNone") },
                             ]}
                             onChange={(v) => setAnim(key, v as AnimStyle)}
                           />
                         </div>
                       </div>
                     ))}
+                  </div>
+                  <div className="settings__control-group" style={{ marginTop: "var(--settings-py)" }}>
+                    <div className="settings__control-row">
+                      <div className="settings__control-info">
+                        <div className="settings__control-label">{t("animMultiplier")}</div>
+                        <div className="settings__control-desc">{t("animMultiplierDesc")}</div>
+                      </div>
+                      <NumberInput
+                        value={animMultiplier}
+                        step={0.1}
+                        min={0}
+                        max={5}
+                        onChange={setAnimMultiplier}
+                      />
+                    </div>
                   </div>
                 </div>
               </>
@@ -893,7 +998,8 @@ export function Settings({
       </div>
 
       {editing && (
-        <ConnectPopup          template={editing.template}
+        <ConnectPopup
+          template={editing.template}
           custom={editing.custom}
           editId={editing.editId}
           editProvider={editing.editId ? providers.find((p) => p.id === editing.editId) : null}

@@ -38,5 +38,5 @@
   color: var(--fg);
   border: 1px solid var(--line);
   padding: 0 5px;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
 }

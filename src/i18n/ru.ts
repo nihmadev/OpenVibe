@@ -119,6 +119,10 @@ export const ru = {
   hideFileTree: "Скрыть дерево файлов",
   showFileTree: "Показать дерево файлов",
   toggleFileTree: "Переключить дерево файлов",
+  hideButton: "Скрыть",
+  showButton: "Показать",
+  restoreButtons: "Восстановить кнопки",
+  nothingHidden: "Ничего не скрыто",
   minimize: "Свернуть",
   maximize: "Развернуть",
   close: "Закрыть",
@@ -347,6 +351,27 @@ export const ru = {
   preview: "Превью",
   animPreviewTitle: "Превью анимации",
   animPreviewClose: "Закрыть",
+  animMultiplier: "Плавность анимаций",
+  animMultiplierDesc: "Множитель плавности анимаций. 0 = отключено, 0.5 = быстро, 1 = нормально, 2 = плавно, 5 = ультра плавно",
+
+  // Window effects
+  windowEffects: "Эффекты окна",
+  blurOverlay: "Размытие фона",
+  blurOverlayDesc: "Размытие содержимого за модальными окнами (настройки, контекстные меню)",
+  blurNone: "Нет",
+  blurSubtle: "Лёгкое",
+  blurStrong: "Сильное",
+
+  // Radius settings
+  borderRadius: "Скругление углов",
+  borderRadiusDesc: "Радиус скругления элементов интерфейса",
+
+  // Zoom settings
+  uiZoom: "Масштаб UI",
+  zoomStep: "Шаг зума",
+  zoomStepDesc: "На сколько меняется масштаб при каждом нажатии Ctrl+Plus/Ctrl+Minus",
+  zoomDefault: "Зум по умолчанию",
+  zoomDefaultDesc: "Уровень масштаба при нажатии Ctrl+0",
 };
 
 export type Translations = typeof ru;

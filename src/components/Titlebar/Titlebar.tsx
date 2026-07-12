@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import "../../styles/Titlebar.css";
 import { Tooltip } from "../Tooltip/Tooltip.js";
 import { useI18n } from "../../hooks/useI18n.js";
+import { ContextMenu, type MenuItem } from "../ContextMenu/ContextMenu.js";
 import {
   BurgerIcon,
   SidebarToggleIcon,
@@ -28,11 +29,27 @@ interface TitlebarProps {
   onSearchOpen?: () => void;
 }
 
+const STORAGE_KEY = "titlebar:hidden";
+
+type BtnId = "sidebar" | "new-session" | "nav-prev" | "nav-next" | "terminal" | "file-tree";
+
+function loadHidden(): Set<BtnId> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return new Set<BtnId>(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set<BtnId>();
+  }
+}
+
 function folderLabel(folder: string | null | undefined): string {
   if (!folder) return "openvibe";
   const parts = folder.replace(/\\/g, "/").split("/");
   return parts[parts.length - 1] || "openvibe";
 }
+
+const LEFT_BTNS: BtnId[] = ["sidebar", "new-session", "nav-prev", "nav-next"];
+const RIGHT_BTNS: BtnId[] = ["terminal", "file-tree"];
 
 export function Titlebar({
   chatSideOpen = false,
@@ -49,49 +66,151 @@ export function Titlebar({
   onSearchOpen = () => {},
 }: TitlebarProps): React.ReactElement {
   const { t } = useI18n();
+  const [hidden, setHidden] = useState<Set<BtnId>>(loadHidden);
+  const [hiding, setHiding] = useState<Set<BtnId>>(new Set());
+  const [showing, setShowing] = useState<Set<BtnId>>(new Set());
+  const [ctx, setCtx] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...hidden]));
+  }, [hidden]);
+
+  const hide = useCallback((id: BtnId) => {
+    setHiding(p => new Set(p).add(id));
+    setTimeout(() => {
+      setHiding(p => { const n = new Set(p); n.delete(id); return n; });
+      setHidden(p => new Set(p).add(id));
+    }, 250);
+  }, []);
+
+  const unhide = useCallback((id: BtnId) => {
+    setHidden(p => { const n = new Set(p); n.delete(id); return n; });
+    setShowing(p => new Set(p).add(id));
+    setTimeout(() => {
+      setShowing(p => { const n = new Set(p); n.delete(id); return n; });
+    }, 250);
+  }, []);
+
+  function btnLabel(id: BtnId): string {
+    switch (id) {
+      case "sidebar": return chatSideOpen ? t("hideSessions") : t("showSessions");
+      case "new-session": return t("newSessionTitle");
+      case "nav-prev": return t("prevSessionTitle");
+      case "nav-next": return t("nextSessionTitle");
+      case "terminal": return t("toggleTerminal");
+      case "file-tree": return fileTreeOpen ? t("hideFileTree") : t("showFileTree");
+    }
+  }
+
+  function isVisible(id: BtnId): boolean {
+    if (hiding.has(id)) return true;
+    if (hidden.has(id) && !showing.has(id)) return false;
+    return true;
+  }
+
+  function btnClasses(id: BtnId, extra = ""): string {
+    let cls = "titlebar__action-btn";
+    if (extra) cls += " " + extra;
+    if (hiding.has(id)) cls += " titlebar__action-btn--hiding";
+    if (showing.has(id)) cls += " titlebar__action-btn--showing";
+    return cls;
+  }
+
+  function onBtnCtx(e: React.MouseEvent, id: BtnId): void {
+    e.preventDefault();
+    e.stopPropagation();
+    setCtx({
+      x: e.clientX,
+      y: e.clientY,
+      items: [
+        {
+          label: `${t("hideButton")} «${btnLabel(id)}»`,
+          onClick: () => hide(id),
+        },
+      ],
+    });
+  }
+
+  function onSectionCtx(e: React.MouseEvent, ids: BtnId[]): void {
+    e.preventDefault();
+    const hiddenHere = ids.filter(id => hidden.has(id) && !showing.has(id));
+    if (hiddenHere.length === 0) return;
+    setCtx({
+      x: e.clientX,
+      y: e.clientY,
+      items: [
+        { label: t("restoreButtons"), disabled: true },
+        ...hiddenHere.map(id => ({
+          label: `${t("showButton")} «${btnLabel(id)}»`,
+          onClick: () => unhide(id),
+        })),
+      ],
+    });
+  }
+
   return (
     <div className="titlebar">
-      <div className="titlebar__left">
+      <div className="titlebar__left" onContextMenu={e => onSectionCtx(e, LEFT_BTNS)}>
         <Tooltip text={t("menu")} side="bottom">
-          <button className="titlebar__action-btn" aria-label={t("menu")}>
+          <button
+            className="titlebar__action-btn"
+            aria-label={t("menu")}
+            onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}
+          >
             <BurgerIcon />
           </button>
         </Tooltip>
-        <Tooltip text={chatSideOpen ? t("hideSessions") : t("showSessions")} side="bottom">
-          <button
-            className={`titlebar__action-btn ${chatSideOpen ? "titlebar__action-btn--active" : ""}`}
-            onClick={onToggleChatSide}
-            aria-label="Toggle sessions"
-          >
-            <SidebarToggleIcon />
-          </button>
-        </Tooltip>
-        <Tooltip text={t("newSessionTitle")} side="bottom">
-          <button className="titlebar__action-btn" onClick={onNewChat} aria-label={t("newSessionTitle")}>
-            <NewSessionIcon />
-          </button>
-        </Tooltip>
+        {isVisible("sidebar") && (
+          <Tooltip text={chatSideOpen ? t("hideSessions") : t("showSessions")} side="bottom">
+            <button
+              className={btnClasses("sidebar", chatSideOpen ? "titlebar__action-btn--active" : "")}
+              onClick={onToggleChatSide}
+              onContextMenu={e => onBtnCtx(e, "sidebar")}
+              aria-label="Toggle sessions"
+            >
+              <SidebarToggleIcon />
+            </button>
+          </Tooltip>
+        )}
+        {isVisible("new-session") && (
+          <Tooltip text={t("newSessionTitle")} side="bottom">
+            <button
+              className={btnClasses("new-session")}
+              onClick={onNewChat}
+              onContextMenu={e => onBtnCtx(e, "new-session")}
+              aria-label={t("newSessionTitle")}
+            >
+              <NewSessionIcon />
+            </button>
+          </Tooltip>
+        )}
         <div className="titlebar__nav-group">
-          <Tooltip text={t("prevSessionTitle")} side="bottom">
-            <button
-              className="titlebar__action-btn"
-              onClick={() => onSwitchChat("prev")}
-              disabled={!canGoBack}
-              aria-label={t("prevSessionTitle")}
-            >
-              <ArrowLeftIcon />
-            </button>
-          </Tooltip>
-          <Tooltip text={t("nextSessionTitle")} side="bottom">
-            <button
-              className="titlebar__action-btn"
-              onClick={() => onSwitchChat("next")}
-              disabled={!canGoForward}
-              aria-label={t("nextSessionTitle")}
-            >
-              <ArrowRightIcon />
-            </button>
-          </Tooltip>
+          {isVisible("nav-prev") && (
+            <Tooltip text={t("prevSessionTitle")} side="bottom">
+              <button
+                className={btnClasses("nav-prev")}
+                onClick={() => onSwitchChat("prev")}
+                disabled={!canGoBack}
+                onContextMenu={e => onBtnCtx(e, "nav-prev")}
+                aria-label={t("prevSessionTitle")}
+              >
+                <ArrowLeftIcon />
+              </button>
+            </Tooltip>
+          )}
+          {isVisible("nav-next") && (
+            <Tooltip text={t("nextSessionTitle")} side="bottom">
+              <button
+                className={btnClasses("nav-next")}
+                onClick={() => onSwitchChat("next")}
+                disabled={!canGoForward}
+                onContextMenu={e => onBtnCtx(e, "nav-next")}
+                aria-label={t("nextSessionTitle")}
+              >
+                <ArrowRightIcon />
+              </button>
+            </Tooltip>
+          )}
         </div>
       </div>
 
@@ -102,30 +221,37 @@ export function Titlebar({
         </div>
       </div>
 
-      <div className="titlebar__right">
-        <Tooltip text={t("toggleTerminal")} side="bottom">
-          <button
-            className={`titlebar__action-btn ${terminalOpen ? "titlebar__action-btn--active" : ""}`}
-            onClick={onToggleTerminal}
-            aria-label={t("toggleTerminal")}
-          >
-            <TerminalIcon />
-          </button>
-        </Tooltip>
-        <Tooltip text={fileTreeOpen ? t("hideFileTree") : t("showFileTree")} side="bottom">
-          <button
-            className={`titlebar__action-btn ${fileTreeOpen ? "titlebar__action-btn--active" : ""}`}
-            onClick={onToggleFileTree}
-            aria-label="Toggle file tree"
-          >
-            <FolderToggleIcon />
-          </button>
-        </Tooltip>
+      <div className="titlebar__right" onContextMenu={e => onSectionCtx(e, RIGHT_BTNS)}>
+        {isVisible("terminal") && (
+          <Tooltip text={t("toggleTerminal")} side="bottom">
+            <button
+              className={btnClasses("terminal", terminalOpen ? "titlebar__action-btn--active" : "")}
+              onClick={onToggleTerminal}
+              onContextMenu={e => onBtnCtx(e, "terminal")}
+              aria-label={t("toggleTerminal")}
+            >
+              <TerminalIcon />
+            </button>
+          </Tooltip>
+        )}
+        {isVisible("file-tree") && (
+          <Tooltip text={fileTreeOpen ? t("hideFileTree") : t("showFileTree")} side="bottom">
+            <button
+              className={btnClasses("file-tree", fileTreeOpen ? "titlebar__action-btn--active" : "")}
+              onClick={onToggleFileTree}
+              onContextMenu={e => onBtnCtx(e, "file-tree")}
+              aria-label="Toggle file tree"
+            >
+              <FolderToggleIcon />
+            </button>
+          </Tooltip>
+        )}
 
         <div className="titlebar__controls">
           <button
             className="titlebar__btn"
             onClick={() => window.vibe.window.minimize()}
+            onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}
             aria-label={t("minimizeLabel")}
           >
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.2">
@@ -135,6 +261,7 @@ export function Titlebar({
           <button
             className="titlebar__btn"
             onClick={() => window.vibe.window.maximize()}
+            onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}
             aria-label={t("maximizeLabel")}
           >
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.2">
@@ -144,6 +271,7 @@ export function Titlebar({
           <button
             className="titlebar__btn titlebar__btn--close"
             onClick={() => window.vibe.window.close()}
+            onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}
             aria-label={t("closeLabel")}
           >
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.2">
@@ -152,6 +280,10 @@ export function Titlebar({
           </button>
         </div>
       </div>
+
+      {ctx && (
+        <ContextMenu x={ctx.x} y={ctx.y} items={ctx.items} onClose={() => setCtx(null)} />
+      )}
     </div>
   );
 }

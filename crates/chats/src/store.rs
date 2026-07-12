@@ -1,6 +1,6 @@
-use rusqlite::{params, Connection, Result as SqlResult};
-use crate::types::*;
 use crate::migration;
+use crate::types::*;
+use rusqlite::{params, Connection, Result as SqlResult};
 
 pub struct ChatStore {
     conn: Connection,
@@ -32,9 +32,7 @@ impl ChatStore {
                 created_at        INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
             )",
         )?;
-        conn.execute_batch(
-            "CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id)",
-        )?;
+        conn.execute_batch("CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id)")?;
         let store = Self { conn };
         migration::run(&store.conn);
         Ok(store)
@@ -127,15 +125,17 @@ impl ChatStore {
                  VALUES (?1, ?2, ?3, ?4)
                  ON CONFLICT(id) DO UPDATE SET
                    title = excluded.title, updated_at = excluded.updated_at",
-                params![record.id, record.title, record.created_at, record.updated_at],
+                params![
+                    record.id,
+                    record.title,
+                    record.created_at,
+                    record.updated_at
+                ],
             )
             .unwrap();
 
         self.conn
-            .execute(
-                "DELETE FROM messages WHERE chat_id = ?",
-                params![record.id],
-            )
+            .execute("DELETE FROM messages WHERE chat_id = ?", params![record.id])
             .unwrap();
 
         for msg in &record.messages {

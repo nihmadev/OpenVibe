@@ -1,6 +1,6 @@
-use tauri::{Manager, State};
-use serde::{Deserialize, Serialize};
 use crate::AppState;
+use serde::{Deserialize, Serialize};
+use tauri::{Manager, State};
 
 #[derive(Serialize)]
 pub struct InitResult {
@@ -37,11 +37,7 @@ pub fn init_app(state: State<AppState>) -> Result<InitResult, String> {
             "providerId": c.provider_id,
         })
     });
-    Ok(InitResult {
-        ok: true,
-        config: config_val,
-        error: None,
-    })
+    Ok(InitResult { ok: true, config: config_val, error: None })
 }
 
 #[tauri::command]

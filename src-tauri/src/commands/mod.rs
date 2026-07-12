@@ -1,10 +1,10 @@
 pub mod agent;
-pub mod fs;
-pub mod projects;
 pub mod chats;
-pub mod providers;
-pub mod models;
-pub mod terminals;
-pub mod misc;
+pub mod fs;
 pub mod llm;
+pub mod misc;
+pub mod models;
+pub mod projects;
+pub mod providers;
+pub mod terminals;
 pub mod tools;

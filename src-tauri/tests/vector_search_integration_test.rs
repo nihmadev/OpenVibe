@@ -3,13 +3,8 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn test_root() -> String {
-    let ts = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    let dir = std::env::temp_dir()
-        .join("openvibe_vec_int_test")
-        .join(format!("int_{ts}"));
+    let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let dir = std::env::temp_dir().join("openvibe_vec_int_test").join(format!("int_{ts}"));
     fs::create_dir_all(&dir).unwrap();
     dir.to_string_lossy().to_string()
 }
@@ -59,8 +54,12 @@ fn test_model_loading_and_search() -> Result<(), String> {
 
     println!("📊 Results for 'adding numbers':");
     for (i, r) in results1.iter().enumerate() {
-        println!("  {}. [{:.4}] {}:{} — {}",
-            i+1, r.score, r.path, r.line,
+        println!(
+            "  {}. [{:.4}] {}:{} — {}",
+            i + 1,
+            r.score,
+            r.path,
+            r.line,
             r.content.lines().next().unwrap_or("").trim()
         );
     }
@@ -70,8 +69,12 @@ fn test_model_loading_and_search() -> Result<(), String> {
 
     println!("📊 Results for 'click element':");
     for (i, r) in results2.iter().enumerate() {
-        println!("  {}. [{:.4}] {}:{} — {}",
-            i+1, r.score, r.path, r.line,
+        println!(
+            "  {}. [{:.4}] {}:{} — {}",
+            i + 1,
+            r.score,
+            r.path,
+            r.line,
             r.content.lines().next().unwrap_or("").trim()
         );
     }

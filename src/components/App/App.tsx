@@ -291,65 +291,65 @@ export function App(): React.ReactElement {
       <ThemeProvider>
         <I18nProvider lang={lang as any}>
           <AnimationProvider>
-          <div className="app">
-            <Titlebar
-              chatSideOpen={chatSideOpen}
-              onToggleChatSide={() => {
-                setChatSideSticky(!chatSideSticky);
-                setChatSideOpen(!chatSideOpen);
-              }}
-              onNewChat={() => handleNewChat(() => setItems([]))}
-              onSwitchChat={handleSwitchChat}
-              canGoBack={canGoBack}
-              canGoForward={canGoForward}
-              terminalOpen={terminalOpen}
-              onToggleTerminal={() => setTerminalOpen(!terminalOpen)}
-              fileTreeOpen={fileTreeOpen}
-              onToggleFileTree={() => setFileTreeOpen(!fileTreeOpen)}
-              folder={folder}
-              onSearchOpen={handleOpenSearch}
-            />
-            {searchOpen && (
-              <SearchPopup
+            <div className="app">
+              <Titlebar
+                chatSideOpen={chatSideOpen}
+                onToggleChatSide={() => {
+                  setChatSideSticky(!chatSideSticky);
+                  setChatSideOpen(!chatSideOpen);
+                }}
+                onNewChat={() => handleNewChat(() => setItems([]))}
+                onSwitchChat={handleSwitchChat}
+                canGoBack={canGoBack}
+                canGoForward={canGoForward}
+                terminalOpen={terminalOpen}
+                onToggleTerminal={() => setTerminalOpen(!terminalOpen)}
+                fileTreeOpen={fileTreeOpen}
+                onToggleFileTree={() => setFileTreeOpen(!fileTreeOpen)}
                 folder={folder}
-                onClose={handleCloseSearch}
-                onNewChat={() => {
-                  handleNewChat(() => setItems([]));
-                  setSearchOpen(false);
-                }}
-                onSwitchChat={(dir) => {
-                  handleSwitchChat(dir);
-                  setSearchOpen(false);
-                }}
-                onToggleTerminal={() => {
-                  setTerminalOpen((o) => !o);
-                  setSearchOpen(false);
-                }}
-                onOpenFile={handleOpenFile}
-                onRevealFolder={setRevealPath}
+                onSearchOpen={handleOpenSearch}
               />
-            )}
-            <Welcome
-              projects={projects}
-              activeProject={activeProject}
-              handlePickProject={handlePickProject}
-              handleAddProject={handleAddProject}
-              handleCloseProject={handleCloseProject}
-              handleRemoveProject={handleRemoveProject}
-              onProjectChange={onProjectChange}
-              setSettingsOpen={setSettingsOpen}
-            />
-            <Settings
-              open={settingsOpen}
-              onClose={() => setSettingsOpen(false)}
-              onProviderChanged={(model, baseUrl) => setConfig((c) => (c ? { ...c, model, baseUrl } : c))}
-              initialTab={settingsTab as any}
-              onLanguageChange={setLang}
-              shortcuts={shortcuts}
-              onUpdateBinding={updateBinding}
-              onResetBinding={resetBinding}
-            />
-          </div>
+              {searchOpen && (
+                <SearchPopup
+                  folder={folder}
+                  onClose={handleCloseSearch}
+                  onNewChat={() => {
+                    handleNewChat(() => setItems([]));
+                    setSearchOpen(false);
+                  }}
+                  onSwitchChat={(dir) => {
+                    handleSwitchChat(dir);
+                    setSearchOpen(false);
+                  }}
+                  onToggleTerminal={() => {
+                    setTerminalOpen((o) => !o);
+                    setSearchOpen(false);
+                  }}
+                  onOpenFile={handleOpenFile}
+                  onRevealFolder={setRevealPath}
+                />
+              )}
+              <Welcome
+                projects={projects}
+                activeProject={activeProject}
+                handlePickProject={handlePickProject}
+                handleAddProject={handleAddProject}
+                handleCloseProject={handleCloseProject}
+                handleRemoveProject={handleRemoveProject}
+                onProjectChange={onProjectChange}
+                setSettingsOpen={setSettingsOpen}
+              />
+              <Settings
+                open={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
+                onProviderChanged={(model, baseUrl) => setConfig((c) => (c ? { ...c, model, baseUrl } : c))}
+                initialTab={settingsTab as any}
+                onLanguageChange={setLang}
+                shortcuts={shortcuts}
+                onUpdateBinding={updateBinding}
+                onResetBinding={resetBinding}
+              />
+            </div>
           </AnimationProvider>
         </I18nProvider>
       </ThemeProvider>
@@ -360,7 +360,7 @@ export function App(): React.ReactElement {
     <ThemeProvider>
       <I18nProvider lang={lang as any}>
         <AnimationProvider>
-        <div className="app">
+          <div className="app">
             <Titlebar
               chatSideOpen={chatSideOpen}
               onToggleChatSide={() => {

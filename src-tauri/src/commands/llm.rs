@@ -1,13 +1,13 @@
+use crate::AppState;
+use agent::chat::ChatMessage;
+use agent::config::LlmConfig;
+use agent::definition::ToolDefinition;
+use agent::request::stream_chat;
+use agent::token::compute_context_usage;
+use agent::token::ContextUsage;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
-use crate::AppState;
-use agent::config::LlmConfig;
-use agent::chat::ChatMessage;
-use agent::definition::ToolDefinition;
-use agent::request::stream_chat;
-use agent::token::ContextUsage;
-use agent::token::compute_context_usage;
 
 #[tauri::command]
 pub fn estimate_context_tokens(state: State<AppState>) -> Result<ContextUsage, String> {
@@ -44,22 +44,15 @@ pub async fn llm_stream(
         &cancel,
         &state.http_client,
         &|chunk| {
-            let _ = app_for_emit.emit(
-                "vibe:llm:delta",
-                serde_json::json!({ "sessionId": &session_id_clone, "content": chunk }),
-            );
+            let _ = app_for_emit
+                .emit("vibe:llm:delta", serde_json::json!({ "sessionId": &session_id_clone, "content": chunk }));
         },
         &|chunk| {
-            let _ = app_for_emit.emit(
-                "vibe:llm:reasoning",
-                serde_json::json!({ "sessionId": &session_id_clone, "content": chunk }),
-            );
+            let _ = app_for_emit
+                .emit("vibe:llm:reasoning", serde_json::json!({ "sessionId": &session_id_clone, "content": chunk }));
         },
         &|| {
-            let _ = app_for_emit.emit(
-                "vibe:llm:reasoning_end",
-                serde_json::json!({ "sessionId": &session_id_clone }),
-            );
+            let _ = app_for_emit.emit("vibe:llm:reasoning_end", serde_json::json!({ "sessionId": &session_id_clone }));
         },
         &|_, _| {},
     )
@@ -83,10 +76,7 @@ pub async fn llm_stream(
             Ok(())
         }
         Err(e) => {
-            let _ = app_handle.emit(
-                "vibe:llm:error",
-                serde_json::json!({ "sessionId": session_id, "error": e }),
-            );
+            let _ = app_handle.emit("vibe:llm:error", serde_json::json!({ "sessionId": session_id, "error": e }));
             Err(e)
         }
     }

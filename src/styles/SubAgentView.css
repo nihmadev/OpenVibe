@@ -36,7 +36,7 @@
   align-items: center;
   padding: 6px 10px;
   border: 1px solid var(--line-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--bg-2);
 }
 

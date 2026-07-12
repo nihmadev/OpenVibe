@@ -72,7 +72,7 @@ const MessageItem = React.memo(
       };
     }, [item.id, item.kind, items, busy]);
 
-    if (item.kind === "tool") return <AgentToolView item={item} onDrillDown={onDrillDown} />;
+    if (item.kind === "tool") return <AgentToolView item={item} onDrillDown={onDrillDown} cwd={cwd} />;
 
     if (item.kind === "model-picker" && item.models) {
       return (
@@ -228,7 +228,7 @@ export function ChatHistory({
     <div className="chathistory-container" ref={ref}>
       {processedItems.map((entry) => {
         if (entry.kind === "group") {
-          return <ToolGroup key={entry.items[0]!.id} items={entry.items} />;
+          return <ToolGroup key={entry.items[0]!.id} items={entry.items} cwd={cwd} />;
         }
         return (
           <MessageItem

@@ -1,0 +1,53 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Europe/Moscow
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - automated
+    groups:
+      tauri-plugins:
+        patterns:
+          - "@tauri-apps/*"
+      fontsource:
+        patterns:
+          - "@fontsource/*"
+      react-ecosystem:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      dev-deps:
+        dependency-type: development
+    ignore:
+      - dependency-name: "react"
+        versions: [">=19.0.0"]
+
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Europe/Moscow
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - automated
+    groups:
+      rust-deps:
+        patterns:
+          - "*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels:
+      - ci
+      - automated

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: OpenVibe Support
+    url: https://github.com/nihmadev/OpenVibe/discussions
+    about: Please ask and answer questions here.
+  - name: Telegram
+    url: https://t.me/nihmadev
+    about: Direct contact with the maintainer.

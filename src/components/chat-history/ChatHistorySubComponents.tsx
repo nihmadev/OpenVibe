@@ -1,6 +1,6 @@
 import React from "react";
 import { HistoryItem } from "./types";
-import { FileBadgeInfo, describe, pickFile } from "./utils.js";
+import { FileBadgeInfo, describe, pickFile, toRelativePath } from "./utils.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { CheckIcon, FailIcon, SpinIcon, DiffIcon, CircularProgress } from "./ChatHistoryIcons.js";
 import { invoke } from "@tauri-apps/api/core";
@@ -13,10 +13,11 @@ import { DiffEditor } from "../DiffEditor/DiffEditor.js";
 import { resolveMonacoLang } from "../CodeBlock/CodeBlock.js";
 
 export function FileBadge({ info }: { info: FileBadgeInfo }): React.ReactElement {
+  const display = info.rawPath ?? info.name;
   return (
     <span className="fbadge">
       {info.cls === "dir" ? <FolderIcon open={false} name={info.name} /> : <FileIcon name={info.name} />}
-      <span className="fbadge__name">{info.name}</span>
+      <span className="fbadge__name">{display}</span>
     </span>
   );
 }
@@ -116,7 +117,7 @@ export function ToolBlock({ item }: { item: HistoryItem }): React.ReactElement {
   );
 }
 
-export function ToolGroup({ items }: { items: HistoryItem[] }): React.ReactElement {
+export function ToolGroup({ items, cwd }: { items: HistoryItem[]; cwd?: string }): React.ReactElement {
   const { t } = useI18n();
   const [open, setOpen] = React.useState(false);
 
@@ -191,7 +192,7 @@ export function ToolGroup({ items }: { items: HistoryItem[] }): React.ReactEleme
       </div>
       <div className={`tool-group__tools${open ? "" : " tool-group__tools--hidden"}`}>
         {items.map((item) => (
-          <AgentToolView key={item.id} item={item} />
+          <AgentToolView key={item.id} item={item} cwd={cwd} />
         ))}
       </div>
     </div>
@@ -337,15 +338,6 @@ interface FileChangeInfo {
   added: number;
   removed: number;
   item: HistoryItem;
-}
-
-function toRelativePath(filePath: string, cwd?: string): string {
-  if (!cwd) return filePath;
-  const np = filePath.replace(/\\/g, "/").replace(/\/$/, "");
-  const nc = cwd.replace(/\\/g, "/").replace(/\/$/, "");
-  if (np.startsWith(nc + "/")) return np.slice(nc.length + 1);
-  if (np === nc) return ".";
-  return filePath;
 }
 
 function getFileChanges(items: HistoryItem[], currentId: string): FileChangeInfo[] {

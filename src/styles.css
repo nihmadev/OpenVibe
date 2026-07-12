@@ -15,6 +15,18 @@
   --white: #ffffff;
   --sans: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Border radius scale — controlled via settings */
+  --radius: 6px;
+  --radius-xs: max(2px, calc(var(--radius) - 3px));
+  --radius-sm: max(3px, calc(var(--radius) - 2px));
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 8px);
+  --radius-2xl: calc(var(--radius) + 10px);
+
+  /* Backdrop blur — controlled via settings */
+  --blur-overlay: 0px;
 }
 
 * {
@@ -52,13 +64,24 @@ code {
 /* ── Global animation keyframes ── */
 
 @keyframes loader-wave {
-  0%, 100% { transform: scaleY(0.4); opacity: 0.4; }
-  50%       { transform: scaleY(1);   opacity: 1; }
+  0%,
+  100% {
+    transform: scaleY(0.4);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slide-up-in {
@@ -70,6 +93,26 @@ code {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes anim-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes anim-slide {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes anim-scale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes anim-fade-slide {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes project-switch-in {
@@ -85,15 +128,24 @@ code {
 
 /* Applied to the main content when a project is picked */
 .animate-project-switch {
-  animation: project-switch-in 0.22s cubic-bezier(0.2, 0, 0.2, 1);
+  animation-name: var(--anim-project-switch-keyframes, project-switch-in);
+  animation-duration: calc(var(--anim-project-switch-duration, 0.22s) * var(--anim-project-switch-enabled, 1));
+  animation-timing-function: var(--anim-project-switch-easing, cubic-bezier(0.2, 0, 0.2, 1));
+  animation-fill-mode: both;
 }
 
 /* Generic fade-in for any newly mounted panel */
 .animate-fade-in {
-  animation: fade-in 0.18s ease;
+  animation-name: var(--anim-panel-appear-keyframes, fade-in);
+  animation-duration: calc(var(--anim-panel-appear-duration, 0.18s) * var(--anim-panel-appear-enabled, 1));
+  animation-timing-function: var(--anim-panel-appear-easing, ease);
+  animation-fill-mode: both;
 }
 
 /* Slide up — used for session list items, chat rows, etc */
 .animate-slide-up {
-  animation: slide-up-in 0.18s cubic-bezier(0.2, 0, 0.2, 1);
+  animation-name: var(--anim-sidebar-slide-keyframes, slide-up-in);
+  animation-duration: calc(var(--anim-sidebar-slide-duration, 0.18s) * var(--anim-sidebar-slide-enabled, 1));
+  animation-timing-function: var(--anim-sidebar-slide-easing, cubic-bezier(0.2, 0, 0.2, 1));
+  animation-fill-mode: both;
 }

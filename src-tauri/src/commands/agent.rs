@@ -1,29 +1,27 @@
+use std::sync::atomic::Ordering;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, State};
 
+use crate::AppState;
 use agent::chat::ChatMessage;
 use agent::snapshot::RollbackPreview;
-use agent::sub_trace::{SubTraceEvent, get_sub_trace};
+use agent::sub_trace::{get_sub_trace, SubTraceEvent};
 use agent::Agent;
-use crate::AppState;
 use config::Config;
 
 #[tauri::command]
 pub async fn agent_new(state: State<'_, AppState>, cwd: String) -> Result<(), String> {
     let cfg = {
         let config_lock = state.config.lock().map_err(|e| e.to_string())?;
-        config_lock
-            .as_ref()
-            .cloned()
-            .unwrap_or_else(|| Config {
-                api_key: String::new(),
-                base_url: "https://api.openai.com/v1".to_string(),
-                model: "gpt-4o-mini".to_string(),
-                cwd: cwd.clone(),
-                auto_approve: false,
-                provider_id: None,
-                api_url: Some("https://openvibe-api-production.up.railway.app".to_string()),
-            })
+        config_lock.as_ref().cloned().unwrap_or_else(|| Config {
+            api_key: String::new(),
+            base_url: "https://api.openai.com/v1".to_string(),
+            model: "gpt-4o-mini".to_string(),
+            cwd: cwd.clone(),
+            auto_approve: false,
+            provider_id: None,
+            api_url: Some("https://api.nihmadev.fun".to_string()),
+        })
     };
 
     let agent_cfg = cfg.to_agent_config();
@@ -40,6 +38,16 @@ pub async fn agent_send(
     input: String,
     content_parts: Option<Vec<serde_json::Value>>,
 ) -> Result<(), String> {
+    // Extract cancel flag from agent BEFORE taking it out, so agent_stop can still cancel
+    let cancel_token = {
+        let agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
+        agent_lock.as_ref().map(|a| a.cancel.clone())
+    };
+    {
+        let mut cancel_lock = state.agent_cancel.lock().map_err(|e| e.to_string())?;
+        *cancel_lock = cancel_token;
+    }
+
     let mut agent = {
         let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
         agent_lock.take()
@@ -56,9 +64,13 @@ pub async fn agent_send(
         let _ = app_handle.emit(event, data);
     };
 
-    agent
-        .send(input, content_parts, &executor, &state.http_client, &emit, &mut confirm_senders)
-        .await;
+    agent.send(input, content_parts, &executor, &state.http_client, &emit, &mut confirm_senders).await;
+
+    // Clean up cancel token now that send is done
+    {
+        let mut cancel_lock = state.agent_cancel.lock().map_err(|e| e.to_string())?;
+        *cancel_lock = None;
+    }
 
     {
         let mut lock = state.pending_confirms.lock().map_err(|e| e.to_string())?;
@@ -67,10 +79,7 @@ pub async fn agent_send(
 
     {
         let msgs = agent.messages.clone();
-        let ts = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_millis() as i64;
+        let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as i64;
         let active = state.active_chat_id.lock().map_err(|e| e.to_string())?;
         if let Some(ref id) = *active {
             let chat_store = state.chat_store.lock().map_err(|e| e.to_string())?;
@@ -101,9 +110,18 @@ pub async fn agent_send(
 
 #[tauri::command]
 pub async fn agent_stop(state: State<'_, AppState>) -> Result<(), String> {
-    let agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
-    if let Some(ref agent) = *agent_lock {
-        agent.stop();
+    // Try the agent first (it's in state when not currently sending)
+    if let Ok(agent_lock) = state.agent.lock() {
+        if let Some(ref agent) = *agent_lock {
+            agent.stop();
+            return Ok(());
+        }
+    }
+    // Agent was taken out by agent_send — use the cancel token instead
+    if let Ok(cancel_lock) = state.agent_cancel.lock() {
+        if let Some(ref cancel) = *cancel_lock {
+            cancel.store(true, Ordering::Relaxed);
+        }
     }
     Ok(())
 }
@@ -131,11 +149,7 @@ pub async fn agent_summarize(state: State<'_, AppState>) -> Result<String, Strin
 }
 
 #[tauri::command]
-pub async fn agent_confirm(
-    state: State<'_, AppState>,
-    id: String,
-    decision: String,
-) -> Result<(), String> {
+pub async fn agent_confirm(state: State<'_, AppState>, id: String, decision: String) -> Result<(), String> {
     let mut confirm_senders = state.pending_confirms.lock().map_err(|e| e.to_string())?;
     if let Some(sender) = confirm_senders.remove(&id) {
         let _ = sender.send(decision);
@@ -144,10 +158,7 @@ pub async fn agent_confirm(
 }
 
 #[tauri::command]
-pub async fn agent_set_messages(
-    state: State<'_, AppState>,
-    messages: Vec<ChatMessage>,
-) -> Result<(), String> {
+pub async fn agent_set_messages(state: State<'_, AppState>, messages: Vec<ChatMessage>) -> Result<(), String> {
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     if let Some(ref mut agent) = *agent_lock {
         agent.set_messages(messages);
@@ -156,13 +167,9 @@ pub async fn agent_set_messages(
 }
 
 #[tauri::command]
-pub async fn agent_get_messages(
-    state: State<'_, AppState>,
-) -> Result<Vec<ChatMessage>, String> {
+pub async fn agent_get_messages(state: State<'_, AppState>) -> Result<Vec<ChatMessage>, String> {
     let agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
-    let agent = agent_lock
-        .as_ref()
-        .ok_or_else(|| "No agent".to_string())?;
+    let agent = agent_lock.as_ref().ok_or_else(|| "No agent".to_string())?;
     Ok(agent.get_messages().to_vec())
 }
 
@@ -172,20 +179,14 @@ pub async fn agent_get_sub_trace(call_id: String) -> Vec<SubTraceEvent> {
 }
 
 #[tauri::command]
-pub async fn agent_revert_preview(
-    state: State<'_, AppState>,
-    index: usize,
-) -> Result<RollbackPreview, String> {
+pub async fn agent_revert_preview(state: State<'_, AppState>, index: usize) -> Result<RollbackPreview, String> {
     let agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     let agent = agent_lock.as_ref().ok_or_else(|| "No agent".to_string())?;
     Ok(agent.prepare_revert(index))
 }
 
 #[tauri::command]
-pub async fn agent_instant_revert(
-    state: State<'_, AppState>,
-    index: usize,
-) -> Result<RollbackPreview, String> {
+pub async fn agent_instant_revert(state: State<'_, AppState>, index: usize) -> Result<RollbackPreview, String> {
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     let agent = agent_lock.as_mut().ok_or_else(|| "No agent".to_string())?;
     agent.instant_revert(index)

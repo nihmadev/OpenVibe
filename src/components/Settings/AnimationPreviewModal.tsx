@@ -1,21 +1,22 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import type { AnimStyle, AnimKey } from "../../hooks/useAnimations.js";
+import { useAnimations } from "../../hooks/useAnimations.js";
 
 // ─── Duration map ────────────────────────────────────────────────────────────
 const PREVIEW_DURATION: Record<AnimStyle, number> = {
-  fade:         220,
-  slide:        260,
-  scale:        220,
+  fade: 220,
+  slide: 260,
+  scale: 220,
   "fade-slide": 260,
-  none:         80,
+  none: 80,
 };
 
 const ANIM_CLASS: Record<AnimStyle, string> = {
-  fade:         "apm-preview--fade",
-  slide:        "apm-preview--slide",
-  scale:        "apm-preview--scale",
+  fade: "apm-preview--fade",
+  slide: "apm-preview--slide",
+  scale: "apm-preview--scale",
   "fade-slide": "apm-preview--fade-slide",
-  none:         "apm-preview--none",
+  none: "apm-preview--none",
 };
 
 // ─── Mini ProjectRail (horizontal) ──────────────────────────────────────────
@@ -26,14 +27,8 @@ function MiniProjectRail({ highlightIdx }: { highlightIdx: number }) {
   return (
     <div className="apm-rail apm-rail--row">
       {TILE_LABELS.map((label, i) => (
-        <div
-          key={i}
-          className={"apm-rail__tile" + (i === highlightIdx ? " apm-rail__tile--active" : "")}
-        >
-          <span
-            className="apm-rail__avatar"
-            style={{ background: TILE_COLORS[i] } as React.CSSProperties}
-          >
+        <div key={i} className={"apm-rail__tile" + (i === highlightIdx ? " apm-rail__tile--active" : "")}>
+          <span className="apm-rail__avatar" style={{ background: TILE_COLORS[i] } as React.CSSProperties}>
             {label}
           </span>
         </div>
@@ -46,11 +41,7 @@ function MiniProjectRail({ highlightIdx }: { highlightIdx: number }) {
 // ─── Mini ContextMenu ────────────────────────────────────────────────────────
 function MiniContextMenu({ cls, visible }: { cls: string; visible: boolean }) {
   return (
-    <div
-      className={"apm-ctx " + cls}
-      style={{ opacity: visible ? undefined : 0 }}
-      key={String(visible)}
-    >
+    <div className={"apm-ctx " + cls} style={{ opacity: visible ? undefined : 0 }} key={String(visible)}>
       <div className="apm-ctx__item">New File</div>
       <div className="apm-ctx__item">New Folder</div>
       <div className="apm-ctx__sep" />
@@ -62,11 +53,7 @@ function MiniContextMenu({ cls, visible }: { cls: string; visible: boolean }) {
 // ─── Mini Panel / Modal ──────────────────────────────────────────────────────
 function MiniPanel({ cls, visible }: { cls: string; visible: boolean }) {
   return (
-    <div
-      className={"apm-panel " + cls}
-      style={{ opacity: visible ? undefined : 0 }}
-      key={String(visible)}
-    >
+    <div className={"apm-panel " + cls} style={{ opacity: visible ? undefined : 0 }} key={String(visible)}>
       <div className="apm-panel__header" />
       <div className="apm-panel__body">
         <div className="apm-panel__bar" />
@@ -81,11 +68,7 @@ function MiniPanel({ cls, visible }: { cls: string; visible: boolean }) {
 function MiniButtons({ cls, visible }: { cls: string; visible: boolean }) {
   return (
     <div className="apm-buttons" key={String(visible)}>
-      <button
-        className={"apm-btn" + (visible ? " " + cls : "")}
-        style={{ opacity: visible ? 1 : 0.3 }}
-        tabIndex={-1}
-      >
+      <button className={"apm-btn" + (visible ? " " + cls : "")} style={{ opacity: visible ? 1 : 0.3 }} tabIndex={-1}>
         Send
       </button>
       <button
@@ -181,13 +164,9 @@ function PreviewContent({
 }
 
 // ─── Inline preview — hover-triggered, embedded in the settings card ─────────
-export function InlineAnimPreview({
-  animKey,
-  animStyle,
-}: {
-  animKey: AnimKey;
-  animStyle: AnimStyle;
-}) {
+export function InlineAnimPreview({ animKey, animStyle }: { animKey: AnimKey; animStyle: AnimStyle }) {
+  const { animMultiplier } = useAnimations();
+  const mult = Math.max(parseFloat(animMultiplier) || 1, 0.01);
   const [playing, setPlaying] = useState(false);
   const [tick, setTick] = useState(0);
   const [hovered, setHovered] = useState(false);
@@ -200,16 +179,16 @@ export function InlineAnimPreview({
     timerRef.current = setTimeout(() => {
       setPlaying(true);
       setTick((n) => n + 1);
-      const dur = PREVIEW_DURATION[animStyle] + 300;
+      const dur = (PREVIEW_DURATION[animStyle] + 150) * mult;
       timerRef.current = setTimeout(() => setPlaying(false), dur);
-    }, 40);
-  }, [animStyle]);
+    }, 20 * mult);
+  }, [animStyle, mult]);
 
   // Start cycle on hover, stop on leave
   useEffect(() => {
     if (hovered) {
       play();
-      cycleRef.current = setInterval(() => play(), 2000);
+      cycleRef.current = setInterval(() => play(), 1200 * mult);
     } else {
       if (cycleRef.current) clearInterval(cycleRef.current);
       // don't abort in-flight animation — let it finish naturally
@@ -217,7 +196,7 @@ export function InlineAnimPreview({
     return () => {
       if (cycleRef.current) clearInterval(cycleRef.current);
     };
-  }, [hovered, play]);
+  }, [hovered, play, mult]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -233,12 +212,7 @@ export function InlineAnimPreview({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <PreviewContent
-        animKey={animKey}
-        animStyle={animStyle}
-        playing={playing}
-        tick={tick}
-      />
+      <PreviewContent animKey={animKey} animStyle={animStyle} playing={playing} tick={tick} />
     </div>
   );
 }

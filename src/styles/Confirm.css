@@ -2,9 +2,12 @@
   margin-top: 16px;
   padding: 20px;
   border: 2px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bg-2);
-  animation: slide-up 0.2s ease-out;
+  animation-name: var(--anim-panel-appear-keyframes, slide-up);
+  animation-duration: calc(var(--anim-panel-appear-duration, 0.2s) * var(--anim-panel-appear-enabled, 1));
+  animation-timing-function: var(--anim-panel-appear-easing, ease-out);
+  animation-fill-mode: both;
 }
 
 .confirm__title {
@@ -20,7 +23,7 @@
 .confirm__title code {
   background: var(--bg-3);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--accent);
 }
 
@@ -30,7 +33,7 @@
   color: var(--fg-dim);
   background: var(--bg-3);
   padding: 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--line);
   margin-bottom: 16px;
   max-height: 300px;
@@ -50,7 +53,7 @@
   align-items: center;
   gap: 8px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 600;
@@ -61,7 +64,7 @@
 .confirm__btn kbd {
   background: var(--bg-3);
   padding: 0 4px;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   font-size: 10px;
 }
 

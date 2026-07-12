@@ -16,7 +16,7 @@ describe("PROVIDER_TEMPLATES", () => {
       expect(p.id).toBeTruthy();
       expect(p.name).toBeTruthy();
       expect(p.baseUrl).toBeTruthy();
-      expect(p.icon).toMatch(/\.svg$/);
+      expect(p.icon).toMatch(/\.(svg|webp)$/);
     }
   });
 

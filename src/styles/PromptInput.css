@@ -10,7 +10,7 @@
   gap: 0;
   background: var(--bg-2);
   border: 1px solid var(--line-strong);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   position: relative;
   transition: border-color 0.15s;
 }
@@ -29,7 +29,7 @@
   align-items: center;
   justify-content: center;
   background: var(--bg-3);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   pointer-events: none;
 }
 
@@ -56,7 +56,7 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 4px 4px 4px 8px;
   max-width: 200px;
   min-height: 48px;
@@ -101,7 +101,7 @@
   color: var(--fg-muted);
   cursor: pointer;
   padding: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -140,7 +140,7 @@
   width: 64px;
   height: 64px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--line);
   cursor: pointer;
   transition: border-color 0.12s;
@@ -153,7 +153,7 @@
 .prompt-input__image-fallback {
   width: 64px;
   height: 64px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--line);
   background: var(--bg-3);
   display: flex;
@@ -195,7 +195,7 @@
   right: 0;
   padding: 2px 4px;
   background: var(--bg-3);
-  border-radius: 0 0 6px 6px;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
 .prompt-input__image-name span {
@@ -278,7 +278,7 @@
   left: 0;
   right: 0;
   pointer-events: none;
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
 /* ── Submit area (bottom-right) ── */
@@ -306,7 +306,7 @@
   width: 32px;
   height: 32px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   background: var(--fg);
   color: var(--bg);
@@ -344,7 +344,7 @@
   width: 32px;
   height: 32px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--fg-dim);
   cursor: pointer;
@@ -400,7 +400,7 @@
   font-size: 13px;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .prompt-input__shell-cancel:hover {
@@ -420,7 +420,7 @@
   display: flex;
   flex-direction: column;
   padding: 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bg-2);
   z-index: 100;
 }
@@ -438,7 +438,7 @@
   width: 100%;
   padding: 6px 8px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--fg);
   font-size: 13px;
@@ -486,7 +486,7 @@
   gap: 6px;
   padding: 3px 4px 3px 8px;
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--bg-2);
   font-size: 11px;
   color: var(--fg-dim);
@@ -501,7 +501,7 @@
   width: 22px;
   height: 22px;
   object-fit: cover;
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
 }
 
 .chip__icon {
@@ -524,7 +524,7 @@
   width: 18px;
   height: 18px;
   padding: 0;
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
 }
 
 .chip__close:hover {
@@ -576,7 +576,7 @@
   gap: 4px;
   padding: 2px 4px 2px 2px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--fg);
   font-size: 13px;
@@ -601,7 +601,7 @@
   max-height: 300px;
   background: var(--bg-2);
   border: 1px solid var(--line-strong);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   z-index: 200;
   overflow: hidden;
 }
@@ -621,7 +621,7 @@
   gap: 6px;
   flex: 1;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--bg-1);
 }
 
@@ -651,7 +651,7 @@
   width: 28px;
   height: 28px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--fg-dim);
   cursor: pointer;
@@ -700,12 +700,12 @@
 
 .model-selector__group:last-child {
   border-bottom: 1px solid var(--line);
-  border-radius: 0 0 8px 8px;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
 .model-selector__group:only-child {
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .model-selector__group-name {

@@ -6,10 +6,13 @@
 <p align="center">
   <a href="https://openvibe-beta.vercel.app">website</a> ·
   <a href="https://github.com/mttscode/openvibe">github</a> ·
-  <a href="mailto:mt-studio@bk.ru">mt-studio@bk.ru</a>
+  <a href="mailto:lolz@nihmadev.fun">lolz@nihmadev.fun</a>
 </p>
 
 <p align="center">
+  <a href="https://github.com/nihmadev/OpenVibe/releases/ alt="Release" /></a>
+  <a href="https://github.com/nihmadev/OpenVibe/actions"><img src="https://img.shields.io/github/actions/workflow/status/nihmadev/openvibe-community/.github/workflows/build.yml?style=flat-square&logo=githubactions&label=build" alt="CI" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-OpenVibe-blue?style=flat-square" alt="License" /></a>
   <img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Rust-000000?style=flat-square&logo=rust&logoColor=white" alt="Rust" />
@@ -94,5 +97,5 @@ Source code is open for use and modification. UI design and visual assets are pr
 <p align="center">
   <small>Built by developers who got tired of being told which model to use</small>
   <br/>
-  <a href="mailto:mt-studio@bk.ru">mt-studio@bk.ru</a>
+  <a href="mailto:lolz@nihmadev.fun">lolz@nihmadev.fun</a>
 </p>

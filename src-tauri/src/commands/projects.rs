@@ -1,6 +1,6 @@
-use tauri::State;
 use crate::AppState;
 use db::Project;
+use tauri::State;
 
 #[tauri::command]
 pub fn projects_list(state: State<AppState>) -> Result<Vec<Project>, String> {
@@ -17,9 +17,7 @@ pub fn projects_active(state: State<AppState>) -> Result<Option<Project>, String
 #[tauri::command]
 pub async fn projects_add(state: State<'_, AppState>, app_handle: tauri::AppHandle) -> Result<Option<Project>, String> {
     use tauri_plugin_dialog::DialogExt;
-    let path = app_handle.dialog()
-        .file()
-        .blocking_pick_folder();
+    let path = app_handle.dialog().file().blocking_pick_folder();
 
     let path = match path {
         Some(p) => p.to_string(),

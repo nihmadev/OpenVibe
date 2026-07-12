@@ -1,7 +1,7 @@
 .code-block {
   position: relative;
   border: 1px solid var(--line-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: auto;
   margin: 8px 0;
 }
@@ -22,7 +22,7 @@
   width: 26px;
   height: 26px;
   padding: 0;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
   justify-content: center;

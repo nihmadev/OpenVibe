@@ -98,7 +98,9 @@ pub fn compute_context_usage(messages: &[ChatMessage], model: &str) -> ContextUs
     let used = estimate_tokens(messages);
     let max = max_context_tokens(model);
     let percent = if max > 0 {
-        ((used as f64 / max as f64) * 100.0).round().clamp(1.0, 100.0) as usize
+        ((used as f64 / max as f64) * 100.0)
+            .round()
+            .clamp(1.0, 100.0) as usize
     } else {
         1
     };

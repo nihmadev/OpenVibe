@@ -33,6 +33,16 @@ pub fn load_config(cwd: &str) -> Config {
     let github_key = get("GITHUB_TOKEN");
     let moonshot_key = get("MOONSHOT_API_KEY");
     let zai_key = get("ZAI_API_KEY");
+    let together_key = get("TOGETHER_API_KEY");
+    let fireworks_key = get("FIREWORKS_API_KEY");
+    let mistral_key = get("MISTRAL_API_KEY");
+    let xai_key = get("XAI_API_KEY");
+    let cohere_key = get("COHERE_API_KEY");
+    let perplexity_key = get("PERPLEXITY_API_KEY");
+    let huggingface_key = get("HUGGINGFACE_API_KEY");
+    let replicate_key = get("REPLICATE_API_KEY");
+    let deepinfra_key = get("DEEPINFRA_API_KEY");
+    let nvidia_key = get("NVIDIA_API_KEY");
 
     let mut provider_id: Option<String> = None;
 
@@ -102,6 +112,116 @@ pub fn load_config(cwd: &str) -> Config {
         provider_id = Some("zai".to_string());
     }
 
+    if api_key.is_empty() && !together_key.is_empty() {
+        api_key = together_key;
+        if base_url.is_empty() {
+            base_url = "https://api.together.ai/v1".to_string();
+        }
+        if model.is_empty() {
+            model = "mistralai/Mixtral-8x7B-Instruct-v0.1".to_string();
+        }
+        provider_id = Some("together".to_string());
+    }
+
+    if api_key.is_empty() && !fireworks_key.is_empty() {
+        api_key = fireworks_key;
+        if base_url.is_empty() {
+            base_url = "https://api.fireworks.ai/inference/v1".to_string();
+        }
+        if model.is_empty() {
+            model = "accounts/fireworks/models/llama-v3p1-8b-instruct".to_string();
+        }
+        provider_id = Some("fireworks".to_string());
+    }
+
+    if api_key.is_empty() && !mistral_key.is_empty() {
+        api_key = mistral_key;
+        if base_url.is_empty() {
+            base_url = "https://api.mistral.ai/v1".to_string();
+        }
+        if model.is_empty() {
+            model = "mistral-small-latest".to_string();
+        }
+        provider_id = Some("mistral".to_string());
+    }
+
+    if api_key.is_empty() && !xai_key.is_empty() {
+        api_key = xai_key;
+        if base_url.is_empty() {
+            base_url = "https://api.x.ai/v1".to_string();
+        }
+        if model.is_empty() {
+            model = "grok-2-latest".to_string();
+        }
+        provider_id = Some("xai".to_string());
+    }
+
+    if api_key.is_empty() && !cohere_key.is_empty() {
+        api_key = cohere_key;
+        if base_url.is_empty() {
+            base_url = "https://api.cohere.ai/v1".to_string();
+        }
+        if model.is_empty() {
+            model = "command-r-plus".to_string();
+        }
+        provider_id = Some("cohere".to_string());
+    }
+
+    if api_key.is_empty() && !perplexity_key.is_empty() {
+        api_key = perplexity_key;
+        if base_url.is_empty() {
+            base_url = "https://api.perplexity.ai".to_string();
+        }
+        if model.is_empty() {
+            model = "llama-3.1-sonar-small-128k-online".to_string();
+        }
+        provider_id = Some("perplexity".to_string());
+    }
+
+    if api_key.is_empty() && !huggingface_key.is_empty() {
+        api_key = huggingface_key;
+        if base_url.is_empty() {
+            base_url = "https://router.huggingface.co/v1".to_string();
+        }
+        if model.is_empty() {
+            model = "meta-llama/Meta-Llama-3.1-8B-Instruct".to_string();
+        }
+        provider_id = Some("huggingface".to_string());
+    }
+
+    if api_key.is_empty() && !replicate_key.is_empty() {
+        api_key = replicate_key;
+        if base_url.is_empty() {
+            base_url = "https://api.replicate.com/v1".to_string();
+        }
+        if model.is_empty() {
+            model = "meta/meta-llama-3-70b-instruct".to_string();
+        }
+        provider_id = Some("replicate".to_string());
+    }
+
+    if api_key.is_empty() && !deepinfra_key.is_empty() {
+        api_key = deepinfra_key;
+        if base_url.is_empty() {
+            base_url = "https://api.deepinfra.com/v1".to_string();
+        }
+        if model.is_empty() {
+            model = "meta-llama/Meta-Llama-3.1-8B-Instruct".to_string();
+        }
+        provider_id = Some("deepinfra".to_string());
+    }
+
+    if api_key.is_empty() && !nvidia_key.is_empty() {
+        api_key = nvidia_key;
+        if base_url.is_empty() {
+            base_url = "https://integrate.api.nvidia.com/v1".to_string();
+        }
+        if model.is_empty() {
+            model = "meta/llama-3.1-8b-instruct".to_string();
+        }
+        provider_id = Some("nvidia".to_string());
+    }
+
     if base_url.is_empty() {
         base_url = "https://api.openai.com/v1".to_string();
     }
@@ -114,7 +234,7 @@ pub fn load_config(cwd: &str) -> Config {
 
     let api_url = get("VIBE_API_URL");
     let api_url = if api_url.is_empty() {
-        Some("https://openvibe-api-production.up.railway.app".to_string())
+        Some("https://api.nihmadev.fun".to_string())
     } else {
         Some(api_url)
     };

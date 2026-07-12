@@ -73,8 +73,15 @@ impl Agent {
             Ok(turn) => {
                 let mut t = turn.content.trim().to_string();
                 let prefixes = [
-                    "Title:", "Topic:", "Summary:", "Название:", "Тема:", "Заголовок:",
-                    "title:", "topic:", "summary:",
+                    "Title:",
+                    "Topic:",
+                    "Summary:",
+                    "Название:",
+                    "Тема:",
+                    "Заголовок:",
+                    "title:",
+                    "topic:",
+                    "summary:",
                 ];
                 for prefix in &prefixes {
                     if let Some(rest) = t.strip_prefix(prefix) {

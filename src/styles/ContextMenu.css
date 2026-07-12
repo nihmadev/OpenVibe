@@ -2,21 +2,24 @@
 .ctxmenu {
   position: fixed;
   z-index: 100;
-  min-width: 160px;
+  min-width: 120px;
   background: var(--bg-2);
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  padding: 6px;
-  font-size: 12.5px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 2px;
+  font-size: 11.5px;
   overflow: hidden;
-  animation: ctxmenu-in 0.12s cubic-bezier(0.2, 0, 0, 1);
+  animation-name: var(--anim-context-menu-keyframes, ctxmenu-in);
+  animation-duration: calc(var(--anim-context-menu-duration, 0.1s) * var(--anim-context-menu-enabled, 1));
+  animation-timing-function: var(--anim-context-menu-easing, cubic-bezier(0.2, 0, 0, 1));
+  animation-fill-mode: both;
   transform-origin: top left;
 }
 
 @keyframes ctxmenu-in {
   from {
     opacity: 0;
-    transform: scale(0.92) translateY(-4px);
+    transform: scale(0.96) translateY(-2px);
   }
   to {
     opacity: 1;
@@ -28,38 +31,37 @@
   display: flex;
   width: 100%;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
   background: transparent;
   border: 0;
-  border-radius: 6px;
-  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
   color: var(--fg-dim);
   cursor: pointer;
   text-align: left;
-  transition: background 0.1s, color 0.1s;
+  transition: background 0.08s;
 }
 .ctxmenu__item:hover:not(:disabled) {
   background: var(--bg-3);
   color: var(--fg);
 }
-.ctxmenu__item--danger {
-  color: var(--fg-dim);
+.ctxmenu__item--danger:hover:not(:disabled) {
+  color: var(--accent);
 }
 .ctxmenu__item--disabled,
 .ctxmenu__item:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
-.ctxmenu__shortcut {
-  color: var(--fg-muted);
-  font-size: 11px;
-  margin-left: 16px;
+.ctxmenu__icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
-.ctxmenu__sep {
-  height: 1px;
-  background: var(--line);
-  margin: 4px 8px;
-  border-radius: 1px;
+.ctxmenu__icon > * {
+  width: 14px;
+  height: 14px;
 }
 
 .popup {
@@ -71,7 +73,7 @@
   overflow: auto;
   background: var(--bg);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   z-index: 5;
 }
 .popup__item {

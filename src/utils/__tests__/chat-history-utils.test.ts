@@ -4,6 +4,7 @@ import {
   basename,
   pickFile,
   describe as describeItem,
+  toRelativePath,
   formatArgs,
   ICON_MAP_HISTORY,
 } from "../../components/chat-history/utils";
@@ -52,22 +53,22 @@ suite("pickFile", () => {
 
   it("extracts file info from path field", () => {
     const result = pickFile({ path: "/home/user/main.ts" });
-    expect(result).toEqual({ name: "main.ts", ext: "ts", cls: "ts" });
+    expect(result).toEqual({ name: "main.ts", ext: "ts", cls: "ts", rawPath: "/home/user/main.ts" });
   });
 
   it("extracts file info from file field", () => {
     const result = pickFile({ file: "style.css" });
-    expect(result).toEqual({ name: "style.css", ext: "css", cls: "css" });
+    expect(result).toEqual({ name: "style.css", ext: "css", cls: "css", rawPath: "style.css" });
   });
 
   it("handles extension with no color mapping", () => {
     const result = pickFile({ path: "foo.xyz" });
-    expect(result).toEqual({ name: "foo.xyz", ext: "xyz", cls: "" });
+    expect(result).toEqual({ name: "foo.xyz", ext: "xyz", cls: "", rawPath: "foo.xyz" });
   });
 
   it("handles file without extension", () => {
     const result = pickFile({ path: "/dir/Makefile" });
-    expect(result).toEqual({ name: "Makefile", ext: "", cls: "" });
+    expect(result).toEqual({ name: "Makefile", ext: "", cls: "", rawPath: "/dir/Makefile" });
   });
 });
 
@@ -78,7 +79,14 @@ suite("describe", () => {
     const item = { toolName: "read_file", toolArgs: { path: "/a/b.ts" } } as HistoryItem;
     const d = describeItem(item, t);
     expect(d.verb).toBe("reading");
-    expect(d.file).toEqual({ name: "b.ts", ext: "ts", cls: "ts" });
+    expect(d.file).toEqual({ name: "b.ts", ext: "ts", cls: "ts", rawPath: "/a/b.ts" });
+  });
+
+  it("describes read_file with cwd", () => {
+    const item = { toolName: "read_file", toolArgs: { path: "/home/user/proj/src/file.ts" }, ok: true } as HistoryItem;
+    const d = describeItem(item, t, "/home/user/proj");
+    expect(d.verb).toBe("read");
+    expect(d.file?.rawPath).toBe("src/file.ts");
   });
 
   it("describes read_file (done)", () => {
@@ -109,7 +117,7 @@ suite("describe", () => {
     const item = { toolName: "list_dir", toolArgs: { path: "/src" } } as HistoryItem;
     const d = describeItem(item, t);
     expect(d.verb).toBe("listing");
-    expect(d.file).toEqual({ name: "src", ext: "", cls: "dir" });
+    expect(d.file).toEqual({ name: "src", ext: "", cls: "dir", rawPath: "/src" });
   });
 
   it("describes list_dir (done)", () => {
@@ -168,7 +176,25 @@ suite("describe", () => {
     const item = { toolName: "custom_tool", toolArgs: { path: "x.txt" } } as HistoryItem;
     const d = describeItem(item, t);
     expect(d.verb).toBe("custom_tool");
-    expect(d.file).toEqual({ name: "x.txt", ext: "txt", cls: "" });
+    expect(d.file).toEqual({ name: "x.txt", ext: "txt", cls: "", rawPath: "x.txt" });
+  });
+});
+
+suite("toRelativePath", () => {
+  it("returns path unchanged when no cwd", () => {
+    expect(toRelativePath("/a/b/c.ts")).toBe("/a/b/c.ts");
+  });
+
+  it("makes path relative to cwd", () => {
+    expect(toRelativePath("/home/user/proj/src/file.ts", "/home/user/proj")).toBe("src/file.ts");
+  });
+
+  it("returns dot when path equals cwd", () => {
+    expect(toRelativePath("/home/user/proj", "/home/user/proj")).toBe(".");
+  });
+
+  it("handles trailing slashes", () => {
+    expect(toRelativePath("/home/user/proj/src/", "/home/user/proj")).toBe("src");
   });
 });
 

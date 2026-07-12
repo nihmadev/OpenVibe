@@ -104,7 +104,7 @@
   background: transparent;
   color: transparent;
   font-size: 14px;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
   flex-shrink: 0;
   padding: 0;
@@ -133,7 +133,7 @@
   height: 16px;
   flex-shrink: 0;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   position: relative;
 }
 
@@ -221,7 +221,7 @@
   gap: 4px;
   color: var(--fg);
   padding: 0 2px;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
 }
 
 .editor-area__breadcrumb-seg:hover {

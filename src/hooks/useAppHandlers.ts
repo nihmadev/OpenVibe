@@ -8,11 +8,7 @@ interface UseAppHandlersProps {
   pendingAttachments: React.MutableRefObject<any[] | undefined>;
 }
 
-export function useAppHandlers({
-  setItems,
-  pendingAttachments,
-}: UseAppHandlersProps) {
-
+export function useAppHandlers({ setItems, pendingAttachments }: UseAppHandlersProps) {
   const handleSubmit = useCallback(
     (payload: SendPayload) => {
       const { parts, display, attachments } = payload;

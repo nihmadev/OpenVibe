@@ -88,5 +88,5 @@ npm start
 <p align="center">
   <small>Создано разработчиками, уставшими от того, что им диктуют, какую модель использовать</small>
   <br/>
-  <a href="mailto:mt-studio@bk.ru">mt-studio@bk.ru</a>
+  <a href="mailto:lolz@nihmadev.fun">lolz@nihmadev.fun</a>
 </p>

@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 
 use crate::config::should_skip;
-use crate::types::{FsEntry, FileMatch};
+use crate::types::{FileMatch, FsEntry};
 use crate::walker;
 
 const TEXT_FILE_LIMIT: u64 = 2 * 1024 * 1024;
@@ -21,13 +21,26 @@ pub fn fs_list(dir: String) -> Result<Vec<FsEntry>, String> {
             let name = e.file_name().to_string_lossy().to_string();
             let full = path.to_string_lossy().to_string();
             let is_dir = path.is_dir();
-            let size = if path.is_file() { path.metadata().ok().map(|m| m.len()) } else { None };
-            FsEntry { name, path: full, is_dir, size }
+            let size = if path.is_file() {
+                path.metadata().ok().map(|m| m.len())
+            } else {
+                None
+            };
+            FsEntry {
+                name,
+                path: full,
+                is_dir,
+                size,
+            }
         })
         .collect();
     result.sort_by(|a, b| {
         if a.is_dir != b.is_dir {
-            return if a.is_dir { std::cmp::Ordering::Less } else { std::cmp::Ordering::Greater };
+            return if a.is_dir {
+                std::cmp::Ordering::Less
+            } else {
+                std::cmp::Ordering::Greater
+            };
         }
         a.name.to_lowercase().cmp(&b.name.to_lowercase())
     });

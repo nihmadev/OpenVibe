@@ -55,7 +55,9 @@
 
 .prompt-input__rollback-body {
   overflow: hidden;
-  transition: max-height 0.3s ease, opacity 0.2s ease;
+  transition:
+    max-height 0.3s ease,
+    opacity 0.2s ease;
 }
 
 .prompt-input__rollback-body > div {
@@ -66,7 +68,7 @@
 
 .prompt-input__rollback-files {
   margin-bottom: 6px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--line-strong);
 }
@@ -141,14 +143,16 @@
   font-size: 12px;
   font-weight: 500;
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--line-strong);
   background: transparent;
   color: var(--text-1);
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .prompt-input__rollback-restore-btn:hover {

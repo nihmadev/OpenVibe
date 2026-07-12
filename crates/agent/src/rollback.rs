@@ -64,8 +64,9 @@ impl Agent {
             match &entry.snapshot.content {
                 Some(content) => {
                     if let Some(parent) = std::path::Path::new(path).parent() {
-                        std::fs::create_dir_all(parent)
-                            .map_err(|e| format!("Failed to create dir for restore {}: {e}", path))?;
+                        std::fs::create_dir_all(parent).map_err(|e| {
+                            format!("Failed to create dir for restore {}: {e}", path)
+                        })?;
                     }
                     std::fs::write(path, content)
                         .map_err(|e| format!("Failed to restore file {}: {e}", path))?;
@@ -91,8 +92,9 @@ impl Agent {
         for snap in &state.file_current {
             match &snap.content {
                 Some(content) => {
-                    std::fs::write(&snap.path, content)
-                        .map_err(|e| format!("Failed to undo restore of file {}: {e}", snap.path))?;
+                    std::fs::write(&snap.path, content).map_err(|e| {
+                        format!("Failed to undo restore of file {}: {e}", snap.path)
+                    })?;
                 }
                 None => {
                     std::fs::remove_file(&snap.path).ok();

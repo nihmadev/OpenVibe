@@ -4,6 +4,7 @@ export interface FileBadgeInfo {
   name: string;
   ext: string;
   cls: string;
+  rawPath?: string;
 }
 
 export const EXT_COLORS: Record<string, string> = {
@@ -55,7 +56,16 @@ export function pickFile(args: unknown): FileBadgeInfo | null {
   const name = basename(raw);
   const dot = name.lastIndexOf(".");
   const ext = dot > 0 ? name.slice(dot + 1).toLowerCase() : "";
-  return { name, ext, cls: EXT_COLORS[ext] ?? "" };
+  return { name, ext, cls: EXT_COLORS[ext] ?? "", rawPath: raw };
+}
+
+export function toRelativePath(filePath: string, cwd?: string): string {
+  if (!cwd) return filePath;
+  const np = filePath.replace(/\\/g, "/").replace(/\/$/, "");
+  const nc = cwd.replace(/\\/g, "/").replace(/\/$/, "");
+  if (np.startsWith(nc + "/")) return np.slice(nc.length + 1);
+  if (np === nc) return ".";
+  return filePath;
 }
 
 type TranslateFn = (key: string, params?: Record<string, string>) => string;
@@ -63,8 +73,12 @@ type TranslateFn = (key: string, params?: Record<string, string>) => string;
 export function describe(
   item: HistoryItem,
   t: TranslateFn,
+  cwd?: string,
 ): { verb: string; file: FileBadgeInfo | null; suffix: string } {
   const file = pickFile(item.toolArgs);
+  if (file && cwd && file.rawPath) {
+    file.rawPath = toRelativePath(file.rawPath, cwd);
+  }
   const pending = item.ok === undefined;
   switch (item.toolName) {
     case "read_file":
@@ -86,7 +100,7 @@ export function describe(
       const path = args?.path ?? ".";
       return {
         verb: pending ? t("listing") : t("listed"),
-        file: { name: basename(path) || path, ext: "", cls: "dir" },
+        file: { name: basename(path) || path, ext: "", cls: "dir", rawPath: path },
         suffix: "",
       };
     }

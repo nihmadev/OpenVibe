@@ -14,10 +14,7 @@ pub async fn tools_execute(
 ) -> Result<String, String> {
     let cwd = {
         let config_lock = state.config.lock().map_err(|e| e.to_string())?;
-        config_lock
-            .as_ref()
-            .map(|c| c.cwd.clone())
-            .unwrap_or_default()
+        config_lock.as_ref().map(|c| c.cwd.clone()).unwrap_or_default()
     };
 
     let cancel = std::sync::atomic::AtomicBool::new(false);

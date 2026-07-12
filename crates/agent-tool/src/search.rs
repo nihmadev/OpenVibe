@@ -7,7 +7,11 @@ fn clip(text: &str, max: usize) -> String {
     if text.len() <= max {
         text.to_string()
     } else {
-        format!("{}\n…[truncated, {} more chars]", &text[..max], text.len() - max)
+        format!(
+            "{}\n…[truncated, {} more chars]",
+            &text[..max],
+            text.len() - max
+        )
     }
 }
 
@@ -21,16 +25,16 @@ fn resolve_path(cwd: &str, p: &str) -> String {
 }
 
 pub async fn tool_search_codebase(cwd: &str, args: &serde_json::Value) -> Result<String, String> {
-    let query = args.get("query").and_then(|v| v.as_str())
+    let query = args
+        .get("query")
+        .and_then(|v| v.as_str())
         .ok_or_else(|| "Missing 'query' argument".to_string())?;
     let root = if cwd.is_empty() { "." } else { &cwd };
     let resolved_root = resolve_path(root, ".");
 
     let is_regex_query = regex::Regex::new(&format!("(?i){}", query)).is_ok();
 
-    let skip: &[&str] = &[
-        "node_modules", ".git", "dist", "build", ".next", "out",
-    ];
+    let skip: &[&str] = &["node_modules", ".git", "dist", "build", ".next", "out"];
 
     let q = query.to_string();
     let skip_clone: Vec<String> = skip.iter().map(|s| s.to_string()).collect();
@@ -106,8 +110,14 @@ pub async fn tool_search_codebase(cwd: &str, args: &serde_json::Value) -> Result
     let vec_query = query.to_string();
     let additional = tokio::task::spawn_blocking(move || -> Vec<String> {
         match search::vector_search::search_codebase_vector(&vec_query, &vec_root, 30) {
-            Ok(results) => results.into_iter()
-                .map(|r| format!("{}:{}: {} [score={:.3}]", r.path, r.line, r.content, r.score))
+            Ok(results) => results
+                .into_iter()
+                .map(|r| {
+                    format!(
+                        "{}:{}: {} [score={:.3}]",
+                        r.path, r.line, r.content, r.score
+                    )
+                })
                 .collect(),
             Err(e) => {
                 eprintln!("Vector search error: {e}");

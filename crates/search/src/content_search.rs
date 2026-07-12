@@ -15,7 +15,11 @@ fn clip(text: &str, max: usize) -> String {
     if text.len() <= max {
         text.to_string()
     } else {
-        format!("{}\n…[truncated, {} more chars]", &text[..max], text.len() - max)
+        format!(
+            "{}\n…[truncated, {} more chars]",
+            &text[..max],
+            text.len() - max
+        )
     }
 }
 
@@ -29,7 +33,10 @@ pub async fn search_content(
 
     let is_regex_query = regex::Regex::new(&format!("(?i){}", query)).is_ok();
 
-    let skip: Vec<String> = crate::config::SKIP_DIRS.iter().map(|s| s.to_string()).collect();
+    let skip: Vec<String> = crate::config::SKIP_DIRS
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
 
     let root_clone = resolved_root.clone();
     let q = query.to_string();
@@ -37,8 +44,7 @@ pub async fn search_content(
 
     let results = tokio::task::spawn_blocking(move || -> Vec<String> {
         let mut results: Vec<String> = Vec::new();
-        let mut dirs: Vec<std::path::PathBuf> =
-            vec![std::path::PathBuf::from(&root_clone)];
+        let mut dirs: Vec<std::path::PathBuf> = vec![std::path::PathBuf::from(&root_clone)];
 
         let use_regex = regex::Regex::new(&format!("(?i){}", q)).ok();
         let q_lower = q.to_lowercase();
@@ -130,7 +136,10 @@ pub async fn search_content_with_vector(
             Ok(results) => results
                 .into_iter()
                 .map(|r| {
-                    format!("{}:{}: {} [score={:.3}]", r.path, r.line, r.content, r.score)
+                    format!(
+                        "{}:{}: {} [score={:.3}]",
+                        r.path, r.line, r.content, r.score
+                    )
                 })
                 .collect(),
             Err(e) => {

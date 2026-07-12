@@ -3,25 +3,31 @@
   "version": "1.2.0",
   "description": "Open-source agentic coding environment. Bring your own AI model.",
   "license": "SEE LICENSE IN LICENSE",
-  "author": "mt-studio <mt-studio@bk.ru>",
+  "author": "mt-studio <lolz@nihmadev.fun>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nihmadev/openvibe-community"
+    "url": "https://github.com/nihmadev/OpenVibe"
   },
   "type": "module",
   "scripts": {
     "dev:src": "vite",
     "dev:tauri": "tauri dev",
+    "dev": "npm run dev:tauri",
     "build:src": "vite build",
     "build:tauri": "tauri build",
+    "build": "npm run build:src && npm run build:tauri",
+    "preview": "vite preview",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run lint && npm run format:check",
     "test": "vitest run",
     "test:watch": "vitest",
     "audit": "npm audit --audit-level=moderate",
+    "clean": "rm -rf dist node_modules/.vite && cargo clean",
+    "setup": "npm install && npm run check",
     "postinstall": "node -e \"const fs=require('fs'); const path=require('path'); const src=path.join('node_modules','monaco-editor','min','vs'); const dest=path.join('public','monaco-editor','min','vs'); if(fs.existsSync(src)){fs.mkdirSync(dest,{recursive:true}); const copyRecursive=(s,d)=>{fs.readdirSync(s).forEach(f=>{const ss=path.join(s,f); const dd=path.join(d,f); if(fs.statSync(ss).isDirectory()){fs.mkdirSync(dd,{recursive:true}); copyRecursive(ss,dd);}else{fs.copyFileSync(ss,dd);}});}; copyRecursive(src,dest); console.log('Monaco assets copied to public/');}\""
   },
   "engines": {
@@ -29,17 +35,49 @@
   },
   "dependencies": {
     "@fontsource/anonymous-pro": "^5.2.8",
+    "@fontsource/archivo": "^5.2.8",
+    "@fontsource/barlow": "^5.2.8",
+    "@fontsource/be-vietnam-pro": "^5.2.8",
+    "@fontsource/dm-mono": "^5.2.7",
+    "@fontsource/dm-sans": "^5.2.8",
+    "@fontsource/epilogue": "^5.2.8",
+    "@fontsource/figtree": "^5.2.10",
     "@fontsource/fira-code": "^5.2.7",
+    "@fontsource/fira-sans": "^5.2.7",
     "@fontsource/ibm-plex-mono": "^5.2.7",
+    "@fontsource/inconsolata": "^5.2.8",
     "@fontsource/inter": "^5.2.8",
+    "@fontsource/iosevka": "^5.2.5",
     "@fontsource/jetbrains-mono": "^5.2.8",
+    "@fontsource/josefin-sans": "^5.2.8",
+    "@fontsource/lato": "^5.2.7",
+    "@fontsource/lexend": "^5.2.11",
     "@fontsource/manrope": "^5.2.8",
+    "@fontsource/montserrat": "^5.2.8",
+    "@fontsource/mulish": "^5.2.8",
+    "@fontsource/noto-sans": "^5.2.10",
     "@fontsource/nunito": "^5.2.7",
+    "@fontsource/onest": "^5.2.11",
     "@fontsource/open-sans": "^5.2.7",
+    "@fontsource/outfit": "^5.2.8",
+    "@fontsource/plus-jakarta-sans": "^5.2.8",
     "@fontsource/poppins": "^5.2.7",
+    "@fontsource/pt-sans": "^5.2.8",
+    "@fontsource/quicksand": "^5.2.10",
+    "@fontsource/raleway": "^5.2.8",
+    "@fontsource/recursive": "^5.2.8",
+    "@fontsource/red-hat-mono": "^5.2.8",
     "@fontsource/roboto": "^5.2.10",
+    "@fontsource/rubik": "^5.2.8",
+    "@fontsource/sometype-mono": "^5.2.7",
+    "@fontsource/sora": "^5.2.8",
     "@fontsource/source-code-pro": "^5.2.7",
+    "@fontsource/source-sans-3": "^5.2.9",
     "@fontsource/space-mono": "^5.2.9",
+    "@fontsource/ubuntu": "^5.2.8",
+    "@fontsource/urbanist": "^5.2.7",
+    "@fontsource/victor-mono": "^5.2.8",
+    "@fontsource/work-sans": "^5.2.8",
     "@monaco-editor/react": "^4.7.0",
     "@tauri-apps/api": "^2.11.0",
     "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
@@ -77,6 +115,18 @@
     "typescript-eslint": "^8.61.0",
     "vite": "^5.4.0",
     "vitest": "^4.1.8"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,json,md,css}": [
+      "prettier --write"
+    ],
+    "*.rs": [
+      "rustfmt --edition 2021"
+    ]
   },
   "keywords": [
     "agent",

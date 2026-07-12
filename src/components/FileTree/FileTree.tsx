@@ -206,7 +206,6 @@ export function FileTree({ cwd, onOpenFile, activeFile, revealPath }: RootProps)
         icon: <NewFolderIcon />,
         onClick: () => promptCreate(p, "dir"),
       });
-      items.push({ type: "separator" });
     }
 
     if (entry) {

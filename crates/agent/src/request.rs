@@ -4,8 +4,10 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use crate::chat::{AssistantTurn, ChatMessage};
 use crate::config::LlmConfig;
 use crate::definition::ToolDefinition;
-use crate::transform::{flatten_for_text_only, messages_to_api_json, supports_vision, trim_messages};
 use crate::sse::parse_sse_stream;
+use crate::transform::{
+    flatten_for_text_only, messages_to_api_json, supports_vision, trim_messages,
+};
 
 pub async fn stream_chat(
     config: &LlmConfig,
@@ -102,7 +104,15 @@ pub async fn stream_chat(
                     return Err(format!("LLM request failed: {status}\n{detail}"));
                 }
 
-                return parse_sse_stream(res, cancel, on_delta, on_reasoning, on_reasoning_end, on_tool_args).await;
+                return parse_sse_stream(
+                    res,
+                    cancel,
+                    on_delta,
+                    on_reasoning,
+                    on_reasoning_end,
+                    on_tool_args,
+                )
+                .await;
             }
             Err(e) => {
                 if attempt == max_retries - 1 {
@@ -141,11 +151,13 @@ fn build_request(config: &LlmConfig) -> (String, reqwest::header::HeaderMap) {
         let pid = config.provider_id.as_ref().unwrap();
         headers.insert("x-provider-base-url", config.base_url.parse().unwrap());
         headers.insert("x-api-key", config.api_key.parse().unwrap());
-        format!("{base}/v2/{pid}/chat/completions")
+        format!("{base}/v3/{pid}/chat/completions")
     } else {
         let auth_val = format!("Bearer {}", config.api_key);
         headers.insert(reqwest::header::AUTHORIZATION, auth_val.parse().unwrap());
-        let is_google = config.base_url.contains("generativelanguage.googleapis.com");
+        let is_google = config
+            .base_url
+            .contains("generativelanguage.googleapis.com");
         let is_github = config.base_url.contains("models.github.ai");
         if is_google {
             format!(
@@ -156,7 +168,10 @@ fn build_request(config: &LlmConfig) -> (String, reqwest::header::HeaderMap) {
         } else if is_github {
             headers.insert("Accept", "application/vnd.github+json".parse().unwrap());
             headers.insert("X-GitHub-Api-Version", "2026-03-10".parse().unwrap());
-            format!("{}/inference/chat/completions", config.base_url.trim_end_matches('/'))
+            format!(
+                "{}/inference/chat/completions",
+                config.base_url.trim_end_matches('/')
+            )
         } else {
             format!("{}/chat/completions", config.base_url.trim_end_matches('/'))
         }
@@ -187,5 +202,9 @@ fn parse_retry_after_body(text: &str) -> Option<&str> {
     let rest = &text[start + prefix.len()..];
     let end = rest.find(suffix).unwrap_or(rest.len());
     let num_str = &rest[..end];
-    if num_str.is_empty() { None } else { Some(num_str) }
+    if num_str.is_empty() {
+        None
+    } else {
+        Some(num_str)
+    }
 }

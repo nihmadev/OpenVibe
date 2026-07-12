@@ -12,9 +12,7 @@ pub fn run(conn: &Connection) {
         return;
     }
     let mut stmt = conn
-        .prepare(
-            "SELECT id, messages FROM chats WHERE messages IS NOT NULL AND messages != '[]'",
-        )
+        .prepare("SELECT id, messages FROM chats WHERE messages IS NOT NULL AND messages != '[]'")
         .unwrap();
     let rows: Vec<(String, String)> = stmt
         .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))

@@ -232,7 +232,9 @@ export function AppMain({
     if (rollbackIndex === null) return;
     try {
       await window.vibe.revertUndo();
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setItems((prev: any[]) => [...prev, ...rollbackRemovedItems]);
     clearRollback();
   }, [rollbackIndex, rollbackRemovedItems, clearRollback]);
@@ -357,7 +359,7 @@ export function AppMain({
                       setRollbackIndex(item.msgIndex);
                       setRollbackText(item.text);
                       setRollbackChanged(result.filesChanged);
-                      setRollbackRemoved(result.messagesRemoved);
+                      setRollbackRemoved(removed.length);
                     } catch {
                       // revert failed silently
                     }

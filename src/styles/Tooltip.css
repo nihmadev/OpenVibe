@@ -9,7 +9,7 @@
   background: var(--knob);
   color: var(--bg);
   border: 1px solid var(--line-strong);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 3px 7px;
   font-size: 12px;
   line-height: 1.4;

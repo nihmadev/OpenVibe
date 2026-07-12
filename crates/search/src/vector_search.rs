@@ -28,8 +28,7 @@ pub fn ensure_model() -> Result<(), String> {
     }
     *guard = Some(
         TextEmbedding::try_new(
-            InitOptions::new(EmbeddingModel::BGESmallENV15)
-                .with_show_download_progress(true),
+            InitOptions::new(EmbeddingModel::BGESmallENV15).with_show_download_progress(true),
         )
         .map_err(|e| format!("Failed to load embedding model: {e}"))?,
     );
@@ -102,10 +101,7 @@ pub fn build_index(root: &str) -> Result<(), String> {
         return Ok(());
     }
 
-    let prefixed: Vec<String> = file_texts
-        .iter()
-        .map(|s| format!("passage: {s}"))
-        .collect();
+    let prefixed: Vec<String> = file_texts.iter().map(|s| format!("passage: {s}")).collect();
     let refs: Vec<&str> = prefixed.iter().map(|s| s.as_str()).collect();
     let embeddings = m
         .embed(refs, Some(256))
@@ -198,7 +194,8 @@ pub fn embed_texts(texts: Vec<&str>) -> Result<Vec<Vec<f32>>, String> {
     ensure_model()?;
     let mut guard = MODEL.lock().map_err(|e| e.to_string())?;
     let m = guard.as_mut().ok_or("Model not loaded")?;
-    m.embed(texts, None).map_err(|e| format!("embed_texts failed: {e}"))
+    m.embed(texts, None)
+        .map_err(|e| format!("embed_texts failed: {e}"))
 }
 
 pub fn clear_cache(root: &str) -> Result<(), String> {
@@ -265,7 +262,15 @@ mod tests {
 
     #[test]
     fn test_should_skip_known_dirs() {
-        for d in &["node_modules", ".git", "dist", "build", ".next", "out", "target"] {
+        for d in &[
+            "node_modules",
+            ".git",
+            "dist",
+            "build",
+            ".next",
+            "out",
+            "target",
+        ] {
             assert!(should_skip(d), "{d} should be skipped");
         }
     }
@@ -280,14 +285,20 @@ mod tests {
     #[test]
     fn test_should_not_skip_special_dotfiles() {
         assert!(!should_skip(".env"), ".env should not be skipped");
-        assert!(!should_skip(".gitignore"), ".gitignore should not be skipped");
+        assert!(
+            !should_skip(".gitignore"),
+            ".gitignore should not be skipped"
+        );
     }
 
     #[test]
     fn test_ensure_model() -> Result<(), String> {
         ensure_model()?;
         let guard = MODEL.lock().map_err(|e| e.to_string())?;
-        assert!(guard.is_some(), "model should be loaded after ensure_model()");
+        assert!(
+            guard.is_some(),
+            "model should be loaded after ensure_model()"
+        );
         Ok(())
     }
 }

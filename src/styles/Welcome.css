@@ -5,7 +5,10 @@
   padding: 0;
   gap: 0;
   position: relative;
-  animation: fade-in 0.2s ease;
+  animation-name: var(--anim-panel-appear-keyframes, fade-in);
+  animation-duration: calc(var(--anim-panel-appear-duration, 0.2s) * var(--anim-panel-appear-enabled, 1));
+  animation-timing-function: var(--anim-panel-appear-easing, ease);
+  animation-fill-mode: both;
 }
 
 .welcome__main {
@@ -50,7 +53,7 @@
   background: transparent;
   color: var(--fg);
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   margin-top: 8px;
   cursor: pointer;

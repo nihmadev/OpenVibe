@@ -29,8 +29,7 @@ export function RollbackPill({
     }
   }, [expanded, filesOpen]);
 
-  const truncated =
-    messageText.length > 100 ? messageText.slice(0, 100) + "…" : messageText;
+  const truncated = messageText.length > 100 ? messageText.slice(0, 100) + "…" : messageText;
 
   const fileLabel =
     fileCount === 1
@@ -39,10 +38,7 @@ export function RollbackPill({
         ? `${fileCount} файла изменено`
         : `${fileCount} файлов изменено`;
 
-  const msgLabel =
-    messagesRemoved === 1
-      ? "1 сообщ. возвращено"
-      : `${messagesRemoved} сообщ. возвращено`;
+  const msgLabel = messagesRemoved === 1 ? "1 сообщ. возвращено" : `${messagesRemoved} сообщ. возвращено`;
 
   return (
     <div className="prompt-input__rollback">
@@ -65,16 +61,22 @@ export function RollbackPill({
           {!expanded && <span className="prompt-input__rollback-preview">{truncated}</span>}
         </span>
         <span className={`prompt-input__rollback-chevron${expanded ? " prompt-input__rollback-chevron--open" : ""}`}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </span>
       </div>
 
-      <div
-        className="prompt-input__rollback-body"
-        style={{ maxHeight: bodyHeight, opacity: expanded ? 1 : 0 }}
-      >
+      <div className="prompt-input__rollback-body" style={{ maxHeight: bodyHeight, opacity: expanded ? 1 : 0 }}>
         <div ref={contentRef}>
           {filesChanged.length > 0 && (
             <div className="prompt-input__rollback-files">
@@ -82,7 +84,10 @@ export function RollbackPill({
                 className="prompt-input__rollback-files-header"
                 role="button"
                 tabIndex={0}
-                onClick={(e) => { e.stopPropagation(); setFilesOpen(!filesOpen); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFilesOpen(!filesOpen);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
@@ -91,8 +96,19 @@ export function RollbackPill({
                 }}
               >
                 <span>Изменённые файлы</span>
-                <span className={`prompt-input__rollback-files-chevron${filesOpen ? " prompt-input__rollback-files-chevron--open" : ""}`}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <span
+                  className={`prompt-input__rollback-files-chevron${filesOpen ? " prompt-input__rollback-files-chevron--open" : ""}`}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
                 </span>

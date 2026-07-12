@@ -81,6 +81,10 @@ fn clip(text: &str, max: usize) -> String {
     if text.len() <= max {
         text.to_string()
     } else {
-        format!("{}\n…[truncated, {} more chars]", &text[..max], text.len() - max)
+        format!(
+            "{}\n…[truncated, {} more chars]",
+            &text[..max],
+            text.len() - max
+        )
     }
 }

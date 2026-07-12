@@ -1,5 +1,5 @@
-use tauri::{Emitter, State};
 use crate::AppState;
+use tauri::{Emitter, State};
 
 #[tauri::command]
 pub fn term_start(

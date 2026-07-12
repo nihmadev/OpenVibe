@@ -1,17 +1,17 @@
 mod commands;
 mod http_client;
 
-use config::{Config, load_config};
+use config::{load_config, Config};
 
-use std::sync::Mutex;
-use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
+use chats::ChatStore;
+use notify::{Config as NotifyConfig, Event, RecommendedWatcher, RecursiveMode, Watcher};
 use std::collections::HashMap;
 use std::path::Path;
-use notify::{Config as NotifyConfig, Event, RecommendedWatcher, RecursiveMode, Watcher};
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
+use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager};
 use tokio::sync::{oneshot, watch};
-use chats::ChatStore;
 
 pub struct AppState {
     pub projects: Mutex<db::ProjectStore>,
@@ -22,6 +22,7 @@ pub struct AppState {
     pub app_handle: Mutex<Option<AppHandle>>,
     pub llm_cancels: Mutex<HashMap<String, Arc<AtomicBool>>>,
     pub agent: Mutex<Option<agent::Agent>>,
+    pub agent_cancel: Mutex<Option<Arc<AtomicBool>>>,
     pub pending_confirms: Mutex<HashMap<String, oneshot::Sender<String>>>,
     pub http_client: reqwest::Client,
     pub provider_url: Arc<tokio::sync::Mutex<String>>,
@@ -101,8 +102,17 @@ impl AppState {
             }
 
             let ignored = [
-                "node_modules", ".git", "dist", "build", ".next", "out",
-                ".cache", ".turbo", "coverage", ".vite", "target",
+                "node_modules",
+                ".git",
+                "dist",
+                "build",
+                ".next",
+                "out",
+                ".cache",
+                ".turbo",
+                "coverage",
+                ".vite",
+                "target",
             ];
 
             // Trailing-edge debounce: emit only after a quiet period (no events for 300ms)
@@ -115,7 +125,9 @@ impl AppState {
                         // Filter ignored paths
                         let should_ignore = event.paths.iter().any(|p| {
                             let p_str = p.to_string_lossy();
-                            ignored.iter().any(|i| p_str.contains(&format!("\\{}\\", i)) || p_str.contains(&format!("/{}/", i)))
+                            ignored
+                                .iter()
+                                .any(|i| p_str.contains(&format!("\\{}\\", i)) || p_str.contains(&format!("/{}/", i)))
                         });
                         if should_ignore {
                             continue;
@@ -150,13 +162,10 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .setup(move |app| {
             // Initialize project store
-            let data_dir = dirs::data_dir()
-                .unwrap_or_else(|| std::path::PathBuf::from("."))
-                .join("openvibe");
+            let data_dir = dirs::data_dir().unwrap_or_else(|| std::path::PathBuf::from(".")).join("openvibe");
             let data_dir_str = data_dir.to_string_lossy().to_string();
 
-            let project_store = db::ProjectStore::new(&data_dir_str)
-                .expect("Failed to initialize project store");
+            let project_store = db::ProjectStore::new(&data_dir_str).expect("Failed to initialize project store");
 
             // Get initial project
             let (initial_cwd, initial_project_id) = {
@@ -177,7 +186,9 @@ pub fn run() {
             if cfg.api_key.is_empty() {
                 let providers = project_store.list_providers();
                 // Prefer matching by provider_id, otherwise take the most recently added
-                let active_provider = cfg.provider_id.as_ref()
+                let active_provider = cfg
+                    .provider_id
+                    .as_ref()
                     .and_then(|pid| providers.iter().find(|p| p.id == *pid))
                     .or_else(|| providers.last());
                 if let Some(p) = active_provider {
@@ -189,10 +200,13 @@ pub fn run() {
             }
 
             // Setup chat store if project exists
-            let chat_store = initial_project_id.as_ref().map(|pid| {
-                let db_path = project_store.chats_db(pid);
-                ChatStore::new(&db_path).ok()
-            }).flatten();
+            let chat_store = initial_project_id
+                .as_ref()
+                .map(|pid| {
+                    let db_path = project_store.chats_db(pid);
+                    ChatStore::new(&db_path).ok()
+                })
+                .flatten();
 
             // Setup terminal manager
             let term_mgr = terminal::manager::TerminalManager::new(&initial_cwd);
@@ -201,17 +215,11 @@ pub fn run() {
 
             // Создаём общий HTTP клиент с HTTP/2, keep-alive, tcp_nodelay
             let shared_client = http_client::create_shared_client();
-            let provider_url = Arc::new(tokio::sync::Mutex::new(
-                cfg.base_url.clone()
-            ));
+            let provider_url = Arc::new(tokio::sync::Mutex::new(cfg.base_url.clone()));
             let (warmer_stop_tx, warmer_stop_rx) = watch::channel(false);
 
             // Запускаем connection warmer (держит соединение с провайдером тёплым)
-            http_client::spawn_connection_warmer(
-                shared_client.clone(),
-                provider_url.clone(),
-                warmer_stop_rx,
-            );
+            http_client::spawn_connection_warmer(shared_client.clone(), provider_url.clone(), warmer_stop_rx);
 
             // Create state
             let state = AppState {
@@ -223,6 +231,7 @@ pub fn run() {
                 app_handle: Mutex::new(Some(app_handle.clone())),
                 llm_cancels: Mutex::new(HashMap::new()),
                 agent: Mutex::new(None),
+                agent_cancel: Mutex::new(None),
                 pending_confirms: Mutex::new(HashMap::new()),
                 http_client: shared_client,
                 provider_url,

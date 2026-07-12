@@ -729,6 +729,15 @@ export function PromptInput({
 
   // ─── effects ────────────────────────────────────────────
 
+  const prevRollbackActive = useRef(rollbackActive);
+  useEffect(() => {
+    if (prevRollbackActive.current && !rollbackActive) {
+      clearEditor();
+      setDirty(false);
+    }
+    prevRollbackActive.current = rollbackActive;
+  }, [rollbackActive, clearEditor]);
+
   useEffect(() => {
     if (!disabled) editorRef.current?.focus();
   }, [disabled]);

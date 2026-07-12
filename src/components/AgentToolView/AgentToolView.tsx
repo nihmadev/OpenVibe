@@ -35,7 +35,12 @@ function AnimatedValue({ value, prefix }: { value: number; prefix: string }) {
     return () => cancelAnimationFrame(raf.current);
   }, [value]);
 
-  return <>{prefix}{display}</>;
+  return (
+    <>
+      {prefix}
+      {display}
+    </>
+  );
 }
 
 // ─── Streaming code helper ────────────────────────────────────────────────
@@ -76,8 +81,6 @@ function StreamingCodeBlock({ toolStream, toolName }: { toolStream: string; tool
     </div>
   );
 }
-
-
 
 function DiffBlock({ item, file }: { item: HistoryItem; file?: { name: string } | null }) {
   const [diffData, setDiffData] = React.useState<{ original: string; modified: string; lang: string } | null>(null);
@@ -177,9 +180,17 @@ function getToolResultLang(item: HistoryItem): string {
   return "plaintext";
 }
 
-export function AgentToolView({ item, onDrillDown }: { item: HistoryItem; onDrillDown?: (id: string) => void }) {
+export function AgentToolView({
+  item,
+  onDrillDown,
+  cwd,
+}: {
+  item: HistoryItem;
+  onDrillDown?: (id: string) => void;
+  cwd?: string;
+}) {
   const { t } = useI18n();
-  const { verb, file, suffix } = describe(item, t);
+  const { verb, file, suffix } = describe(item, t, cwd);
   const isPending = item.ok === undefined;
   const isErr = item.ok === false;
   const isStreaming = isPending && !!item.toolStream;
@@ -256,8 +267,12 @@ export function AgentToolView({ item, onDrillDown }: { item: HistoryItem; onDril
           <>
             {diffInfo && (
               <span className="tool__diff-stats">
-                <span className="tool__diff-add"><AnimatedValue value={diffInfo.added} prefix="+" /></span>
-                <span className="tool__diff-remove"><AnimatedValue value={diffInfo.removed} prefix="−" /></span>
+                <span className="tool__diff-add">
+                  <AnimatedValue value={diffInfo.added} prefix="+" />
+                </span>
+                <span className="tool__diff-remove">
+                  <AnimatedValue value={diffInfo.removed} prefix="−" />
+                </span>
               </span>
             )}
             {!isListDir && (

@@ -6,12 +6,14 @@
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(var(--blur-overlay));
+  -webkit-backdrop-filter: blur(var(--blur-overlay));
 }
 
 .edit-project {
   background: var(--bg);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 24px;
   width: 340px;
   display: flex;
@@ -53,7 +55,7 @@
   width: 100%;
   padding: 8px 10px;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--bg-2);
   color: var(--fg);
   font-size: 13px;
@@ -80,7 +82,7 @@
   position: relative;
   width: 52px;
   height: 52px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -96,7 +98,7 @@
 }
 
 .edit-project__preview:hover {
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 }
 
 .edit-project__preview-letter {
@@ -144,7 +146,7 @@
   cursor: pointer;
   padding: 4px;
   display: flex;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   transition: background 0.1s;
 }
 
@@ -194,7 +196,7 @@
 
 .edit-project__btn {
   padding: 7px 16px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--line);
   background: transparent;
   color: var(--fg);

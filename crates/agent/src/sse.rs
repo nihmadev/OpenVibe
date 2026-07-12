@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::chat::{ToolCall, ToolCallFunction, AssistantTurn};
+use crate::chat::{AssistantTurn, ToolCall, ToolCallFunction};
 
 struct ToolCallAcc {
     id: String,
@@ -21,7 +21,8 @@ pub async fn parse_sse_stream(
     let mut reasoning_content: Option<String> = None;
     let mut has_seen_reasoning = false;
     let mut tool_acc: HashMap<usize, ToolCallAcc> = HashMap::new();
-    let mut buffer = String::new();
+    let mut buffer = String::with_capacity(4096);
+    let mut buf_idx = 0usize;
 
     loop {
         if cancel.load(Ordering::Relaxed) {
@@ -31,14 +32,17 @@ pub async fn parse_sse_stream(
         let chunk = res.chunk().await.map_err(|e| e.to_string())?;
         match chunk {
             Some(bytes) => {
-                let chunk_str = String::from_utf8_lossy(&bytes);
-                buffer.push_str(&chunk_str);
+                let Ok(chunk_str) = std::str::from_utf8(&bytes) else {
+                    continue;
+                };
+                buffer.push_str(chunk_str);
 
-                while let Some(pos) = buffer.find('\n') {
-                    let line = buffer[..pos].to_string();
-                    buffer = buffer[pos + 1..].to_string();
+                while let Some(pos) = buffer[buf_idx..].find('\n') {
+                    let abs_pos = buf_idx + pos;
+                    let line = &buffer[buf_idx..abs_pos];
+                    buf_idx = abs_pos + 1;
                     process_sse_line(
-                        &line,
+                        line,
                         &mut content,
                         &mut reasoning_content,
                         &mut has_seen_reasoning,
@@ -51,7 +55,7 @@ pub async fn parse_sse_stream(
                 }
             }
             None => {
-                let remaining = buffer.trim();
+                let remaining = buffer[buf_idx..].trim();
                 if !remaining.is_empty() {
                     process_sse_line(
                         remaining,
@@ -144,7 +148,9 @@ fn process_sse_line(
     if let Some(rc) = delta.get("reasoning_content").and_then(|v| v.as_str()) {
         if !rc.is_empty() {
             *has_seen_reasoning = true;
-            reasoning_content.get_or_insert_with(String::new).push_str(rc);
+            reasoning_content
+                .get_or_insert_with(String::new)
+                .push_str(rc);
             on_reasoning(rc);
         }
     }

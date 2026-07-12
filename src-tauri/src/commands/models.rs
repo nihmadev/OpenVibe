@@ -1,9 +1,40 @@
-use tauri::State;
 use crate::AppState;
+use tauri::State;
 
 const PROVIDER_TEMPLATE_IDS: &[&str] = &[
-    "anthropic", "openai", "google", "deepseek", "groq",
-    "openrouter", "ollama", "cerebras", "moonshot", "zai", "opencode", "github",
+    "anthropic",
+    "openai",
+    "google",
+    "deepseek",
+    "groq",
+    "openrouter",
+    "ollama",
+    "cerebras",
+    "moonshot",
+    "zai",
+    "opencode",
+    "github",
+    "together",
+    "fireworks",
+    "mistral",
+    "xai",
+    "cohere",
+    "qwen",
+    "azure-openai",
+    "amazon-bedrock",
+    "huggingface",
+    "replicate",
+    "deepinfra",
+    "perplexity",
+    "anyscale",
+    "vercel",
+    "fal",
+    "baseten",
+    "hyperbolic",
+    "minimax",
+    "nvidia",
+    "sambanova",
+    "siliconcloud",
 ];
 
 fn parse_model_name(model_id: &str) -> String {
@@ -11,15 +42,22 @@ fn parse_model_name(model_id: &str) -> String {
     if let Some(idx) = name.find('/') {
         name = name[idx + 1..].to_string();
     }
-    if !name.is_empty() {
-        let mut chars = name.chars();
-        match chars.next() {
-            Some(c) => c.to_uppercase().collect::<String>() + chars.as_str(),
-            None => name,
-        }
-    } else {
-        name
+    if name.is_empty() {
+        return name;
     }
+    name.split('-')
+        .map(|part| {
+            if part.is_empty() {
+                return part.to_string();
+            }
+            let mut chars = part.chars();
+            match chars.next() {
+                Some(c) => c.to_uppercase().collect::<String>() + chars.as_str(),
+                None => part.to_string(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 #[tauri::command]
@@ -41,7 +79,7 @@ pub async fn models_fetch(
         if let Some(ref api_url_val) = api_url {
             if let Some(ref pid) = provider_id {
                 if PROVIDER_TEMPLATE_IDS.contains(&pid.as_str()) {
-                    let url = format!("{}/v2/{}/models", api_url_val.trim_end_matches('/'), pid);
+                    let url = format!("{}/v3/{}/models", api_url_val.trim_end_matches('/'), pid);
                     let mut headers = Vec::new();
                     headers.push(("x-provider-base-url".to_string(), base_url.clone()));
                     if !api_key.is_empty() {
@@ -71,7 +109,11 @@ pub async fn models_fetch(
     do_fetch(&url, &headers, &state.http_client).await
 }
 
-async fn do_fetch(url: &str, headers: &[(String, String)], client: &reqwest::Client) -> Result<serde_json::Value, String> {
+async fn do_fetch(
+    url: &str,
+    headers: &[(String, String)],
+    client: &reqwest::Client,
+) -> Result<serde_json::Value, String> {
     let mut req = client.get(url).timeout(std::time::Duration::from_secs(15));
     for (k, v) in headers {
         req = req.header(k, v);

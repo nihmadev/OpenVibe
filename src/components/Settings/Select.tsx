@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 interface Option {
   value: string;
   label: string;
+  fontFamily?: string;
 }
 
 interface SelectProps {
@@ -36,8 +37,10 @@ export function Select({ value, options, onChange, onHover }: SelectProps) {
       // close if click outside both trigger and dropdown
       const target = e.target as Node;
       if (
-        wrapRef.current && !wrapRef.current.contains(target) &&
-        triggerRef.current && !triggerRef.current.contains(target)
+        wrapRef.current &&
+        !wrapRef.current.contains(target) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(target)
       ) {
         setOpen(false);
       }
@@ -48,42 +51,46 @@ export function Select({ value, options, onChange, onHover }: SelectProps) {
 
   const selected = options.find((o) => o.value === value);
 
-  const dropdown = open && rect ? createPortal(
-    <div
-      ref={wrapRef}
-      className="settings__custom-select-dropdown settings__custom-select-dropdown--portal"
-      style={{
-        position: "fixed",
-        left: rect.left,
-        width: rect.width,
-        ...(dropUp
-          ? { bottom: window.innerHeight - rect.top, top: "auto" }
-          : { top: rect.bottom, bottom: "auto" }),
-        borderRadius: dropUp ? "6px 6px 0 0" : "0 0 6px 6px",
-        borderTop: dropUp ? undefined : 0,
-        borderBottom: dropUp ? 0 : undefined,
-      }}
-    >
-      <div className="settings__custom-select-dropdown-body">
-        {options.map((o) => (
-          <button
-            key={o.value}
-            type="button"
-            className={`settings__custom-select-item ${o.value === value ? "active" : ""}`}
-            onMouseEnter={() => onHover?.(o.value)}
-            onMouseLeave={() => onHover?.(null)}
-            onClick={() => {
-              onChange(o.value);
-              setOpen(false);
+  const dropdown =
+    open && rect
+      ? createPortal(
+          <div
+            ref={wrapRef}
+            className="settings__custom-select-dropdown settings__custom-select-dropdown--portal"
+            style={{
+              position: "fixed",
+              left: rect.left,
+              width: rect.width,
+              ...(dropUp
+                ? { bottom: window.innerHeight - rect.top, top: "auto" }
+                : { top: rect.bottom, bottom: "auto" }),
+              borderRadius: dropUp ? "var(--radius-md) var(--radius-md) 0 0" : "0 0 var(--radius-md) var(--radius-md)",
+              borderTop: dropUp ? undefined : 0,
+              borderBottom: dropUp ? 0 : undefined,
             }}
           >
-            {o.label}
-          </button>
-        ))}
-      </div>
-    </div>,
-    document.body
-  ) : null;
+            <div className="settings__custom-select-dropdown-body">
+              {options.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  className={`settings__custom-select-item ${o.value === value ? "active" : ""}`}
+                  onMouseEnter={() => onHover?.(o.value)}
+                  onMouseLeave={() => onHover?.(null)}
+                  onClick={() => {
+                    onChange(o.value);
+                    setOpen(false);
+                  }}
+                  style={o.fontFamily ? { fontFamily: o.fontFamily } : undefined}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
 
   return (
     <div className="settings__custom-select">

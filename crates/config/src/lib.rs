@@ -1,7 +1,7 @@
-pub mod types;
 pub mod dotenv;
-pub mod provider;
 pub mod loader;
+pub mod provider;
+pub mod types;
 
-pub use types::Config;
 pub use loader::load_config;
+pub use types::Config;

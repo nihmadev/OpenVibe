@@ -95,7 +95,9 @@ impl Agent {
                 .iter()
                 .filter_map(|p| {
                     if p.get("type").and_then(|v| v.as_str()) == Some("text") {
-                        p.get("text").and_then(|v| v.as_str()).map(|s| s.to_string())
+                        p.get("text")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string())
                     } else {
                         None
                     }
@@ -168,7 +170,10 @@ impl Agent {
                             let text = std::mem::take(&mut sb.buf);
                             sb.last_emit = now;
                             drop(sb);
-                            emit("vibe:agent:assistant-chunk", serde_json::json!({"text": text}));
+                            emit(
+                                "vibe:agent:assistant-chunk",
+                                serde_json::json!({"text": text}),
+                            );
                         }
                     }
                 }
@@ -185,7 +190,10 @@ impl Agent {
                             let text = std::mem::take(&mut sb.buf);
                             sb.last_emit = now;
                             drop(sb);
-                            emit("vibe:agent:reasoning-chunk", serde_json::json!({"text": text}));
+                            emit(
+                                "vibe:agent:reasoning-chunk",
+                                serde_json::json!({"text": text}),
+                            );
                         }
                     }
                 }
@@ -199,7 +207,10 @@ impl Agent {
                         if !sb.buf.is_empty() {
                             let text = std::mem::take(&mut sb.buf);
                             drop(sb);
-                            emit("vibe:agent:reasoning-chunk", serde_json::json!({"text": text}));
+                            emit(
+                                "vibe:agent:reasoning-chunk",
+                                serde_json::json!({"text": text}),
+                            );
                         }
                     }
                     emit("vibe:agent:reasoning-end", serde_json::Value::Null);
@@ -228,7 +239,10 @@ impl Agent {
                 if !sb.buf.is_empty() {
                     let text = std::mem::take(&mut sb.buf);
                     drop(sb);
-                    emit("vibe:agent:assistant-chunk", serde_json::json!({"text": text}));
+                    emit(
+                        "vibe:agent:assistant-chunk",
+                        serde_json::json!({"text": text}),
+                    );
                 }
             }
 
@@ -246,7 +260,12 @@ impl Agent {
 
             let mut content_text = turn_result.content.trim().to_string();
             let noise_phrases = [
-                "done", "done.", "finished", "finished.", "completed", "completed.",
+                "done",
+                "done.",
+                "finished",
+                "finished.",
+                "completed",
+                "completed.",
             ];
             if noise_phrases.contains(&content_text.as_str()) {
                 content_text.clear();
@@ -302,9 +321,12 @@ impl Agent {
                         Ok(v) => v,
                         Err(e) => {
                             let err_msg = format!("Invalid JSON arguments: {e}");
-                            emit("vibe:agent:tool-result", serde_json::json!({
-                                "id": call.id, "ok": false, "text": err_msg,
-                            }));
+                            emit(
+                                "vibe:agent:tool-result",
+                                serde_json::json!({
+                                    "id": call.id, "ok": false, "text": err_msg,
+                                }),
+                            );
                             self.messages.push(ChatMessage {
                                 role: "tool".to_string(),
                                 content: Some(serde_json::Value::String(err_msg)),
@@ -330,7 +352,10 @@ impl Agent {
                         if std::path::Path::new(p).is_absolute() {
                             p.to_string()
                         } else {
-                            std::path::Path::new(&cwd).join(p).to_string_lossy().to_string()
+                            std::path::Path::new(&cwd)
+                                .join(p)
+                                .to_string_lossy()
+                                .to_string()
                         }
                     })
                 } else {
@@ -344,14 +369,24 @@ impl Agent {
                 {
                     let (tx, rx) = oneshot::channel();
                     confirm_senders.insert(call.id.clone(), tx);
-                    emit("vibe:agent:confirm-request", serde_json::json!({
-                        "id": call.id, "toolName": tool_name, "args": parsed_args,
-                    }));
+                    emit(
+                        "vibe:agent:confirm-request",
+                        serde_json::json!({
+                            "id": call.id, "toolName": tool_name, "args": parsed_args,
+                        }),
+                    );
                     let response = rx.await.unwrap_or_default();
-                    if !response.starts_with("y") && response != "1" && response != "always" && response != "aa" {
-                        emit("vibe:agent:tool-denied", serde_json::json!({
-                            "id": call.id, "name": tool_name,
-                        }));
+                    if !response.starts_with("y")
+                        && response != "1"
+                        && response != "always"
+                        && response != "aa"
+                    {
+                        emit(
+                            "vibe:agent:tool-denied",
+                            serde_json::json!({
+                                "id": call.id, "name": tool_name,
+                            }),
+                        );
                         self.messages.push(ChatMessage {
                             role: "tool".to_string(),
                             content: Some(serde_json::Value::String(
@@ -384,9 +419,12 @@ impl Agent {
                     });
                 }
 
-                emit("vibe:agent:tool-result", serde_json::json!({
-                    "id": call.id, "ok": is_ok, "text": result_text,
-                }));
+                emit(
+                    "vibe:agent:tool-result",
+                    serde_json::json!({
+                        "id": call.id, "ok": is_ok, "text": result_text,
+                    }),
+                );
 
                 self.messages.push(ChatMessage {
                     role: "tool".to_string(),

@@ -64,6 +64,10 @@ export const en: Partial<Translations> = {
   hideFileTree: "Hide file tree",
   showFileTree: "Show file tree",
   toggleFileTree: "Toggle file tree",
+  hideButton: "Hide",
+  showButton: "Show",
+  restoreButtons: "Restore buttons",
+  nothingHidden: "Nothing hidden",
   minimize: "Minimize",
   maximize: "Maximize",
   close: "Close",
@@ -247,4 +251,25 @@ export const en: Partial<Translations> = {
   preview: "Preview",
   animPreviewTitle: "Animation preview",
   animPreviewClose: "Close",
+  animMultiplier: "Animation smoothness",
+  animMultiplierDesc: "Animation smoothness multiplier. 0 = stopped, 0.5 = snappy, 1 = normal, 2 = smooth, 5 = ultra smooth",
+
+  // Window effects
+  windowEffects: "Window Effects",
+  blurOverlay: "Background blur",
+  blurOverlayDesc: "Blur the content behind modal windows (settings, context menus)",
+  blurNone: "None",
+  blurSubtle: "Subtle",
+  blurStrong: "Strong",
+
+  // Radius settings
+  borderRadius: "Border radius",
+  borderRadiusDesc: "Corner rounding for UI elements",
+
+  // Zoom settings
+  uiZoom: "UI Zoom",
+  zoomStep: "Zoom step",
+  zoomStepDesc: "How much each Ctrl+Plus/Ctrl+Minus press changes the zoom level",
+  zoomDefault: "Default zoom",
+  zoomDefaultDesc: "Zoom level when pressing Ctrl+0",
 };

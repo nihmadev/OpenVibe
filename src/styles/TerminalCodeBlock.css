@@ -1,6 +1,6 @@
 .terminal-code-block {
   border: 1px solid var(--line-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   margin: 8px 0;
   background: var(--bg-3);
@@ -42,7 +42,7 @@
   width: 24px;
   height: 24px;
   padding: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
   justify-content: center;

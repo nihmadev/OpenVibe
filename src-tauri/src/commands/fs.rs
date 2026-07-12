@@ -1,7 +1,7 @@
+use search::walker;
+use serde::Serialize;
 use std::fs;
 use std::path::Path;
-use serde::Serialize;
-use search::walker;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -100,12 +100,20 @@ pub async fn fs_create_dir(dir: String, name: String) -> Result<String, String> 
 }
 
 #[tauri::command]
-pub async fn fs_find(root: String, query: String, limit: Option<usize>) -> Result<Vec<search::types::FileMatch>, String> {
+pub async fn fs_find(
+    root: String,
+    query: String,
+    limit: Option<usize>,
+) -> Result<Vec<search::types::FileMatch>, String> {
     Ok(walker::find_files(&root, &query, limit.unwrap_or(30)))
 }
 
 #[tauri::command]
-pub async fn fs_find_all(root: String, query: String, limit: Option<usize>) -> Result<Vec<search::types::FileMatch>, String> {
+pub async fn fs_find_all(
+    root: String,
+    query: String,
+    limit: Option<usize>,
+) -> Result<Vec<search::types::FileMatch>, String> {
     Ok(walker::find_all(&root, &query, limit.unwrap_or(50)))
 }
 
@@ -135,14 +143,17 @@ pub async fn whisper_transcribe(audio_base64: String, mime_type: String) -> Resu
     };
 
     use base64::Engine;
-    let audio_bytes = base64::engine::general_purpose::STANDARD
-        .decode(&audio_base64)
-        .map_err(|e| e.to_string())?;
+    let audio_bytes = base64::engine::general_purpose::STANDARD.decode(&audio_base64).map_err(|e| e.to_string())?;
 
-    let ext = if mime_type.contains("webm") { "webm" }
-        else if mime_type.contains("ogg") { "ogg" }
-        else if mime_type.contains("mp4") { "mp4" }
-        else { "wav" };
+    let ext = if mime_type.contains("webm") {
+        "webm"
+    } else if mime_type.contains("ogg") {
+        "ogg"
+    } else if mime_type.contains("mp4") {
+        "mp4"
+    } else {
+        "wav"
+    };
 
     let boundary = format!("----vibewhisper{}", chrono_now());
     let mut body = Vec::new();
@@ -152,7 +163,8 @@ pub async fn whisper_transcribe(audio_base64: String, mime_type: String) -> Resu
     body.extend_from_slice(&audio_bytes);
     body.extend_from_slice(b"\r\n");
     body.extend_from_slice(
-        format!("--{boundary}\r\nContent-Disposition: form-data; name=\"model\"\r\n\r\nwhisper-large-v3\r\n").as_bytes()
+        format!("--{boundary}\r\nContent-Disposition: form-data; name=\"model\"\r\n\r\nwhisper-large-v3\r\n")
+            .as_bytes(),
     );
     body.extend_from_slice(format!("--{boundary}--\r\n").as_bytes());
 
@@ -178,8 +190,5 @@ pub async fn whisper_transcribe(audio_base64: String, mime_type: String) -> Resu
 }
 
 fn chrono_now() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis() as i64
+    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_millis() as i64
 }

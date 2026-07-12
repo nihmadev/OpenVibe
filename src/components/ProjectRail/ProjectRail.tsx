@@ -56,7 +56,6 @@ export function ProjectRail({
               label: t("closeProject"),
               onClick: () => onClose(),
             },
-            { label: "-", onClick: () => {} },
           ]
         : []),
       {
@@ -68,7 +67,6 @@ export function ProjectRail({
         label: t("revealExplorer"),
         onClick: () => window.vibe.fs.reveal(c.project.path),
       },
-      { label: "-", onClick: () => {} },
       {
         label: t("removeFromList"),
         danger: true,

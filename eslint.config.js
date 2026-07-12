@@ -23,6 +23,6 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ["dist/", "src/dist/", "node_modules/", "src-tauri/target/", "public/monaco-editor/"],
+    ignores: ["dist/", "src/dist/", "node_modules/", "target/", "src-tauri/target/", "public/monaco-editor/"],
   },
 );

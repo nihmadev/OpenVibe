@@ -1,9 +1,9 @@
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
+use std::fs;
 use std::path::Path;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
-use std::fs;
 
 use crate::config::should_skip;
 use crate::types::FileMatch;
@@ -60,10 +60,16 @@ fn walk(root: &Path) -> Vec<WalkEntry> {
             let path = entry.path();
             let full = path.to_string_lossy().to_string();
             if path.is_dir() {
-                out.push(WalkEntry { path: full, is_dir: true });
+                out.push(WalkEntry {
+                    path: full,
+                    is_dir: true,
+                });
                 dirs.push(path);
             } else if path.is_file() {
-                out.push(WalkEntry { path: full, is_dir: false });
+                out.push(WalkEntry {
+                    path: full,
+                    is_dir: false,
+                });
             }
         }
     }
@@ -78,7 +84,13 @@ fn ensure_index(root: &str) -> Vec<WalkEntry> {
         }
     }
     let files = walk(Path::new(root));
-    cache.insert(root.to_string(), CacheEntry { files: files.clone(), at: Instant::now() });
+    cache.insert(
+        root.to_string(),
+        CacheEntry {
+            files: files.clone(),
+            at: Instant::now(),
+        },
+    );
     files
 }
 
@@ -88,7 +100,11 @@ fn score(haystack: &str, needle: &str) -> f64 {
     }
     let h = haystack.to_lowercase();
     let n = needle.to_lowercase();
-    let base = h.split(|c: char| c == '/' || c == '\\').last().unwrap_or(&h).to_string();
+    let base = h
+        .split(|c: char| c == '/' || c == '\\')
+        .last()
+        .unwrap_or(&h)
+        .to_string();
     if base.contains(&n) {
         let bonus = if base.starts_with(&n) { 50.0 } else { 0.0 };
         return 100.0 + bonus - h.len() as f64 / 1000.0;
@@ -135,7 +151,12 @@ pub fn find_files(root: &str, query: &str, limit: usize) -> Vec<FileMatch> {
                 .file_name()
                 .map(|n| n.to_string_lossy().to_string())
                 .unwrap_or_else(|| e.path.clone());
-            FileMatch { path: e.path, rel: r, name, is_dir: Some(false) }
+            FileMatch {
+                path: e.path,
+                rel: r,
+                name,
+                is_dir: Some(false),
+            }
         })
         .collect()
 }
@@ -164,7 +185,12 @@ pub fn find_all(root: &str, query: &str, limit: usize) -> Vec<FileMatch> {
                 .file_name()
                 .map(|n| n.to_string_lossy().to_string())
                 .unwrap_or_else(|| e.path.clone());
-            FileMatch { path: e.path, rel: r, name, is_dir: Some(e.is_dir) }
+            FileMatch {
+                path: e.path,
+                rel: r,
+                name,
+                is_dir: Some(e.is_dir),
+            }
         })
         .collect()
 }

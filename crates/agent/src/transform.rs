@@ -4,10 +4,7 @@ use crate::chat::ChatMessage;
 
 pub fn supports_vision(model: &str) -> bool {
     let m = model.to_lowercase();
-    if m.starts_with("gpt-4o")
-        || m.starts_with("gpt-4-vision")
-        || m.starts_with("gpt-4-turbo")
-    {
+    if m.starts_with("gpt-4o") || m.starts_with("gpt-4-vision") || m.starts_with("gpt-4-turbo") {
         return true;
     }
     if m.contains("claude") && (m.contains("opus") || m.contains("sonnet")) {
@@ -36,7 +33,10 @@ pub fn flatten_for_text_only(messages: Vec<ChatMessage>) -> Vec<ChatMessage> {
                         .filter_map(|p| {
                             let t = p.get("type").and_then(|v| v.as_str())?;
                             match t {
-                                "text" => p.get("text").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                                "text" => p
+                                    .get("text")
+                                    .and_then(|v| v.as_str())
+                                    .map(|s| s.to_string()),
                                 "image_url" => Some("[image attached]".to_string()),
                                 _ => None,
                             }
@@ -56,7 +56,10 @@ pub fn trim_messages(messages: Vec<ChatMessage>, keep: usize) -> Vec<ChatMessage
         return messages;
     }
     let system = messages.first().filter(|m| m.role == "system").cloned();
-    let tail: Vec<ChatMessage> = messages.into_iter().skip(total.saturating_sub(keep)).collect();
+    let tail: Vec<ChatMessage> = messages
+        .into_iter()
+        .skip(total.saturating_sub(keep))
+        .collect();
 
     let valid_ids: HashSet<String> = tail
         .iter()
@@ -112,7 +115,10 @@ pub fn messages_to_api_json(messages: Vec<ChatMessage>) -> Vec<serde_json::Value
                 );
             }
             if let Some(tool_calls) = m.tool_calls {
-                obj.insert("tool_calls".to_string(), serde_json::to_value(tool_calls).unwrap());
+                obj.insert(
+                    "tool_calls".to_string(),
+                    serde_json::to_value(tool_calls).unwrap(),
+                );
             }
             if let Some(ref reasoning_content) = m.reasoning_content {
                 if !reasoning_content.is_empty() {

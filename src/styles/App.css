@@ -53,7 +53,7 @@
   border-right: 1px solid var(--line);
   border-top: 1px solid var(--line);
   border-left: 1px solid var(--line);
-  border-radius: 16px 0 0 0;
+  border-radius: var(--radius-2xl) 0 0 0;
 }
 
 .layout__editor {
@@ -117,9 +117,9 @@
   min-height: 0;
   min-width: 0;
   transition:
-    flex 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1)) var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    min-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1)) var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    max-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1)) var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1));
 }
 .sidebar--closed {
   overflow: hidden;
