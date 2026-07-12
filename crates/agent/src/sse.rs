@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
 
 use crate::chat::{AssistantTurn, ToolCall, ToolCallFunction};
 
@@ -29,9 +30,9 @@ pub async fn parse_sse_stream(
             return Err("Aborted".to_string());
         }
 
-        let chunk = res.chunk().await.map_err(|e| e.to_string())?;
+        let chunk = tokio::time::timeout(Duration::from_millis(100), res.chunk()).await;
         match chunk {
-            Some(bytes) => {
+            Ok(Ok(Some(bytes))) => {
                 let Ok(chunk_str) = std::str::from_utf8(&bytes) else {
                     continue;
                 };
@@ -54,7 +55,7 @@ pub async fn parse_sse_stream(
                     );
                 }
             }
-            None => {
+            Ok(Ok(None)) => {
                 let remaining = buffer[buf_idx..].trim();
                 if !remaining.is_empty() {
                     process_sse_line(
@@ -71,6 +72,8 @@ pub async fn parse_sse_stream(
                 }
                 break;
             }
+            Ok(Err(e)) => return Err(e.to_string()),
+            Err(_) => {} // timeout – loop back to check cancel
         }
     }
 
