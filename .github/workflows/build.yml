@@ -199,7 +199,7 @@ jobs:
           if-no-files-found: false
 
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           generate_release_notes: true
@@ -256,7 +256,7 @@ jobs:
           '
 
       - name: Upload latest.json to Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: latest.json
           fail_on_unmatched_files: false
