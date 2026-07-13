@@ -1,6 +1,6 @@
 import React from "react";
 import type { ChatSummary } from "../../types.js";
-import { CheckIcon, TrashIcon } from "./SidebarIcons.js";
+import { CheckIcon, TrashIcon } from "../icons/icons.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
 import { useI18n } from "../../hooks/useI18n.js";
 

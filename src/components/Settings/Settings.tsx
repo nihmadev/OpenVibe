@@ -8,7 +8,7 @@ import { themes } from "../../themes/themes.js";
 import { PROVIDER_TEMPLATES, getProviderIconPath } from "../../constants.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { FONT_OPTIONS, CODE_FONT_OPTIONS, applyFont } from "../../fonts.js";
-import { ChevronRightIcon } from "../icons/ui-icons.js";
+import { ChevronRightIcon } from "../icons/icons.js";
 import { languageOptions } from "../../i18n/index.js";
 import type { ShortcutDef, KeyCombo } from "../../hooks/useShortcuts.js";
 import { formatCombo, setRecording } from "../../hooks/useShortcuts.js";

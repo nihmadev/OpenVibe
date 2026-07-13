@@ -1,9 +1,9 @@
 import React from "react";
 import { HistoryItem } from "../chat-history/types.js";
 import { describe, pickFile } from "../chat-history/utils.js";
-import { FailIcon } from "../chat-history/ChatHistoryIcons.js";
+import { FailIcon } from "../icons/icons.js";
 import { FileBadge } from "../chat-history/ChatHistorySubComponents.js";
-import { ChevronRightIcon, Loader2Icon } from "../icons/ui-icons.js";
+import { ChevronRightIcon, Loader2Icon } from "../icons/icons.js";
 import { FileIcon } from "../icons/file-icons.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { CodeBlock, resolveMonacoLang } from "../CodeBlock/CodeBlock.js";

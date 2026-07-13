@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { CopyIcon, TerminalIcon, RunIcon, InsertTerminalIcon } from "../icons/ui-icons.js";
+import { CopyIcon, TerminalIcon, RunIcon, InsertTerminalIcon } from "../icons/icons.js";
 import { useTerminalActions } from "../../hooks/useTerminalActions.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";

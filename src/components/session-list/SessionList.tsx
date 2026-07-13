@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
+import { KebabMenuIcon, PlusSmallIcon } from "../icons/icons.js";
 import type { ChatSummary, Project } from "../../types.js";
 import { SessionListItem } from "./SessionListItem.js";
 import { useI18n } from "../../hooks/useI18n.js";
@@ -164,11 +165,7 @@ export function SessionList({
             {project ? (
               <div style={{ position: "relative", flexShrink: 0 }}>
                 <button className="session-list__menu-btn" onClick={handleMenuToggle} aria-label="Project menu">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                    <circle cx="8" cy="3" r="1.5" />
-                    <circle cx="8" cy="8" r="1.5" />
-                    <circle cx="8" cy="13" r="1.5" />
-                  </svg>
+                  <KebabMenuIcon />
                 </button>
                 {menuOpen ? (
                   <div className="session-list__dropdown" ref={menuRef}>
@@ -197,18 +194,7 @@ export function SessionList({
           </div>
 
           <button className="session-list__newsession" onClick={onNew}>
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M8 3v10M3 8h10" />
-            </svg>
+            <PlusSmallIcon />
             {t("newSession")}
           </button>
         </div>

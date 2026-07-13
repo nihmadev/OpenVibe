@@ -2,9 +2,9 @@ import React from "react";
 import { HistoryItem } from "./types";
 import { FileBadgeInfo, describe, pickFile, toRelativePath } from "./utils.js";
 import { useI18n } from "../../hooks/useI18n.js";
-import { CheckIcon, FailIcon, SpinIcon, DiffIcon, CircularProgress } from "./ChatHistoryIcons.js";
+import { CheckCircleIcon, FailIcon, SpinIcon, DiffIcon, CircularProgress } from "../icons/icons.js";
 import { invoke } from "@tauri-apps/api/core";
-import { ChevronRightIcon } from "../icons/ui-icons.js";
+import { ChevronRightIcon } from "../icons/icons.js";
 import { FileIcon, FolderIcon } from "../icons/file-icons.js";
 import { Markdown } from "../Markdown/Markdown.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
@@ -101,7 +101,7 @@ export function ToolBlock({ item }: { item: HistoryItem }): React.ReactElement {
   return (
     <div className={`tool ${stateCls}`}>
       <span className="tool__icon">
-        {item.ok === undefined ? <SpinIcon /> : item.ok ? <CheckIcon /> : <FailIcon />}
+        {item.ok === undefined ? <SpinIcon /> : item.ok ? <CheckCircleIcon /> : <FailIcon />}
       </span>
       <span className="tool__line">
         <span className="tool__verb">{verb}</span>
@@ -256,7 +256,7 @@ export function MessageFooter({
       <div className="msg__footer-content">
         <div className="msg__footer-left">
           <div className="msg__footer-item msg__footer-item--green">
-            <CheckIcon />
+            <CheckCircleIcon />
             <span>{t("completed")}</span>
           </div>
           <span className="msg__footer-sep">|</span>

@@ -3,7 +3,7 @@ import type { Provider } from "../../types.js";
 import { PROVIDER_TEMPLATES, getProviderIconPath } from "../../constants.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { useTheme } from "../../hooks/useTheme.js";
-import { ChevronRightIcon } from "../icons/ui-icons.js";
+import { ChevronRightIcon, ChevronDownIcon, SearchMiniIcon, AttachPlusIcon, FilterIcon, CheckIcon } from "../icons/icons.js";
 
 interface ModelGroup {
   providerId: string;
@@ -181,37 +181,14 @@ export function ModelSelector({ currentModel, onPickModel, onOpenSettings }: Mod
     <div className="model-selector" ref={selRef}>
       <button type="button" className="model-selector__trigger" onClick={() => setOpen((v) => !v)}>
         <span className="model-selector__trigger-name">{activeModelName}</span>
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
+        <ChevronDownIcon />
       </button>
 
       {open && (
         <div className="model-selector__popup" style={{ width: 260 }}>
           <div className="model-selector__header">
             <div className="model-selector__search">
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
+              <SearchMiniIcon />
               <input
                 ref={inputRef}
                 type="text"
@@ -230,18 +207,7 @@ export function ModelSelector({ currentModel, onPickModel, onOpenSettings }: Mod
                   onOpenSettings("providers");
                 }}
               >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
+                <AttachPlusIcon />
               </button>
               <button
                 className="model-selector__action-btn"
@@ -251,20 +217,7 @@ export function ModelSelector({ currentModel, onPickModel, onOpenSettings }: Mod
                   onOpenSettings("models");
                 }}
               >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <line x1="4" y1="6" x2="20" y2="6" />
-                  <line x1="4" y1="18" x2="20" y2="18" />
-                  <circle cx="9" cy="6" r="2" fill="currentColor" />
-                  <circle cx="15" cy="18" r="2" fill="currentColor" />
-                </svg>
+                <FilterIcon />
               </button>
             </div>
           </div>
@@ -313,18 +266,7 @@ export function ModelSelector({ currentModel, onPickModel, onOpenSettings }: Mod
                             {m.name}
                           </span>
                           {m.id === currentModel && (
-                            <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="var(--accent)"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
+                            <CheckIcon />
                           )}
                         </button>
                       ))}

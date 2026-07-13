@@ -13,6 +13,9 @@ import {
   TerminalIcon,
   FolderToggleIcon,
   SearchInCodeIcon,
+  MinimizeIcon,
+  MaximizeIcon,
+  CloseIcon,
 } from "../icons/index.js";
 
 interface TitlebarProps {
@@ -297,9 +300,7 @@ export function Titlebar({
             }}
             aria-label={t("minimizeLabel")}
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.2">
-              <path d="M1 5h8" />
-            </svg>
+            <MinimizeIcon />
           </button>
           <button
             className="titlebar__btn"
@@ -310,9 +311,7 @@ export function Titlebar({
             }}
             aria-label={t("maximizeLabel")}
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.2">
-              <rect x="1" y="1" width="8" height="8" />
-            </svg>
+            <MaximizeIcon />
           </button>
           <button
             className="titlebar__btn titlebar__btn--close"
@@ -323,9 +322,7 @@ export function Titlebar({
             }}
             aria-label={t("closeLabel")}
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.2">
-              <path d="M1 1l8 8M9 1l-8 8" />
-            </svg>
+            <CloseIcon />
           </button>
         </div>
       </div>
