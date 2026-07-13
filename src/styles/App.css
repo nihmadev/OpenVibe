@@ -65,6 +65,14 @@
   overflow: hidden;
 }
 
+.layout__search-code {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--line);
+}
+
 /* ── Resize handles ── */
 .resize-handle {
   flex-shrink: 0;

@@ -1,0 +1,534 @@
+/* ── Search In Code ── */
+.search-code {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-size: 12px;
+  background: var(--bg);
+}
+
+/* ── Header ── */
+.sc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sc-header-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--fg-muted);
+}
+
+.sc-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sc-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--fg-muted);
+  background: transparent;
+  transition: color var(--anim-buttons-duration, 0.15s) var(--anim-buttons-easing, ease), background var(--anim-buttons-duration, 0.15s) var(--anim-buttons-easing, ease);
+  flex-shrink: 0;
+}
+
+.sc-action-btn:hover {
+  color: var(--fg);
+  background: var(--bg-2);
+}
+
+.sc-action-btn--active {
+  color: var(--fg);
+  background: var(--bg-2);
+}
+
+/* ── Inputs ── */
+.sc-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 8px 12px 4px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.sc-inputs-inner {
+  display: flex;
+  gap: 4px;
+  align-items: stretch;
+}
+
+.sc-input-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.sc-input-row {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.sc-input-row--replace {
+  margin-top: 0;
+}
+
+.sc-replace-wrap {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sc-replace-wrap--open {
+  max-height: 40px;
+}
+
+.sc-chevron-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  color: var(--fg-muted);
+  padding: 0;
+  flex-shrink: 0;
+  transition: height 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.15s, border-color 0.15s, background 0.15s;
+  height: 28px;
+}
+
+.sc-chevron-btn:hover {
+  color: var(--fg);
+  border-color: var(--fg-dim);
+  background: var(--bg-2);
+}
+
+.sc-chevron-btn--open {
+  color: var(--fg);
+  border-color: var(--fg-dim);
+  height: 56px;
+}
+
+.sc-input-wrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color var(--anim-buttons-duration, 0.15s) var(--anim-buttons-easing, ease);
+}
+
+.sc-input-wrap:focus-within {
+  border-color: var(--fg-dim);
+}
+
+.sc-input {
+  flex: 1;
+  height: 26px;
+  padding: 0 8px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--fg);
+  font-size: 12px;
+  font-family: inherit;
+  min-width: 0;
+}
+
+.sc-input::placeholder {
+  color: var(--fg-dim);
+  opacity: 0.6;
+}
+
+.sc-input-toggles {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding-right: 2px;
+  flex-shrink: 0;
+}
+
+.sc-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 22px;
+  border: 0;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--fg-muted);
+  background: transparent;
+  transition: color var(--anim-buttons-duration, 0.15s) var(--anim-buttons-easing, ease), background var(--anim-buttons-duration, 0.15s) var(--anim-buttons-easing, ease);
+  font-size: 10px;
+}
+
+.sc-toggle-btn:hover {
+  color: var(--fg);
+  background: var(--bg-3);
+}
+
+.sc-toggle-btn--active {
+  color: var(--fg);
+  background: var(--bg-3);
+}
+
+/* ── Filters ── */
+.sc-filters-wrap {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sc-filters-wrap--open {
+  max-height: 140px;
+}
+
+.sc-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0 6px 20px;
+}
+
+.sc-filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sc-filter-label {
+  font-size: 11px;
+  color: var(--fg-dim);
+  font-weight: 500;
+}
+
+/* ── Summary ── */
+.sc-summary {
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+  animation: sc-fade-in var(--anim-panel-appear-duration, 0.15s) var(--anim-panel-appear-easing, ease) both;
+}
+
+.sc-summary-text {
+  font-size: 11px;
+  color: var(--fg-dim);
+}
+
+.sc-summary-text--searching {
+  color: var(--fg-muted);
+  animation: sc-pulse 1.5s infinite;
+}
+
+@keyframes sc-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Results ── */
+.sc-results {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+.sc-results::-webkit-scrollbar {
+  display: none;
+}
+
+.sc-empty {
+  padding: 24px 12px;
+  color: var(--fg-dim);
+  font-size: 12px;
+  text-align: center;
+}
+
+.sc-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 100px;
+}
+.sc-loading svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* ── Flat list view ── */
+.sc-flat-list {
+  display: flex;
+  flex-direction: column;
+  animation: sc-fade-in var(--anim-panel-appear-duration, 0.18s) var(--anim-panel-appear-easing, ease) both;
+}
+
+.sc-file-group {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.sc-flat-list .sc-match-row {
+  position: relative;
+  padding-left: 32px;
+}
+
+.sc-flat-list .sc-match-row::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 10px;
+  height: 1px;
+  background: var(--line);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.sc-flat-list .sc-match-row:not(.sc-match-row--last)::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--line);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.sc-flat-list .sc-match-row--last::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 0;
+  bottom: 50%;
+  width: 1px;
+  background: var(--line);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.sc-file-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--fg);
+  transition: background var(--anim-buttons-duration, 0.18s) var(--anim-buttons-easing, ease);
+  position: relative;
+}
+
+.sc-file-header:hover {
+  background: var(--bg-2);
+}
+
+.sc-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 180px;
+  font-weight: 500;
+}
+
+.sc-file-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg-dim);
+  font-size: 11px;
+  flex: 1;
+  min-width: 0;
+  opacity: 0.7;
+}
+
+/* ── Chevron (shared flat + tree) ── */
+.sc-chev {
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sc-chev svg {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Match badge ── */
+.sc-match-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--bg-2);
+  color: var(--fg-muted);
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* ── Match rows ── */
+.sc-matches {
+  display: flex;
+  flex-direction: column;
+  animation: sc-slide-in 0.25s cubic-bezier(0.2, 0, 0.2, 1) both;
+}
+
+@keyframes sc-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sc-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sc-match-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  color: var(--fg-dim);
+  min-height: 22px;
+  transition: background var(--anim-buttons-duration, 0.18s) var(--anim-buttons-easing, ease), color var(--anim-buttons-duration, 0.18s) var(--anim-buttons-easing, ease);
+  position: relative;
+}
+
+.sc-match-row:hover {
+  background: var(--bg-2);
+  color: var(--fg);
+}
+
+.sc-match-content {
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+  line-height: 1.5;
+}
+
+/* ── Match highlight ── */
+.sc-match-highlight {
+  background: rgba(255, 200, 0, 0.3);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* ── Syntax highlighting tokens ── */
+.sc-token-keyword {
+  color: var(--syntax-keyword);
+}
+.sc-token-string {
+  color: var(--syntax-string);
+}
+.sc-token-comment {
+  color: var(--syntax-comment);
+  font-style: italic;
+}
+.sc-token-number {
+  color: var(--syntax-constant);
+}
+.sc-token-identifier {
+  color: var(--syntax-variable);
+}
+.sc-token-punctuation {
+  color: var(--syntax-punctuation);
+}
+.sc-token-ws {
+  /* no styling needed */
+}
+
+/* ── Tree view ── */
+.sc-tree-view {
+  display: flex;
+  flex-direction: column;
+  animation: sc-fade-in var(--anim-panel-appear-duration, 0.18s) var(--anim-panel-appear-easing, ease) both;
+}
+
+.sc-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--fg-dim);
+  position: relative;
+  transition: background var(--anim-buttons-duration, 0.18s) var(--anim-buttons-easing, ease), color var(--anim-buttons-duration, 0.18s) var(--anim-buttons-easing, ease);
+}
+
+.sc-tree-row:hover {
+  background: var(--bg-2);
+  color: var(--fg);
+}
+
+.sc-tree-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.sc-tree-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg-dim);
+  font-size: 11px;
+  flex: 1;
+  min-width: 0;
+  opacity: 0.7;
+}
+
+/* ── Vertical guide lines on rows ── */
+.sc-guide-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--line);
+  pointer-events: none;
+}

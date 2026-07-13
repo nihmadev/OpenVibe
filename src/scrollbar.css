@@ -110,7 +110,8 @@ code::-webkit-scrollbar-button {
 .settings__content-body,
 .settings__custom-select-dropdown-body,
 .project-rail__list,
-.session-list__list {
+.session-list__list,
+.sc-results {
   scrollbar-width: none !important;
 }
 
@@ -134,7 +135,10 @@ code::-webkit-scrollbar-button {
 .project-rail__list::-webkit-scrollbar-track,
 .session-list__list::-webkit-scrollbar,
 .session-list__list::-webkit-scrollbar-thumb,
-.session-list__list::-webkit-scrollbar-track {
+.session-list__list::-webkit-scrollbar-track,
+.sc-results::-webkit-scrollbar,
+.sc-results::-webkit-scrollbar-thumb,
+.sc-results::-webkit-scrollbar-track {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
