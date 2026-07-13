@@ -8,6 +8,7 @@ import { Confirm } from "../Confirm/Confirm.js";
 import { PromptInput } from "../prompt-input/PromptInput.js";
 import { Terminals } from "../Terminals/Terminals.js";
 import { EditorArea } from "../Editor/EditorArea.js";
+import { SearchInCode } from "../SearchInCode/SearchInCode.js";
 import { FileTree } from "../FileTree/FileTree.js";
 import { EditProjectPopup } from "../EditProjectPopup/EditProjectPopup.js";
 import type { Project, ChatSummary, VibeConfig, FileSnapshot } from "../../types.js";
@@ -53,13 +54,18 @@ interface AppMainProps {
   connectedModels: any[];
   openFiles: string[];
   activeFile: string | null;
-  handleOpenFile: (path: string) => void;
+  handleOpenFile: (path: string, line?: number, column?: number) => void;
   handleCloseFile: (path: string) => void;
   handleActivateFile: (path: string) => void;
   handleDecide: (decision: "yes" | "no" | "always") => void;
   setItems: React.Dispatch<React.SetStateAction<any[]>>;
   revealPath?: string | null;
   setProjects?: (projects: Project[]) => void;
+  searchInCodeOpen?: boolean;
+  onCloseSearchInCode?: () => void;
+  gotoLine?: number;
+  gotoColumn?: number;
+  gotoMatchLength?: number;
 }
 
 /** Drag-handle divider between two resizable panels */
@@ -145,6 +151,11 @@ export function AppMain({
   fileTreeOpen,
   revealPath,
   setProjects,
+  searchInCodeOpen = false,
+  onCloseSearchInCode = () => {},
+  gotoLine,
+  gotoColumn,
+  gotoMatchLength,
 }: AppMainProps) {
   const [sidebarResizing, setSidebarResizing] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -152,6 +163,7 @@ export function AppMain({
 
   // Panel widths (px). Chat is fixed, editor takes the rest, filetree is fixed.
   const [chatWidth, setChatWidth] = useState(320);
+  const [searchWidth, setSearchWidth] = useState(400);
   const [ftreeWidth, setFtreeWidth] = useState(280);
 
   // dirty files set — tracked here so EditorArea tabs can show the dot
@@ -330,7 +342,11 @@ export function AppMain({
           <div
             className="layout__chat"
             style={
-              openFiles.length > 0 ? { flex: `0 1 ${chatWidth}px`, minWidth: 200, maxWidth: 600 } : { flex: "1 1 0" }
+              searchInCodeOpen
+                ? { flex: "1 1 0", minWidth: 200 }
+                : openFiles.length > 0
+                  ? { flex: `0 1 ${chatWidth}px`, minWidth: 200, maxWidth: 600 }
+                  : { flex: "1 1 0" }
             }
           >
             {drillDownId ? (
@@ -425,8 +441,19 @@ export function AppMain({
             </div>
           </div>
 
-          {/* Editor panel — only when files are open */}
-          {openFiles.length > 0 && (
+          {/* Search in Code panel — always mounted to preserve state */}
+          <div style={{ display: searchInCodeOpen ? 'contents' : 'none' }}>
+            <ResizeHandle onDrag={(d) => setSearchWidth((w) => Math.max(200, Math.min(800, w - d)))} />
+            <div className="layout__search-code" style={{ flex: `0 1 ${searchWidth}px`, minWidth: 200, maxWidth: 800 }}>
+              <SearchInCode cwd={cwd} onOpenFile={handleOpenFile} onClose={onCloseSearchInCode} />
+            </div>
+            {fileTreeOpen && (
+              <ResizeHandle onDrag={(d) => setFtreeWidth((w) => Math.max(160, Math.min(500, w - d)))} />
+            )}
+          </div>
+
+          {/* Editor panel — only when files are open and search is closed */}
+          {!searchInCodeOpen && openFiles.length > 0 && (
             <>
               <ResizeHandle onDrag={(d) => setChatWidth((w) => Math.max(200, Math.min(600, w + d)))} />
               <div className="layout__editor">
@@ -438,6 +465,9 @@ export function AppMain({
                   onClose={handleCloseFile}
                   onDirtyChange={handleDirtyChange}
                   cwd={cwd}
+                  gotoLine={gotoLine}
+                  gotoColumn={gotoColumn}
+                  gotoMatchLength={gotoMatchLength}
                 />
               </div>
               {fileTreeOpen && (
@@ -446,8 +476,8 @@ export function AppMain({
             </>
           )}
 
-          {/* When no editor, still need the resize handle before file tree */}
-          {openFiles.length === 0 && fileTreeOpen && (
+          {/* When no editor/search, still need the resize handle before file tree */}
+          {!searchInCodeOpen && openFiles.length === 0 && fileTreeOpen && (
             <ResizeHandle onDrag={(d) => setFtreeWidth((w) => Math.max(160, Math.min(500, w - d)))} />
           )}
 

@@ -40,6 +40,9 @@ export function App(): React.ReactElement {
   const handleCloseSearch = useCallback(() => {
     setSearchOpen(false);
   }, []);
+  const handleCloseSearchInCode = useCallback(() => {
+    setSearchInCodeOpen(false);
+  }, []);
   const handleOpenSettings = useCallback((tab?: string) => {
     if (tab) setSettingsTab(tab);
     setSettingsOpen(true);
@@ -48,6 +51,10 @@ export function App(): React.ReactElement {
   const [chatSideSticky, setChatSideSticky] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(220);
   const [terminalOpen, setTerminalOpen] = useState(false);
+  const [searchInCodeOpen, setSearchInCodeOpen] = useState(false);
+  const [gotoLine, setGotoLine] = useState<number | undefined>(undefined);
+  const [gotoColumn, setGotoColumn] = useState<number | undefined>(undefined);
+  const [gotoMatchLength, setGotoMatchLength] = useState<number | undefined>(undefined);
   const [fileTreeOpen, setFileTreeOpen] = useState(true);
   const [openFiles, setOpenFiles] = useState<string[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
@@ -159,9 +166,12 @@ export function App(): React.ReactElement {
     [pending],
   );
 
-  const handleOpenFile = useCallback((path: string) => {
+  const handleOpenFile = useCallback((path: string, line?: number, column?: number, matchLength?: number) => {
     setOpenFiles((prev) => (prev.includes(path) ? prev : [...prev, path]));
     setActiveFile(path);
+    setGotoLine(line);
+    setGotoColumn(column);
+    setGotoMatchLength(matchLength);
   }, []);
 
   const handleCloseFile = useCallback((path: string) => {
@@ -314,6 +324,10 @@ export function App(): React.ReactElement {
     ],
   );
 
+  const handleToggleSearchInCode = useCallback(() => {
+    setSearchInCodeOpen((o) => !o);
+  }, []);
+
   const { shortcuts, updateBinding, resetBinding } = useShortcuts({
     newChat: handleShortcutNewChat,
     switchChat: handleSwitchChat,
@@ -366,6 +380,8 @@ export function App(): React.ReactElement {
                 canGoForward={canGoForward}
                 terminalOpen={terminalOpen}
                 onToggleTerminal={() => setTerminalOpen(!terminalOpen)}
+                searchInCodeOpen={searchInCodeOpen}
+                onToggleSearchInCode={handleToggleSearchInCode}
                 fileTreeOpen={fileTreeOpen}
                 onToggleFileTree={() => setFileTreeOpen(!fileTreeOpen)}
                 folder={folder}
@@ -436,6 +452,8 @@ export function App(): React.ReactElement {
               canGoForward={canGoForward}
               terminalOpen={terminalOpen}
               onToggleTerminal={() => setTerminalOpen(!terminalOpen)}
+              searchInCodeOpen={searchInCodeOpen}
+              onToggleSearchInCode={handleToggleSearchInCode}
               fileTreeOpen={fileTreeOpen}
               onToggleFileTree={() => setFileTreeOpen(!fileTreeOpen)}
               folder={folder}
@@ -508,6 +526,11 @@ export function App(): React.ReactElement {
               handleDecide={handleDecide}
               setItems={setItems}
               setProjects={setProjects}
+              searchInCodeOpen={searchInCodeOpen}
+              onCloseSearchInCode={handleCloseSearchInCode}
+              gotoLine={gotoLine}
+              gotoColumn={gotoColumn}
+              gotoMatchLength={gotoMatchLength}
             />
             <Settings
               open={settingsOpen}
