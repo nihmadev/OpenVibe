@@ -39,6 +39,12 @@ interface Props {
   onDirtyChange?: (dirty: boolean) => void;
   /** @deprecated kept for backward compat, no longer used */
   onClose?: () => void;
+  /** Line number to navigate to after opening */
+  gotoLine?: number;
+  /** Column to set cursor when navigating */
+  gotoColumn?: number;
+  /** Match length to select when navigating */
+  gotoMatchLength?: number;
 }
 
 const TYPES_LOADING_PROMISES = new Map<string, Promise<void>>();
@@ -152,7 +158,7 @@ interface CachedModel {
 }
 const MODEL_CACHE = new Map<string, CachedModel>();
 
-export function Editor({ path, cwd, onDirtyChange }: Props): React.ReactElement {
+export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMatchLength }: Props): React.ReactElement {
   const { t } = useI18n();
   const [content, setContent] = useState<string | null>(null);
   const [original, setOriginal] = useState<string>("");
@@ -291,6 +297,21 @@ export function Editor({ path, cwd, onDirtyChange }: Props): React.ReactElement 
     }
   }, [dirty, onDirtyChange]);
 
+  // Navigate to position when gotoLine changes while editor is already mounted
+  useEffect(() => {
+    const ed = editorRef.current;
+    const m = monacoInstanceRef.current;
+    if (ed && gotoLine !== undefined) {
+      const col = gotoColumn ?? 1;
+      ed.revealLineInCenter(gotoLine);
+      ed.setPosition({ lineNumber: gotoLine, column: col });
+      if (m && gotoColumn !== undefined && gotoMatchLength !== undefined) {
+        ed.setSelection(new m.Range(gotoLine, col, gotoLine, col + gotoMatchLength));
+      }
+      ed.focus();
+    }
+  }, [gotoLine, gotoColumn, gotoMatchLength]);
+
   const save = useCallback(async () => {
     if (content === null || saving || !dirty) return;
     setSaving(true);
@@ -371,6 +392,17 @@ export function Editor({ path, cwd, onDirtyChange }: Props): React.ReactElement 
             ed.onDidChangeModelContent(() => {
               setContent(ed.getValue());
             });
+
+            // Navigate to line when opening from search results
+            if (gotoLine !== undefined) {
+              const col = gotoColumn ?? 1;
+              ed.revealLineInCenter(gotoLine);
+              ed.setPosition({ lineNumber: gotoLine, column: col });
+              if (gotoColumn !== undefined && gotoMatchLength !== undefined) {
+                ed.setSelection(new m.Range(gotoLine, col, gotoLine, col + gotoMatchLength));
+              }
+              ed.focus();
+            }
           } catch (e) {
             console.error("Error mounting editor:", e);
           }
