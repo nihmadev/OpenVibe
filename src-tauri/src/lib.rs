@@ -274,6 +274,11 @@ pub fn run() {
             commands::fs::fs_create_dir,
             commands::fs::fs_find,
             commands::fs::fs_find_all,
+            commands::fs::fs_search_content,
+            commands::fs::fs_search_content_filter,
+            commands::fs::fs_search_content_files,
+            commands::fs::fs_search_content_file_matches,
+            commands::fs::fs_highlight_lines,
             commands::fs::fs_project_info,
             commands::fs::whisper_transcribe,
             // Editor commands
