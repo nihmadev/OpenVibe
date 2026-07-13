@@ -1,8 +1,7 @@
 TODO
 ====
 
-- Implement full search, button and search-in-code functionality in tree line
 - Improve bash tool UX and error handling
 - Add questions tool for interactive user prompting
 - Fix agent confirmation dialog design
-- Sleep
+- Fix resolve paths React/node_modules/packages in editor

@@ -286,6 +286,33 @@ export const ru = {
   cannotOpenFile: "Невозможно открыть файл",
   retry: "Повторить",
 
+  // SearchInCode
+  searchInCode: "Поиск в коде",
+  searchInCodePlaceholder: "Поиск",
+  replacePlaceholder: "Замена",
+  refreshSearch: "Обновить поиск",
+  clearSearchResults: "Очистить результаты поиска",
+  viewAsTree: "Вид деревом",
+  showReplace: "Показать замену",
+  hideReplace: "Скрыть замену",
+  matchCase: "С учётом регистра",
+  matchWholeWord: "Только слово целиком",
+  useRegex: "Регулярное выражение",
+  preserveCase: "Сохранить регистр",
+  replaceAll: "Заменить всё",
+  filesToIncludeExclude: "Файлы для включения/исключения",
+  filesToInclude: "файлы для включения",
+  filesToExclude: "файлы для исключения",
+  includePlaceholder: "например *.ts, src/**",
+  excludePlaceholder: "например node_modules, *.test.ts",
+  noResultsFound: "Ничего не найдено.",
+  searchInCodeResults_one: "{count} результат в {fileCount} файле",
+  searchInCodeResults_few: "{count} результата в {fileCount} файлах",
+  searchInCodeResults: "{count} результатов в {fileCount} файлах",
+  typeToSearch: "Введите поисковый запрос для поиска в файлах.",
+  loadingMatches: "Загрузка...",
+  moreMatches: "… и ещё {count} совпадений",
+
   // EditorArea
   openFileFromTree: "Откройте файл из дерева файлов",
   unsavedChanges: "Несохранённые изменения",
@@ -353,7 +380,8 @@ export const ru = {
   animPreviewTitle: "Превью анимации",
   animPreviewClose: "Закрыть",
   animMultiplier: "Плавность анимаций",
-  animMultiplierDesc: "Множитель плавности анимаций. 0 = отключено, 0.5 = быстро, 1 = нормально, 2 = плавно, 5 = ультра плавно",
+  animMultiplierDesc:
+    "Множитель плавности анимаций. 0 = отключено, 0.5 = быстро, 1 = нормально, 2 = плавно, 5 = ультра плавно",
 
   // Window effects
   windowEffects: "Эффекты окна",

@@ -7,9 +7,13 @@ fn clip(text: &str, max: usize) -> String {
     if text.len() <= max {
         text.to_string()
     } else {
+        let mut end = max;
+        while !text.is_char_boundary(end) {
+            end -= 1;
+        }
         format!(
             "{}\n…[truncated, {} more chars]",
-            &text[..max],
+            &text[..end],
             text.len() - max
         )
     }

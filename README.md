@@ -1,17 +1,16 @@
 <p align="center">
-  <img src="src-tauri/icons/icon.png" width="100" alt="Openvibe" />
+  <img src="public/icons/etc/icon.png" width="100" alt="Openvibe" />
 </p>
 
 <h1 align="center">Openvibe</h1>
 <p align="center">
-  <a href="https://openvibe-beta.vercel.app">website</a> ·
   <a href="https://github.com/nihmadev/OpenVibe">github</a> ·
   <a href="mailto:lolz@nihmadev.fun">lolz@nihmadev.fun</a>
 </p>
 
 <p align="center">
   <a href="https://github.com/nihmadev/OpenVibe/releases/ alt="Release" /></a>
-  <a href="https://github.com/nihmadev/OpenVibe/actions"><img src="https://img.shields.io/github/actions/workflow/status/nihmadev/openvibe-community/.github/workflows/build.yml?style=flat-square&logo=githubactions&label=build" alt="CI" /></a>
+  <a href="https://github.com/nihmadev/OpenVibe/actions"><img src="https://img.shields.io/github/actions/workflow/status/nihmadev/OpenVibe/.github/workflows/build.yml?style=flat-square&logo=githubactions&label=build" alt="CI" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-OpenVibe-blue?style=flat-square" alt="License" /></a>
   <img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -97,9 +96,3 @@ Launch the app. Click the gear icon on the left sidebar. Add a provider. Paste y
 ## License
 
 Source code is open for use and modification. UI design and visual assets are proprietary. See [LICENSE](LICENSE).
-
-<p align="center">
-  <small>Built by developers who got tired of being told which model to use</small>
-  <br/>
-  <a href="mailto:lolz@nihmadev.fun">lolz@nihmadev.fun</a>
-</p>
