@@ -331,8 +331,8 @@ export const vibe = {
   },
 
   models: {
-    fetch: (baseUrl: string, apiKey: string, providerId?: string) =>
-      wrap(() => invoke("models_fetch", { baseUrl, apiKey, providerId })),
+    fetch: (baseUrl: string, apiKey: string, providerId?: string, modelsUrl?: string, customHeaders?: [string, string][]) =>
+      wrap(() => invoke("models_fetch", { baseUrl, apiKey, providerId, modelsUrl, customHeaders })),
     listDisabled: () => invoke("models_list_disabled"),
     toggleDisabled: (modelId: string) => invoke("models_toggle_disabled", { modelId }),
     listEnabled: () => invoke("models_list_enabled"),
@@ -410,8 +410,8 @@ export const vibe = {
   editor: {
     preloadTypes: (cwd: string) =>
       wrap(
-        () => invoke<{ types: Array<{ path: string; content: string }> }>("editor_preload_types", { cwd }),
-        (result) => ({ types: result.types }),
+        () => invoke<{ types: Array<{ path: string; content: string }>; packages: Array<{ name: string; typePath: string; content: string }> }>("editor_preload_types", { cwd }),
+        (result) => ({ types: result.types, packages: result.packages }),
       ),
   },
 

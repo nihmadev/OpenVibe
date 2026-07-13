@@ -66,6 +66,8 @@ pub async fn models_fetch(
     base_url: String,
     api_key: String,
     provider_id: Option<String>,
+    models_url: Option<String>,
+    custom_headers: Option<Vec<(String, String)>>,
 ) -> Result<serde_json::Value, String> {
     let api_url: Option<String> = {
         let config = state.config.lock().map_err(|e| e.to_string())?;
@@ -93,11 +95,21 @@ pub async fn models_fetch(
         }
     }
 
-    let url = if is_github {
+    // Use custom models_url if provided, otherwise derive from base_url
+    let url = if let Some(mu) = &models_url {
+        if !mu.is_empty() {
+            mu.clone()
+        } else if is_github {
+            format!("{}/catalog/models", base_url.trim_end_matches('/'))
+        } else {
+            format!("{}/models", base_url.trim_end_matches('/'))
+        }
+    } else if is_github {
         format!("{}/catalog/models", base_url.trim_end_matches('/'))
     } else {
         format!("{}/models", base_url.trim_end_matches('/'))
     };
+
     let mut headers = Vec::new();
     if !api_key.is_empty() {
         headers.push(("Authorization".to_string(), format!("Bearer {}", api_key)));
@@ -105,6 +117,14 @@ pub async fn models_fetch(
     if is_github {
         headers.push(("Accept".to_string(), "application/vnd.github+json".to_string()));
         headers.push(("X-GitHub-Api-Version".to_string(), "2026-03-10".to_string()));
+    }
+    // Apply custom headers (overwrite defaults)
+    if let Some(ch) = custom_headers {
+        for (k, v) in ch {
+            // Remove existing header with same key if present
+            headers.retain(|(existing_key, _)| existing_key != &k);
+            headers.push((k, v));
+        }
     }
     do_fetch(&url, &headers, &state.http_client).await
 }

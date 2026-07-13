@@ -103,6 +103,11 @@ export interface Project {
   photo?: string | null;
 }
 
+export interface KeyValuePair {
+  key: string;
+  value: string;
+}
+
 export interface Provider {
   id: string;
   name: string;
@@ -111,6 +116,10 @@ export interface Provider {
   apiKey: string;
   model: string;
   addedAt: number;
+  customIcon?: string | null;
+  modelsUrl?: string | null;
+  headers?: KeyValuePair[] | null;
+  parameters?: KeyValuePair[] | null;
 }
 
 export interface FileSnapshot {
@@ -147,7 +156,7 @@ export interface VibeApi {
     preloadTypes: (
       cwd: string,
     ) => Promise<
-      | { ok: true; types: Array<{ path: string; content: string }> }
+      | { ok: true; types: Array<{ path: string; content: string }>; packages: Array<{ name: string; typePath: string; content: string }> }
       | { ok: false; error: string }
     >;
   };
@@ -166,6 +175,8 @@ export interface VibeApi {
       baseUrl: string,
       apiKey: string,
       providerId?: string,
+      modelsUrl?: string,
+      customHeaders?: [string, string][],
     ) => Promise<{ ok: true; models: { id: string; name: string }[] } | { ok: false; error: string }>;
     listDisabled: () => Promise<string[]>;
     toggleDisabled: (modelId: string) => Promise<boolean>;

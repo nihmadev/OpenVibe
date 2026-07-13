@@ -35,6 +35,14 @@ pub struct Provider {
     pub api_key: String,
     pub model: String,
     pub added_at: i64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub custom_icon: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub models_url: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub headers: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parameters: Option<String>,
 }
 
 fn pick_color(seed: &str, used: &[String]) -> String {
@@ -91,7 +99,11 @@ impl ProjectStore {
                 base_url    TEXT NOT NULL,
                 api_key     TEXT NOT NULL,
                 model       TEXT NOT NULL,
-                added_at    INTEGER NOT NULL
+                added_at    INTEGER NOT NULL,
+                custom_icon TEXT DEFAULT NULL,
+                models_url  TEXT DEFAULT NULL,
+                headers     TEXT DEFAULT NULL,
+                parameters  TEXT DEFAULT NULL
             );
             CREATE TABLE IF NOT EXISTS disabled_models (
                 model_id TEXT PRIMARY KEY
@@ -104,6 +116,15 @@ impl ProjectStore {
         conn.execute_batch("ALTER TABLE projects ADD COLUMN icon TEXT DEFAULT NULL")
             .ok();
         conn.execute_batch("ALTER TABLE projects ADD COLUMN photo TEXT DEFAULT NULL")
+            .ok();
+
+        conn.execute_batch("ALTER TABLE providers ADD COLUMN custom_icon TEXT DEFAULT NULL")
+            .ok();
+        conn.execute_batch("ALTER TABLE providers ADD COLUMN models_url TEXT DEFAULT NULL")
+            .ok();
+        conn.execute_batch("ALTER TABLE providers ADD COLUMN headers TEXT DEFAULT NULL")
+            .ok();
+        conn.execute_batch("ALTER TABLE providers ADD COLUMN parameters TEXT DEFAULT NULL")
             .ok();
 
         Ok(Self {
@@ -363,7 +384,7 @@ impl ProjectStore {
 
     pub fn list_providers(&self) -> Vec<Provider> {
         let mut stmt = self.conn
-            .prepare("SELECT id, name, description, base_url, api_key, model, added_at FROM providers ORDER BY added_at ASC")
+            .prepare("SELECT id, name, description, base_url, api_key, model, added_at, custom_icon, models_url, headers, parameters FROM providers ORDER BY added_at ASC")
             .unwrap();
         let rows = stmt
             .query_map([], |row| {
@@ -375,6 +396,10 @@ impl ProjectStore {
                     api_key: row.get(4)?,
                     model: row.get(5)?,
                     added_at: row.get(6)?,
+                    custom_icon: row.get(7)?,
+                    models_url: row.get(8)?,
+                    headers: row.get(9)?,
+                    parameters: row.get(10)?,
                 })
             })
             .unwrap();
@@ -384,12 +409,14 @@ impl ProjectStore {
     pub fn save_provider(&self, p: &Provider) {
         self.conn
             .execute(
-                "INSERT INTO providers (id, name, description, base_url, api_key, model, added_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+                "INSERT INTO providers (id, name, description, base_url, api_key, model, added_at, custom_icon, models_url, headers, parameters)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
                  ON CONFLICT(id) DO UPDATE SET
                    name = excluded.name, description = excluded.description,
                    base_url = excluded.base_url, api_key = excluded.api_key,
-                   model = excluded.model",
+                   model = excluded.model,
+                   custom_icon = excluded.custom_icon, models_url = excluded.models_url,
+                   headers = excluded.headers, parameters = excluded.parameters",
                 params![
                     p.id,
                     p.name,
@@ -397,7 +424,11 @@ impl ProjectStore {
                     p.base_url,
                     p.api_key,
                     p.model,
-                    p.added_at
+                    p.added_at,
+                    p.custom_icon,
+                    p.models_url,
+                    p.headers,
+                    p.parameters,
                 ],
             )
             .unwrap();

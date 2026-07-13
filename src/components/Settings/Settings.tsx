@@ -223,7 +223,8 @@ export function Settings({
         const providerId = template?.id ?? p.id;
         const providerName = template?.name ?? p.name;
         const providerIcon = template?.icon ?? "";
-        const res = await window.vibe.models.fetch(p.baseUrl, p.apiKey, providerId);
+        const customHeaders = p.headers?.filter((h: any) => h.key?.trim()).map((h: any) => [h.key.trim(), h.value.trim()] as [string, string]);
+        const res = await window.vibe.models.fetch(p.baseUrl, p.apiKey, providerId, p.modelsUrl ?? undefined, customHeaders);
         if (!res.ok) {
           console.error("Failed to fetch models for", providerName, res.error);
           return;
@@ -745,16 +746,23 @@ export function Settings({
                     <div className="settings__providers-list">
                       {connected.map((p) => {
                         const template = PROVIDER_TEMPLATES.find((t) => t.baseUrl === p.baseUrl);
+                        const hasCustomIcon = p.customIcon && p.customIcon.startsWith("data:");
                         return (
                           <div key={p.id} className="settings__provider-row">
                             <div className="settings__provider-info">
-                              {template && (
+                              {hasCustomIcon ? (
+                                <img
+                                  src={p.customIcon!}
+                                  className="settings__provider-icon"
+                                  alt=""
+                                />
+                              ) : template ? (
                                 <img
                                   src={getProviderIconPath(template.icon, resolvedScheme === "light")}
                                   className="settings__provider-icon"
                                   alt=""
                                 />
-                              )}
+                              ) : null}
                               <div className="settings__provider-name">{p.name}</div>
                             </div>
                             <div className="settings__provider-actions">
@@ -1023,6 +1031,9 @@ export function Settings({
           editId={editing.editId}
           editProvider={editing.editId ? providers.find((p) => p.id === editing.editId) : null}
           onConnect={async (formData) => {
+            const serializePairs = (pairs: { key: string; value: string }[]) =>
+              pairs.filter((p) => p.key.trim()).map((p) => `${p.key.trim()}:${p.value.trim()}`).join("\n");
+
             if (editing.editId) {
               const updated = providers.map((p) =>
                 p.id === editing.editId
@@ -1032,6 +1043,10 @@ export function Settings({
                       apiKey: formData.apiKey,
                       model: formData.model,
                       baseUrl: formData.baseUrl,
+                      customIcon: formData.customIcon || null,
+                      modelsUrl: formData.modelsUrl || null,
+                      headers: formData.headers.length > 0 ? formData.headers : null,
+                      parameters: formData.parameters.length > 0 ? formData.parameters : null,
                     }
                   : p,
               );
@@ -1050,6 +1065,10 @@ export function Settings({
                 apiKey: formData.apiKey,
                 model: formData.model,
                 addedAt: Date.now(),
+                customIcon: formData.customIcon || null,
+                modelsUrl: formData.modelsUrl || null,
+                headers: formData.headers.length > 0 ? formData.headers : null,
+                parameters: formData.parameters.length > 0 ? formData.parameters : null,
               };
               await window.vibe.providers.save(newP);
               await save([...providers, newP]);

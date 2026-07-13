@@ -54,4 +54,5 @@ export interface ProviderTemplate {
   name: string;
   icon: string;
   baseUrl: string;
+  modelsUrl?: string;
 }
