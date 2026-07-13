@@ -52,45 +52,43 @@ pub fn build_index(root: &str) -> Result<(), String> {
 
     let mut file_texts: Vec<String> = Vec::new();
     let mut file_meta: Vec<(String, usize)> = Vec::new();
-    let mut dirs: Vec<String> = vec![root.to_string()];
 
-    while let Some(dir) = dirs.pop() {
-        let read_dir = match std::fs::read_dir(&dir) {
-            Ok(d) => d,
+    for entry in jwalk::WalkDir::new(root)
+        .into_iter()
+        .filter(|e| match e {
+            Ok(e) => !should_skip(&e.file_name().to_string_lossy().to_string()),
+            Err(_) => false,
+        })
+    {
+        let entry = match entry {
+            Ok(e) => e,
             Err(_) => continue,
         };
-        for entry in read_dir.flatten() {
-            let name = entry.file_name().to_string_lossy().to_string();
-            if should_skip(&name) {
+        if !entry.file_type().is_file() {
+            continue;
+        }
+        if let Ok(meta) = entry.metadata() {
+            if meta.len() > MAX_FILE_BYTES || meta.len() == 0 {
                 continue;
             }
-            let path = entry.path();
-            if path.is_dir() {
-                dirs.push(path.to_string_lossy().to_string());
-            } else if path.is_file() {
-                if let Ok(meta) = entry.metadata() {
-                    if meta.len() > MAX_FILE_BYTES || meta.len() == 0 {
-                        continue;
-                    }
-                }
-                let text = match std::fs::read_to_string(&path) {
-                    Ok(t) => t,
-                    Err(_) => continue,
-                };
-                let path_str = path.to_string_lossy().to_string();
-                let lines: Vec<&str> = text.lines().collect();
+        }
+        let path = entry.path();
+        let text = match std::fs::read_to_string(&path) {
+            Ok(t) => t,
+            Err(_) => continue,
+        };
+        let path_str = path.to_string_lossy().to_string();
+        let lines: Vec<&str> = text.lines().collect();
 
-                if lines.len() <= CHUNK_LINES {
-                    file_texts.push(text);
-                    file_meta.push((path_str, 1));
-                } else {
-                    for chunk_start in (0..lines.len()).step_by(CHUNK_LINES) {
-                        let chunk_end = (chunk_start + CHUNK_LINES).min(lines.len());
-                        let chunk = lines[chunk_start..chunk_end].join("\n");
-                        file_texts.push(chunk);
-                        file_meta.push((path_str.clone(), chunk_start + 1));
-                    }
-                }
+        if lines.len() <= CHUNK_LINES {
+            file_texts.push(text);
+            file_meta.push((path_str, 1));
+        } else {
+            for chunk_start in (0..lines.len()).step_by(CHUNK_LINES) {
+                let chunk_end = (chunk_start + CHUNK_LINES).min(lines.len());
+                let chunk = lines[chunk_start..chunk_end].join("\n");
+                file_texts.push(chunk);
+                file_meta.push((path_str.clone(), chunk_start + 1));
             }
         }
     }

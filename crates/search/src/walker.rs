@@ -1,6 +1,6 @@
+use jwalk::WalkDir;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
-use std::fs;
 use std::path::Path;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
@@ -36,41 +36,31 @@ fn relpath(path: &str, base: &str) -> String {
 
 fn walk(root: &Path) -> Vec<WalkEntry> {
     let mut out = Vec::new();
-    let mut dirs = vec![root.to_path_buf()];
-    while let Some(dir) = dirs.pop() {
+    for entry in WalkDir::new(root)
+        .into_iter()
+        .filter(|e| match e {
+            Ok(e) => !should_skip(&e.file_name().to_string_lossy().to_string()),
+            Err(_) => false,
+        })
+    {
         if out.len() >= MAX_FILES {
             break;
         }
-        let entries = match fs::read_dir(&dir) {
+        let entry = match entry {
             Ok(e) => e,
             Err(_) => continue,
         };
-        for entry in entries {
-            if out.len() >= MAX_FILES {
-                break;
-            }
-            let entry = match entry {
-                Ok(e) => e,
-                Err(_) => continue,
-            };
-            let name = entry.file_name().to_string_lossy().to_string();
-            if should_skip(&name) {
-                continue;
-            }
-            let path = entry.path();
-            let full = path.to_string_lossy().to_string();
-            if path.is_dir() {
-                out.push(WalkEntry {
-                    path: full,
-                    is_dir: true,
-                });
-                dirs.push(path);
-            } else if path.is_file() {
-                out.push(WalkEntry {
-                    path: full,
-                    is_dir: false,
-                });
-            }
+        let full = entry.path().to_string_lossy().to_string();
+        if entry.file_type().is_dir() {
+            out.push(WalkEntry {
+                path: full,
+                is_dir: true,
+            });
+        } else if entry.file_type().is_file() {
+            out.push(WalkEntry {
+                path: full,
+                is_dir: false,
+            });
         }
     }
     out
