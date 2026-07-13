@@ -153,6 +153,7 @@ export const pa: Partial<Translations> = {
   searching: "ਖੋਜ ਰਿਹਾ ਹੈ…",
   noMatches: "ਕੋਈ ਮੇਲ ਨਹੀਂ",
   terminal: "ਟਰਮੀਨਲ",
+  search: "ਖੋਜ",
   insertTerminal: "ਟਰਮੀਨਲ ਵਿੱਚ ਸ਼ਾਮਲ ਕਰੋ",
   terminalTab: "ਟਰਮੀਨਲ {num}",
   closeTab: "ਟੈਬ ਬੰਦ ਕਰੋ",

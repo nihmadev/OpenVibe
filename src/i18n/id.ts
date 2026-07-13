@@ -149,6 +149,7 @@ export const id: Partial<Translations> = {
   searching: "mencari…",
   noMatches: "tidak ada kecocokan",
   terminal: "Terminal",
+  search: "Cari",
   insertTerminal: "Sisipkan ke terminal",
   terminalTab: "Terminal {num}",
   closeTab: "Tutup tab",

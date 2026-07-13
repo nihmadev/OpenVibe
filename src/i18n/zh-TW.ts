@@ -150,6 +150,7 @@ export const zhTW: Partial<Translations> = {
   searching: "搜尋中…",
   noMatches: "無相符項",
   terminal: "終端機",
+  search: "搜尋",
   insertTerminal: "插入到終端機",
   terminalTab: "終端機 {num}",
   closeTab: "關閉分頁",

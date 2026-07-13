@@ -10,7 +10,7 @@ import { useI18n } from "../../hooks/useI18n.js";
 import { FONT_OPTIONS, CODE_FONT_OPTIONS, applyFont } from "../../fonts.js";
 import { ChevronRightIcon } from "../icons/icons.js";
 import { languageOptions } from "../../i18n/index.js";
-import type { ShortcutDef, KeyCombo } from "../../hooks/useShortcuts.js";
+import type { ShortcutDef, KeyCombo, ShortcutCategory } from "../../hooks/useShortcuts.js";
 import { formatCombo, setRecording } from "../../hooks/useShortcuts.js";
 import { useAnimations } from "../../hooks/useAnimations.js";
 import type { AnimKey, AnimStyle } from "../../hooks/useAnimations.js";
@@ -964,30 +964,49 @@ export function Settings({
                   </div>
                 ) : (
                   <div className="settings__hotkeys-list">
-                    {shortcuts.map((h) => {
-                      const isRecording = recordingId === h.id;
-                      return (
-                        <div key={h.id} className="settings__control-row">
-                          <div className="settings__control-info">
-                            <div className="settings__control-label">{h.label}</div>
+                    {(() => {
+                      const categoryOrder: ShortcutCategory[] = ["navigation", "search", "chat", "workspace", "terminal", "project", "editor"];
+                      const grouped: Record<string, ShortcutDef[]> = {};
+                      for (const h of shortcuts) {
+                        if (!grouped[h.category]) grouped[h.category] = [];
+                        grouped[h.category].push(h);
+                      }
+                      return categoryOrder.map((cat) => {
+                        const items = grouped[cat];
+                        if (!items || items.length === 0) return null;
+                        return (
+                          <div key={cat} className="settings__hotkeys-section">
+                            <div className="settings__hotkeys-section-header">
+                              {t(cat)}
+                            </div>
+                            {items.map((h) => {
+                              const isRecording = recordingId === h.id;
+                              return (
+                                <div key={h.id} className="settings__control-row">
+                                  <div className="settings__control-info">
+                                    <div className="settings__control-label">{h.label}</div>
+                                  </div>
+                                  <button
+                                    className={"settings__hotkey-btn" + (isRecording ? " settings__hotkey-btn--recording" : "")}
+                                    onClick={() => {
+                                      if (isRecording) return;
+                                      setRecordingId(h.id);
+                                      setErrorMsg(null);
+                                    }}
+                                    onContextMenu={(e) => {
+                                      e.preventDefault();
+                                      onResetBinding?.(h.id);
+                                    }}
+                                  >
+                                    {isRecording ? "..." : h.keys}
+                                  </button>
+                                </div>
+                              );
+                            })}
                           </div>
-                          <button
-                            className={"settings__hotkey-btn" + (isRecording ? " settings__hotkey-btn--recording" : "")}
-                            onClick={() => {
-                              if (isRecording) return;
-                              setRecordingId(h.id);
-                              setErrorMsg(null);
-                            }}
-                            onContextMenu={(e) => {
-                              e.preventDefault();
-                              onResetBinding?.(h.id);
-                            }}
-                          >
-                            {isRecording ? "..." : h.keys}
-                          </button>
-                        </div>
-                      );
-                    })}
+                        );
+                      });
+                    })()}
                   </div>
                 )}
                 {errorMsg && <div className="settings__hotkeys-error">{errorMsg}</div>}

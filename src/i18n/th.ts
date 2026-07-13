@@ -152,6 +152,7 @@ export const th: Partial<Translations> = {
   searching: "กำลังค้นหา…",
   noMatches: "ไม่พบรายการที่ตรงกัน",
   terminal: "เทอร์มินัล",
+  search: "ค้นหา",
   insertTerminal: "แทรกไปยังเทอร์มินัล",
   terminalTab: "เทอร์มินัล {num}",
   closeTab: "ปิดแท็บ",

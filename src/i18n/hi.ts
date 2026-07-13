@@ -151,6 +151,7 @@ export const hi: Partial<Translations> = {
   searching: "खोज रहा है…",
   noMatches: "कोई मेल नहीं",
   terminal: "टर्मिनल",
+  search: "खोज",
   insertTerminal: "टर्मिनल में डालें",
   terminalTab: "टर्मिनल {num}",
   closeTab: "टैब बंद करें",

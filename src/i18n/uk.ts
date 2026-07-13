@@ -142,6 +142,7 @@ export const uk: Partial<Translations> = {
   searching: "пошук…",
   noMatches: "нічого не знайдено",
   terminal: "Термінал",
+  search: "Пошук",
   insertTerminal: "Вставити в термінал",
   terminalTab: "Термінал {num}",
   closeTab: "Закрити вкладку",

@@ -152,6 +152,7 @@ export const cs: Partial<Translations> = {
   searching: "hledání…",
   noMatches: "žádné shody",
   terminal: "Terminál",
+  search: "Hledání",
   insertTerminal: "Vložit do terminálu",
   terminalTab: "Terminál {num}",
   closeTab: "Zavřít kartu",

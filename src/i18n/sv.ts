@@ -149,6 +149,7 @@ export const sv: Partial<Translations> = {
   searching: "söker…",
   noMatches: "inga träffar",
   terminal: "Terminal",
+  search: "Sök",
   insertTerminal: "Infoga i terminal",
   terminalTab: "Terminal {num}",
   closeTab: "Stäng flik",

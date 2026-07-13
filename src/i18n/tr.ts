@@ -150,6 +150,7 @@ export const tr: Partial<Translations> = {
   searching: "aranıyor…",
   noMatches: "eşleşme yok",
   terminal: "Terminal",
+  search: "Ara",
   insertTerminal: "Terminale ekle",
   terminalTab: "Terminal {num}",
   closeTab: "Sekmeyi kapat",

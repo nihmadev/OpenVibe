@@ -245,6 +245,7 @@ export const en: Partial<Translations> = {
   nextFileHotkey: "Next File",
   prevFileHotkey: "Previous File",
   navigation: "Navigation",
+  search: "Search",
   chat: "Chat",
   workspace: "Workspace",
   project: "Project",

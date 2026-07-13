@@ -151,6 +151,7 @@ export const ms: Partial<Translations> = {
   searching: "mencari…",
   noMatches: "tiada padanan",
   terminal: "Terminal",
+  search: "Carian",
   insertTerminal: "Sisipkan ke terminal",
   terminalTab: "Terminal {num}",
   closeTab: "Tutup tab",

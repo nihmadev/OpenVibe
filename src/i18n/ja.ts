@@ -154,6 +154,7 @@ export const ja: Partial<Translations> = {
   searching: "検索中…",
   noMatches: "一致なし",
   terminal: "ターミナル",
+  search: "検索",
   insertTerminal: "ターミナルに挿入",
   terminalTab: "ターミナル {num}",
   closeTab: "タブを閉じる",

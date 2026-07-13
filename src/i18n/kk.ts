@@ -149,6 +149,7 @@ export const kk: Partial<Translations> = {
   searching: "іздеу…",
   noMatches: "сәйкестіктер жоқ",
   terminal: "Терминал",
+  search: "Іздеу",
   insertTerminal: "Терминалға енгізу",
   terminalTab: "Терминал {num}",
   closeTab: "Қойындыны жабу",

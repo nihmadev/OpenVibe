@@ -152,6 +152,7 @@ export const az: Partial<Translations> = {
   searching: "axtarılır…",
   noMatches: "nəticə tapılmadı",
   terminal: "Terminal",
+  search: "Axtarış",
   insertTerminal: "Terminala daxil et",
   terminalTab: "Terminal {num}",
   closeTab: "Vərəqəni bağla",

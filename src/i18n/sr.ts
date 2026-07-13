@@ -149,6 +149,7 @@ export const sr: Partial<Translations> = {
   searching: "pretraga…",
   noMatches: "ništa nije pronađeno",
   terminal: "Terminal",
+  search: "Претрага",
   insertTerminal: "Umetni u terminal",
   terminalTab: "Terminal {num}",
   closeTab: "Zatvori karticu",

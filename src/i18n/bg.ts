@@ -152,6 +152,7 @@ export const bg: Partial<Translations> = {
   searching: "търсене…",
   noMatches: "няма резултати",
   terminal: "Терминал",
+  search: "Търсене",
   insertTerminal: "Вмъкване в терминал",
   terminalTab: "Терминал {num}",
   closeTab: "Затваряне на раздел",

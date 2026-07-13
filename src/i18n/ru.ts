@@ -325,6 +325,7 @@ export const ru = {
 
   // Hotkeys categories
   navigation: "Навигация",
+  search: "Поиск",
   chat: "Чат",
   workspace: "Рабочее пространство",
   project: "Проект",

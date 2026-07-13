@@ -150,6 +150,7 @@ export const zhCN: Partial<Translations> = {
   searching: "搜索中…",
   noMatches: "无匹配",
   terminal: "终端",
+  search: "搜索",
   insertTerminal: "插入到终端",
   terminalTab: "终端 {num}",
   closeTab: "关闭标签页",

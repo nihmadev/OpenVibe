@@ -150,6 +150,7 @@ export const mr: Partial<Translations> = {
   searching: "शोधत आहे…",
   noMatches: "काहीही जुळले नाही",
   terminal: "टर्मिनल",
+  search: "शोध",
   insertTerminal: "टर्मिनलमध्ये घाला",
   terminalTab: "टर्मिनल {num}",
   closeTab: "टॅब बंद करा",

@@ -150,6 +150,7 @@ export const fil: Partial<Translations> = {
   searching: "naghahanap…",
   noMatches: "walang tugma",
   terminal: "Terminal",
+  search: "Maghanap",
   insertTerminal: "Ipasok sa terminal",
   terminalTab: "Terminal {num}",
   closeTab: "Isara ang tab",

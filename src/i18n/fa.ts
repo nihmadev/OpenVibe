@@ -150,6 +150,7 @@ export const fa: Partial<Translations> = {
   searching: "در حال جستجو…",
   noMatches: "نتیجه‌ای یافت نشد",
   terminal: "ترمینال",
+  search: "جستجو",
   insertTerminal: "درج در ترمینال",
   terminalTab: "ترمینال {num}",
   closeTab: "بستن برگه",

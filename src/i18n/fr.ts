@@ -155,6 +155,7 @@ export const fr: Partial<Translations> = {
   searching: "recherche…",
   noMatches: "aucun résultat",
   terminal: "Terminal",
+  search: "Recherche",
   insertTerminal: "Insérer dans le terminal",
   terminalTab: "Terminal {num}",
   closeTab: "Fermer l'onglet",

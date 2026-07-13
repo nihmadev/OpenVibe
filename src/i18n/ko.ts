@@ -149,6 +149,7 @@ export const ko: Partial<Translations> = {
   searching: "검색 중…",
   noMatches: "일치 항목 없음",
   terminal: "터미널",
+  search: "검색",
   insertTerminal: "터미널에 삽입",
   terminalTab: "터미널 {num}",
   closeTab: "탭 닫기",

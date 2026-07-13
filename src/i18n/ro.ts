@@ -149,6 +149,7 @@ export const ro: Partial<Translations> = {
   searching: "căutare…",
   noMatches: "nicio potrivire",
   terminal: "Terminal",
+  search: "Căutare",
   insertTerminal: "Inserează în terminal",
   terminalTab: "Terminal {num}",
   closeTab: "Închide fila",

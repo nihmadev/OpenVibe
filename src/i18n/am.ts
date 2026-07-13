@@ -150,6 +150,7 @@ export const am: Partial<Translations> = {
   searching: "በመፈለግ ላይ…",
   noMatches: "ምንም አልተገኘም",
   terminal: "ተርሚናል",
+  search: "ፍለጋ",
   insertTerminal: "ወደ ተርሚናል አስገባ",
   terminalTab: "ተርሚናል {num}",
   closeTab: "ትር ዝጋ",

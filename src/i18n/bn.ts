@@ -152,6 +152,7 @@ export const bn: Partial<Translations> = {
   searching: "অনুসন্ধান করছে…",
   noMatches: "কিছু মেলেনি",
   terminal: "টার্মিনাল",
+  search: "অনুসন্ধান",
   insertTerminal: "টার্মিনালে সন্নিবেশ করুন",
   terminalTab: "টার্মিনাল {num}",
   closeTab: "ট্যাব বন্ধ করুন",

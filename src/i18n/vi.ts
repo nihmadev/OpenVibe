@@ -149,6 +149,7 @@ export const vi: Partial<Translations> = {
   searching: "đang tìm…",
   noMatches: "không có kết quả",
   terminal: "Terminal",
+  search: "Tìm kiếm",
   insertTerminal: "Chèn vào terminal",
   terminalTab: "Terminal {num}",
   closeTab: "Đóng tab",

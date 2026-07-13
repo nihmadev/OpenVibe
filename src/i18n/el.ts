@@ -149,6 +149,7 @@ export const el: Partial<Translations> = {
   searching: "αναζήτηση…",
   noMatches: "κανένα αποτέλεσμα",
   terminal: "Τερματικό",
+  search: "Αναζήτηση",
   insertTerminal: "Εισαγωγή στο τερματικό",
   terminalTab: "Τερματικό {num}",
   closeTab: "Κλείσιμο καρτέλας",

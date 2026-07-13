@@ -152,6 +152,7 @@ export const ar: Partial<Translations> = {
   searching: "جارٍ البحث…",
   noMatches: "لا توجد نتائج",
   terminal: "الطرفية",
+  search: "بحث",
   insertTerminal: "إدراج في الطرفية",
   terminalTab: "الطرفية {num}",
   closeTab: "إغلاق التبويب",

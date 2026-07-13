@@ -150,6 +150,7 @@ export const my: Partial<Translations> = {
   searching: "ရှာဖွေနေသည်…",
   noMatches: "မကိုက်ညီပါ",
   terminal: "Terminal",
+  search: "ရှာဖွေရန်",
   insertTerminal: "Terminal ထဲသို့ ထည့်ရန်",
   terminalTab: "Terminal {num}",
   closeTab: "Tab ပိတ်ရန်",

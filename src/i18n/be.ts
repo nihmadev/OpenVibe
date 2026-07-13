@@ -143,6 +143,7 @@ export const be: Partial<Translations> = {
   searching: "пошук…",
   noMatches: "нічога не знойдзена",
   terminal: "Тэрмінал",
+  search: "Пошук",
   insertTerminal: "Уставіць у тэрмінал",
   terminalTab: "Тэрмінал {num}",
   closeTab: "Закрыць укладку",

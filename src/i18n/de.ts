@@ -149,6 +149,7 @@ export const de: Partial<Translations> = {
   searching: "suche…",
   noMatches: "keine Treffer",
   terminal: "Terminal",
+  search: "Suche",
   insertTerminal: "In Terminal einfügen",
   terminalTab: "Terminal {num}",
   closeTab: "Tab schließen",

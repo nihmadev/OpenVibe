@@ -88,6 +88,16 @@
   padding: 0;
 }
 
+/* Disable CSS transitions on resizable panels while drag is active */
+body.is-resizing .sidebar,
+body.is-resizing .layout__search-code-wrap {
+  transition: none !important;
+}
+body.is-resizing {
+  user-select: none !important;
+  cursor: col-resize;
+}
+
 /* ── Resize handles ── */
 .resize-handle {
   flex-shrink: 0;
