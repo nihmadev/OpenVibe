@@ -77,6 +77,22 @@ export interface FileMatch {
   isDir?: boolean;
 }
 
+export interface ContentMatch {
+  path: string;
+  rel: string;
+  name: string;
+  line: number;
+  column: number;
+  content: string;
+}
+
+export interface FileGroupEntry {
+  path: string;
+  rel: string;
+  name: string;
+  matchCount: number;
+}
+
 export interface Project {
   id: string;
   path: string;
@@ -196,6 +212,34 @@ export interface VibeApi {
       query: string,
       limit?: number,
     ) => Promise<{ ok: true; matches: FileMatch[] } | { ok: false; error: string }>;
+    searchContentFiles: (
+      root: string,
+      query: string,
+      matchCase?: boolean,
+      matchWholeWord?: boolean,
+      useRegex?: boolean,
+      include?: string,
+      exclude?: string,
+      maxFiles?: number,
+    ) => Promise<
+      | { ok: true; files: FileGroupEntry[]; totalMatches: number }
+      | { ok: false; error: string }
+    >;
+    searchContentFileMatches: (
+      root: string,
+      query: string,
+      matchCase: boolean,
+      matchWholeWord: boolean,
+      useRegex: boolean,
+      include: string,
+      exclude: string,
+      filePath: string,
+      offset: number,
+      limit: number,
+    ) => Promise<
+      | { ok: true; total: number; matches: ContentMatch[] }
+      | { ok: false; error: string }
+    >;
     projectInfo: (dir: string) => Promise<{ ok: true; name: string | null; version: string | null } | { ok: false }>;
   };
   clipboard: {

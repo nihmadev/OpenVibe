@@ -457,6 +457,75 @@ export const vibe = {
         () => invoke("fs_find_all", { root, query, limit }),
         (matches) => ({ matches }),
       ),
+    searchContent: (
+      root: string,
+      query: string,
+      maxResults?: number,
+      matchCase?: boolean,
+      matchWholeWord?: boolean,
+      useRegex?: boolean,
+      include?: string,
+      exclude?: string,
+    ) =>
+      wrap(() =>
+        invoke("fs_search_content", { root, query, maxResults, matchCase, matchWholeWord, useRegex, include, exclude }),
+        (matches) => ({ matches }),
+      ),
+    searchContentFilter: (
+      root: string,
+      query: string,
+      matchCase: boolean,
+      matchWholeWord: boolean,
+      useRegex: boolean,
+      include: string,
+      exclude: string,
+      offset: number,
+      limit: number,
+    ) =>
+      wrap(() =>
+        invoke("fs_search_content_filter", { root, query, matchCase, matchWholeWord, useRegex, include, exclude, offset, limit }),
+        (result) => result,
+      ),
+    searchContentFiles: (
+      root: string,
+      query: string,
+      matchCase?: boolean,
+      matchWholeWord?: boolean,
+      useRegex?: boolean,
+      include?: string,
+      exclude?: string,
+      maxFiles?: number,
+    ) =>
+      wrap(() =>
+        invoke("fs_search_content_files", { root, query, matchCase, matchWholeWord, useRegex, include, exclude, maxFiles }),
+        (result: any) => ({ files: result.files, totalMatches: result.totalMatches }),
+      ),
+    highlightLines: (
+      lines: string[],
+      fileName: string,
+      query: string,
+      matchCase: boolean,
+    ) =>
+      wrap(() =>
+        invoke("fs_highlight_lines", { lines, fileName, query, matchCase }),
+        (result) => result as { text: string; className: string }[][],
+      ),
+    searchContentFileMatches: (
+      root: string,
+      query: string,
+      matchCase: boolean,
+      matchWholeWord: boolean,
+      useRegex: boolean,
+      include: string,
+      exclude: string,
+      filePath: string,
+      offset: number,
+      limit: number,
+    ) =>
+      wrap(() =>
+        invoke("fs_search_content_file_matches", { root, query, matchCase, matchWholeWord, useRegex, include, exclude, filePath, offset, limit }),
+        (result: any) => ({ total: result.total, matches: result.matches }),
+      ),
     projectInfo: (dir: string) =>
       wrap(() => invoke<{ name: string | null; version: string | null }>("fs_project_info", { dir })),
   },
