@@ -442,9 +442,16 @@ export function AppMain({
           </div>
 
           {/* Search in Code panel — always mounted to preserve state */}
-          <div style={{ display: searchInCodeOpen ? 'contents' : 'none' }}>
+          <div
+            className={`layout__search-code-wrap ${!searchInCodeOpen ? "layout__search-code-wrap--closed" : ""}`}
+            style={
+              searchInCodeOpen
+                ? { flex: `0 1 ${searchWidth}px`, minWidth: 200, maxWidth: 800 }
+                : { flex: "0 1 0", minWidth: 0, maxWidth: 0 }
+            }
+          >
             <ResizeHandle onDrag={(d) => setSearchWidth((w) => Math.max(200, Math.min(800, w - d)))} />
-            <div className="layout__search-code" style={{ flex: `0 1 ${searchWidth}px`, minWidth: 200, maxWidth: 800 }}>
+            <div className="layout__search-code" style={{ flex: 1, minWidth: 200, maxWidth: 800 }}>
               <SearchInCode cwd={cwd} onOpenFile={handleOpenFile} onClose={onCloseSearchInCode} />
             </div>
             {fileTreeOpen && (

@@ -27,12 +27,11 @@
   flex: 1 1 0;
   min-height: 0;
   min-width: 0;
-  transition: opacity calc(var(--anim-sidebar-slide-duration, 0.15s) * var(--anim-sidebar-slide-enabled, 1));
 }
 
 .session-list:not(.session-list--open) .session-list__inner {
   opacity: 0;
-  transition-duration: calc(0.05s * var(--anim-sidebar-slide-enabled, 1));
+  transition: opacity calc(0.05s * var(--anim-sidebar-slide-enabled, 1));
 }
 
 .session-list--open .session-list__inner {
@@ -52,9 +51,7 @@
   z-index: 100;
 }
 
-.session-list__resize-handle:hover {
-  background: var(--fg);
-}
+
 
 .session-list__head {
   padding: 4px 8px 14px;
