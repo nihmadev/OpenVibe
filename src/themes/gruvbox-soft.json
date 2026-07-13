@@ -1,9 +1,9 @@
 {
-  "name": "Gruvbox Hard",
-  "id": "gruvbox",
+  "name": "Gruvbox Soft",
+  "id": "gruvbox-soft",
   "light": {
     "palette": {
-      "neutral": "#f9f5d7",
+      "neutral": "#f2e5bc",
       "ink": "#3c3836",
       "primary": "#076678",
       "accent": "#9d0006",
@@ -23,7 +23,7 @@
   },
   "dark": {
     "palette": {
-      "neutral": "#1d2021",
+      "neutral": "#32302f",
       "ink": "#ebdbb2",
       "primary": "#83a598",
       "accent": "#fb4934",
