@@ -7,7 +7,6 @@ dist/
 .vscode/
 .idea/
 .kiro/
-api/openvibe-proxy
 target/
 src-tauri/target
 my_folder/

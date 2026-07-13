@@ -36,4 +36,5 @@ agent = { path = "../crates/agent" }
 agent-tool = { path = "../crates/agent-tool" }
 config = { path = "../crates/config" }
 chats = { path = "../crates/chats" }
+editor = { path = "../crates/editor" }
 
