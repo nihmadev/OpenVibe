@@ -336,6 +336,39 @@ export function App(): React.ReactElement {
     toggleFileTree: () => setFileTreeOpen((o) => !o),
     openSettings: handleOpenSettings,
     openSearch: handleOpenSearch,
+    openSearchInCode: handleToggleSearchInCode,
+    searchToggleMatchCase: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-toggle-match-case"));
+    },
+    searchToggleWholeWord: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-toggle-whole-word"));
+    },
+    searchToggleRegex: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-toggle-regex"));
+    },
+    searchToggleReplace: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-toggle-replace"));
+    },
+    searchToggleFilters: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-toggle-filters"));
+    },
+    searchToggleTree: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-toggle-tree"));
+    },
+    searchRefresh: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-refresh"));
+    },
+    searchClear: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-clear"));
+    },
     closeSettings: () => setSettingsOpen(false),
     clearChat: handleShortcutClearChat,
     focusInput: () => {

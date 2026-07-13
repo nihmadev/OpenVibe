@@ -350,6 +350,12 @@
   background: var(--bg-2);
 }
 
+.sc-file-header--selected {
+  background: var(--bg-2);
+  outline: 1px solid var(--fg-dim);
+  outline-offset: -1px;
+}
+
 .sc-file-name {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -438,6 +444,13 @@
 .sc-match-row:hover {
   background: var(--bg-2);
   color: var(--fg);
+}
+
+.sc-match-row--selected {
+  background: var(--bg-2) !important;
+  color: var(--fg) !important;
+  outline: 1px solid var(--fg-dim);
+  outline-offset: -1px;
 }
 
 .sc-match-content {
