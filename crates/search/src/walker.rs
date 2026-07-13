@@ -36,13 +36,31 @@ fn relpath(path: &str, base: &str) -> String {
 
 fn walk(root: &Path) -> Vec<WalkEntry> {
     let mut out = Vec::new();
-    for entry in WalkDir::new(root)
-        .into_iter()
-        .filter(|e| match e {
-            Ok(e) => !should_skip(&e.file_name().to_string_lossy().to_string()),
-            Err(_) => false,
-        })
-    {
+    let gitignore = crate::gitignore_filter::load(root);
+    let root_owned = root.to_path_buf();
+
+    let walk = WalkDir::new(root).process_read_dir(move |_depth, _path, _state, children| {
+        children.retain(|entry_result| {
+            let entry = match entry_result {
+                Ok(e) => e,
+                Err(_) => return false,
+            };
+            let name = entry.file_name.to_string_lossy().to_string();
+            if should_skip(&name) {
+                return false;
+            }
+            if let Some(ref gi) = gitignore {
+                if let Ok(rel) = entry.path().strip_prefix(&root_owned) {
+                    if crate::gitignore_filter::is_ignored(gi, rel, entry.file_type().is_dir()) {
+                        return false;
+                    }
+                }
+            }
+            true
+        });
+    });
+
+    for entry in walk.into_iter() {
         if out.len() >= MAX_FILES {
             break;
         }

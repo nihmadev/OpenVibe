@@ -52,6 +52,7 @@ pub async fn search_content(
     let root_clone = resolved_root.clone();
     let q = query.to_string();
     let skip_clone = skip.clone();
+    let gitignore = crate::gitignore_filter::load(std::path::Path::new(&root_clone));
 
     let results = tokio::task::spawn_blocking(move || -> Vec<String> {
         let mut results: Vec<String> = Vec::new();
@@ -59,16 +60,28 @@ pub async fn search_content(
         let use_regex = regex::Regex::new(&format!("(?i){}", q)).ok();
         let q_lower = q.to_lowercase();
 
-        for entry in jwalk::WalkDir::new(&root_clone)
-            .into_iter()
-            .filter(|e| match e {
-                Ok(e) => {
-                    let name = e.file_name().to_string_lossy().to_string();
-                    !skip_clone.iter().any(|s| s == &name)
+        let root_path = std::path::PathBuf::from(&root_clone);
+        let walk = jwalk::WalkDir::new(&root_path).process_read_dir(move |_depth, _path, _state, children| {
+            children.retain(|entry_result| {
+                let entry = match entry_result {
+                    Ok(e) => e,
+                    Err(_) => return false,
+                };
+                let name = entry.file_name.to_string_lossy().to_string();
+                if skip_clone.iter().any(|s| s == &name) {
+                    return false;
                 }
-                Err(_) => false,
-            })
-        {
+                if let Some(ref gi) = gitignore {
+                    if let Ok(rel) = entry.path().strip_prefix(&root_path) {
+                        if crate::gitignore_filter::is_ignored(gi, rel, entry.file_type().is_dir()) {
+                            return false;
+                        }
+                    }
+                }
+                true
+            });
+        });
+        for entry in walk.into_iter() {
             if results.len() >= max_results {
                 break;
             }
@@ -231,6 +244,7 @@ pub async fn search_content_structured(
     let skip_clone = skip.clone();
     let include_pats = compile_patterns(include);
     let exclude_pats = compile_patterns(exclude);
+    let gitignore = crate::gitignore_filter::load(std::path::Path::new(&root_clone));
 
     let results = tokio::task::spawn_blocking(move || -> Vec<ContentMatch> {
         let mut results: Vec<ContentMatch> = Vec::new();
@@ -257,16 +271,28 @@ pub async fn search_content_structured(
             None
         };
 
-        for entry in jwalk::WalkDir::new(&root_clone)
-            .into_iter()
-            .filter(|e| match e {
-                Ok(e) => {
-                    let name = e.file_name().to_string_lossy().to_string();
-                    !skip_clone.iter().any(|s| s == &name)
+        let root_path = std::path::PathBuf::from(&root_clone);
+        let walk = jwalk::WalkDir::new(&root_path).process_read_dir(move |_depth, _path, _state, children| {
+            children.retain(|entry_result| {
+                let entry = match entry_result {
+                    Ok(e) => e,
+                    Err(_) => return false,
+                };
+                let name = entry.file_name.to_string_lossy().to_string();
+                if skip_clone.iter().any(|s| s == &name) {
+                    return false;
                 }
-                Err(_) => false,
-            })
-        {
+                if let Some(ref gi) = gitignore {
+                    if let Ok(rel) = entry.path().strip_prefix(&root_path) {
+                        if crate::gitignore_filter::is_ignored(gi, rel, entry.file_type().is_dir()) {
+                            return false;
+                        }
+                    }
+                }
+                true
+            });
+        });
+        for entry in walk.into_iter() {
             if results.len() >= max_results {
                 break;
             }
@@ -448,6 +474,7 @@ pub async fn ensure_cached(
     let root_clone = resolved_root.clone();
     let q = query.to_string();
     let skip_clone = skip.clone();
+    let gitignore = crate::gitignore_filter::load(std::path::Path::new(&root_clone));
 
     let results = tokio::task::spawn_blocking(move || -> Vec<ContentMatch> {
         let mut results: Vec<ContentMatch> = Vec::new();
@@ -459,16 +486,28 @@ pub async fn ensure_cached(
         };
         let q_lower = q.to_ascii_lowercase();
 
-        for entry in jwalk::WalkDir::new(&root_clone)
-            .into_iter()
-            .filter(|e| match e {
-                Ok(e) => {
-                    let name = e.file_name().to_string_lossy().to_string();
-                    !skip_clone.iter().any(|s| s == &name)
+        let root_path = std::path::PathBuf::from(&root_clone);
+        let walk = jwalk::WalkDir::new(&root_path).process_read_dir(move |_depth, _path, _state, children| {
+            children.retain(|entry_result| {
+                let entry = match entry_result {
+                    Ok(e) => e,
+                    Err(_) => return false,
+                };
+                let name = entry.file_name.to_string_lossy().to_string();
+                if skip_clone.iter().any(|s| s == &name) {
+                    return false;
                 }
-                Err(_) => false,
-            })
-        {
+                if let Some(ref gi) = gitignore {
+                    if let Ok(rel) = entry.path().strip_prefix(&root_path) {
+                        if crate::gitignore_filter::is_ignored(gi, rel, entry.file_type().is_dir()) {
+                            return false;
+                        }
+                    }
+                }
+                true
+            });
+        });
+        for entry in walk.into_iter() {
             if results.len() >= CACHE_MAX {
                 break;
             }
