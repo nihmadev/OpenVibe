@@ -5,3 +5,4 @@ TODO
 - Add questions tool for interactive user prompting
 - Fix agent confirmation dialog design
 - Decomposite monolite files
+- Decomposite full project structure and .tsx files.

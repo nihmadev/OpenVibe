@@ -17,5 +17,5 @@ pub const MAX_FILE_BYTES: u64 = 256 * 1024;
 pub const MAX_OUTPUT_CHARS: usize = 16_000;
 
 pub fn should_skip(name: &str) -> bool {
-    SKIP_DIRS.contains(&name) || (name.starts_with('.') && name != ".env" && name != ".gitignore")
+    SKIP_DIRS.contains(&name) || name == ".DS_Store"
 }
