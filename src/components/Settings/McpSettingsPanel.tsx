@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import type { McpConfig, McpServerConfig, McpServerStatus } from "../../types.js";
 import { mcpGetConfig, mcpSaveConfig, mcpGetServers, mcpStartServer, mcpStopServer } from "../../tauri-bridge.js";
-import { Server, Plus, Edit2, Trash2, Sliders, FileCode2, Download, Upload, Check, AlertCircle } from "lucide-react";
+import { Server, Plus, Edit2, Trash2, Download, Upload, AlertCircle } from "lucide-react";
+import { TrashIcon, PlusIcon } from "../icons/icons.js";
 
 import { useTranslate } from "../../hooks/useI18n.js";
 
@@ -224,233 +225,253 @@ export function McpSettingsPanel(): React.ReactElement {
     reader.readAsText(file);
   };
 
-  const getStatusDotClass = (name: string) => {
+  const getStatusColor = (name: string) => {
     const st = statuses.find((s) => s.name === name);
-    if (!st || !st.enabled) return "mcp-dot--gray";
+    if (!st || !st.enabled) return "var(--fg-dim)";
     const statusType = typeof st.status === "string" ? st.status : st.status.type;
-    if (statusType === "running") return "mcp-dot--green";
-    if (statusType === "stopped") return "mcp-dot--yellow";
-    return "mcp-dot--red";
+    if (statusType === "running") return "#4caf50";
+    if (statusType === "stopped") return "#ff9800";
+    return "#f44336";
   };
 
   const currentServers = getServers(config);
 
   return (
-    <div className="mcp-settings">
-      <div className="mcp-settings__toolbar">
-        <button className="mcp-btn mcp-btn--primary" onClick={openAddModal}>
-          <Plus size={14} />
-          <span>{t("mcpAddServer")}</span>
-        </button>
-
-        <button className="mcp-btn mcp-btn--toggle-mode" onClick={() => setIsRawMode(!isRawMode)}>
-          {isRawMode ? <Sliders size={14} /> : <FileCode2 size={14} />}
-          <span>{isRawMode ? t("mcpVisualEditor") : t("mcpRawConfig")}</span>
-        </button>
-
-        <button className="mcp-btn" onClick={handleExport}>
-          <Download size={14} />
-          <span>{t("mcpExport")}</span>
-        </button>
-
-        <label className="mcp-btn mcp-btn--upload">
-          <Upload size={14} />
-          <span>{t("mcpImport")}</span>
-          <input type="file" accept=".json" onChange={handleImport} hidden />
-        </label>
+    <>
+      <div className="settings__subsection">
+        <div className="settings__control-group">
+          <div className="settings__control-row">
+            <div className="settings__control-info">
+              <div className="settings__control-label">{t("mcpRawConfig")}</div>
+              <div className="settings__control-desc">{t("mcpVisualEditor")}</div>
+            </div>
+            <input
+              type="checkbox"
+              className="settings__checkbox"
+              checked={isRawMode}
+              onChange={(e) => setIsRawMode(e.target.checked)}
+            />
+          </div>
+          <div className="settings__control-row">
+            <div className="settings__control-info">
+              <div className="settings__control-label">{t("mcpExport")} / {t("mcpImport")}</div>
+            </div>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button className="settings__edit-btn" onClick={handleExport}>
+                <Download size={12} style={{ marginRight: 4 }} />
+                {t("mcpExport")}
+              </button>
+              <label className="settings__edit-btn" style={{ cursor: "pointer", margin: 0 }}>
+                <Upload size={12} style={{ marginRight: 4 }} />
+                {t("mcpImport")}
+                <input type="file" accept=".json" onChange={handleImport} hidden />
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
 
       {isRawMode ? (
-        <div className="mcp-raw-editor">
+        <div className="settings__section" style={{ marginTop: 16 }}>
           <textarea
-            className="mcp-raw-textarea"
+            className="settings__input"
             value={rawToml}
             onChange={(e) => setRawToml(e.target.value)}
+            style={{ width: "100%", fontFamily: "monospace", minHeight: 300, resize: "vertical", boxSizing: "border-box" }}
             placeholder={`[mcp]
 
 [[mcp.server]]
 name = "filesystem"
 command = "npx"
 args = ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
-enabled = true
-
-[[mcp.server]]
-name = "github"
-command = "uvx"
-args = ["mcp-server-github"]
-env = { GITHUB_TOKEN = "ghp_xxx" }
-enabled = false`}
-            rows={15}
+enabled = true`}
           />
-          <div className="mcp-raw-actions">
-            <button className="mcp-btn mcp-btn--primary" onClick={handleSaveRawToml}>
-              {t("mcpSaveTomlConfig")}
-            </button>
-          </div>
+          <button className="settings__connect-btn" style={{ marginTop: 12 }} onClick={handleSaveRawToml}>
+            {t("mcpSaveTomlConfig")}
+          </button>
         </div>
       ) : (
-        <div className="mcp-server-list">
-          {currentServers.length === 0 ? (
-            <div className="mcp-empty-state">
-              <Server size={32} />
-              <p>{t("mcpNoServersConfiguredYet")}</p>
-              <span>{t("mcpAddServerDesc")}</span>
-            </div>
-          ) : (
-            currentServers.map((server) => {
-              return (
-                <div key={server.name} className="mcp-server-card">
-                  <div className="mcp-server-card__header">
-                    <div className="mcp-server-card__title">
-                      <span className={`mcp-dot ${getStatusDotClass(server.name)}`} />
-                      <h3>{server.name}</h3>
-                    </div>
-                    <div className="mcp-server-card__actions">
-                      <button
-                        type="button"
-                        className={`mcp-switch ${server.enabled ? "mcp-switch--active" : ""}`}
-                        onClick={() => handleToggleServer(server.name, !server.enabled)}
-                        aria-checked={server.enabled}
-                        role="switch"
-                        title={server.enabled ? t("mcpDisableServer") : t("mcpEnableServer")}
-                      >
-                        <span className="mcp-switch__thumb" />
-                      </button>
-
-                      <button className="mcp-icon-btn" onClick={() => openEditModal(server)} title={t("edit")}>
-                        <Edit2 size={14} />
-                      </button>
-                      <button
-                        className="mcp-icon-btn mcp-icon-btn--danger"
-                        onClick={() => handleDeleteServer(server.name)}
-                        title={t("delete")}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
+        <div className="settings__section" style={{ marginTop: 16 }}>
+          <h3 className="settings__section-title">{t("mcpServers")}</h3>
+          <div className="settings__providers-list">
+            {currentServers.map((server) => (
+              <div key={server.name} className="settings__provider-row">
+                <div className="settings__provider-info">
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      backgroundColor: getStatusColor(server.name),
+                    }}
+                  />
+                  <Server size={14} style={{ opacity: 0.8 }} />
+                  <div className="settings__provider-name">{server.name}</div>
                 </div>
-              );
-            })
-          )}
+                <div className="settings__provider-actions">
+                  <input
+                    type="checkbox"
+                    className="settings__checkbox"
+                    checked={server.enabled}
+                    onChange={(e) => handleToggleServer(server.name, e.target.checked)}
+                    title={server.enabled ? t("mcpDisableServer") : t("mcpEnableServer")}
+                  />
+                  <button className="settings__edit-btn" onClick={() => openEditModal(server)} title={t("edit")}>
+                    <Edit2 size={12} />
+                  </button>
+                  <button
+                    className="settings__disconnect-btn"
+                    onClick={() => handleDeleteServer(server.name)}
+                    title={t("delete")}
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              </div>
+            ))}
+            
+            <div className="settings__provider-row">
+              <div className="settings__provider-info">
+                <div className="settings__provider-icon-placeholder">
+                  <Plus size={16} />
+                </div>
+                <div className="settings__provider-name">{t("mcpAddServer")}</div>
+              </div>
+              <button className="settings__connect-btn" onClick={openAddModal}>
+                <Plus size={12} />
+                {t("mcpAddServer")}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Add / Edit Server Modal */}
       {isAdding && (
-        <div className="mcp-modal-overlay" onClick={() => setIsAdding(false)}>
-          <div className="mcp-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="mcp-modal__header">
-              <h3>{editingServer ? t("mcpEditServerTitle") : t("mcpAddServerTitle")}</h3>
-              <button className="mcp-modal__close" onClick={() => setIsAdding(false)}>
+        <div className="connect-popup__overlay" onClick={() => setIsAdding(false)}>
+          <div className="connect-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="connect-popup__header">
+              <div className="connect-popup__icon-wrap">
+                <div className="connect-popup__icon-placeholder">
+                  <Server size={20} />
+                </div>
+              </div>
+              <h2 className="connect-popup__title">
+                {editingServer ? t("mcpEditServerTitle") : t("mcpAddServerTitle")}
+              </h2>
+              <button className="connect-popup__close" onClick={() => setIsAdding(false)}>
                 ×
               </button>
             </div>
 
-            <div className="mcp-modal__body">
+            <div className="connect-popup__body">
               {formError && (
-                <div className="mcp-form-error">
+                <div style={{ color: "var(--error-fg, #e74c3c)", fontSize: 12, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
                   <AlertCircle size={14} />
                   <span>{formError}</span>
                 </div>
               )}
 
-              <div className="mcp-form-group">
-                <label>{t("mcpServerName")}</label>
+              <div className="connect-popup__section">
+                <label className="connect-popup__label">{t("mcpServerName")}</label>
                 <input
-                  type="text"
-                  placeholder="filesystem"
+                  className="connect-popup__input"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
+                  placeholder="filesystem"
                 />
               </div>
 
-              <div className="mcp-form-group">
-                <label>{t("mcpCommandPath")}</label>
+              <div className="connect-popup__section">
+                <label className="connect-popup__label">{t("mcpCommandPath")}</label>
                 <input
-                  type="text"
-                  placeholder={t("mcpCommandPlaceholder")}
+                  className="connect-popup__input"
                   value={formCommand}
                   onChange={(e) => setFormCommand(e.target.value)}
+                  placeholder={t("mcpCommandPlaceholder")}
                 />
               </div>
 
-              <div className="mcp-form-group">
-                <label>{t("mcpArguments")}</label>
+              <div className="connect-popup__section">
+                <label className="connect-popup__label">{t("mcpArguments")}</label>
                 <input
-                  type="text"
-                  placeholder="-y @modelcontextprotocol/server-filesystem /tmp"
+                  className="connect-popup__input"
                   value={formArgs}
                   onChange={(e) => setFormArgs(e.target.value)}
+                  placeholder="-y @modelcontextprotocol/server-filesystem /tmp"
                 />
               </div>
 
-              <div className="mcp-form-group">
-                <label>{t("mcpEnvVariables")}</label>
-                {formEnv.map((item, idx) => (
-                  <div key={idx} className="mcp-env-row">
-                    <input
-                      type="text"
-                      placeholder={t("mcpEnvKeyPlaceholder")}
-                      value={item.key}
-                      onChange={(e) => {
-                        const updated = [...formEnv];
-                        updated[idx].key = e.target.value;
-                        setFormEnv(updated);
-                      }}
-                    />
-                    <input
-                      type="text"
-                      placeholder={t("mcpEnvValuePlaceholder")}
-                      value={item.value}
-                      onChange={(e) => {
-                        const updated = [...formEnv];
-                        updated[idx].value = e.target.value;
-                        setFormEnv(updated);
-                      }}
-                    />
-                    <button
-                      className="mcp-icon-btn mcp-icon-btn--danger"
-                      onClick={() => setFormEnv(formEnv.filter((_, i) => i !== idx))}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  className="mcp-btn mcp-btn--sm"
-                  onClick={() => setFormEnv([...formEnv, { key: "", value: "" }])}
-                >
-                  {t("mcpAddEnvVar")}
-                </button>
+              <div className="connect-popup__section">
+                <div className="connect-popup__section-header">
+                  <label className="connect-popup__label">{t("mcpEnvVariables")}</label>
+                </div>
+                <div className="connect-popup__pairs">
+                  {formEnv.map((item, idx) => (
+                    <div key={idx} className="connect-popup__pair-row">
+                      <input
+                        className="connect-popup__input connect-popup__pair-key"
+                        value={item.key}
+                        onChange={(e) => {
+                          const updated = [...formEnv];
+                          updated[idx].key = e.target.value;
+                          setFormEnv(updated);
+                        }}
+                        placeholder={t("mcpEnvKeyPlaceholder")}
+                      />
+                      <input
+                        className="connect-popup__input connect-popup__pair-value"
+                        value={item.value}
+                        onChange={(e) => {
+                          const updated = [...formEnv];
+                          updated[idx].value = e.target.value;
+                          setFormEnv(updated);
+                        }}
+                        placeholder={t("mcpEnvValuePlaceholder")}
+                      />
+                      <button
+                        className="connect-popup__icon-btn"
+                        type="button"
+                        onClick={() => setFormEnv(formEnv.filter((_, i) => i !== idx))}
+                      >
+                        <TrashIcon />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    className="connect-popup__add-pair-btn"
+                    type="button"
+                    onClick={() => setFormEnv([...formEnv, { key: "", value: "" }])}
+                  >
+                    <PlusIcon /> {t("mcpAddEnvVar")}
+                  </button>
+                </div>
               </div>
 
-              <div className="mcp-form-group mcp-form-group--inline">
-                <label>{t("mcpEnableOnStartup")}</label>
-                <button
-                  type="button"
-                  className={`mcp-switch ${formEnabled ? "mcp-switch--active" : ""}`}
-                  onClick={() => setFormEnabled(!formEnabled)}
-                  aria-checked={formEnabled}
-                  role="switch"
-                >
-                  <span className="mcp-switch__thumb" />
-                </button>
+              <div className="connect-popup__section" style={{ marginTop: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <input
+                    type="checkbox"
+                    className="settings__checkbox"
+                    checked={formEnabled}
+                    onChange={(e) => setFormEnabled(e.target.checked)}
+                  />
+                  <label className="connect-popup__label">{t("mcpEnableOnStartup")}</label>
+                </div>
               </div>
             </div>
 
-            <div className="mcp-modal__footer">
-              <button className="mcp-btn" onClick={() => setIsAdding(false)}>
-                {t("cancel")}
-              </button>
-              <button className="mcp-btn mcp-btn--primary" onClick={handleSaveForm}>
+            <div className="connect-popup__footer">
+              <button className="connect-popup__btn connect-popup__btn--primary" onClick={handleSaveForm}>
                 {t("mcpSaveServer")}
+              </button>
+              <button className="connect-popup__btn" onClick={() => setIsAdding(false)}>
+                {t("cancel")}
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
