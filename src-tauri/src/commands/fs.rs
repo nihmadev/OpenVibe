@@ -117,6 +117,164 @@ pub async fn fs_find_all(
     Ok(walker::find_all(&root, &query, limit.unwrap_or(50)))
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FilteredResult {
+    pub total: usize,
+    pub matches: Vec<search::types::ContentMatch>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FileGroupsResult {
+    pub files: Vec<search::types::FileGroupEntry>,
+    pub total_matches: usize,
+}
+
+#[tauri::command]
+pub async fn fs_search_content(
+    root: String,
+    query: String,
+    max_results: Option<usize>,
+    match_case: Option<bool>,
+    match_whole_word: Option<bool>,
+    use_regex: Option<bool>,
+    include: Option<String>,
+    exclude: Option<String>,
+) -> Result<Vec<search::types::ContentMatch>, String> {
+    let cwd = std::env::current_dir().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
+    let use_regex = use_regex.unwrap_or(false);
+    let match_case = match_case.unwrap_or(false);
+    let match_whole_word = match_whole_word.unwrap_or(false);
+    let max = max_results.unwrap_or(500);
+    let include = include.unwrap_or_default();
+    let exclude = exclude.unwrap_or_default();
+
+    // Populate cache via broad search, then return a filtered page
+    search::ensure_cached(&cwd, &query, &root, use_regex).await?;
+    let (_total, page) = search::filter_cached(
+        &cwd,
+        &query,
+        &root,
+        use_regex,
+        match_case,
+        match_whole_word,
+        &include,
+        &exclude,
+        0,
+        max,
+    )?;
+    Ok(page)
+}
+
+#[tauri::command]
+pub async fn fs_search_content_filter(
+    root: String,
+    query: String,
+    match_case: bool,
+    match_whole_word: bool,
+    use_regex: bool,
+    include: String,
+    exclude: String,
+    offset: usize,
+    limit: usize,
+) -> Result<FilteredResult, String> {
+    let cwd = std::env::current_dir().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
+    let (total, matches) = search::filter_cached(
+        &cwd,
+        &query,
+        &root,
+        use_regex,
+        match_case,
+        match_whole_word,
+        &include,
+        &exclude,
+        offset,
+        limit,
+    )?;
+    Ok(FilteredResult { total, matches })
+}
+
+#[tauri::command]
+pub async fn fs_search_content_files(
+    root: String,
+    query: String,
+    match_case: Option<bool>,
+    match_whole_word: Option<bool>,
+    use_regex: Option<bool>,
+    include: Option<String>,
+    exclude: Option<String>,
+    max_files: Option<usize>,
+) -> Result<FileGroupsResult, String> {
+    let cwd = std::env::current_dir().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
+    let use_regex = use_regex.unwrap_or(false);
+    let match_case = match_case.unwrap_or(false);
+    let match_whole_word = match_whole_word.unwrap_or(false);
+    let max_files = max_files.unwrap_or(1000);
+    let include = include.unwrap_or_default();
+    let exclude = exclude.unwrap_or_default();
+
+    // Use file_groups_from_cache — iterates cached matches with refs, no cloning of all matches
+    search::ensure_cached(&cwd, &query, &root, use_regex).await?;
+    let (files, total_matches) = search::file_groups_from_cache(
+        &cwd,
+        &query,
+        &root,
+        use_regex,
+        match_case,
+        match_whole_word,
+        &include,
+        &exclude,
+        max_files,
+    )?;
+
+    Ok(FileGroupsResult { files, total_matches })
+}
+
+#[tauri::command]
+pub async fn fs_search_content_file_matches(
+    root: String,
+    query: String,
+    match_case: bool,
+    match_whole_word: bool,
+    use_regex: bool,
+    include: String,
+    exclude: String,
+    file_path: String,
+    offset: usize,
+    limit: usize,
+) -> Result<FilteredResult, String> {
+    let cwd = std::env::current_dir().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
+
+    search::ensure_cached(&cwd, &query, &root, use_regex).await?;
+    let (page, total) = search::file_matches_from_cache(
+        &cwd,
+        &query,
+        &root,
+        use_regex,
+        match_case,
+        match_whole_word,
+        &include,
+        &exclude,
+        &file_path,
+        offset,
+        limit,
+    )?;
+
+    Ok(FilteredResult { total, matches: page })
+}
+
+#[tauri::command]
+pub async fn fs_highlight_lines(
+    lines: Vec<String>,
+    file_name: String,
+    query: String,
+    match_case: bool,
+) -> Result<Vec<Vec<search::types::SyntaxToken>>, String> {
+    let refs: Vec<&str> = lines.iter().map(|s| s.as_str()).collect();
+    Ok(search::highlight_lines(&refs, &file_name, &query, match_case))
+}
+
 #[tauri::command]
 pub async fn fs_project_info(dir: String) -> Result<serde_json::Value, String> {
     let pkg = Path::new(&dir).join("package.json");

@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import "../../styles/SearchPopup.css";
 import { SearchIcon, FileIcon, FolderIcon } from "../icons/index.js";
 import type { FileMatch } from "../../types.js";
 import { useI18n } from "../../hooks/useI18n.js";
+import { filterCommands } from "./commands.js";
 
 interface SearchPopupProps {
   folder: string | null;
@@ -12,6 +13,7 @@ interface SearchPopupProps {
   onToggleTerminal: () => void;
   onOpenFile?: (path: string) => void;
   onRevealFolder?: (path: string) => void;
+  onCommand?: (id: string) => void;
 }
 
 interface ActionItem {
@@ -38,6 +40,7 @@ export function SearchPopup({
   onToggleTerminal,
   onOpenFile,
   onRevealFolder,
+  onCommand,
 }: SearchPopupProps): React.ReactElement {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
@@ -58,6 +61,8 @@ export function SearchPopup({
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  const commandMatches = useMemo(() => filterCommands(query), [query]);
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -88,7 +93,7 @@ export function SearchPopup({
   }, [onClose]);
 
   const showingResults = query.trim().length > 0;
-  const totalItems = showingResults ? matches.length : actions.length;
+  const totalItems = showingResults ? commandMatches.length + matches.length : actions.length;
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -100,21 +105,39 @@ export function SearchPopup({
         setSelectedIdx((i) => (i > 0 ? i - 1 : totalItems - 1));
       } else if (e.key === "Enter" && selectedIdx >= 0 && selectedIdx < totalItems) {
         e.preventDefault();
-        if (showingResults && selectedIdx < matches.length) {
-          const m = matches[selectedIdx];
-          if (m.isDir) {
-            onRevealFolder?.(m.path);
+        if (showingResults) {
+          if (selectedIdx < commandMatches.length) {
+            onCommand?.(commandMatches[selectedIdx]!.id);
           } else {
-            onOpenFile?.(m.path);
+            const fileIdx = selectedIdx - commandMatches.length;
+            if (fileIdx < matches.length) {
+              const m = matches[fileIdx]!;
+              if (m.isDir) {
+                onRevealFolder?.(m.path);
+              } else {
+                onOpenFile?.(m.path);
+              }
+            }
           }
           onClose();
-        } else if (!showingResults && selectedIdx < actions.length) {
-          actions[selectedIdx].action();
+        } else if (selectedIdx < actions.length) {
+          actions[selectedIdx]!.action();
           onClose();
         }
       }
     },
-    [matches.length, actions, selectedIdx, totalItems, showingResults, onClose, onOpenFile, onRevealFolder],
+    [
+      commandMatches,
+      matches,
+      actions,
+      selectedIdx,
+      totalItems,
+      showingResults,
+      onClose,
+      onOpenFile,
+      onRevealFolder,
+      onCommand,
+    ],
   );
 
   return (
@@ -137,50 +160,77 @@ export function SearchPopup({
         </div>
 
         <div className="search-popup__body">
-          {showingResults && matches.length > 0 && (
-            <div className="search-popup__results">
-              {matches.map((m, i) => (
+          {showingResults ? (
+            <>
+              {commandMatches.map((cmd, i) => (
                 <div
-                  key={m.path}
+                  key={cmd.id}
                   className={
-                    "search-popup__result-item" + (i === selectedIdx ? " search-popup__result-item--active" : "")
+                    "search-popup__result-item search-popup__result-item--cmd" +
+                    (i === selectedIdx ? " search-popup__result-item--active" : "")
                   }
                   onMouseEnter={() => setSelectedIdx(i)}
                   onClick={() => {
-                    if (m.isDir) {
-                      onRevealFolder?.(m.path);
-                    } else {
-                      onOpenFile?.(m.path);
-                    }
+                    onCommand?.(cmd.id);
                     onClose();
                   }}
                 >
-                  {m.isDir ? <FolderIcon open={false} name={m.name} /> : <FileIcon name={m.name} />}
-                  <span className="search-popup__result-path">{m.rel}</span>
+                  <span className="search-popup__cmd-label">{t(cmd.labelKey as any)}</span>
+                  {cmd.shortcut && <span className="search-popup__cmd-kbd">{cmd.shortcut}</span>}
+                </div>
+              ))}
+              {commandMatches.length > 0 && matches.length > 0 && <div className="search-popup__separator" />}
+              {matches.map((m, i) => {
+                const idx = commandMatches.length + i;
+                return (
+                  <div
+                    key={m.path}
+                    className={
+                      "search-popup__result-item" + (idx === selectedIdx ? " search-popup__result-item--active" : "")
+                    }
+                    onMouseEnter={() => setSelectedIdx(idx)}
+                    onClick={() => {
+                      if (m.isDir) {
+                        onRevealFolder?.(m.path);
+                      } else {
+                        onOpenFile?.(m.path);
+                      }
+                      onClose();
+                    }}
+                  >
+                    {m.isDir ? <FolderIcon open={false} name={m.name} /> : <FileIcon name={m.name} />}
+                    <span className="search-popup__result-path">{m.rel}</span>
+                  </div>
+                );
+              })}
+              {!loading && commandMatches.length === 0 && matches.length === 0 && (
+                <div className="search-popup__status">{t("noMatches")}</div>
+              )}
+              {loading && commandMatches.length === 0 && matches.length === 0 && (
+                <div className="search-popup__status">{t("searching")}</div>
+              )}
+            </>
+          ) : (
+            <div className="search-popup__footer">
+              {actions.map((a, i) => (
+                <div
+                  key={a.id}
+                  className={
+                    "search-popup__action-row" + (i === selectedIdx ? " search-popup__action-row--active" : "")
+                  }
+                  onMouseEnter={() => setSelectedIdx(i)}
+                  onClick={() => {
+                    a.action();
+                    onClose();
+                  }}
+                >
+                  <span className="search-popup__action-label">{a.label}</span>
+                  <span className="search-popup__action-kbd">{a.shortcut}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
-
-        {!showingResults && (
-          <div className="search-popup__footer">
-            {actions.map((a, i) => (
-              <div
-                key={a.id}
-                className={"search-popup__action-row" + (i === selectedIdx ? " search-popup__action-row--active" : "")}
-                onMouseEnter={() => setSelectedIdx(i)}
-                onClick={() => {
-                  a.action();
-                  onClose();
-                }}
-              >
-                <span className="search-popup__action-label">{a.label}</span>
-                <span className="search-popup__action-kbd">{a.shortcut}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

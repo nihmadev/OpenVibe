@@ -99,16 +99,6 @@
   font-weight: 500;
 }
 
-.ftree__row--active::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--fg);
-}
-
 .ftree__row--cut {
   opacity: 0.4;
 }
@@ -157,4 +147,8 @@
   width: 1px;
   background: rgba(255, 255, 255, 0.05);
   z-index: 1;
+}
+
+.ftree__line--active {
+  background: rgba(255, 255, 255, 0.15);
 }

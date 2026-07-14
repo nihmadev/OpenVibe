@@ -1,101 +1,135 @@
 <p align="center">
-  <img src="src-tauri/icons/icon.png" width="100" alt="Openvibe" />
+  <img src="public/icons/etc/icon.png" width="100" alt="Openvibe" />
 </p>
 
 <h1 align="center">Openvibe</h1>
+
 <p align="center">
-  <a href="https://openvibe-beta.vercel.app">website</a> ·
-  <a href="https://github.com/mttscode/openvibe">github</a> ·
-  <a href="mailto:lolz@nihmadev.fun">lolz@nihmadev.fun</a>
+  <a href="https://github.com/nihmadev/OpenVibe">GitHub</a> ·
+  <a href="mailto:lolz@nihmadev.fun">lolz@nihmadev.fun</a> ·
+  <a href="README-RU.md">Russian Version</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/nihmadev/OpenVibe/releases/ alt="Release" /></a>
-  <a href="https://github.com/nihmadev/OpenVibe/actions"><img src="https://img.shields.io/github/actions/workflow/status/nihmadev/openvibe-community/.github/workflows/build.yml?style=flat-square&logo=githubactions&label=build" alt="CI" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-OpenVibe-blue?style=flat-square" alt="License" /></a>
-  <img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React" />
-  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Rust-000000?style=flat-square&logo=rust&logoColor=white" alt="Rust" />
-  <img src="https://img.shields.io/badge/Tauri-FFC131?style=flat-square&logo=tauri&logoColor=black" alt="Tauri 2" />
-  <img src="https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
-  <img src="https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite" />
-  <img src="https://img.shields.io/badge/Monaco-FFBE00?style=flat-square&logo=visualstudiocode&logoColor=white" alt="Monaco Editor" />
-  <img src="https://img.shields.io/badge/xterm.js-000000?style=flat-square&logo=windowsterminal&logoColor=white" alt="xterm.js" />
-  <img src="https://img.shields.io/badge/Tokio-FF4500?style=flat-square&logo=rust&logoColor=white" alt="Tokio" />
+  <a href="https://github.com/nihmadev/OpenVibe/actions"><img src="https://img.shields.io/github/actions/workflow/status/nihmadev/OpenVibe/.github/workflows/build.yml?style=flat-square&logo=githubactions&label=build" alt="CI" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" /></a>
+  <img src="https://img.shields.io/badge/React-18-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React 18" />
+  <img src="https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Rust-2021-000000?style=flat-square&logo=rust&logoColor=white" alt="Rust 2021" />
+  <img src="https://img.shields.io/badge/Tauri-2.0-FFC131?style=flat-square&logo=tauri&logoColor=black" alt="Tauri 2" />
+  <img src="https://img.shields.io/badge/Vite-6.0-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/SQLite-Bundled-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite" />
+  <img src="https://img.shields.io/badge/MCP-Supported-8A2BE2?style=flat-square" alt="MCP Supported" />
 </p>
 
 ---
 
-If you've tried **OpenCode Desktop**, you've probably run into the same issues: the app gradually eats up all your RAM, the CPU overheats, it sometimes restarts on its own, and in the worst cases, it just crashes and takes other programs down with it. GitHub is full of issues describing RAM usage climbing to 20+ GB until the system collapses.
-
-**Openvibe is the same experience, but without all that headache.** Built on Tauri 2 + Rust. Lightweight, no wasted memory, no surprise reloads, no runaway memory loops that crash your system.
+Openvibe is an open-source agentic coding environment built for local execution, high responsiveness, and complete code control. Powered by a modular Rust workspace (11 specialized crates) and a lightweight Tauri 2 with React 18 frontend, Openvibe provides deep codebase understanding, subagent task execution, and seamless Model Context Protocol (MCP) integration without the heavy footprint of standard Electron applications.
 
 ---
 
-## Stack & Architecture
+## Architecture & Modular Crates
 
-- **Frontend:** React + TypeScript on Vite — hot reload, fast iteration
-- **Desktop shell:** Tauri 2 — Rust under the hood, native performance, small binary, no Electron memory tax
-- **Code editor:** Monaco Editor — same engine as VS Code, full syntax highlighting, autocompletion, tabs, unsaved change tracking
-- **Terminal:** xterm.js connected to real PTY sessions through node-pty on the Rust side
-- **Database:** SQLite via rusqlite — conversations, project metadata, provider configs, app state. Bundled compilation, no system dependencies
-- **AI Agent:** Written entirely in Rust. Direct HTTP requests to provider APIs via reqwest + tokio for async streaming. SSE parsing, retries, vision support, token limit management by trimming conversation history. File watching via the notify crate with debouncing
-- **Proxy:** Small Express server in `api/` deployable on Railway — forwards requests to provider endpoints with configurable timeouts
-- **Languages:** 38 interface languages
-- **Themes:** 17 color themes (Monokai, Nord, One Dark, Gruvbox, Kanagawa, Everforest, etc.)
-- **Providers:** 11 built-in + custom OpenAI-compatible endpoints
-- **Icons:** 230 file type icons, 99 folder icons
-- **Offline:** Everything local-first, works offline with local models
+The core functionality of Openvibe is divided into 11 specialized Rust crates inside `crates/`:
 
----
+- **`crates/scg2`**: Smart Context Generation 2 (SCG2) engine. Performs background AST symbol parsing via Tree-Sitter (TypeScript, JavaScript, Rust, Python), builds graph dependency maps (`petgraph`), tracks recency decay metrics, boosts symbol relevance on editor hover/cursor telemetry, synchronizes compiler diagnostic errors/warnings, and formats context snippets for LLM prompts.
+- **`crates/agent`**: Async LLM streaming engine (`reqwest` + `tokio`). Handles Server-Sent Events (SSE) parsing, prompt assembly, token history truncation, thinking/reasoning stream extraction, request cancellation, and multi-turn execution loops.
+- **`crates/agent-tool`**: System tool executor (`read_file`, `write_file`, `edit_file`, `list_dir`, `bash`, `search_codebase`, `agent` subagent) and dynamic bridge for Model Context Protocol tools (`mcp__<server>__<tool>`). Enforces explicit confirmation prompts for shell execution.
+- **`crates/mcp`**: Stdio transport MCP client (JSON-RPC 2.0). Controls MCP server process lifecycles, configuration parsing (`openvibe.toml`), tool discovery (`tools/list`), execution dispatch (`tools/call`), connection health tracking, and process recovery.
+- **`crates/search`**: Multithreaded codebase search with `.gitignore` parsing, regex and exact matching, line tokenization, syntax highlighting, and local code vector embeddings via `fastembed`.
+- **`crates/git`**: Native Git integration powered by `git2` (libgit2 Rust bindings). Manages workspace repository status, diff generation, staging index mutations, commit execution, and branch inspection.
+- **`crates/db`**: SQLite storage layer (`rusqlite` bundled in WAL mode). Manages workspace configurations, provider profiles, model settings, global application state, and per-project isolated conversation databases (`chats.db`).
+- **`crates/chats`**: Chat session management, message history persistence, context branching, message content editing, and SQLite serialization.
+- **`crates/terminal`**: Native terminal process runner (`std::process::Command` streaming stdio over Tauri IPC events directly to xterm.js).
+- **`crates/editor`**: Workspace document state, tab management, and active file editor synchronization.
+- **`crates/config`**: Configuration file serialization, default options, and runtime settings store.
 
-## What Openvibe can do
+### Auxiliary Services
 
-- **AI agent** reads, writes, edits files, runs terminal commands, searches codebase by text and regex (all file scanning in Rust, not JS). Streams reasoning in real-time, asks for confirmation before destructive operations
-- **Supported providers:** OpenAI (GPT-4o, o1, o3), Anthropic (Claude Sonnet, Opus, Haiku), Google (Gemini Pro, Flash), DeepSeek, Groq, Cerebras, OpenRouter, Ollama, LM Studio, Moonshot, Z.ai, Opencode Zen, any custom OpenAI-compatible URL
-- **Editor:** Tabbed interface, unsaved change indicators, side-by-side with chat for manual editing while the agent works
-- **Terminal:** Multiple tabbed sessions, automatic PowerShell detection (pwsh with fallback), real PTY through node-pty, resize handling
-- **File management:** Project tree with file/folder icons, right-click context menu, drag-and-drop, auto-refresh on disk changes via notify, fuzzy search for @-mention file attachment
-- **Chat & history:** Every conversation auto-saved to SQLite, switch sessions without losing context, regenerate individual responses, navigate back through history
-- **Quality of life:** @-mention files, drag images into chat, keyboard shortcuts, project-wide search (Ctrl+K), window zoom, completion sounds, 38 UI languages, 17 themes
+- **`api/`**: Go proxy server (`main.go`, `proxy.go`, `updater.go`) handling API request forwarding, provider connection warmup, timeout management, health endpoints, and auto-update verification.
 
 ---
 
-## Getting Started
+## Technical Capabilities
+
+### SCG2 Context Indexing Engine
+
+Smart Context Generation 2 runs an asynchronous background worker that aggregates editor telemetry batches using a 500ms debouncing window. It extracts syntax trees, resolves module import paths into dependency graphs, boosts relevance ranks for active cursor symbols, tracks diagnostic warnings from compiler output, and dynamically compiles structured markdown context blocks for LLM system prompts.
+
+### Agent Loop & Tool Calling
+
+- **Execution Engine**: Supports single and multi-step agent execution cycles.
+- **Built-in Tools**: `read_file`, `write_file`, `edit_file`, `list_dir`, `bash`, `search_codebase`, and `agent` (subagent for multi-step codebase research).
+- **Command Security**: Destructive actions and terminal operations require explicit user approval.
+- **Context Boundaries**: Automatic sliding window token truncation to stay within model limits, combined with `@` file references and image attachment support for vision models.
+
+### Model Context Protocol (MCP) Integration
+
+- **Stdio Transport**: Full support for local MCP servers communicating over stdin/stdout via JSON-RPC 2.0.
+- **Automatic Registration**: Tools provided by running MCP servers are registered dynamically as `mcp__<server>__<tool>`.
+- **Status Monitoring**: Titlebar indicator reflecting real-time MCP server state (Green: All Running, Yellow: Partial, Red: Error/Stopped, Gray: Unconfigured) with popover management controls.
+- **Configuration File**: Configured through the UI settings or declared directly in `openvibe.toml` inside the workspace root.
+
+### Code Editor & Integrated Terminal
+
+- **Monaco Editor**: Multi-tab code view, syntax highlighting, line numbers, unsaved file diff indicators, customizable fonts/sizes, and split-pane layout side-by-side with chat.
+- **xterm.js Terminal**: Tabbed PTY sessions, automatic resizing via fit addon, shell detection (`bash`, `zsh`, `pwsh`, `cmd`), and real-time streaming over Rust process handles.
+
+### Provider & Model Support
+
+- **33 Provider Presets**: Anthropic, OpenAI, Google Gemini, DeepSeek, Groq, OpenRouter, Ollama, Cerebras, Moonshot, Z.ai, Opencode Zen, GitHub Models, Together AI, Fireworks AI, Mistral AI, xAI (Grok), Cohere, Alibaba (Qwen), Azure OpenAI, AWS Bedrock, Hugging Face, Replicate, DeepInfra, Perplexity AI, Anyscale, Vercel AI Gateway, FalAI, Baseten, Hyperbolic, MiniMax, NVIDIA, SambaNova, SiliconCloud.
+- **OpenAI-Compatible Custom Endpoints**: Connect custom provider base URLs, custom headers, and API keys.
+- **Offline / Local Execution**: Native compatibility with local servers including Ollama, LM Studio, and vLLM.
+
+### Customization & Localization
+
+- **38 UI Languages**: English, Russian, German, French, Spanish, Chinese (Simplified/Traditional), Japanese, Korean, Italian, Portuguese, Arabic, Hindi, Turkish, Vietnamese, Polish, Ukrainian, and others.
+- **18 Themes**: Ayu, Carbonfox, Cursor, Dark, Default, Everforest, Flexoki, GitHub, Gruvbox (Standard, Medium, Soft), Kanagawa, Monokai, Nord, One Dark, Vercel, Vesper, Zenburn.
+- **Typography & Icons**: Integrated Google Fonts and extensive file/folder icon packs.
+
+---
+
+## Development & Usage
+
+### Prerequisites
+
+- **Node.js**: `>= 18`
+- **Rust**: Stable toolchain (`cargo`, `rustc`)
+- **Operating System**: Linux, macOS, or Windows
+
+### Installation
 
 ```bash
-git clone https://github.com/mttscode/openvibe.git
-cd openvibe
+git clone https://github.com/nihmadev/OpenVibe.git
+cd OpenVibe
 npm install
 ```
 
-### Development
+### Development Server
 
 ```bash
-npm run dev:tauri
+npm run dev
 ```
 
-This starts the Vite dev server on port 3000 and launches the Tauri window pointing at it.
+Launches the Vite frontend dev server and runs the desktop app via `tauri dev`.
 
-### Build
+### Application Build
 
 ```bash
-npm run build:renderer
-npm run build:tauri
+npm run build
 ```
 
-### Connecting a Model
+Compiles the web frontend (`npm run build:src`) and generates the standalone native binary via Tauri (`npm run build:tauri`).
 
-Launch the app. Click the gear icon on the left sidebar. Add a provider. Paste your API key. Select a model. That's it.
+### Verification & Testing
+
+```bash
+npm run check    # Run TypeScript, ESLint, and Prettier verifications
+npm test         # Run unit and integration tests via Vitest
+```
 
 ---
 
 ## License
 
-Source code is open for use and modification. UI design and visual assets are proprietary. See [LICENSE](LICENSE).
-
-<p align="center">
-  <small>Built by developers who got tired of being told which model to use</small>
-  <br/>
-  <a href="mailto:lolz@nihmadev.fun">lolz@nihmadev.fun</a>
-</p>
+Distributed under the MIT License. See [LICENSE](LICENSE) for details.

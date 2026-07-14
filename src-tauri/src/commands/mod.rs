@@ -1,10 +1,14 @@
 pub mod agent;
 pub mod chats;
+pub mod editor;
 pub mod fs;
+pub mod git;
 pub mod llm;
+pub mod mcp;
 pub mod misc;
 pub mod models;
 pub mod projects;
 pub mod providers;
+pub mod scg2;
 pub mod terminals;
 pub mod tools;

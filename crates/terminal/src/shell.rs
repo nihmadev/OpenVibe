@@ -1,3 +1,7 @@
+/// Resolves the default interactive terminal shell binary and launch flags for the host operating system.
+///
+/// On Windows, prioritizes PowerShell 7 (`pwsh.exe`) if available, falling back to standard Windows PowerShell.
+/// On Unix-like systems (Linux, macOS), resolves the `$SHELL` environment variable, defaulting to `/bin/bash`.
 pub fn pick_shell() -> (String, Vec<String>) {
     #[cfg(windows)]
     {

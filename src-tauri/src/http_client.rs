@@ -2,8 +2,10 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::watch;
 
-/// Создаёт общий reqwest::Client с оптимизациями для LLM провайдеров:
-/// HTTP/2, keep-alive, tcp_nodelay, connection pooling, таймауты.
+/// Instantiates a shared high-performance `reqwest::Client` optimized for LLM API streaming.
+///
+/// Enables TCP keep-alive, low-latency TCP_NODELAY, connection pooling (up to 4 idle connections per host),
+/// and HTTP/2 PING frames to preserve long-lived streaming connections across API proxies.
 pub fn create_shared_client() -> reqwest::Client {
     reqwest::Client::builder()
         .pool_max_idle_per_host(4)
@@ -15,11 +17,13 @@ pub fn create_shared_client() -> reqwest::Client {
         .timeout(Duration::from_secs(300))
         .tcp_nodelay(true)
         .build()
-        .expect("Failed to create shared reqwest::Client")
+        .expect("Failed to initialize shared HTTP client instance")
 }
 
-/// Фоновая задача: каждые 60 сек делает лёгкий запрос к активному провайдеру,
-/// чтобы TCP/TLS соединение оставалось в пуле «тёплым».
+/// Spawns a background connection pre-warming loop.
+///
+/// Periodically (every 60 seconds) dispatches a lightweight probe to the configured LLM API provider base endpoint
+/// to maintain established TCP/TLS handshakes in the connection pool, eliminating TLS handshake latency on incoming user queries.
 pub fn spawn_connection_warmer(
     client: reqwest::Client,
     provider_url: Arc<tokio::sync::Mutex<String>>,
@@ -37,7 +41,7 @@ pub fn spawn_connection_warmer(
                         continue;
                     }
                     let models_url = format!("{}/models", url.trim_end_matches('/'));
-                    // Делаем GET /models — даже при 401/403 TCP/TLS соединение установлено
+                    // Issue lightweight endpoint probe; establishing socket state even if 401/403 status is returned
                     let _ = client
                         .get(&models_url)
                         .timeout(Duration::from_secs(10))

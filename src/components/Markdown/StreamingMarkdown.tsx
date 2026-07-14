@@ -178,12 +178,13 @@ function renderInlineHtml(html: string, noFileIcons?: boolean): React.ReactNode[
 
 function AccentCodeBlock({ code }: { code: string }): React.ReactElement {
   const [copied, setCopied] = useState(false);
+  const displayCode = code.trimEnd();
   const handleCopy = () => {
-    navigator.clipboard.writeText(code);
+    navigator.clipboard.writeText(displayCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-  const escaped = escapeHtmlCode(code);
+  const escaped = escapeHtmlCode(displayCode);
   return (
     <div className="code-block">
       <Tooltip text="Copy">
@@ -227,20 +228,22 @@ function AccentCodeBlock({ code }: { code: string }): React.ReactElement {
   );
 }
 
-function renderCodeBlock(lang: string, code: string, asAccent?: boolean): React.ReactElement {
+function renderCodeBlock(lang: string, code: string, asAccent?: boolean, blockKey?: string): React.ReactElement {
+  const key = blockKey || `cb-${code.slice(0, 40)}`;
   if (asAccent) {
-    return <AccentCodeBlock key={code.slice(0, 40)} code={code} />;
+    return <AccentCodeBlock key={key} code={code} />;
   }
-  return <CodeBlock key={code.slice(0, 40)} language={lang || "code"} code={code} />;
+  return <CodeBlock key={key} language={lang || "code"} code={code} />;
 }
 
 // ─── Math block ───────────────────────────────────────────────────────────
 
-function renderMathBlock(latex: string): React.ReactElement {
+function renderMathBlock(latex: string, blockKey?: string): React.ReactElement {
   const trimmed = latex.trim();
   const html = renderMath(trimmed, true);
+  const key = blockKey || `m${trimmed.slice(0, 40)}`;
   return (
-    <div className="math math-block" key={`m${trimmed.slice(0, 40)}`}>
+    <div className="math math-block" key={key}>
       <span
         style={{
           position: "absolute",
@@ -336,6 +339,8 @@ export const StreamingMarkdown = React.memo(function StreamingMarkdown({
     const nodes: React.ReactNode[] = [];
     let lastIndex = 0;
     let textSegmentIdx = 0;
+    let codeBlockIdx = 0;
+    let mathBlockIdx = 0;
 
     for (const b of blocks) {
       if (b.start > lastIndex) {
@@ -346,9 +351,9 @@ export const StreamingMarkdown = React.memo(function StreamingMarkdown({
       }
 
       if (b.type === "code") {
-        nodes.push(renderCodeBlock(b.lang, b.code, simplifiedCodeBlocks));
+        nodes.push(renderCodeBlock(b.lang, b.code, simplifiedCodeBlocks, `cb-${codeBlockIdx++}`));
       } else if (b.type === "math") {
-        nodes.push(renderMathBlock(b.latex));
+        nodes.push(renderMathBlock(b.latex, `m-${mathBlockIdx++}`));
       }
 
       lastIndex = b.end;

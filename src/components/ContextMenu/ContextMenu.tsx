@@ -7,6 +7,7 @@ export interface MenuItem {
   danger?: boolean;
   disabled?: boolean;
   icon?: React.ReactNode;
+  checked?: boolean;
 }
 
 interface Props {
@@ -61,7 +62,13 @@ export function ContextMenu({ x, y, items, onClose }: Props): React.ReactElement
             onClose();
           }}
         >
-          {item.icon ? <span className="ctxmenu__icon">{item.icon}</span> : null}
+          {item.checked !== undefined ? (
+            <span className={`ctxmenu__check ${item.checked ? "ctxmenu__check--on" : ""}`}>
+              {item.checked ? "✓" : ""}
+            </span>
+          ) : item.icon ? (
+            <span className="ctxmenu__icon">{item.icon}</span>
+          ) : null}
           {item.label}
         </button>
       ))}

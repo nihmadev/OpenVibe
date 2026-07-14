@@ -1,6 +1,6 @@
+use jwalk::WalkDir;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
-use std::fs;
 use std::path::Path;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
@@ -36,41 +36,49 @@ fn relpath(path: &str, base: &str) -> String {
 
 fn walk(root: &Path) -> Vec<WalkEntry> {
     let mut out = Vec::new();
-    let mut dirs = vec![root.to_path_buf()];
-    while let Some(dir) = dirs.pop() {
+    let gitignore = crate::gitignore_filter::load(root);
+    let root_owned = root.to_path_buf();
+
+    let walk = WalkDir::new(root).process_read_dir(move |_depth, _path, _state, children| {
+        children.retain(|entry_result| {
+            let entry = match entry_result {
+                Ok(e) => e,
+                Err(_) => return false,
+            };
+            let name = entry.file_name.to_string_lossy().to_string();
+            if should_skip(&name) {
+                return false;
+            }
+            if let Some(ref gi) = gitignore {
+                if let Ok(rel) = entry.path().strip_prefix(&root_owned) {
+                    if crate::gitignore_filter::is_ignored(gi, rel, entry.file_type().is_dir()) {
+                        return false;
+                    }
+                }
+            }
+            true
+        });
+    });
+
+    for entry in walk.into_iter() {
         if out.len() >= MAX_FILES {
             break;
         }
-        let entries = match fs::read_dir(&dir) {
+        let entry = match entry {
             Ok(e) => e,
             Err(_) => continue,
         };
-        for entry in entries {
-            if out.len() >= MAX_FILES {
-                break;
-            }
-            let entry = match entry {
-                Ok(e) => e,
-                Err(_) => continue,
-            };
-            let name = entry.file_name().to_string_lossy().to_string();
-            if should_skip(&name) {
-                continue;
-            }
-            let path = entry.path();
-            let full = path.to_string_lossy().to_string();
-            if path.is_dir() {
-                out.push(WalkEntry {
-                    path: full,
-                    is_dir: true,
-                });
-                dirs.push(path);
-            } else if path.is_file() {
-                out.push(WalkEntry {
-                    path: full,
-                    is_dir: false,
-                });
-            }
+        let full = entry.path().to_string_lossy().to_string();
+        if entry.file_type().is_dir() {
+            out.push(WalkEntry {
+                path: full,
+                is_dir: true,
+            });
+        } else if entry.file_type().is_file() {
+            out.push(WalkEntry {
+                path: full,
+                is_dir: false,
+            });
         }
     }
     out
@@ -101,8 +109,8 @@ fn score(haystack: &str, needle: &str) -> f64 {
     let h = haystack.to_lowercase();
     let n = needle.to_lowercase();
     let base = h
-        .split(|c: char| c == '/' || c == '\\')
-        .last()
+        .split(['/', '\\'])
+        .next_back()
         .unwrap_or(&h)
         .to_string();
     if base.contains(&n) {

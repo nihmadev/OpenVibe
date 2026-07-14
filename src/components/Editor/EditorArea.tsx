@@ -20,6 +20,12 @@ interface EditorAreaProps {
   onDirtyChange: (path: string, dirty: boolean) => void;
   /** Root folder of the project, used to make breadcrumb relative */
   cwd: string;
+  /** Line number to scroll to when opening from search */
+  gotoLine?: number;
+  /** Column number to position cursor when opening from search */
+  gotoColumn?: number;
+  /** Match length to select when opening from search */
+  gotoMatchLength?: number;
 }
 
 export function EditorArea({
@@ -30,6 +36,9 @@ export function EditorArea({
   onClose,
   onDirtyChange,
   cwd,
+  gotoLine,
+  gotoColumn,
+  gotoMatchLength,
 }: EditorAreaProps): React.ReactElement {
   const { t } = useI18n();
   const breadcrumbRef = useRef<HTMLDivElement>(null);
@@ -163,6 +172,9 @@ export function EditorArea({
               path={activeFile}
               cwd={cwd}
               onDirtyChange={(dirty) => onDirtyChange(activeFile, dirty)}
+              gotoLine={gotoLine}
+              gotoColumn={gotoColumn}
+              gotoMatchLength={gotoMatchLength}
             />
           )
         ) : (

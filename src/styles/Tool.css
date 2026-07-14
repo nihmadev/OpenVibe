@@ -152,7 +152,6 @@
 
 .tool--has-diff {
   flex-wrap: wrap;
-  gap: 4px;
 }
 
 .tool__diff-stats {
@@ -277,4 +276,82 @@
 .tool__diff-block .diff-editor__container {
   background: var(--bg);
   min-height: 60px;
+}
+
+/* ── MCP Tool Call ── */
+.tool--mcp {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  font-size: 14px;
+}
+
+.tool--mcp.tool--pending .tool__verb {
+  font-weight: 400;
+  background-image:
+    linear-gradient(90deg, transparent 0px, transparent 20px, var(--fg) 60px, transparent 100px, transparent 160px),
+    linear-gradient(var(--fg-dim), var(--fg-dim));
+  background-size:
+    160px 100%,
+    100% 100%;
+  background-repeat: no-repeat, no-repeat;
+  background-position:
+    -160px center,
+    0 0;
+  -webkit-background-clip: text, text;
+  background-clip: text, text;
+  -webkit-text-fill-color: transparent;
+  animation: tool-shimmer 2.5s linear infinite;
+}
+
+.tool--mcp .tool__verb {
+  font-weight: 400;
+  color: var(--fg-dim);
+}
+
+/* ── ListDirBlock ── */
+.tool__diff-block--list {
+  border: none;
+  background: transparent;
+  padding-left: 20px;
+  border-radius: 0;
+}
+
+.list-dir-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.list-dir-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--fg);
+}
+
+.list-dir-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.list-dir-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

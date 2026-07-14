@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+
 import "../../styles/Titlebar.css";
 import { Tooltip } from "../Tooltip/Tooltip.js";
 import { useI18n } from "../../hooks/useI18n.js";
@@ -12,7 +13,16 @@ import {
   SearchIcon,
   TerminalIcon,
   FolderToggleIcon,
+  SearchInCodeIcon,
+  MinimizeIcon,
+  MaximizeIcon,
+  CloseIcon,
 } from "../icons/index.js";
+import { Server } from "lucide-react";
+
+import { McpStatusDropdown } from "./McpStatusDropdown.js";
+import { mcpGetServers, mcpStartServer, mcpStopServer } from "../../tauri-bridge.js";
+import type { McpServerStatus } from "../../types.js";
 
 interface TitlebarProps {
   chatSideOpen?: boolean;
@@ -23,15 +33,18 @@ interface TitlebarProps {
   canGoForward?: boolean;
   terminalOpen?: boolean;
   onToggleTerminal?: () => void;
+  searchInCodeOpen?: boolean;
+  onToggleSearchInCode?: () => void;
   fileTreeOpen?: boolean;
   onToggleFileTree?: () => void;
   folder?: string | null;
   onSearchOpen?: () => void;
+  onOpenSettings?: (tab?: string) => void;
 }
 
 const STORAGE_KEY = "titlebar:hidden";
 
-type BtnId = "sidebar" | "new-session" | "nav-prev" | "nav-next" | "terminal" | "file-tree";
+type BtnId = "sidebar" | "new-session" | "nav-prev" | "nav-next" | "terminal" | "search-in-code" | "file-tree";
 
 function loadHidden(): Set<BtnId> {
   try {
@@ -49,7 +62,7 @@ function folderLabel(folder: string | null | undefined): string {
 }
 
 const LEFT_BTNS: BtnId[] = ["sidebar", "new-session", "nav-prev", "nav-next"];
-const RIGHT_BTNS: BtnId[] = ["terminal", "file-tree"];
+const RIGHT_BTNS: BtnId[] = ["terminal", "search-in-code", "file-tree"];
 
 export function Titlebar({
   chatSideOpen = false,
@@ -60,10 +73,13 @@ export function Titlebar({
   canGoForward = false,
   terminalOpen = false,
   onToggleTerminal = () => {},
+  searchInCodeOpen = false,
+  onToggleSearchInCode = () => {},
   fileTreeOpen = false,
   onToggleFileTree = () => {},
   folder,
   onSearchOpen = () => {},
+  onOpenSettings,
 }: TitlebarProps): React.ReactElement {
   const { t } = useI18n();
   const [hidden, setHidden] = useState<Set<BtnId>>(loadHidden);
@@ -71,34 +87,111 @@ export function Titlebar({
   const [showing, setShowing] = useState<Set<BtnId>>(new Set());
   const [ctx, setCtx] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null);
 
+  const [mcpServers, setMcpServers] = useState<McpServerStatus[]>([]);
+  const [mcpDropdownOpen, setMcpDropdownOpen] = useState(false);
+
+  const fetchMcpServers = useCallback(async () => {
+    try {
+      const list = await mcpGetServers();
+      setMcpServers(list || []);
+    } catch (e) {
+      console.error("fetchMcpServers error:", e);
+      // Ignore if backend not connected or error
+    }
+  }, []);
+
+  const mcpContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!mcpDropdownOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (mcpContainerRef.current && !mcpContainerRef.current.contains(e.target as Node)) {
+        setMcpDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [mcpDropdownOpen]);
+
+  useEffect(() => {
+    fetchMcpServers();
+    const interval = setInterval(fetchMcpServers, 5000);
+    return () => clearInterval(interval);
+  }, [fetchMcpServers]);
+
+  const handleToggleMcpServer = async (name: string, enable: boolean) => {
+    try {
+      if (enable) {
+        await mcpStartServer(name);
+      } else {
+        await mcpStopServer(name);
+      }
+      fetchMcpServers();
+    } catch (e) {
+      console.error("Failed to toggle MCP server:", e);
+    }
+  };
+
+  const getMcpGlobalDotClass = (servers: McpServerStatus[]) => {
+    if (servers.length === 0) return "titlebar__mcp-dot--gray";
+    const enabled = servers.filter((s) => s.enabled);
+    if (enabled.length === 0) return "titlebar__mcp-dot--gray";
+
+    const runningCount = enabled.filter((s) => s.status.type === "running").length;
+
+    if (runningCount === enabled.length) return "titlebar__mcp-dot--green";
+    if (runningCount > 0) return "titlebar__mcp-dot--yellow";
+    return "titlebar__mcp-dot--red";
+  };
+
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...hidden]));
   }, [hidden]);
 
   const hide = useCallback((id: BtnId) => {
-    setHiding(p => new Set(p).add(id));
+    setHiding((p) => new Set(p).add(id));
     setTimeout(() => {
-      setHiding(p => { const n = new Set(p); n.delete(id); return n; });
-      setHidden(p => new Set(p).add(id));
+      setHiding((p) => {
+        const n = new Set(p);
+        n.delete(id);
+        return n;
+      });
+      setHidden((p) => new Set(p).add(id));
     }, 250);
   }, []);
 
   const unhide = useCallback((id: BtnId) => {
-    setHidden(p => { const n = new Set(p); n.delete(id); return n; });
-    setShowing(p => new Set(p).add(id));
+    setHidden((p) => {
+      const n = new Set(p);
+      n.delete(id);
+      return n;
+    });
+    setShowing((p) => new Set(p).add(id));
     setTimeout(() => {
-      setShowing(p => { const n = new Set(p); n.delete(id); return n; });
+      setShowing((p) => {
+        const n = new Set(p);
+        n.delete(id);
+        return n;
+      });
     }, 250);
   }, []);
 
   function btnLabel(id: BtnId): string {
     switch (id) {
-      case "sidebar": return chatSideOpen ? t("hideSessions") : t("showSessions");
-      case "new-session": return t("newSessionTitle");
-      case "nav-prev": return t("prevSessionTitle");
-      case "nav-next": return t("nextSessionTitle");
-      case "terminal": return t("toggleTerminal");
-      case "file-tree": return fileTreeOpen ? t("hideFileTree") : t("showFileTree");
+      case "sidebar":
+        return chatSideOpen ? t("hideSessions") : t("showSessions");
+      case "new-session":
+        return t("newSessionTitle");
+      case "nav-prev":
+        return t("prevSessionTitle");
+      case "nav-next":
+        return t("nextSessionTitle");
+      case "terminal":
+        return t("toggleTerminal");
+      case "search-in-code":
+        return t("searchInCode");
+      case "file-tree":
+        return fileTreeOpen ? t("hideFileTree") : t("showFileTree");
     }
   }
 
@@ -133,14 +226,14 @@ export function Titlebar({
 
   function onSectionCtx(e: React.MouseEvent, ids: BtnId[]): void {
     e.preventDefault();
-    const hiddenHere = ids.filter(id => hidden.has(id) && !showing.has(id));
+    const hiddenHere = ids.filter((id) => hidden.has(id) && !showing.has(id));
     if (hiddenHere.length === 0) return;
     setCtx({
       x: e.clientX,
       y: e.clientY,
       items: [
         { label: t("restoreButtons"), disabled: true },
-        ...hiddenHere.map(id => ({
+        ...hiddenHere.map((id) => ({
           label: `${t("showButton")} «${btnLabel(id)}»`,
           onClick: () => unhide(id),
         })),
@@ -150,12 +243,15 @@ export function Titlebar({
 
   return (
     <div className="titlebar">
-      <div className="titlebar__left" onContextMenu={e => onSectionCtx(e, LEFT_BTNS)}>
+      <div className="titlebar__left" onContextMenu={(e) => onSectionCtx(e, LEFT_BTNS)}>
         <Tooltip text={t("menu")} side="bottom">
           <button
             className="titlebar__action-btn"
             aria-label={t("menu")}
-            onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
           >
             <BurgerIcon />
           </button>
@@ -165,7 +261,7 @@ export function Titlebar({
             <button
               className={btnClasses("sidebar", chatSideOpen ? "titlebar__action-btn--active" : "")}
               onClick={onToggleChatSide}
-              onContextMenu={e => onBtnCtx(e, "sidebar")}
+              onContextMenu={(e) => onBtnCtx(e, "sidebar")}
               aria-label="Toggle sessions"
             >
               <SidebarToggleIcon />
@@ -177,7 +273,7 @@ export function Titlebar({
             <button
               className={btnClasses("new-session")}
               onClick={onNewChat}
-              onContextMenu={e => onBtnCtx(e, "new-session")}
+              onContextMenu={(e) => onBtnCtx(e, "new-session")}
               aria-label={t("newSessionTitle")}
             >
               <NewSessionIcon />
@@ -191,7 +287,7 @@ export function Titlebar({
                 className={btnClasses("nav-prev")}
                 onClick={() => onSwitchChat("prev")}
                 disabled={!canGoBack}
-                onContextMenu={e => onBtnCtx(e, "nav-prev")}
+                onContextMenu={(e) => onBtnCtx(e, "nav-prev")}
                 aria-label={t("prevSessionTitle")}
               >
                 <ArrowLeftIcon />
@@ -204,7 +300,7 @@ export function Titlebar({
                 className={btnClasses("nav-next")}
                 onClick={() => onSwitchChat("next")}
                 disabled={!canGoForward}
-                onContextMenu={e => onBtnCtx(e, "nav-next")}
+                onContextMenu={(e) => onBtnCtx(e, "nav-next")}
                 aria-label={t("nextSessionTitle")}
               >
                 <ArrowRightIcon />
@@ -221,16 +317,55 @@ export function Titlebar({
         </div>
       </div>
 
-      <div className="titlebar__right" onContextMenu={e => onSectionCtx(e, RIGHT_BTNS)}>
+      <div className="titlebar__right" onContextMenu={(e) => onSectionCtx(e, RIGHT_BTNS)}>
+        <div className="titlebar__mcp-container" ref={mcpContainerRef}>
+          <Tooltip text={t("mcpServers")} side="bottom">
+            <button
+              className={`titlebar__action-btn titlebar__mcp-btn ${mcpDropdownOpen ? "titlebar__action-btn--active" : ""}`}
+              onClick={() => {
+                fetchMcpServers();
+                setMcpDropdownOpen(!mcpDropdownOpen);
+              }}
+              aria-label={t("mcpServers")}
+            >
+              <Server size={15} />
+
+              <span className={`titlebar__mcp-badge ${getMcpGlobalDotClass(mcpServers)}`} />
+            </button>
+          </Tooltip>
+          {mcpDropdownOpen && (
+            <McpStatusDropdown
+              servers={mcpServers}
+              onToggleServer={handleToggleMcpServer}
+              onOpenSettings={() => {
+                setMcpDropdownOpen(false);
+                if (onOpenSettings) onOpenSettings("mcp");
+              }}
+              onRefresh={fetchMcpServers}
+            />
+          )}
+        </div>
         {isVisible("terminal") && (
           <Tooltip text={t("toggleTerminal")} side="bottom">
             <button
               className={btnClasses("terminal", terminalOpen ? "titlebar__action-btn--active" : "")}
               onClick={onToggleTerminal}
-              onContextMenu={e => onBtnCtx(e, "terminal")}
+              onContextMenu={(e) => onBtnCtx(e, "terminal")}
               aria-label={t("toggleTerminal")}
             >
               <TerminalIcon />
+            </button>
+          </Tooltip>
+        )}
+        {isVisible("search-in-code") && (
+          <Tooltip text={t("searchInCode")} side="bottom">
+            <button
+              className={btnClasses("search-in-code")}
+              onClick={onToggleSearchInCode}
+              onContextMenu={(e) => onBtnCtx(e, "search-in-code")}
+              aria-label={t("searchInCode")}
+            >
+              <SearchInCodeIcon />
             </button>
           </Tooltip>
         )}
@@ -239,51 +374,51 @@ export function Titlebar({
             <button
               className={btnClasses("file-tree", fileTreeOpen ? "titlebar__action-btn--active" : "")}
               onClick={onToggleFileTree}
-              onContextMenu={e => onBtnCtx(e, "file-tree")}
-              aria-label="Toggle file tree"
+              onContextMenu={(e) => onBtnCtx(e, "file-tree")}
+              aria-label={t("toggleFileTree")}
             >
               <FolderToggleIcon />
             </button>
           </Tooltip>
         )}
-
         <div className="titlebar__controls">
           <button
             className="titlebar__btn"
             onClick={() => window.vibe.window.minimize()}
-            onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
             aria-label={t("minimizeLabel")}
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.2">
-              <path d="M1 5h8" />
-            </svg>
+            <MinimizeIcon />
           </button>
           <button
             className="titlebar__btn"
             onClick={() => window.vibe.window.maximize()}
-            onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
             aria-label={t("maximizeLabel")}
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.2">
-              <rect x="1" y="1" width="8" height="8" />
-            </svg>
+            <MaximizeIcon />
           </button>
           <button
             className="titlebar__btn titlebar__btn--close"
             onClick={() => window.vibe.window.close()}
-            onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
             aria-label={t("closeLabel")}
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.2">
-              <path d="M1 1l8 8M9 1l-8 8" />
-            </svg>
+            <CloseIcon />
           </button>
         </div>
       </div>
 
-      {ctx && (
-        <ContextMenu x={ctx.x} y={ctx.y} items={ctx.items} onClose={() => setCtx(null)} />
-      )}
+      {ctx && <ContextMenu x={ctx.x} y={ctx.y} items={ctx.items} onClose={() => setCtx(null)} />}
     </div>
   );
 }

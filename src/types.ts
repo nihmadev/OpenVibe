@@ -14,7 +14,7 @@ export interface VibeConfig {
 export type ContentPart = { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
 
 export type VibeEvent =
-  | { kind: "user"; text: string }
+  | { kind: "user"; text: string; index?: number }
   | { kind: "assistant-start" }
   | { kind: "assistant-chunk"; text: string }
   | { kind: "assistant-end" }
@@ -28,12 +28,6 @@ export type VibeEvent =
   | { kind: "stopped" }
   | { kind: "error"; text: string }
   | { kind: "done" };
-
-export interface ConfirmPayload {
-  id: string;
-  toolName: string;
-  args: unknown;
-}
 
 export interface FsEntry {
   name: string;
@@ -77,6 +71,22 @@ export interface FileMatch {
   isDir?: boolean;
 }
 
+export interface ContentMatch {
+  path: string;
+  rel: string;
+  name: string;
+  line: number;
+  column: number;
+  content: string;
+}
+
+export interface FileGroupEntry {
+  path: string;
+  rel: string;
+  name: string;
+  matchCount: number;
+}
+
 export interface Project {
   id: string;
   path: string;
@@ -87,6 +97,11 @@ export interface Project {
   photo?: string | null;
 }
 
+export interface KeyValuePair {
+  key: string;
+  value: string;
+}
+
 export interface Provider {
   id: string;
   name: string;
@@ -95,6 +110,10 @@ export interface Provider {
   apiKey: string;
   model: string;
   addedAt: number;
+  customIcon?: string | null;
+  modelsUrl?: string | null;
+  headers?: KeyValuePair[] | null;
+  parameters?: KeyValuePair[] | null;
 }
 
 export interface FileSnapshot {
@@ -115,7 +134,6 @@ export interface VibeApi {
   revertUndo: () => Promise<void>;
   reset: () => Promise<void>;
   stop: () => Promise<void>;
-  decide: (id: string, decision: "yes" | "no" | "always") => Promise<void>;
   pickWorkspace: () => Promise<string | null>;
   window: {
     minimize: () => Promise<void>;
@@ -125,6 +143,17 @@ export interface VibeApi {
   state: {
     get: (key: string) => Promise<string | null>;
     set: (key: string, value: string) => Promise<void>;
+  };
+
+  editor: {
+    preloadTypes: (cwd: string) => Promise<
+      | {
+          ok: true;
+          types: Array<{ path: string; content: string }>;
+          packages: Array<{ name: string; typePath: string; content: string }>;
+        }
+      | { ok: false; error: string }
+    >;
   };
 
   setModel: (model: string) => Promise<void>;
@@ -141,6 +170,8 @@ export interface VibeApi {
       baseUrl: string,
       apiKey: string,
       providerId?: string,
+      modelsUrl?: string,
+      customHeaders?: [string, string][],
     ) => Promise<{ ok: true; models: { id: string; name: string }[] } | { ok: false; error: string }>;
     listDisabled: () => Promise<string[]>;
     toggleDisabled: (modelId: string) => Promise<boolean>;
@@ -187,10 +218,29 @@ export interface VibeApi {
       query: string,
       limit?: number,
     ) => Promise<{ ok: true; matches: FileMatch[] } | { ok: false; error: string }>;
+    searchContentFiles: (
+      root: string,
+      query: string,
+      matchCase?: boolean,
+      matchWholeWord?: boolean,
+      useRegex?: boolean,
+      include?: string,
+      exclude?: string,
+      maxFiles?: number,
+    ) => Promise<{ ok: true; files: FileGroupEntry[]; totalMatches: number } | { ok: false; error: string }>;
+    searchContentFileMatches: (
+      root: string,
+      query: string,
+      matchCase: boolean,
+      matchWholeWord: boolean,
+      useRegex: boolean,
+      include: string,
+      exclude: string,
+      filePath: string,
+      offset: number,
+      limit: number,
+    ) => Promise<{ ok: true; total: number; matches: ContentMatch[] } | { ok: false; error: string }>;
     projectInfo: (dir: string) => Promise<{ ok: true; name: string | null; version: string | null } | { ok: false }>;
-  };
-  clipboard: {
-    writeText: (text: string) => void;
   };
   whisper: {
     transcribe: (
@@ -200,7 +250,6 @@ export interface VibeApi {
   };
   onEvent: (cb: (e: VibeEvent) => void) => () => void;
   onBusy: (cb: (busy: boolean) => void) => () => void;
-  onConfirm: (cb: (p: ConfirmPayload) => void) => () => void;
   onChatsUpdated: (cb: () => void) => () => void;
   onFsChanged: (cb: () => void) => () => void;
   term: {
@@ -211,6 +260,27 @@ export interface VibeApi {
     onData: (cb: (p: { id: string; chunk: string }) => void) => () => void;
     onExit: (cb: (p: { id: string; code: number }) => void) => () => void;
   };
+}
+
+export type McpStatus = { type: "running" } | { type: "stopped" } | { type: "error"; message: string };
+
+export interface McpServerStatus {
+  name: string;
+  status: McpStatus;
+  enabled: boolean;
+  error?: string;
+}
+
+export interface McpServerConfig {
+  name: string;
+  command: string;
+  args: string[];
+  env: Record<string, string>;
+  enabled: boolean;
+}
+
+export interface McpConfig {
+  servers: McpServerConfig[];
 }
 
 declare global {

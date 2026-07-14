@@ -17,6 +17,7 @@ import { MentionPopup } from "./MentionPopup.js";
 import { ModelSelector } from "./ModelSelector.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
 import { RollbackPill } from "../RollbackPill/RollbackPill.js";
+import { StopIcon, RefreshCwIcon, ArrowUpIcon, AttachPlusIcon } from "../icons/icons.js";
 
 export type { Attachment, SendPayload };
 
@@ -899,39 +900,7 @@ export function PromptInput({
                   disabled={!stopping && !editorText().trim() && attachments.length === 0}
                   aria-label={tipText}
                 >
-                  {stopping ? (
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                      <rect x="6" y="6" width="12" height="12" rx="2" />
-                    </svg>
-                  ) : mode === "shell" ? (
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      width="18"
-                      height="18"
-                    >
-                      <polyline points="1 4 1 10 7 10" />
-                      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-                    </svg>
-                  ) : (
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      width="18"
-                      height="18"
-                    >
-                      <line x1="12" y1="19" x2="12" y2="5" />
-                      <polyline points="5 12 12 5 19 12" />
-                    </svg>
-                  )}
+                  {stopping ? <StopIcon /> : mode === "shell" ? <RefreshCwIcon /> : <ArrowUpIcon />}
                 </button>
               </Tooltip>
             </div>
@@ -950,19 +919,7 @@ export function PromptInput({
                     disabled={mode !== "normal"}
                     aria-label={t("attachFiles")}
                   >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
+                    <AttachPlusIcon />
                   </button>
                 </Tooltip>
                 <ModelSelector

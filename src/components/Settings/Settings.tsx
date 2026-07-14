@@ -8,9 +8,9 @@ import { themes } from "../../themes/themes.js";
 import { PROVIDER_TEMPLATES, getProviderIconPath } from "../../constants.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { FONT_OPTIONS, CODE_FONT_OPTIONS, applyFont } from "../../fonts.js";
-import { ChevronRightIcon } from "../icons/ui-icons.js";
+import { ChevronRightIcon } from "../icons/icons.js";
 import { languageOptions } from "../../i18n/index.js";
-import type { ShortcutDef, KeyCombo } from "../../hooks/useShortcuts.js";
+import type { ShortcutDef, KeyCombo, ShortcutCategory } from "../../hooks/useShortcuts.js";
 import { formatCombo, setRecording } from "../../hooks/useShortcuts.js";
 import { useAnimations } from "../../hooks/useAnimations.js";
 import type { AnimKey, AnimStyle } from "../../hooks/useAnimations.js";
@@ -26,7 +26,11 @@ interface DiscoveredModel {
   providerIcon: string;
 }
 
-type Tab = "general" | "design" | "providers" | "models" | "hotkeys";
+import { Server } from "lucide-react";
+
+import { McpSettingsPanel } from "./McpSettingsPanel.js";
+
+type Tab = "general" | "design" | "providers" | "models" | "hotkeys" | "mcp";
 
 interface Props {
   open: boolean;
@@ -223,7 +227,16 @@ export function Settings({
         const providerId = template?.id ?? p.id;
         const providerName = template?.name ?? p.name;
         const providerIcon = template?.icon ?? "";
-        const res = await window.vibe.models.fetch(p.baseUrl, p.apiKey, providerId);
+        const customHeaders = p.headers
+          ?.filter((h: any) => h.key?.trim())
+          .map((h: any) => [h.key.trim(), h.value.trim()] as [string, string]);
+        const res = await window.vibe.models.fetch(
+          p.baseUrl,
+          p.apiKey,
+          providerId,
+          p.modelsUrl ?? undefined,
+          customHeaders,
+        );
         if (!res.ok) {
           console.error("Failed to fetch models for", providerName, res.error);
           return;
@@ -333,8 +346,8 @@ export function Settings({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V22a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
                 <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15A1.65 1.65 0 0 0 3.17 14H3a2 2 0 0 1 0-4h.17A1.65 1.65 0 0 0 4.68 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.17a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1.08z" />
               </svg>,
             )}
             {renderSidebarItem(
@@ -422,6 +435,7 @@ export function Settings({
                 <line x1="12" y1="22.08" x2="12" y2="12" />
               </svg>,
             )}
+            {renderSidebarItem("mcp", t("mcpServers"), <Server size={14} />)}
           </div>
 
           <div className="settings__sidebar-footer">
@@ -443,8 +457,11 @@ export function Settings({
                     ? t("models")
                     : activeTab === "providers"
                       ? t("providers")
-                      : t("hotkeys")}
+                      : activeTab === "mcp"
+                        ? t("mcpServers")
+                        : t("hotkeys")}
             </h2>
+
             <button className="settings__close" onClick={onClose}>
               ×
             </button>
@@ -726,13 +743,7 @@ export function Settings({
                         <div className="settings__control-label">{t("animMultiplier")}</div>
                         <div className="settings__control-desc">{t("animMultiplierDesc")}</div>
                       </div>
-                      <NumberInput
-                        value={animMultiplier}
-                        step={0.1}
-                        min={0}
-                        max={5}
-                        onChange={setAnimMultiplier}
-                      />
+                      <NumberInput value={animMultiplier} step={0.1} min={0} max={5} onChange={setAnimMultiplier} />
                     </div>
                   </div>
                 </div>
@@ -745,16 +756,19 @@ export function Settings({
                     <div className="settings__providers-list">
                       {connected.map((p) => {
                         const template = PROVIDER_TEMPLATES.find((t) => t.baseUrl === p.baseUrl);
+                        const hasCustomIcon = p.customIcon && p.customIcon.startsWith("data:");
                         return (
                           <div key={p.id} className="settings__provider-row">
                             <div className="settings__provider-info">
-                              {template && (
+                              {hasCustomIcon ? (
+                                <img src={p.customIcon!} className="settings__provider-icon" alt="" />
+                              ) : template ? (
                                 <img
                                   src={getProviderIconPath(template.icon, resolvedScheme === "light")}
                                   className="settings__provider-icon"
                                   alt=""
                                 />
-                              )}
+                              ) : null}
                               <div className="settings__provider-name">{p.name}</div>
                             </div>
                             <div className="settings__provider-actions">
@@ -956,6 +970,8 @@ export function Settings({
                   })()
                 )}
               </div>
+            ) : activeTab === "mcp" ? (
+              <McpSettingsPanel />
             ) : (
               <div className="settings__section">
                 {!shortcuts || shortcuts.length === 0 ? (
@@ -964,30 +980,57 @@ export function Settings({
                   </div>
                 ) : (
                   <div className="settings__hotkeys-list">
-                    {shortcuts.map((h) => {
-                      const isRecording = recordingId === h.id;
-                      return (
-                        <div key={h.id} className="settings__control-row">
-                          <div className="settings__control-info">
-                            <div className="settings__control-label">{h.label}</div>
+                    {(() => {
+                      const categoryOrder: ShortcutCategory[] = [
+                        "navigation",
+                        "search",
+                        "chat",
+                        "workspace",
+                        "terminal",
+                        "project",
+                        "editor",
+                      ];
+                      const grouped: Record<string, ShortcutDef[]> = {};
+                      for (const h of shortcuts) {
+                        if (!grouped[h.category]) grouped[h.category] = [];
+                        grouped[h.category].push(h);
+                      }
+                      return categoryOrder.map((cat) => {
+                        const items = grouped[cat];
+                        if (!items || items.length === 0) return null;
+                        return (
+                          <div key={cat} className="settings__hotkeys-section">
+                            <div className="settings__hotkeys-section-header">{t(cat)}</div>
+                            {items.map((h) => {
+                              const isRecording = recordingId === h.id;
+                              return (
+                                <div key={h.id} className="settings__control-row">
+                                  <div className="settings__control-info">
+                                    <div className="settings__control-label">{h.label}</div>
+                                  </div>
+                                  <button
+                                    className={
+                                      "settings__hotkey-btn" + (isRecording ? " settings__hotkey-btn--recording" : "")
+                                    }
+                                    onClick={() => {
+                                      if (isRecording) return;
+                                      setRecordingId(h.id);
+                                      setErrorMsg(null);
+                                    }}
+                                    onContextMenu={(e) => {
+                                      e.preventDefault();
+                                      onResetBinding?.(h.id);
+                                    }}
+                                  >
+                                    {isRecording ? "..." : h.keys}
+                                  </button>
+                                </div>
+                              );
+                            })}
                           </div>
-                          <button
-                            className={"settings__hotkey-btn" + (isRecording ? " settings__hotkey-btn--recording" : "")}
-                            onClick={() => {
-                              if (isRecording) return;
-                              setRecordingId(h.id);
-                              setErrorMsg(null);
-                            }}
-                            onContextMenu={(e) => {
-                              e.preventDefault();
-                              onResetBinding?.(h.id);
-                            }}
-                          >
-                            {isRecording ? "..." : h.keys}
-                          </button>
-                        </div>
-                      );
-                    })}
+                        );
+                      });
+                    })()}
                   </div>
                 )}
                 {errorMsg && <div className="settings__hotkeys-error">{errorMsg}</div>}
@@ -1004,6 +1047,12 @@ export function Settings({
           editId={editing.editId}
           editProvider={editing.editId ? providers.find((p) => p.id === editing.editId) : null}
           onConnect={async (formData) => {
+            const serializePairs = (pairs: { key: string; value: string }[]) =>
+              pairs
+                .filter((p) => p.key.trim())
+                .map((p) => `${p.key.trim()}:${p.value.trim()}`)
+                .join("\n");
+
             if (editing.editId) {
               const updated = providers.map((p) =>
                 p.id === editing.editId
@@ -1013,6 +1062,10 @@ export function Settings({
                       apiKey: formData.apiKey,
                       model: formData.model,
                       baseUrl: formData.baseUrl,
+                      customIcon: formData.customIcon || null,
+                      modelsUrl: formData.modelsUrl || null,
+                      headers: formData.headers.length > 0 ? formData.headers : null,
+                      parameters: formData.parameters.length > 0 ? formData.parameters : null,
                     }
                   : p,
               );
@@ -1031,6 +1084,10 @@ export function Settings({
                 apiKey: formData.apiKey,
                 model: formData.model,
                 addedAt: Date.now(),
+                customIcon: formData.customIcon || null,
+                modelsUrl: formData.modelsUrl || null,
+                headers: formData.headers.length > 0 ? formData.headers : null,
+                parameters: formData.parameters.length > 0 ? formData.parameters : null,
               };
               await window.vibe.providers.save(newP);
               await save([...providers, newP]);

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { FileIcon, FolderIcon, ChevronRightIcon } from "../icons/index.js";
 import { RenameInput } from "./RenameInput.js";
 import { useI18n } from "../../hooks/useI18n.js";
+import { dirnameOf } from "./utils.js";
 import type { NodeProps } from "./types.js";
 
 export function FileNode(props: NodeProps): React.ReactElement {
@@ -76,6 +77,10 @@ export function FileNode(props: NodeProps): React.ReactElement {
   }
 
   const isActive = !entry.isDir && entry.path === activeFile;
+  const containsActive =
+    entry.isDir &&
+    activeFile !== null &&
+    dirnameOf(activeFile).replace(/[\\/]/g, "/") === entry.path.replace(/[\\/]/g, "/");
   const isCut = entry.path === cutPath;
   const isRenaming = entry.path === renamingPath;
   const [dropOver, setDropOver] = useState(false);
@@ -160,7 +165,10 @@ export function FileNode(props: NodeProps): React.ReactElement {
       {entry.isDir && isOpen && (
         <div className={`ftree__subtree${isOpen ? " ftree__subtree--open" : ""}`}>
           <div className="ftree__subtree-content">
-            <div className="ftree__line" style={{ left: 8 + depth * 12 + 6 }} />
+            <div
+              className={"ftree__line" + (containsActive ? " ftree__line--active" : "")}
+              style={{ left: 8 + depth * 12 + 6 }}
+            />
             {nodeState?.loading && (
               <div className="ftree__loading" style={{ paddingLeft: 8 + (depth + 1) * 12 }}>
                 {t("loading")}

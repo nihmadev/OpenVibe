@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
-export type ShortcutCategory = "navigation" | "chat" | "workspace" | "project" | "editor" | "terminal";
+/** Functional categorizations for application keyboard shortcut keybindings. */
+export type ShortcutCategory = "navigation" | "chat" | "workspace" | "project" | "editor" | "terminal" | "search";
 
+/** Represents a combination of modifier key flags and key code values. */
 export interface KeyCombo {
   code: string;
   ctrl: boolean;
@@ -9,6 +11,7 @@ export interface KeyCombo {
   alt: boolean;
 }
 
+/** Describes a registered shortcut entry for display in UI keybinding settings. */
 export interface ShortcutDef {
   id: string;
   label: string;
@@ -16,6 +19,7 @@ export interface ShortcutDef {
   category: ShortcutCategory;
 }
 
+/** Handler functions mapped to shortcut trigger actions. */
 export interface ShortcutActions {
   newChat: () => void;
   switchChat: (dir: "prev" | "next") => void;
@@ -24,6 +28,15 @@ export interface ShortcutActions {
   toggleFileTree: () => void;
   openSettings: (tab?: string) => void;
   openSearch: () => void;
+  openSearchInCode: () => void;
+  searchToggleMatchCase: () => void;
+  searchToggleWholeWord: () => void;
+  searchToggleRegex: () => void;
+  searchToggleReplace: () => void;
+  searchToggleFilters: () => void;
+  searchToggleTree: () => void;
+  searchRefresh: () => void;
+  searchClear: () => void;
   closeSettings: () => void;
   clearChat: () => void;
   focusInput: () => void;
@@ -133,6 +146,78 @@ const DEFAULT_BINDINGS: BindingDef[] = [
     category: "navigation",
     defaultCombo: { code: "KeyP", ctrl: true, shift: false, alt: false },
     action: (a) => a.openSearch(),
+  },
+  {
+    id: "open-search-in-code",
+    label: "Search in Code",
+    defaultKeys: "Ctrl+Shift+F",
+    category: "search",
+    defaultCombo: { code: "KeyF", ctrl: true, shift: true, alt: false },
+    action: (a) => a.openSearchInCode(),
+  },
+  {
+    id: "search-toggle-match-case",
+    label: "Search: Toggle Match Case",
+    defaultKeys: "Ctrl+D",
+    category: "search",
+    defaultCombo: { code: "KeyD", ctrl: true, shift: false, alt: false },
+    action: (a) => a.searchToggleMatchCase(),
+  },
+  {
+    id: "search-toggle-whole-word",
+    label: "Search: Toggle Whole Word",
+    defaultKeys: "Ctrl+Alt+W",
+    category: "search",
+    defaultCombo: { code: "KeyW", ctrl: true, shift: false, alt: true },
+    action: (a) => a.searchToggleWholeWord(),
+  },
+  {
+    id: "search-toggle-regex",
+    label: "Search: Toggle Regex",
+    defaultKeys: "Ctrl+Alt+R",
+    category: "search",
+    defaultCombo: { code: "KeyR", ctrl: true, shift: false, alt: true },
+    action: (a) => a.searchToggleRegex(),
+  },
+  {
+    id: "search-toggle-replace",
+    label: "Search: Toggle Replace Panel",
+    defaultKeys: "Ctrl+H",
+    category: "search",
+    defaultCombo: { code: "KeyH", ctrl: true, shift: false, alt: false },
+    action: (a) => a.searchToggleReplace(),
+  },
+  {
+    id: "search-toggle-filters",
+    label: "Search: Toggle Filters",
+    defaultKeys: "Ctrl+Shift+I",
+    category: "search",
+    defaultCombo: { code: "KeyI", ctrl: true, shift: true, alt: false },
+    action: (a) => a.searchToggleFilters(),
+  },
+  {
+    id: "search-toggle-tree",
+    label: "Search: Toggle Tree View",
+    defaultKeys: "Ctrl+Shift+T",
+    category: "search",
+    defaultCombo: { code: "KeyT", ctrl: true, shift: true, alt: false },
+    action: (a) => a.searchToggleTree(),
+  },
+  {
+    id: "search-refresh",
+    label: "Search: Refresh",
+    defaultKeys: "Ctrl+R",
+    category: "search",
+    defaultCombo: { code: "KeyR", ctrl: true, shift: false, alt: false },
+    action: (a) => a.searchRefresh(),
+  },
+  {
+    id: "search-clear",
+    label: "Search: Clear",
+    defaultKeys: "Ctrl+Backspace",
+    category: "search",
+    defaultCombo: { code: "Backspace", ctrl: true, shift: false, alt: false },
+    action: (a) => a.searchClear(),
   },
   {
     id: "focus-input",
@@ -401,6 +486,9 @@ export function useShortcuts(actions: ShortcutActions) {
       for (const b of DEFAULT_BINDINGS) {
         const combo = customCombos.get(b.id) ?? b.defaultCombo;
         if (matchCombo(e, combo)) {
+          if (isInputFocused() && !combo.ctrl && !combo.alt) {
+            continue;
+          }
           e.preventDefault();
           e.stopPropagation();
           b.action(actionsRef.current);

@@ -36,6 +36,25 @@ impl Agent {
         }
     }
 
+    pub fn update_system_prompt(&mut self, scg2_context: Option<&str>) {
+        let system = crate::prompt::system_prompt_with_scg2(&self.config.cwd, scg2_context);
+        if !self.messages.is_empty() && self.messages[0].role == "system" {
+            self.messages[0].content = Some(serde_json::Value::String(system));
+        } else {
+            self.messages.insert(
+                0,
+                ChatMessage {
+                    role: "system".to_string(),
+                    content: Some(serde_json::Value::String(system)),
+                    name: None,
+                    tool_call_id: None,
+                    tool_calls: None,
+                    reasoning_content: None,
+                },
+            );
+        }
+    }
+
     pub fn reset(&mut self) {
         let system = system_prompt(&self.config.cwd);
         self.messages = vec![ChatMessage {

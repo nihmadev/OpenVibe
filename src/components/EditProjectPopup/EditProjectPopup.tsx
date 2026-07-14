@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import type { Project } from "../../types.js";
 import { useI18n } from "../../hooks/useI18n.js";
+import { CloseXIcon, UploadIcon } from "../icons/icons.js";
 import "../../styles/EditProjectPopup.css";
 
 const SWATCHES = ["#223883ff", "#0e5340ff", "#7c2d12", "#361868ff", "#155e75"];
@@ -136,24 +137,10 @@ export function EditProjectPopup({ project, onSave, onClose }: Props): React.Rea
             <div className={"edit-project__preview-overlay" + (dragOver ? " edit-project__preview-overlay--drag" : "")}>
               {photo ? (
                 <button className="edit-project__preview-action" onClick={handleClearPhoto}>
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
-                  </svg>
+                  <CloseXIcon />
                 </button>
               ) : (
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  aria-hidden
-                >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
+                <UploadIcon />
               )}
             </div>
           </div>

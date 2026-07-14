@@ -11,6 +11,7 @@ import { getLanguage } from "../icons/utils.js";
 import { useTheme } from "../../hooks/useTheme.js";
 import { makeMonacoTheme } from "../Themes/monacoThemes.js";
 import { useI18n } from "../../hooks/useI18n.js";
+import { scg2Tracker } from "../../services/scg2Tracker.js";
 
 // Wire up Monaco workers for Vite (one-time, module scope is fine)
 if (typeof self !== "undefined") {
@@ -39,148 +40,81 @@ interface Props {
   onDirtyChange?: (dirty: boolean) => void;
   /** @deprecated kept for backward compat, no longer used */
   onClose?: () => void;
+  /** Line number to navigate to after opening */
+  gotoLine?: number;
+  /** Column to set cursor when navigating */
+  gotoColumn?: number;
+  /** Match length to select when navigating */
+  gotoMatchLength?: number;
 }
 
 const TYPES_LOADING_PROMISES = new Map<string, Promise<void>>();
+const PACKAGE_PATHS_CACHE = new Map<string, Record<string, string[]>>();
 
 async function loadTypeDefinitions(m: typeof monaco, cwd: string) {
-  let promise = TYPES_LOADING_PROMISES.get(cwd);
-  if (promise) return promise;
+  const baseUrl = cwd.replace(/\\/g, "/") + "/";
 
-  promise = (async () => {
-    try {
-      // Use a project-specific set for loaded libs within this promise scope
-      // to avoid re-loading the same lib multiple times for the same project
-      const projectLoadedLibs = new Set<string>();
-
-      // 1. Basic compiler options
-      m.languages.typescript.typescriptDefaults.setCompilerOptions({
-        target: m.languages.typescript.ScriptTarget.ESNext,
-        allowNonTsExtensions: true,
-        moduleResolution: m.languages.typescript.ModuleResolutionKind.NodeJs,
-        module: m.languages.typescript.ModuleKind.ESNext,
-        noEmit: true,
-        typeRoots: ["node_modules/@types"],
-        jsx: m.languages.typescript.JsxEmit.React,
-        allowJs: true,
-        reactNamespace: "React",
-        esModuleInterop: true,
-        isolatedModules: true,
-        resolveJsonModule: true,
-        // Important for local imports
-        baseUrl: `file:///${cwd.replace(/\\/g, "/")}/`,
-        paths: {
-          "*": ["*"],
-        },
-        allowSyntheticDefaultImports: true,
-        noImplicitAny: false,
-        noImplicitThis: false,
-        strictNullChecks: false,
-      });
-
-      const typeNames = new Set<string>();
-
-      // 2. Scan package.json for dependencies
-      const pkgRes = await window.vibe.fs.read(`${cwd}/package.json`);
-      if (pkgRes.ok) {
+  // Load type data from backend once per cwd
+  if (!TYPES_LOADING_PROMISES.has(cwd)) {
+    TYPES_LOADING_PROMISES.set(
+      cwd,
+      (async () => {
         try {
-          const pkg = JSON.parse(pkgRes.content);
-          const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-          Object.keys(deps).forEach((d) => typeNames.add(d));
+          const res = await window.vibe.editor.preloadTypes(cwd);
+
+          const packagePaths: Record<string, string[]> = {};
+          if (res.ok && res.packages) {
+            for (const pkg of res.packages) {
+              const typeFilePath = pkg.typePath.replace(/\\/g, "/");
+              if (typeFilePath.startsWith(baseUrl)) {
+                packagePaths[pkg.name] = ["./" + typeFilePath.slice(baseUrl.length)];
+              }
+            }
+          }
+          PACKAGE_PATHS_CACHE.set(cwd, packagePaths);
+
+          if (res.ok) {
+            for (const tf of res.types) {
+              try {
+                m.typescript.typescriptDefaults.addExtraLib(tf.content, tf.path.replace(/\\/g, "/"));
+              } catch (e) {
+                /* ignore per-file errors */
+              }
+            }
+          }
         } catch (e) {
-          /* ignore */
+          console.error("Failed to load type definitions:", e);
+          TYPES_LOADING_PROMISES.delete(cwd);
+          PACKAGE_PATHS_CACHE.delete(cwd);
         }
-      }
+      })(),
+    );
+  }
 
-      // 3. Scan node_modules/@types directly
-      const typesDirRes = await window.vibe.fs.list(`${cwd}/node_modules/@types`);
-      if (typesDirRes.ok) {
-        typesDirRes.entries.forEach((e: any) => {
-          if (e.isDir) {
-            // Handle scoped types (e.g., @types/node)
-            if (e.name.startsWith("__")) {
-              typeNames.add(e.name.replace("__", "/"));
-            } else {
-              typeNames.add(e.name);
-            }
-          }
-        });
-      }
+  await TYPES_LOADING_PROMISES.get(cwd);
 
-      // 4. Load discovered types
-      for (const typeName of typeNames) {
-        const pathsToTry = [
-          `${cwd}/node_modules/${typeName}/package.json`,
-          `${cwd}/node_modules/@types/${typeName}/package.json`,
-          `${cwd}/node_modules/@types/${typeName.replace("/", "__")}/package.json`,
-          `${cwd}/node_modules/${typeName}/index.d.ts`,
-          `${cwd}/node_modules/@types/${typeName}/index.d.ts`,
-        ];
-
-        for (const p of pathsToTry) {
-          if (projectLoadedLibs.has(p)) break;
-
-          const res = await window.vibe.fs.read(p);
-          if (!res.ok) continue;
-
-          if (p.endsWith("package.json")) {
-            try {
-              const pkg = JSON.parse(res.content);
-              const typesPath = pkg.types || pkg.typings;
-              if (typesPath) {
-                const fullPath = `${cwd}/node_modules/${typeName}/${typesPath.startsWith("./") ? typesPath.slice(2) : typesPath}`;
-                if (!projectLoadedLibs.has(fullPath)) {
-                  const typesRes = await window.vibe.fs.read(fullPath);
-                  if (typesRes.ok) {
-                    m.languages.typescript.typescriptDefaults.addExtraLib(
-                      typesRes.content,
-                      `file:///${fullPath.replace(/\\/g, "/")}`,
-                    );
-                    projectLoadedLibs.add(fullPath);
-                  }
-                }
-              }
-            } catch (e) {
-              /* ignore */
-            }
-          } else {
-            try {
-              m.languages.typescript.typescriptDefaults.addExtraLib(res.content, `file:///${p.replace(/\\/g, "/")}`);
-              projectLoadedLibs.add(p);
-            } catch (e) {
-              /* ignore */
-            }
-            break;
-          }
-        }
-      }
-
-      // 5. Scan for local .d.ts files in the project
-      try {
-        const localTypesRes = await window.vibe.fs.find(cwd, "**/*.d.ts", 50);
-        if (localTypesRes.ok) {
-          for (const match of localTypesRes.matches) {
-            const res = await window.vibe.fs.read(match.path);
-            if (res.ok) {
-              const fullPath = match.path.replace(/\\/g, "/");
-              if (!projectLoadedLibs.has(fullPath)) {
-                m.languages.typescript.typescriptDefaults.addExtraLib(res.content, `file:///${fullPath}`);
-                projectLoadedLibs.add(fullPath);
-              }
-            }
-          }
-        }
-      } catch (e) {
-        /* ignore find errors */
-      }
-    } catch (e) {
-      console.error("Failed to load type definitions:", e);
-      TYPES_LOADING_PROMISES.delete(cwd); // Allow retry on failure
-    }
-  })();
-
-  TYPES_LOADING_PROMISES.set(cwd, promise);
-  return promise;
+  // Always set compiler options (triggers TS re-check on every file switch)
+  const packagePaths = PACKAGE_PATHS_CACHE.get(cwd) || {};
+  m.typescript.typescriptDefaults.setCompilerOptions({
+    target: m.typescript.ScriptTarget.ESNext,
+    allowNonTsExtensions: true,
+    moduleResolution: 100 as any /* ModuleResolutionKind.Bundler */,
+    module: m.typescript.ModuleKind.ESNext,
+    noEmit: true,
+    typeRoots: [baseUrl + "node_modules/@types"],
+    jsx: m.typescript.JsxEmit.React,
+    allowJs: true,
+    reactNamespace: "React",
+    esModuleInterop: true,
+    isolatedModules: true,
+    resolveJsonModule: true,
+    allowSyntheticDefaultImports: true,
+    noImplicitAny: false,
+    noImplicitThis: false,
+    strictNullChecks: false,
+    baseUrl: baseUrl,
+    paths: packagePaths,
+  });
 }
 
 // Simple helper to resolve relative paths for local imports
@@ -196,38 +130,40 @@ function resolveRelativePath(basePath: string, relPath: string): string {
   return parts.join("/");
 }
 
-// Regex to find local imports in the file
-const LOCAL_IMPORT_RE = /(?:from|import|require)\s*\(?\s*['"](\.\.?\/[^'"]+)['"]/g;
+// Regex to find local imports in the file (matches import/export/require patterns)
+const LOCAL_IMPORT_RE = /(?:from|import|require|export\s+\*)\s*\(?\s*['"](\.\.?\/[^'"]+)['"]/g;
 
 async function preloadLocalImports(m: typeof monaco, content: string, currentPath: string) {
   const matches = [...content.matchAll(LOCAL_IMPORT_RE)];
-  for (const match of matches) {
-    const relPath = match[1];
-    const absolutePath = resolveRelativePath(currentPath, relPath);
 
-    // Try common extensions
-    const extensions = ["", ".tsx", ".ts", ".js", ".jsx", "/index.tsx", "/index.ts", "/index.js"];
-    for (const ext of extensions) {
-      const targetPath = absolutePath + ext;
-      const uri = m.Uri.file(targetPath.replace(/\\/g, "/"));
+  await Promise.all(
+    matches.map(async (match) => {
+      const relPath = match[1];
+      const absolutePath = resolveRelativePath(currentPath, relPath);
 
-      // If model already exists, skip
-      if (m.editor.getModel(uri)) break;
+      // Strip existing extension so .js imports resolve to .ts/.tsx source files
+      const lastSlash = absolutePath.lastIndexOf("/");
+      const lastDot = absolutePath.lastIndexOf(".");
+      const basePath = lastDot > lastSlash ? absolutePath.slice(0, lastDot) : absolutePath;
 
-      // Try to read the file
-      const res = await window.vibe.fs.read(targetPath);
-      if (res.ok) {
-        try {
-          const model = m.editor.createModel(res.content, getLanguage(targetPath), uri);
-          // Also cache it so we don't reload from disk if the user opens it later
-          MODEL_CACHE.set(targetPath, { model, originalContent: res.content });
-        } catch (e) {
-          /* model might have been created in parallel */
+      const extensions = ["", ".tsx", ".ts", ".js", ".jsx", "/index.tsx", "/index.ts", "/index.js"];
+      for (const ext of extensions) {
+        const targetPath = basePath + ext;
+        const uri = m.Uri.file(targetPath.replace(/\\/g, "/"));
+        if (m.editor.getModel(uri)) return;
+        const res = await window.vibe.fs.read(targetPath);
+        if (res.ok) {
+          try {
+            const model = m.editor.createModel(res.content, getLanguage(targetPath), uri);
+            MODEL_CACHE.set(targetPath, { model, originalContent: res.content });
+          } catch (e) {
+            /* model might have been created in parallel */
+          }
+          return;
         }
-        break;
       }
-    }
-  }
+    }),
+  );
 }
 
 // Model cache to prevent "white text" and enable instant switching
@@ -237,7 +173,7 @@ interface CachedModel {
 }
 const MODEL_CACHE = new Map<string, CachedModel>();
 
-export function Editor({ path, cwd, onDirtyChange }: Props): React.ReactElement {
+export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMatchLength }: Props): React.ReactElement {
   const { t } = useI18n();
   const [content, setContent] = useState<string | null>(null);
   const [original, setOriginal] = useState<string>("");
@@ -265,85 +201,34 @@ export function Editor({ path, cwd, onDirtyChange }: Props): React.ReactElement 
     m.editor.setTheme(monacoThemeName);
   }, [themeVars, monacoThemeName, isDark]);
 
-  // Helper to get or create model
-  const getOrCreateModel = useCallback((m: typeof monaco, p: string, initialContent: string) => {
-    const normalizedPath = p.replace(/\\/g, "/");
-    const uri = m.Uri.file(normalizedPath);
-    let model = m.editor.getModel(uri);
-    if (!model) {
-      model = m.editor.createModel(initialContent, getLanguage(normalizedPath), uri);
-    }
-    return model;
-  }, []);
-
-  // Load content and manage models
+  // Load content from disk when path changes
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
-      // 1. If we have monaco instance, check for existing model
-      if (monacoInstanceRef.current) {
-        try {
-          const m = monacoInstanceRef.current;
-          const uri = m.Uri.file(path);
-          const existingModel = m.editor.getModel(uri);
-          const cached = MODEL_CACHE.get(path);
-
-          if (existingModel && cached) {
-            setContent(existingModel.getValue());
-            setOriginal(cached.originalContent);
-            if (editorRef.current) {
-              editorRef.current.setModel(existingModel);
-            }
-            // Trigger preload even for cached models
-            preloadLocalImports(m, existingModel.getValue(), path);
-            return;
-          }
-        } catch (e) {
-          // If instance is disposed, we'll continue to load from disk
-          console.warn("Failed to reuse existing model (likely disposed):", e);
-        }
-      }
-
-      // 2. Load from disk
       setError(null);
-      setContent(null); // Show loading state
+      setContent(null);
 
-      try {
-        const res = await window.vibe.fs.read(path);
-        if (cancelled) return;
+      const res = await window.vibe.fs.read(path);
+      if (cancelled) return;
 
-        if (!res.ok) {
-          setError(res.error);
-        } else {
-          setContent(res.content);
-          setOriginal(res.content);
-
-          if (monacoInstanceRef.current) {
-            try {
-              const m = monacoInstanceRef.current;
-              const model = getOrCreateModel(m, path, res.content);
-              MODEL_CACHE.set(path, { model, originalContent: res.content });
-              if (editorRef.current) {
-                editorRef.current.setModel(model);
-              }
-              // Preload local imports to fix "Cannot find module" errors
-              preloadLocalImports(m, res.content, path);
-            } catch (monacoErr: any) {
-              console.error("Monaco error during load:", monacoErr);
-              // Don't set global error if it's just a monaco race condition
-              // but if it's persistent, we might need to.
-              if (monacoErr.message?.includes("disposed")) {
-                // Ignore disposal errors during transition
-              } else {
-                setError(monacoErr.message || "Editor error");
-              }
-            }
-          }
-        }
-      } catch (e: any) {
-        if (!cancelled) setError(e.message || "Failed to read file");
+      if (!res.ok) {
+        setError(res.error);
+        return;
       }
+
+      setContent(res.content);
+      setOriginal(res.content);
+
+      // Preload type definitions and local imports for every file switch.
+      // onMount only fires once (when the editor is first created), so
+      // subsequent file changes depend on this path.
+      const m = monacoInstanceRef.current;
+      if (m && cwd) {
+        await loadTypeDefinitions(m, cwd);
+        await preloadLocalImports(m, res.content, path);
+      }
+      scg2Tracker.updateActivePath(path);
     }
 
     load();
@@ -351,7 +236,7 @@ export function Editor({ path, cwd, onDirtyChange }: Props): React.ReactElement 
     return () => {
       cancelled = true;
     };
-  }, [path, getOrCreateModel]);
+  }, [path]);
 
   const dirty = content !== null && content !== original;
 
@@ -375,6 +260,21 @@ export function Editor({ path, cwd, onDirtyChange }: Props): React.ReactElement 
       onDirtyChange?.(dirty);
     }
   }, [dirty, onDirtyChange]);
+
+  // Navigate to position when gotoLine changes while editor is already mounted
+  useEffect(() => {
+    const ed = editorRef.current;
+    const m = monacoInstanceRef.current;
+    if (ed && gotoLine !== undefined) {
+      const col = gotoColumn ?? 1;
+      ed.revealLineInCenter(gotoLine);
+      ed.setPosition({ lineNumber: gotoLine, column: col });
+      if (m && gotoColumn !== undefined && gotoMatchLength !== undefined) {
+        ed.setSelection(new m.Range(gotoLine, col, gotoLine, col + gotoMatchLength));
+      }
+      ed.focus();
+    }
+  }, [gotoLine, gotoColumn, gotoMatchLength]);
 
   const save = useCallback(async () => {
     if (content === null || saving || !dirty) return;
@@ -432,7 +332,7 @@ export function Editor({ path, cwd, onDirtyChange }: Props): React.ReactElement 
       <MonacoEditor
         height="100%"
         theme={monacoThemeName}
-        // No 'path' here to keep manual model control
+        path={"file://" + path.replace(/\\/g, "/")}
         language={getLanguage(path)}
         value={content}
         loading={<div className="editor editor--loading">{t("loading")}</div>}
@@ -443,19 +343,41 @@ export function Editor({ path, cwd, onDirtyChange }: Props): React.ReactElement 
             loadTypeDefinitions(m, cwd);
           }
         }}
-        onMount={(ed, m) => {
+        onMount={async (ed, m) => {
           editorRef.current = ed;
           monacoInstanceRef.current = m;
 
           try {
-            // Ensure model is correctly set on mount
-            const model = getOrCreateModel(m, path, content);
+            // Ensure type definitions (extraLibs + compiler options) are loaded
+            // before the TS worker processes this file.
+            if (cwd) {
+              await loadTypeDefinitions(m, cwd);
+            }
+
+            // Preload imported files as Monaco models so the TS worker
+            // can resolve them immediately.
+            await preloadLocalImports(m, content, path);
+
+            const uri = m.Uri.file(path);
+            const model = m.editor.getModel(uri) ?? m.editor.createModel(content, getLanguage(path), uri);
             MODEL_CACHE.set(path, { model, originalContent: original });
-            ed.setModel(model);
+
+            scg2Tracker.attach(ed, path, m);
 
             ed.onDidChangeModelContent(() => {
               setContent(ed.getValue());
             });
+
+            // Navigate to line when opening from search results
+            if (gotoLine !== undefined) {
+              const col = gotoColumn ?? 1;
+              ed.revealLineInCenter(gotoLine);
+              ed.setPosition({ lineNumber: gotoLine, column: col });
+              if (gotoColumn !== undefined && gotoMatchLength !== undefined) {
+                ed.setSelection(new m.Range(gotoLine, col, gotoLine, col + gotoMatchLength));
+              }
+              ed.focus();
+            }
           } catch (e) {
             console.error("Error mounting editor:", e);
           }

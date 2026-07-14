@@ -4,15 +4,81 @@ import { ProjectRail } from "../ProjectRail/ProjectRail.js";
 import { SessionList } from "../session-list/SessionList.js";
 import { ChatHistory } from "../chat-history/ChatHistory.js";
 import { SubAgentView } from "../SubAgentView/SubAgentView.js";
-import { Confirm } from "../Confirm/Confirm.js";
 import { PromptInput } from "../prompt-input/PromptInput.js";
 import { Terminals } from "../Terminals/Terminals.js";
 import { EditorArea } from "../Editor/EditorArea.js";
+import { SearchInCode } from "../SearchInCode/SearchInCode.js";
 import { FileTree } from "../FileTree/FileTree.js";
 import { EditProjectPopup } from "../EditProjectPopup/EditProjectPopup.js";
 import type { Project, ChatSummary, VibeConfig, FileSnapshot } from "../../types.js";
 import type { HistoryItem } from "../chat-history/types.js";
 import { recordToItems, localId } from "../../utils.js";
+
+/** Drag-handle divider — directly manipulates the target element during drag,
+ *  avoiding React re-renders. Only commits the final width to state on mouseup. */
+function ResizeHandle({
+  targetRef,
+  onCommit,
+  minWidth = 0,
+  maxWidth = Infinity,
+  direction = "horizontal",
+}: {
+  targetRef: React.RefObject<HTMLDivElement | null>;
+  onCommit: (width: number) => void;
+  minWidth?: number;
+  maxWidth?: number;
+  direction?: "horizontal" | "vertical";
+}): React.ReactElement {
+  const dragging = useRef(false);
+  const last = useRef(0);
+
+  const onMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const el = targetRef.current;
+      if (!el) return;
+
+      dragging.current = true;
+      last.current = direction === "horizontal" ? e.clientX : e.clientY;
+      document.body.classList.add("is-resizing");
+
+      // Determine whether the handle sits at the left or right edge of the target
+      // Uses center-position comparison to work for both sibling handles (outside target)
+      // and child handles (inside target, like search-panel handle)
+      const handleRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const targetRect = el.getBoundingClientRect();
+      const handleCx = (handleRect.left + handleRect.right) / 2;
+      const targetCx = (targetRect.left + targetRect.right) / 2;
+      const handleIsLeft = handleCx < targetCx;
+
+      function onMove(ev: MouseEvent) {
+        if (!dragging.current) return;
+        const cur = direction === "horizontal" ? ev.clientX : ev.clientY;
+        const delta = cur - last.current;
+        last.current = cur;
+
+        const rect = el!.getBoundingClientRect();
+        const newWidth = handleIsLeft ? rect.width - delta : rect.width + delta;
+        const clamped = Math.max(minWidth, Math.min(maxWidth, newWidth));
+        el!.style.flex = `0 1 ${clamped}px`;
+      }
+      function onUp() {
+        dragging.current = false;
+        document.body.classList.remove("is-resizing");
+        if (el) {
+          onCommit(Math.round(el.getBoundingClientRect().width));
+        }
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+      }
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    },
+    [targetRef, onCommit, minWidth, maxWidth, direction],
+  );
+
+  return <div className={"resize-handle resize-handle--" + direction} onMouseDown={onMouseDown} aria-hidden="true" />;
+}
 
 interface AppMainProps {
   projects: Project[];
@@ -43,7 +109,6 @@ interface AppMainProps {
   items: any[];
   streamingNow: string | null;
   busy: boolean;
-  pending: any;
   handlePickModel: (model: string) => void;
   handleSubmit: (payload: any) => void;
   onStop: () => void;
@@ -53,50 +118,17 @@ interface AppMainProps {
   connectedModels: any[];
   openFiles: string[];
   activeFile: string | null;
-  handleOpenFile: (path: string) => void;
+  handleOpenFile: (path: string, line?: number, column?: number) => void;
   handleCloseFile: (path: string) => void;
   handleActivateFile: (path: string) => void;
-  handleDecide: (decision: "yes" | "no" | "always") => void;
   setItems: React.Dispatch<React.SetStateAction<any[]>>;
   revealPath?: string | null;
   setProjects?: (projects: Project[]) => void;
-}
-
-/** Drag-handle divider between two resizable panels */
-function ResizeHandle({
-  onDrag,
-  direction = "horizontal",
-}: {
-  onDrag: (delta: number) => void;
-  direction?: "horizontal" | "vertical";
-}): React.ReactElement {
-  const dragging = useRef(false);
-  const last = useRef(0);
-
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      dragging.current = true;
-      last.current = direction === "horizontal" ? e.clientX : e.clientY;
-
-      function onMove(ev: MouseEvent) {
-        if (!dragging.current) return;
-        const cur = direction === "horizontal" ? ev.clientX : ev.clientY;
-        onDrag(cur - last.current);
-        last.current = cur;
-      }
-      function onUp() {
-        dragging.current = false;
-        window.removeEventListener("mousemove", onMove);
-        window.removeEventListener("mouseup", onUp);
-      }
-      window.addEventListener("mousemove", onMove);
-      window.addEventListener("mouseup", onUp);
-    },
-    [onDrag, direction],
-  );
-
-  return <div className={"resize-handle resize-handle--" + direction} onMouseDown={onMouseDown} aria-hidden="true" />;
+  searchInCodeOpen?: boolean;
+  onCloseSearchInCode?: () => void;
+  gotoLine?: number;
+  gotoColumn?: number;
+  gotoMatchLength?: number;
 }
 
 export function AppMain({
@@ -128,7 +160,6 @@ export function AppMain({
   items,
   streamingNow,
   busy,
-  pending,
   handlePickModel,
   handleSubmit,
   onStop,
@@ -140,11 +171,15 @@ export function AppMain({
   handleOpenFile,
   handleCloseFile,
   handleActivateFile,
-  handleDecide,
   setItems,
   fileTreeOpen,
   revealPath,
   setProjects,
+  searchInCodeOpen = false,
+  onCloseSearchInCode = () => {},
+  gotoLine,
+  gotoColumn,
+  gotoMatchLength,
 }: AppMainProps) {
   const [sidebarResizing, setSidebarResizing] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -152,7 +187,13 @@ export function AppMain({
 
   // Panel widths (px). Chat is fixed, editor takes the rest, filetree is fixed.
   const [chatWidth, setChatWidth] = useState(320);
+  const [searchWidth, setSearchWidth] = useState(400);
   const [ftreeWidth, setFtreeWidth] = useState(280);
+
+  // Refs for direct DOM manipulation during resize (avoids React re-renders on every mousemove)
+  const chatPanelRef = useRef<HTMLDivElement>(null);
+  const searchWrapRef = useRef<HTMLDivElement>(null);
+  const ftreePanelRef = useRef<HTMLDivElement>(null);
 
   // dirty files set — tracked here so EditorArea tabs can show the dot
   const [dirtyFiles, setDirtyFiles] = useState<Set<string>>(new Set());
@@ -328,9 +369,14 @@ export function AppMain({
         <div className="layout">
           {/* Chat panel */}
           <div
+            ref={chatPanelRef}
             className="layout__chat"
             style={
-              openFiles.length > 0 ? { flex: `0 1 ${chatWidth}px`, minWidth: 200, maxWidth: 600 } : { flex: "1 1 0" }
+              searchInCodeOpen
+                ? { flex: "1 1 0", minWidth: 200 }
+                : openFiles.length > 0
+                  ? { flex: `0 1 ${chatWidth}px`, minWidth: 200, maxWidth: 600 }
+                  : { flex: "1 1 0" }
             }
           >
             {drillDownId ? (
@@ -340,7 +386,7 @@ export function AppMain({
                 <ChatHistory
                   items={items}
                   streamingId={streamingNow}
-                  busy={busy && !pending}
+                  busy={busy}
                   cwd={cwd}
                   onPickModel={handlePickModel}
                   onRevert={async (id: string) => {
@@ -359,7 +405,8 @@ export function AppMain({
                       setRollbackIndex(item.msgIndex);
                       setRollbackText(item.text);
                       setRollbackChanged(result.filesChanged);
-                      setRollbackRemoved(removed.length);
+                      const removedUserCount = removed.filter((it: any) => it.kind === "user").length;
+                      setRollbackRemoved(removedUserCount);
                     } catch {
                       // revert failed silently
                     }
@@ -395,27 +442,23 @@ export function AppMain({
                   onDrillDown={handleDrillDown}
                 />
 
-                {pending ? (
-                  <Confirm payload={pending} onDecide={handleDecide} />
-                ) : (
-                  <PromptInput
-                    disabled={busy}
-                    workspace={cwd}
-                    onSubmit={handleSubmit}
-                    onStop={onStop}
-                    models={connectedModels}
-                    currentModel={config.model ?? ""}
-                    onPickModel={handlePickModel}
-                    onOpenSettings={onOpenSettings}
-                    initialText={rollbackText || undefined}
-                    rollbackActive={rollbackIndex !== null && !pending}
-                    rollbackText={rollbackText}
-                    rollbackFileCount={rollbackChanged.length}
-                    rollbackFilesChanged={rollbackChanged}
-                    rollbackMessagesRemoved={rollbackRemoved}
-                    onRollbackRestore={handleUndoRollback}
-                  />
-                )}
+                <PromptInput
+                  disabled={busy}
+                  workspace={cwd}
+                  onSubmit={handleSubmit}
+                  onStop={onStop}
+                  models={connectedModels}
+                  currentModel={config.model ?? ""}
+                  onPickModel={handlePickModel}
+                  onOpenSettings={onOpenSettings}
+                  initialText={rollbackText || undefined}
+                  rollbackActive={rollbackIndex !== null}
+                  rollbackText={rollbackText}
+                  rollbackFileCount={rollbackChanged.length}
+                  rollbackFilesChanged={rollbackChanged}
+                  rollbackMessagesRemoved={rollbackRemoved}
+                  onRollbackRestore={handleUndoRollback}
+                />
               </>
             )}
 
@@ -424,10 +467,29 @@ export function AppMain({
             </div>
           </div>
 
-          {/* Editor panel — only when files are open */}
-          {openFiles.length > 0 && (
+          {/* Search in Code panel — always mounted to preserve state */}
+          <div
+            ref={searchWrapRef}
+            className={`layout__search-code-wrap ${!searchInCodeOpen ? "layout__search-code-wrap--closed" : ""}`}
+            style={
+              searchInCodeOpen
+                ? { flex: `0 1 ${searchWidth}px`, minWidth: 200, maxWidth: 800 }
+                : { flex: "0 1 0", minWidth: 0, maxWidth: 0 }
+            }
+          >
+            <ResizeHandle targetRef={searchWrapRef} onCommit={setSearchWidth} minWidth={200} maxWidth={800} />
+            <div className="layout__search-code" style={{ flex: 1, minWidth: 200, maxWidth: 800 }}>
+              <SearchInCode cwd={cwd} onOpenFile={handleOpenFile} onClose={onCloseSearchInCode} />
+            </div>
+            {fileTreeOpen && (
+              <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={500} />
+            )}
+          </div>
+
+          {/* Editor panel — only when files are open and search is closed */}
+          {!searchInCodeOpen && openFiles.length > 0 && (
             <>
-              <ResizeHandle onDrag={(d) => setChatWidth((w) => Math.max(200, Math.min(600, w + d)))} />
+              <ResizeHandle targetRef={chatPanelRef} onCommit={setChatWidth} minWidth={200} maxWidth={600} />
               <div className="layout__editor">
                 <EditorArea
                   openFiles={openFiles}
@@ -437,21 +499,25 @@ export function AppMain({
                   onClose={handleCloseFile}
                   onDirtyChange={handleDirtyChange}
                   cwd={cwd}
+                  gotoLine={gotoLine}
+                  gotoColumn={gotoColumn}
+                  gotoMatchLength={gotoMatchLength}
                 />
               </div>
               {fileTreeOpen && (
-                <ResizeHandle onDrag={(d) => setFtreeWidth((w) => Math.max(160, Math.min(500, w - d)))} />
+                <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={500} />
               )}
             </>
           )}
 
-          {/* When no editor, still need the resize handle before file tree */}
-          {openFiles.length === 0 && fileTreeOpen && (
-            <ResizeHandle onDrag={(d) => setFtreeWidth((w) => Math.max(160, Math.min(500, w - d)))} />
+          {/* When no editor/search, still need the resize handle before file tree */}
+          {!searchInCodeOpen && openFiles.length === 0 && fileTreeOpen && (
+            <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={500} />
           )}
 
           {/* File tree sidebar */}
           <aside
+            ref={ftreePanelRef}
             className={`sidebar ${!fileTreeOpen ? "sidebar--closed" : ""}`}
             style={
               fileTreeOpen

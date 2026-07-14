@@ -1,8 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { open as shellOpen } from "@tauri-apps/plugin-shell";
-import type { VibeEvent, ConfirmPayload, ContentPart, RollbackPreview } from "./types.js";
+import type { VibeEvent, ContentPart, RollbackPreview } from "./types.js";
 
 let activeChatId: string | null = null;
 let currentConfig: {
@@ -18,7 +17,6 @@ let currentConfig: {
 // Callback arrays replacing SessionBus
 const eventListeners: Array<(e: VibeEvent) => void> = [];
 const busyListeners: Array<(b: boolean) => void> = [];
-const confirmListeners: Array<(r: ConfirmPayload) => void> = [];
 
 // Tauri event listener cleanup — prevents message duplication when
 // initVibeBridge() is called more than once (StrictMode, HMR, remounts)
@@ -33,9 +31,6 @@ function emitEvent(e: VibeEvent) {
 }
 function emitBusy(b: boolean) {
   for (const cb of busyListeners) cb(b);
-}
-function emitConfirm(r: ConfirmPayload) {
-  for (const cb of confirmListeners) cb(r);
 }
 
 async function initVibeBridge() {
@@ -63,7 +58,7 @@ async function initVibeBridge() {
 
   tauriUnlistenFns.push(
     await listen<any>("vibe:agent:user", (e) => {
-      emitEvent({ kind: "user", text: e.payload.text ?? "" });
+      emitEvent({ kind: "user", text: e.payload.text ?? "", index: e.payload.index });
     }),
   );
   tauriUnlistenFns.push(
@@ -145,15 +140,6 @@ async function initVibeBridge() {
         kind: "tool-denied",
         id: e.payload.id ?? "",
         name: e.payload.name ?? "",
-      });
-    }),
-  );
-  tauriUnlistenFns.push(
-    await listen<any>("vibe:agent:confirm-request", (e) => {
-      emitConfirm({
-        id: e.payload.id ?? "",
-        toolName: e.payload.toolName ?? "",
-        args: e.payload.args ?? {},
       });
     }),
   );
@@ -284,10 +270,6 @@ export const vibe = {
     await invoke("agent_stop").catch(() => {});
   },
 
-  decide: async (id: string, decision: "yes" | "no" | "always") => {
-    await invoke("agent_confirm", { id, decision }).catch(() => {});
-  },
-
   pickWorkspace: async () => {
     try {
       const { open } = await import("@tauri-apps/plugin-dialog");
@@ -331,8 +313,13 @@ export const vibe = {
   },
 
   models: {
-    fetch: (baseUrl: string, apiKey: string, providerId?: string) =>
-      wrap(() => invoke("models_fetch", { baseUrl, apiKey, providerId })),
+    fetch: (
+      baseUrl: string,
+      apiKey: string,
+      providerId?: string,
+      modelsUrl?: string,
+      customHeaders?: [string, string][],
+    ) => wrap(() => invoke("models_fetch", { baseUrl, apiKey, providerId, modelsUrl, customHeaders })),
     listDisabled: () => invoke("models_list_disabled"),
     toggleDisabled: (modelId: string) => invoke("models_toggle_disabled", { modelId }),
     listEnabled: () => invoke("models_list_enabled"),
@@ -366,8 +353,9 @@ export const vibe = {
     open: async (id: string) => {
       if (activeChatId && activeChatId !== id) {
         try {
-          const msgs = await invoke("agent_get_messages");
-          await invoke("chats_save", { id: activeChatId, messages: msgs });
+          const msgs = await invoke<any[]>("agent_get_messages");
+          const toSave = msgs.filter((m: any) => m.role !== "system");
+          await invoke("chats_save", { id: activeChatId, messages: toSave });
         } catch {
           /* ignore */
         }
@@ -405,6 +393,18 @@ export const vibe = {
     setIcon: (id: string, icon: string | null) => invoke("projects_set_icon", { id, icon }),
     setPhoto: (id: string, photo: string | null) => invoke("projects_set_photo", { id, photo }),
     close: () => invoke("projects_close"),
+  },
+
+  editor: {
+    preloadTypes: (cwd: string) =>
+      wrap(
+        () =>
+          invoke<{
+            types: Array<{ path: string; content: string }>;
+            packages: Array<{ name: string; typePath: string; content: string }>;
+          }>("editor_preload_types", { cwd }),
+        (result) => ({ types: result.types, packages: result.packages }),
+      ),
   },
 
   fs: {
@@ -449,14 +449,115 @@ export const vibe = {
         () => invoke("fs_find_all", { root, query, limit }),
         (matches) => ({ matches }),
       ),
+    searchContent: (
+      root: string,
+      query: string,
+      maxResults?: number,
+      matchCase?: boolean,
+      matchWholeWord?: boolean,
+      useRegex?: boolean,
+      include?: string,
+      exclude?: string,
+    ) =>
+      wrap(
+        () =>
+          invoke("fs_search_content", {
+            root,
+            query,
+            maxResults,
+            matchCase,
+            matchWholeWord,
+            useRegex,
+            include,
+            exclude,
+          }),
+        (matches) => ({ matches }),
+      ),
+    searchContentFilter: (
+      root: string,
+      query: string,
+      matchCase: boolean,
+      matchWholeWord: boolean,
+      useRegex: boolean,
+      include: string,
+      exclude: string,
+      offset: number,
+      limit: number,
+    ) =>
+      wrap(
+        () =>
+          invoke("fs_search_content_filter", {
+            root,
+            query,
+            matchCase,
+            matchWholeWord,
+            useRegex,
+            include,
+            exclude,
+            offset,
+            limit,
+          }),
+        (result) => result,
+      ),
+    searchContentFiles: (
+      root: string,
+      query: string,
+      matchCase?: boolean,
+      matchWholeWord?: boolean,
+      useRegex?: boolean,
+      include?: string,
+      exclude?: string,
+      maxFiles?: number,
+    ) =>
+      wrap(
+        () =>
+          invoke("fs_search_content_files", {
+            root,
+            query,
+            matchCase,
+            matchWholeWord,
+            useRegex,
+            include,
+            exclude,
+            maxFiles,
+          }),
+        (result: any) => ({ files: result.files, totalMatches: result.totalMatches }),
+      ),
+    highlightLines: (lines: string[], fileName: string, query: string, matchCase: boolean) =>
+      wrap(
+        () => invoke("fs_highlight_lines", { lines, fileName, query, matchCase }),
+        (result) => result as { text: string; className: string }[][],
+      ),
+    searchContentFileMatches: (
+      root: string,
+      query: string,
+      matchCase: boolean,
+      matchWholeWord: boolean,
+      useRegex: boolean,
+      include: string,
+      exclude: string,
+      filePath: string,
+      offset: number,
+      limit: number,
+    ) =>
+      wrap(
+        () =>
+          invoke("fs_search_content_file_matches", {
+            root,
+            query,
+            matchCase,
+            matchWholeWord,
+            useRegex,
+            include,
+            exclude,
+            filePath,
+            offset,
+            limit,
+          }),
+        (result: any) => ({ total: result.total, matches: result.matches }),
+      ),
     projectInfo: (dir: string) =>
       wrap(() => invoke<{ name: string | null; version: string | null }>("fs_project_info", { dir })),
-  },
-
-  clipboard: {
-    writeText: (text: string) => {
-      writeText(text);
-    },
   },
 
   whisper: {
@@ -464,6 +565,49 @@ export const vibe = {
       wrap(() => invoke("whisper_transcribe", { audioBase64, mimeType })),
   },
 
+  git: {
+    repoInfo: (cwd: string) =>
+      wrap(
+        () => invoke("git_repo_info", { path: cwd }),
+        (r) => ({ data: r }),
+      ),
+    status: (cwd: string) =>
+      wrap(
+        () => invoke("git_status", { path: cwd }),
+        (r) => ({ data: r }),
+      ),
+    stageFile: (cwd: string, filePath: string) => wrap(() => invoke("git_stage_file", { path: cwd, filePath })),
+    stageAll: (cwd: string) => wrap(() => invoke("git_stage_all", { path: cwd })),
+    unstageFile: (cwd: string, filePath: string) => wrap(() => invoke("git_unstage_file", { path: cwd, filePath })),
+    revertFile: (cwd: string, filePath: string) => wrap(() => invoke("git_revert_file", { path: cwd, filePath })),
+    commit: (cwd: string, message: string) => wrap(() => invoke("git_commit", { path: cwd, message })),
+    branches: (cwd: string) =>
+      wrap(
+        () => invoke("git_branches", { path: cwd }),
+        (r) => ({ data: r }),
+      ),
+    commits: (cwd: string, maxCount: number) =>
+      wrap(
+        () => invoke("git_commits", { path: cwd, maxCount }),
+        (r) => ({ data: r }),
+      ),
+    graph: (cwd: string, maxCount: number) =>
+      wrap(
+        () => invoke("git_graph", { path: cwd, maxCount }),
+        (r) => ({ data: r }),
+      ),
+    publishBranch: (cwd: string, branch: string) => wrap(() => invoke("git_publish_branch", { path: cwd, branch })),
+    currentBranch: (cwd: string) =>
+      wrap(
+        () => invoke("git_current_branch", { path: cwd }),
+        (r) => ({ data: r }),
+      ),
+    commitDetails: (cwd: string, oid: string) =>
+      wrap(
+        () => invoke("git_commit_details", { path: cwd, oid }),
+        (r) => ({ data: r }),
+      ),
+  },
   term: {
     start: (id: string, cols: number, rows: number) => invoke("term_start", { id, cols, rows }),
     write: (id: string, data: string) => invoke("term_write", { id, data }),
@@ -494,14 +638,6 @@ export const vibe = {
     return () => {
       const idx = busyListeners.indexOf(cb);
       if (idx !== -1) busyListeners.splice(idx, 1);
-    };
-  },
-
-  onConfirm: (cb: (p: ConfirmPayload) => void) => {
-    confirmListeners.push(cb);
-    return () => {
-      const idx = confirmListeners.indexOf(cb);
-      if (idx !== -1) confirmListeners.splice(idx, 1);
     };
   },
 
@@ -541,3 +677,63 @@ async function wrap<T>(fn: () => Promise<T>, transform?: (t: T) => any): Promise
 }
 
 (window as any).vibe = vibe;
+
+// ===== MCP BRIDGE FUNCTIONS =====
+export async function mcpGetServers(): Promise<import("./types.js").McpServerStatus[]> {
+  return invoke("mcp_get_servers");
+}
+
+export async function mcpStartServer(name: string): Promise<void> {
+  return invoke("mcp_start_server", { name });
+}
+
+export async function mcpStopServer(name: string): Promise<void> {
+  return invoke("mcp_stop_server", { name });
+}
+
+export async function mcpRestartServer(name: string): Promise<void> {
+  return invoke("mcp_restart_server", { name });
+}
+
+export async function mcpGetStatus(name: string): Promise<import("./types.js").McpStatus> {
+  return invoke("mcp_get_status", { name });
+}
+
+export async function mcpGetConfig(): Promise<import("./types.js").McpConfig> {
+  return invoke("mcp_get_config");
+}
+
+export async function mcpSaveConfig(config: import("./types.js").McpConfig): Promise<void> {
+  return invoke("mcp_save_config", { config });
+}
+
+export async function mcpListTools(serverName: string): Promise<string[]> {
+  return invoke("mcp_list_tools", { serverName });
+}
+
+// ===== SCG2 TELEMETRY BRIDGE =====
+export interface SCG2EventBatch {
+  active_file?: string;
+  cursor?: { line: number; column: number };
+  visible_ranges: { start_line: number; end_line: number }[];
+  selection?: {
+    start_line: number;
+    start_column: number;
+    end_line: number;
+    end_column: number;
+    selected_text: string;
+  };
+  diagnostics?: {
+    message: string;
+    severity: string;
+    start_line: number;
+    end_line: number;
+    file_path?: string;
+  }[];
+  is_edit?: boolean;
+  timestamp_ms?: number;
+}
+
+export async function pushScg2Events(batch: SCG2EventBatch): Promise<void> {
+  await invoke("scg2_push_events", { batch }).catch(() => {});
+}

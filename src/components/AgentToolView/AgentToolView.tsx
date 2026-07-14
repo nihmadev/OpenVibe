@@ -1,13 +1,13 @@
 import React from "react";
 import { HistoryItem } from "../chat-history/types.js";
 import { describe, pickFile } from "../chat-history/utils.js";
-import { FailIcon } from "../chat-history/ChatHistoryIcons.js";
+import { FailIcon } from "../icons/icons.js";
 import { FileBadge } from "../chat-history/ChatHistorySubComponents.js";
-import { ChevronRightIcon, Loader2Icon } from "../icons/ui-icons.js";
-import { FileIcon } from "../icons/file-icons.js";
-import { useI18n } from "../../hooks/useI18n.js";
+import { ChevronRightIcon, Loader2Icon } from "../icons/icons.js";
+import { FileIcon, FolderIcon } from "../icons/file-icons.js";
 import { CodeBlock, resolveMonacoLang } from "../CodeBlock/CodeBlock.js";
 import { DiffEditor } from "../DiffEditor/DiffEditor.js";
+import { Server } from "lucide-react";
 import "../../styles/Tool.css";
 
 // ─── Animated counter ─────────────────────────────────────────────────────
@@ -75,7 +75,7 @@ function StreamingCodeBlock({ toolStream, toolName }: { toolStream: string; tool
     <div className="code-block">
       <div className="code-block__body">
         <pre className="code-block__pre">
-          <code className="code-block__code">{det.content}</code>
+          <code className="code-block__code">{det.content.trimEnd()}</code>
         </pre>
       </div>
     </div>
@@ -180,6 +180,35 @@ function getToolResultLang(item: HistoryItem): string {
   return "plaintext";
 }
 
+function ListDirBlock({ item }: { item: HistoryItem }) {
+  const content = item.text || "";
+  const lines = content
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  if (lines.length === 0 || (lines.length === 1 && lines[0] === "(empty)")) {
+    return <div className="tool__diff-loading">Empty directory.</div>;
+  }
+
+  return (
+    <div className="list-dir-block">
+      {lines.map((line, i) => {
+        const isDir = line.endsWith("/");
+        const name = isDir ? line.slice(0, -1) : line;
+        return (
+          <div key={i} className="list-dir-row">
+            <span className="list-dir-icon">
+              {isDir ? <FolderIcon open={false} name={name} /> : <FileIcon name={name} />}
+            </span>
+            <span className="list-dir-name">{name}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function AgentToolView({
   item,
   onDrillDown,
@@ -189,8 +218,7 @@ export function AgentToolView({
   onDrillDown?: (id: string) => void;
   cwd?: string;
 }) {
-  const { t } = useI18n();
-  const { verb, file, suffix } = describe(item, t, cwd);
+  const { verb, file, suffix } = describe(item, cwd);
   const isPending = item.ok === undefined;
   const isErr = item.ok === false;
   const isStreaming = isPending && !!item.toolStream;
@@ -242,21 +270,20 @@ export function AgentToolView({
     );
   }
 
+  const isMcp = item.toolName?.startsWith("mcp__");
   const hasResultText = item.ok === true && !!item.text;
   const stateCls = isStreaming ? "tool--streaming" : isPending ? "tool--pending" : isErr ? "tool--err" : "tool--ok";
   const isReadFile = item.toolName === "read_file";
-  const hasExpandable =
-    (diffInfo !== null || hasResultText || isStreaming) && !isListDir && !isSearchCodebase && !isReadFile;
+  const hasExpandable = (diffInfo !== null || hasResultText || isStreaming) && !isSearchCodebase && !isReadFile;
 
   return (
-    <div className={`tool ${stateCls}${hasExpandable ? " tool--has-diff" : ""}`}>
-      {isErr && (
-        <span className="tool__icon">
-          <FailIcon />
-        </span>
-      )}
+    <div className={`tool ${isMcp ? "tool--mcp" : ""} ${stateCls}${hasExpandable ? " tool--has-diff" : ""}`}>
+      <span className="tool__icon">
+        {isPending ? <Loader2Icon /> : isErr ? <FailIcon /> : isMcp ? <Server size={14} /> : null}
+      </span>
       <span className="tool__line">
         <span className="tool__verb">{verb}</span>
+
         {file ? (
           <>
             {" "}
@@ -275,27 +302,25 @@ export function AgentToolView({
                 </span>
               </span>
             )}
-            {!isListDir && (
-              <button
-                className="tool__chevron"
-                onClick={() => setOpen(!open)}
-                aria-label={open ? "Collapse" : "Expand"}
-              >
-                <ChevronRightIcon open={open} />
-              </button>
-            )}
+            <button className="tool__chevron" onClick={() => setOpen(!open)} aria-label={open ? "Collapse" : "Expand"}>
+              <ChevronRightIcon open={open} />
+            </button>
           </>
         )}
         {suffix ? <span className="tool__suffix"> {suffix}</span> : null}
       </span>
       {hasExpandable && (
-        <div className={`tool__diff-block${open ? "" : " tool__diff-block--hidden"}`}>
+        <div
+          className={`tool__diff-block${open ? "" : " tool__diff-block--hidden"}${isListDir ? " tool__diff-block--list" : ""}`}
+        >
           {isStreaming && item.toolStream ? (
             <StreamingCodeBlock toolStream={item.toolStream} toolName={item.toolName} />
           ) : item.toolName === "edit_file" ? (
             <DiffBlock item={item} file={file} />
           ) : item.toolName === "write_file" ? (
             <WriteFileBlock item={item} />
+          ) : isListDir ? (
+            <ListDirBlock item={item} />
           ) : (
             <CodeBlock language={getToolResultLang(item)} code={item.text} />
           )}

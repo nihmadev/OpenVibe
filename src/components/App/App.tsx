@@ -40,6 +40,9 @@ export function App(): React.ReactElement {
   const handleCloseSearch = useCallback(() => {
     setSearchOpen(false);
   }, []);
+  const handleCloseSearchInCode = useCallback(() => {
+    setSearchInCodeOpen(false);
+  }, []);
   const handleOpenSettings = useCallback((tab?: string) => {
     if (tab) setSettingsTab(tab);
     setSettingsOpen(true);
@@ -48,6 +51,10 @@ export function App(): React.ReactElement {
   const [chatSideSticky, setChatSideSticky] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(220);
   const [terminalOpen, setTerminalOpen] = useState(false);
+  const [searchInCodeOpen, setSearchInCodeOpen] = useState(false);
+  const [gotoLine, setGotoLine] = useState<number | undefined>(undefined);
+  const [gotoColumn, setGotoColumn] = useState<number | undefined>(undefined);
+  const [gotoMatchLength, setGotoMatchLength] = useState<number | undefined>(undefined);
   const [fileTreeOpen, setFileTreeOpen] = useState(true);
   const [openFiles, setOpenFiles] = useState<string[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
@@ -87,7 +94,7 @@ export function App(): React.ReactElement {
 
   const { connectedModels, handlePickModel } = useModels(config, setConfig, settingsOpen);
 
-  const { items, setItems, busy, pending, streamingNow, pendingAttachments } = useVibeEvents(useCallback(() => {}, []));
+  const { items, setItems, busy, streamingNow, pendingAttachments } = useVibeEvents(useCallback(() => {}, []));
 
   const { handleSubmit } = useAppHandlers({
     setItems,
@@ -151,17 +158,12 @@ export function App(): React.ReactElement {
     [projects],
   );
 
-  const handleDecide = useCallback(
-    (decision: "yes" | "no" | "always") => {
-      if (!pending) return;
-      window.vibe.decide(pending.id, decision);
-    },
-    [pending],
-  );
-
-  const handleOpenFile = useCallback((path: string) => {
+  const handleOpenFile = useCallback((path: string, line?: number, column?: number, matchLength?: number) => {
     setOpenFiles((prev) => (prev.includes(path) ? prev : [...prev, path]));
     setActiveFile(path);
+    setGotoLine(line);
+    setGotoColumn(column);
+    setGotoMatchLength(matchLength);
   }, []);
 
   const handleCloseFile = useCallback((path: string) => {
@@ -252,6 +254,72 @@ export function App(): React.ReactElement {
     [projects, handlePickProject, onProjectChange],
   );
 
+  const handleCommand = useCallback(
+    (id: string) => {
+      switch (id) {
+        case "new-session":
+          handleShortcutNewChat();
+          break;
+        case "prev-session":
+          handleSwitchChat("prev");
+          break;
+        case "next-session":
+          handleSwitchChat("next");
+          break;
+        case "toggle-terminal":
+          setTerminalOpen((o) => !o);
+          break;
+        case "close-terminal":
+          window.dispatchEvent(new CustomEvent("vibe:close-terminal"));
+          break;
+        case "new-terminal":
+          window.dispatchEvent(new CustomEvent("vibe:new-terminal"));
+          break;
+        case "show-file-tree":
+          setFileTreeOpen(true);
+          break;
+        case "hide-file-tree":
+          setFileTreeOpen(false);
+          break;
+        case "toggle-file-tree":
+          setFileTreeOpen((o) => !o);
+          break;
+        case "toggle-chat-side":
+          handleToggleChatSide();
+          break;
+        case "open-settings":
+          handleOpenSettings();
+          break;
+        case "close-project":
+          handleShortcutCloseProject();
+          break;
+        case "new-project":
+          handleShortcutNewProject();
+          break;
+        case "close-file":
+          handleCloseActiveFile();
+          break;
+        case "clear-chat":
+          handleShortcutClearChat();
+          break;
+      }
+    },
+    [
+      handleShortcutNewChat,
+      handleSwitchChat,
+      handleToggleChatSide,
+      handleOpenSettings,
+      handleShortcutCloseProject,
+      handleShortcutNewProject,
+      handleCloseActiveFile,
+      handleShortcutClearChat,
+    ],
+  );
+
+  const handleToggleSearchInCode = useCallback(() => {
+    setSearchInCodeOpen((o) => !o);
+  }, []);
+
   const { shortcuts, updateBinding, resetBinding } = useShortcuts({
     newChat: handleShortcutNewChat,
     switchChat: handleSwitchChat,
@@ -260,6 +328,39 @@ export function App(): React.ReactElement {
     toggleFileTree: () => setFileTreeOpen((o) => !o),
     openSettings: handleOpenSettings,
     openSearch: handleOpenSearch,
+    openSearchInCode: handleToggleSearchInCode,
+    searchToggleMatchCase: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-toggle-match-case"));
+    },
+    searchToggleWholeWord: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-toggle-whole-word"));
+    },
+    searchToggleRegex: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-toggle-regex"));
+    },
+    searchToggleReplace: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-toggle-replace"));
+    },
+    searchToggleFilters: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-toggle-filters"));
+    },
+    searchToggleTree: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-toggle-tree"));
+    },
+    searchRefresh: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-refresh"));
+    },
+    searchClear: () => {
+      if (!searchInCodeOpen) return;
+      window.dispatchEvent(new CustomEvent("vibe:search-clear"));
+    },
     closeSettings: () => setSettingsOpen(false),
     clearChat: handleShortcutClearChat,
     focusInput: () => {
@@ -304,11 +405,15 @@ export function App(): React.ReactElement {
                 canGoForward={canGoForward}
                 terminalOpen={terminalOpen}
                 onToggleTerminal={() => setTerminalOpen(!terminalOpen)}
+                searchInCodeOpen={searchInCodeOpen}
+                onToggleSearchInCode={handleToggleSearchInCode}
                 fileTreeOpen={fileTreeOpen}
                 onToggleFileTree={() => setFileTreeOpen(!fileTreeOpen)}
                 folder={folder}
                 onSearchOpen={handleOpenSearch}
+                onOpenSettings={handleOpenSettings}
               />
+
               {searchOpen && (
                 <SearchPopup
                   folder={folder}
@@ -327,6 +432,7 @@ export function App(): React.ReactElement {
                   }}
                   onOpenFile={handleOpenFile}
                   onRevealFolder={setRevealPath}
+                  onCommand={handleCommand}
                 />
               )}
               <Welcome
@@ -373,10 +479,13 @@ export function App(): React.ReactElement {
               canGoForward={canGoForward}
               terminalOpen={terminalOpen}
               onToggleTerminal={() => setTerminalOpen(!terminalOpen)}
+              searchInCodeOpen={searchInCodeOpen}
+              onToggleSearchInCode={handleToggleSearchInCode}
               fileTreeOpen={fileTreeOpen}
               onToggleFileTree={() => setFileTreeOpen(!fileTreeOpen)}
               folder={folder}
               onSearchOpen={handleOpenSearch}
+              onOpenSettings={handleOpenSettings}
             />
             {searchOpen && (
               <SearchPopup
@@ -396,6 +505,7 @@ export function App(): React.ReactElement {
                 }}
                 onOpenFile={handleOpenFile}
                 onRevealFolder={setRevealPath}
+                onCommand={handleCommand}
               />
             )}
             <AppMain
@@ -428,7 +538,6 @@ export function App(): React.ReactElement {
               items={items}
               streamingNow={streamingNow}
               busy={busy}
-              pending={pending}
               handlePickModel={handlePickModel}
               handleSubmit={handleSubmit}
               onStop={() => window.vibe.stop()}
@@ -441,9 +550,13 @@ export function App(): React.ReactElement {
               handleOpenFile={handleOpenFile}
               handleCloseFile={handleCloseFile}
               handleActivateFile={handleActivateFile}
-              handleDecide={handleDecide}
               setItems={setItems}
               setProjects={setProjects}
+              searchInCodeOpen={searchInCodeOpen}
+              onCloseSearchInCode={handleCloseSearchInCode}
+              gotoLine={gotoLine}
+              gotoColumn={gotoColumn}
+              gotoMatchLength={gotoMatchLength}
             />
             <Settings
               open={settingsOpen}

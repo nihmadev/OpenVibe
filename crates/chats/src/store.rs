@@ -44,7 +44,7 @@ impl ChatStore {
             .prepare(
                 "SELECT c.id, c.title, c.created_at, c.updated_at,
                         COALESCE((SELECT COUNT(*) FROM messages m WHERE m.chat_id = c.id), 0)
-                 FROM chats c ORDER BY c.updated_at DESC",
+                 FROM chats c ORDER BY c.created_at DESC",
             )
             .unwrap();
         let rows = stmt

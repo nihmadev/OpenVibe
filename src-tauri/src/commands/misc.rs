@@ -105,7 +105,7 @@ pub fn set_model(state: State<AppState>, model: String) -> Result<(), String> {
             // Persist model change to provider
             if let Some(ref pid) = c.provider_id {
                 let store = state.projects.lock().map_err(|e| e.to_string())?;
-                store.update_provider_model(pid, &model);
+                let _ = store.update_provider_model(pid, &model);
             }
         }
     }
@@ -149,12 +149,12 @@ pub fn window_zoom(app_handle: tauri::AppHandle, factor: f64) -> Result<(), Stri
 #[tauri::command]
 pub fn state_get(state: State<AppState>, key: String) -> Result<Option<String>, String> {
     let store = state.projects.lock().map_err(|e| e.to_string())?;
-    Ok(store.get_state(&key))
+    store.get_state(&key).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn state_set(state: State<AppState>, key: String, value: String) -> Result<(), String> {
     let store = state.projects.lock().map_err(|e| e.to_string())?;
-    store.set_state(&key, &value);
+    store.set_state(&key, &value).map_err(|e| e.to_string())?;
     Ok(())
 }

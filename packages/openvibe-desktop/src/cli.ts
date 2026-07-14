@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-import { existsSync } from 'node:fs';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
-import { spawn } from 'node:child_process';
-import { getInstallDir, getBinDir, checkForUpdate, downloadAndVerify } from './updater.js';
+import { existsSync } from "node:fs";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { join } from "node:path";
+import { spawn } from "node:child_process";
+import { getInstallDir, getBinDir, checkForUpdate, downloadAndVerify } from "./updater.js";
 
-const VERSION_FILE = join(getInstallDir(), '.version');
-const CACHE_FILE = join(getInstallDir(), '.cache.json');
+const VERSION_FILE = join(getInstallDir(), ".version");
+const CACHE_FILE = join(getInstallDir(), ".cache.json");
 
 interface CacheData {
   version: string;
@@ -16,7 +16,7 @@ interface CacheData {
 
 async function readCache(): Promise<CacheData | null> {
   try {
-    const data = await readFile(CACHE_FILE, 'utf-8');
+    const data = await readFile(CACHE_FILE, "utf-8");
     return JSON.parse(data);
   } catch {
     return null;
@@ -36,16 +36,16 @@ async function getOrDownloadBinary(): Promise<string> {
   }
 
   // Check version file
-  let currentVersion = '';
+  let currentVersion = "";
   try {
-    currentVersion = (await readFile(VERSION_FILE, 'utf-8')).trim();
+    currentVersion = (await readFile(VERSION_FILE, "utf-8")).trim();
   } catch {
-    currentVersion = '';
+    currentVersion = "";
   }
 
   const info = await checkForUpdate(VERSION_FILE);
   if (!info) {
-    throw new Error('failed to fetch latest release info');
+    throw new Error("failed to fetch latest release info");
   }
 
   const binaryPath = await downloadAndVerify(info);
@@ -57,13 +57,13 @@ async function getOrDownloadBinary(): Promise<string> {
 async function main() {
   const args = process.argv.slice(2);
 
-  if (args.includes('--version') || args.includes('-v')) {
+  if (args.includes("--version") || args.includes("-v")) {
     const cache = await readCache();
-    console.log(cache?.version || 'unknown');
+    console.log(cache?.version || "unknown");
     process.exit(0);
   }
 
-  if (args.includes('--help') || args.includes('-h')) {
+  if (args.includes("--help") || args.includes("-h")) {
     console.log(`OpenVibe Desktop — open-source agentic coding environment
 
 Usage:
@@ -76,11 +76,11 @@ Options:
     process.exit(0);
   }
 
-  if (args.includes('--update')) {
-    console.log('Checking for updates...');
+  if (args.includes("--update")) {
+    console.log("Checking for updates...");
     const info = await checkForUpdate(VERSION_FILE);
     if (!info) {
-      console.log('No update available or failed to check');
+      console.log("No update available or failed to check");
       process.exit(1);
     }
     const cache = await readCache();
@@ -98,15 +98,15 @@ Options:
     const binaryPath = await getOrDownloadBinary();
 
     const child = spawn(binaryPath, args, {
-      stdio: 'inherit',
+      stdio: "inherit",
       env: { ...process.env },
     });
 
-    child.on('exit', (code) => {
+    child.on("exit", (code) => {
       process.exit(code ?? 0);
     });
 
-    child.on('error', (err) => {
+    child.on("error", (err) => {
       console.error(`Failed to launch OpenVibe: ${err.message}`);
       process.exit(1);
     });

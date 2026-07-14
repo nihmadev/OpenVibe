@@ -2,20 +2,35 @@
   position: relative;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
-  overflow: auto;
+  overflow: hidden;
   margin: 8px 0;
+  contain: content;
 }
 
 .code-block__body {
+  position: relative;
   background: var(--bg-3);
   border-radius: inherit;
 }
 
-.code-block__copy {
+.code-block__actions {
   position: absolute;
   top: 6px;
   right: 6px;
   z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.code-block:hover .code-block__actions {
+  opacity: 1;
+}
+
+.code-block__action-btn,
+.code-block__copy {
   border: 0;
   background: var(--bg-2);
   color: var(--fg-muted);
@@ -26,18 +41,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
   transition:
-    opacity 0.15s,
     color 0.2s,
     background 0.2s;
   cursor: pointer;
 }
 
-.code-block:hover .code-block__copy {
-  opacity: 1;
-}
-
+.code-block__action-btn:hover,
 .code-block__copy:hover {
   color: var(--fg);
   background: var(--bg-1);
@@ -45,19 +55,84 @@
 
 .code-block__pre {
   margin: 0;
-  padding: 0 0 0 48px;
+  padding: 6px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 18px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-smooth: always;
+  text-rendering: optimizeLegibility;
+}
+
+.code-block__pre--overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .code-block__code {
   font-family: var(--mono);
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 18px;
   color: var(--fg);
   white-space: pre-wrap;
   word-break: break-all;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .code-block__container {
   width: 100%;
-  min-height: 60px;
+  min-height: 26px;
+  contain: content;
+}
+
+.code-block__container .monaco-editor,
+.code-block__container .monaco-editor .view-lines,
+.code-block__container .monaco-editor .view-line {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  font-smooth: always !important;
+  text-rendering: optimizeLegibility !important;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.code-block__container .monaco-editor .margin,
+.code-block__container .monaco-editor .glyph-margin,
+.code-block__container .monaco-editor .margin-view-overlays,
+.code-block__container .monaco-editor .margin-background {
+  display: none !important;
+  width: 0 !important;
+  border: none !important;
+}
+
+.code-block__container .monaco-editor .lines-content {
+  padding-left: 10px !important;
+}
+
+.code-block--terminal .code-block__container .monaco-editor .lines-content,
+.code-block--terminal .code-block__container .monaco-editor .view-lines {
+  left: 0 !important;
+  margin-left: -4px !important;
+  padding-left: 0 !important;
+}
+
+.code-block--terminal .code-block__pre {
+  padding-left: 2px !important;
+}
+
+.code-block__container .monaco-editor .decorationsOverviewRuler,
+.code-block__container .monaco-editor .scroll-decoration,
+.code-block__container .monaco-editor .cigr,
+.code-block__container .monaco-editor .core-guide,
+.code-block__container .monaco-editor .indent-active {
+  display: none !important;
+  width: 0 !important;
+  visibility: hidden !important;
 }

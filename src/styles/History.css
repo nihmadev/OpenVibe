@@ -160,36 +160,55 @@
   color: var(--red);
 }
 
-.msg--thinking {
-  margin-top: 12px;
-  display: flex;
+.thinking {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 0;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--fg-muted);
+  line-height: 1.4;
+  font-style: normal;
+  user-select: none;
   min-height: 16px;
 }
-.msg--thinking--inline {
+.thinking--inline {
   display: inline-flex;
   margin-top: 0;
-  margin-left: 10px;
+  margin-left: 8px;
   vertical-align: baseline;
-  position: relative;
-  top: 2px;
-  flex-direction: row-reverse;
 }
-.msg--thinking__text {
-  color: var(--fg);
-  font-size: 13px;
-  font-style: italic;
-  line-height: 1;
-  white-space: nowrap;
+
+.thinking__word {
+  display: inline-block;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+  opacity: 1;
+  transform: translateY(0);
+  will-change: opacity, transform;
 }
-.msg--thinking .loader {
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(3, 4px);
-  grid-template-rows: repeat(3, 4px);
-  gap: 2px;
-  flex-shrink: 0;
+
+.thinking__word.out {
+  opacity: 0;
+  transform: translateY(-2px);
+}
+
+.thinking__dots {
+  display: inline-flex;
+  margin-left: 1px;
+}
+
+.thinking__dot {
+  display: inline-block;
+  width: 5px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.thinking__dot.on {
+  opacity: 1;
 }
 
 /* ===== User message attachments ===== */

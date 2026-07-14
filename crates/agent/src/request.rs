@@ -9,6 +9,7 @@ use crate::transform::{
     flatten_for_text_only, messages_to_api_json, supports_vision, trim_messages,
 };
 
+#[allow(clippy::too_many_arguments)]
 pub async fn stream_chat(
     config: &LlmConfig,
     messages: Vec<ChatMessage>,
@@ -48,11 +49,7 @@ pub async fn stream_chat(
         });
         if !tools.is_empty() {
             body["tools"] = serde_json::json!(tools);
-            if config.base_url.contains("models.github.ai") {
-                body["tool_choice"] = serde_json::json!("none");
-            } else {
-                body["tool_choice"] = serde_json::json!("auto");
-            }
+            body["tool_choice"] = serde_json::json!("auto");
         }
 
         let req = client.post(&url).headers(headers).json(&body);
@@ -136,11 +133,17 @@ pub async fn stream_chat(
     Err("Rate limit: too many retries. Try again in a minute.".to_string())
 }
 
+fn safe_header_val(val: &str) -> reqwest::header::HeaderValue {
+    let sanitized: String = val.chars().filter(|c| !c.is_control()).collect();
+    reqwest::header::HeaderValue::from_str(&sanitized)
+        .unwrap_or_else(|_| reqwest::header::HeaderValue::from_static(""))
+}
+
 fn build_request(config: &LlmConfig) -> (String, reqwest::header::HeaderMap) {
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert(
         reqwest::header::CONTENT_TYPE,
-        "application/json".parse().unwrap(),
+        reqwest::header::HeaderValue::from_static("application/json"),
     );
 
     let is_github = config.base_url.contains("models.github.ai");
@@ -149,12 +152,12 @@ fn build_request(config: &LlmConfig) -> (String, reqwest::header::HeaderMap) {
     let url = if should_proxy {
         let base = config.api_url.as_ref().unwrap().trim_end_matches('/');
         let pid = config.provider_id.as_ref().unwrap();
-        headers.insert("x-provider-base-url", config.base_url.parse().unwrap());
-        headers.insert("x-api-key", config.api_key.parse().unwrap());
+        headers.insert("x-provider-base-url", safe_header_val(&config.base_url));
+        headers.insert("x-api-key", safe_header_val(&config.api_key));
         format!("{base}/v3/{pid}/chat/completions")
     } else {
         let auth_val = format!("Bearer {}", config.api_key);
-        headers.insert(reqwest::header::AUTHORIZATION, auth_val.parse().unwrap());
+        headers.insert(reqwest::header::AUTHORIZATION, safe_header_val(&auth_val));
         let is_google = config
             .base_url
             .contains("generativelanguage.googleapis.com");
@@ -166,8 +169,14 @@ fn build_request(config: &LlmConfig) -> (String, reqwest::header::HeaderMap) {
                 config.api_key
             )
         } else if is_github {
-            headers.insert("Accept", "application/vnd.github+json".parse().unwrap());
-            headers.insert("X-GitHub-Api-Version", "2026-03-10".parse().unwrap());
+            headers.insert(
+                "Accept",
+                reqwest::header::HeaderValue::from_static("application/vnd.github+json"),
+            );
+            headers.insert(
+                "X-GitHub-Api-Version",
+                reqwest::header::HeaderValue::from_static("2026-03-10"),
+            );
             format!(
                 "{}/inference/chat/completions",
                 config.base_url.trim_end_matches('/')

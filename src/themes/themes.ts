@@ -1,6 +1,8 @@
 import monokai from "./monokai.json";
 import carbonfox from "./carbonfox.json";
 import gruvbox from "./gruvbox.json";
+import gruvboxMedium from "./gruvbox-medium.json";
+import gruvboxSoft from "./gruvbox-soft.json";
 import cursor from "./cursor.json";
 import oneDark from "./one-dark.json";
 import everforest from "./everforest.json";
@@ -232,6 +234,8 @@ export const themes: ThemeDef[] = [
   fromJson(monokai as ThemeJson),
   fromJson(carbonfox as ThemeJson),
   fromJson(gruvbox as ThemeJson),
+  fromJson(gruvboxMedium as ThemeJson),
+  fromJson(gruvboxSoft as ThemeJson),
   fromJson(ayu as ThemeJson),
   fromJson(cursor as ThemeJson),
   fromJson(oneDark as ThemeJson),

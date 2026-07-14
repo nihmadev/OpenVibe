@@ -11,7 +11,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager};
-use tokio::sync::{oneshot, watch};
+use tokio::sync::watch;
 
 pub struct AppState {
     pub projects: Mutex<db::ProjectStore>,
@@ -23,10 +23,11 @@ pub struct AppState {
     pub llm_cancels: Mutex<HashMap<String, Arc<AtomicBool>>>,
     pub agent: Mutex<Option<agent::Agent>>,
     pub agent_cancel: Mutex<Option<Arc<AtomicBool>>>,
-    pub pending_confirms: Mutex<HashMap<String, oneshot::Sender<String>>>,
     pub http_client: reqwest::Client,
     pub provider_url: Arc<tokio::sync::Mutex<String>>,
     pub warmer_stop_tx: Mutex<Option<watch::Sender<bool>>>,
+    pub mcp_manager: Arc<mcp::McpManager>,
+    pub scg2_engine: Arc<scg2::Scg2Engine>,
 }
 
 impl AppState {
@@ -113,6 +114,8 @@ impl AppState {
                 "coverage",
                 ".vite",
                 "target",
+                "__pycache__/",
+                "vendor/",
             ];
 
             // Trailing-edge debounce: emit only after a quiet period (no events for 300ms)
@@ -159,7 +162,6 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_clipboard_manager::init())
         .setup(move |app| {
             // Initialize project store
             let data_dir = dirs::data_dir().unwrap_or_else(|| std::path::PathBuf::from(".")).join("openvibe");
@@ -171,7 +173,7 @@ pub fn run() {
             let (initial_cwd, initial_project_id) = {
                 let active = project_store.get_active();
                 match active {
-                    Some(ref p) if Path::new(&p.path).exists() => (p.path.clone(), Some(p.id.clone())),
+                    Ok(Some(ref p)) if Path::new(&p.path).exists() => (p.path.clone(), Some(p.id.clone())),
                     _ => (String::new(), None),
                 }
             };
@@ -184,7 +186,7 @@ pub fn run() {
 
             // If config has no api_key, try loading from a provider in DB
             if cfg.api_key.is_empty() {
-                let providers = project_store.list_providers();
+                let providers = project_store.list_providers().unwrap_or_default();
                 // Prefer matching by provider_id, otherwise take the most recently added
                 let active_provider = cfg
                     .provider_id
@@ -202,24 +204,39 @@ pub fn run() {
             // Setup chat store if project exists
             let chat_store = initial_project_id
                 .as_ref()
-                .map(|pid| {
+                .and_then(|pid| {
                     let db_path = project_store.chats_db(pid);
                     ChatStore::new(&db_path).ok()
-                })
-                .flatten();
+                });
 
             // Setup terminal manager
             let term_mgr = terminal::manager::TerminalManager::new(&initial_cwd);
 
             let app_handle = app.handle().clone();
 
-            // Создаём общий HTTP клиент с HTTP/2, keep-alive, tcp_nodelay
+            // Initialize optimized HTTP client pool (HTTP/2, TCP keep-alive, low latency)
             let shared_client = http_client::create_shared_client();
             let provider_url = Arc::new(tokio::sync::Mutex::new(cfg.base_url.clone()));
             let (warmer_stop_tx, warmer_stop_rx) = watch::channel(false);
 
-            // Запускаем connection warmer (держит соединение с провайдером тёплым)
+            // Spawn background task to keep provider TCP/TLS connections warm
             http_client::spawn_connection_warmer(shared_client.clone(), provider_url.clone(), warmer_stop_rx);
+
+            // MCP Manager
+            let mcp_config_path = mcp::resolve_config_path(&initial_cwd);
+
+            let mcp_manager = Arc::new(mcp::McpManager::new(mcp_config_path));
+            let mcp_clone = mcp_manager.clone();
+            tauri::async_runtime::spawn(async move {
+                mcp_clone.init_and_autostart().await;
+            });
+
+            // SCG2 Engine
+            let scg2_engine = Arc::new(scg2::Scg2Engine::new(scg2::Scg2Config::default()));
+            let scg2_clone = scg2_engine.clone();
+            tauri::async_runtime::spawn(async move {
+                scg2_clone.start_background_worker().await;
+            });
 
             // Create state
             let state = AppState {
@@ -232,10 +249,11 @@ pub fn run() {
                 llm_cancels: Mutex::new(HashMap::new()),
                 agent: Mutex::new(None),
                 agent_cancel: Mutex::new(None),
-                pending_confirms: Mutex::new(HashMap::new()),
                 http_client: shared_client,
                 provider_url,
                 warmer_stop_tx: Mutex::new(Some(warmer_stop_tx)),
+                mcp_manager,
+                scg2_engine,
             };
 
             // Setup watcher if cwd exists
@@ -254,7 +272,6 @@ pub fn run() {
             commands::agent::agent_stop,
             commands::agent::agent_reset,
             commands::agent::agent_summarize,
-            commands::agent::agent_confirm,
             commands::agent::agent_set_messages,
             commands::agent::agent_get_messages,
             commands::agent::agent_instant_revert,
@@ -274,8 +291,15 @@ pub fn run() {
             commands::fs::fs_create_dir,
             commands::fs::fs_find,
             commands::fs::fs_find_all,
+            commands::fs::fs_search_content,
+            commands::fs::fs_search_content_filter,
+            commands::fs::fs_search_content_files,
+            commands::fs::fs_search_content_file_matches,
+            commands::fs::fs_highlight_lines,
             commands::fs::fs_project_info,
             commands::fs::whisper_transcribe,
+            // Editor commands
+            commands::editor::editor_preload_types,
             // Project commands
             commands::projects::projects_list,
             commands::projects::projects_active,
@@ -306,6 +330,20 @@ pub fn run() {
             commands::models::models_toggle_disabled,
             commands::models::models_list_enabled,
             commands::models::models_toggle_enabled,
+            // Git commands
+            commands::git::git_repo_info,
+            commands::git::git_status,
+            commands::git::git_stage_file,
+            commands::git::git_stage_all,
+            commands::git::git_unstage_file,
+            commands::git::git_revert_file,
+            commands::git::git_commit,
+            commands::git::git_branches,
+            commands::git::git_commits,
+            commands::git::git_graph,
+            commands::git::git_publish_branch,
+            commands::git::git_current_branch,
+            commands::git::git_commit_details,
             // Terminal commands
             commands::terminals::term_start,
             commands::terminals::term_write,
@@ -331,6 +369,17 @@ pub fn run() {
             // Tool commands
             commands::tools::tools_definitions,
             commands::tools::tools_execute,
+            // MCP commands
+            commands::mcp::mcp_get_servers,
+            commands::mcp::mcp_start_server,
+            commands::mcp::mcp_stop_server,
+            commands::mcp::mcp_restart_server,
+            commands::mcp::mcp_get_status,
+            commands::mcp::mcp_get_config,
+            commands::mcp::mcp_save_config,
+            commands::mcp::mcp_list_tools,
+            // SCG2 commands
+            commands::scg2::scg2_push_events,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

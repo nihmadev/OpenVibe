@@ -1,0 +1,21 @@
+Project Overview
+- OpenVibe is a modern AI coding assistant desktop app built with Tauri v2, Rust (workspace crates), React, and TypeScript.
+- Workspace layout:
+  - `src-tauri/` — Tauri application entry point and IPC registration.
+  - `crates/` — Modular Rust crates (`agent`, `mcp`, `git`, etc.).
+  - `src/` — React frontend and UI state management.
+
+## Rust Code Guidelines
+- **Strict Error Handling**: Never use `.unwrap()` or `.expect()` in production crate logic. Use pattern matching, `Result<T, E>`, and `?` operators with context.
+- **Safety First**: Non-UTF8 conversions and file read failures must be logged gracefully via `tracing::warn!` and handled without panic.
+- **Clean API Contracts**: Keep crate APIs clean, modular, and fully documented.
+
+## TypeScript & React Guidelines
+- **Strict Typing**: Avoid using `any` or loose `object` types. Define clear TypeScript interfaces and types for all props and IPC message structures.
+- **Tauri Bridge**: All IPC calls to Rust commands must pass through typed functions in `src/tauri-bridge.ts`.
+- **Design System**: Use predefined CSS variables and cohesive dark-mode styling rules.
+- **Code-style**: Never use a hardcode style coding, i18n, blur, boder's etc
+
+## Testing & Verification
+- Always add unit tests for new features in Rust modules.
+- Ensure `cargo test` runs without errors before committing updates.

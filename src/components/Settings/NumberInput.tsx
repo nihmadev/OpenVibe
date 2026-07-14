@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useCallback } from "react";
+import { MinusIcon, PlusIcon } from "../icons/icons.js";
 
 interface NumberInputProps {
   value: string;
@@ -55,9 +56,7 @@ export function NumberInput({ value, step, min, max, onChange }: NumberInputProp
         disabled={num <= min}
         tabIndex={-1}
       >
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
+        <MinusIcon />
       </button>
       <input
         type="number"
@@ -76,10 +75,7 @@ export function NumberInput({ value, step, min, max, onChange }: NumberInputProp
         disabled={num >= max}
         tabIndex={-1}
       >
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
+        <PlusIcon />
       </button>
     </div>
   );

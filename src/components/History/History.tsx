@@ -4,6 +4,19 @@ import "../../styles/History.css";
 import "../../styles/Tool.css";
 import "../../styles/FBadge.css";
 import { useI18n } from "../../hooks/useI18n.js";
+import {
+  ChevronRightIcon,
+  CircularProgress,
+  LikeIcon,
+  DislikeIcon,
+  CheckCircleIcon,
+  FailIcon,
+  SpinIcon,
+  DiffIcon,
+  CheckIcon,
+  CopyIcon,
+  RefreshIcon2,
+} from "../icons/icons.js";
 
 export interface AttachmentView {
   id: string;
@@ -248,62 +261,6 @@ const ICON_MAP_HISTORY: Record<string, string> = {
   ico: "image.png",
 };
 
-function CheckIcon(): React.ReactElement {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-      style={{ background: "var(--green)", color: "var(--bg)", borderRadius: "50%", padding: "2px" }}
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
-
-function FailIcon(): React.ReactElement {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <circle cx="8" cy="8" r="6.5" />
-      <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" />
-    </svg>
-  );
-}
-
-function SpinIcon(): React.ReactElement {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      aria-hidden
-      className="tool__spinner"
-    >
-      <circle cx="8" cy="8" r="6.5" opacity="0.25" />
-      <path d="M14.5 8a6.5 6.5 0 0 0-6.5-6.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 function ToolBlock({ item }: { item: HistoryItem }): React.ReactElement {
   const { verb, file, suffix } = describe(item);
   const [open, setOpen] = useState(false);
@@ -315,7 +272,7 @@ function ToolBlock({ item }: { item: HistoryItem }): React.ReactElement {
   return (
     <div className={`tool ${stateCls}${hasDiff ? " tool--has-diff" : ""}`}>
       <span className="tool__icon">
-        {item.ok === undefined ? <SpinIcon /> : item.ok ? <CheckIcon /> : <FailIcon />}
+        {item.ok === undefined ? <SpinIcon /> : item.ok ? <CheckCircleIcon /> : <FailIcon />}
       </span>
       <span className="tool__line">
         <span className="tool__verb">{verb}</span>
@@ -388,104 +345,7 @@ interface Props {
   busy?: boolean;
 }
 
-function DiffIcon(): React.ReactElement {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-      <line x1="9" y1="3" x2="9" y2="21" />
-      <line x1="3" y1="9" x2="9" y2="9" />
-      <line x1="3" y1="15" x2="9" y2="15" />
-    </svg>
-  );
-}
-
-function CircularProgress({ percent }: { percent: number }): React.ReactElement {
-  const radius = 7;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (percent / 100) * circumference;
-
-  return (
-    <svg width="16" height="16" viewBox="0 0 20 20" style={{ transform: "rotate(-90deg)" }}>
-      <circle cx="10" cy="10" r={radius} stroke="currentColor" strokeWidth="2" fill="transparent" opacity="0.2" />
-      <circle
-        cx="10"
-        cy="10"
-        r={radius}
-        stroke="currentColor"
-        strokeWidth="2"
-        fill="transparent"
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function ChevronRightIcon({ open }: { open?: boolean }): React.ReactElement {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      style={{
-        transform: open ? "rotate(90deg)" : "rotate(0deg)",
-        transition: "transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-      }}
-      aria-hidden="true"
-    >
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  );
-}
-
-function LikeIcon(): React.ReactElement {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-    </svg>
-  );
-}
-
-function DislikeIcon(): React.ReactElement {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3" />
-    </svg>
-  );
-}
+// (CircularProgress, ChevronRightIcon, LikeIcon, DislikeIcon, CheckCircleIcon, FailIcon, SpinIcon, DiffIcon now imported from ../icons/icons.js)
 
 function MessageFooter({
   item,
@@ -563,43 +423,15 @@ function MessageFooter({
         <div className="msg__footer-right">
           <button className="msg__footer-btn" onClick={onCopy} title="Copy">
             {copied ? (
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="var(--green)"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
+              <span style={{ color: "var(--green)" }}>
+                <CheckIcon />
+              </span>
             ) : (
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
+              <CopyIcon />
             )}
           </button>
           <button className="msg__footer-btn" onClick={() => onRegenerate?.(item.id)} title="Regenerate">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <polyline points="1 20 1 14 7 14"></polyline>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
+            <RefreshIcon2 />
           </button>
         </div>
       </div>
@@ -607,35 +439,59 @@ function MessageFooter({
   );
 }
 
-const VIBE_PHRASES = [
-  "Vibing...",
-  "Catching the flow...",
-  "Brewing code...",
-  "Feeling the logic...",
-  "Chilling with the bits...",
-  "Surfing the syntax...",
-];
+const THINKING_WORDS = ["Working", "Computing", "Thinking", "Analyzing", "Processing"];
 
 function VibingLoader({ text, isInline }: { text?: string; isInline?: boolean }): React.ReactElement {
-  const phrase = React.useMemo(() => {
-    if (text !== undefined) return text;
-    return VIBE_PHRASES[Math.floor(Math.random() * VIBE_PHRASES.length)];
-  }, [text]);
+  const [word, setWord] = useState(THINKING_WORDS[0]);
+  const [dots, setDots] = useState(0);
+  const [fade, setFade] = useState<"in" | "out">("in");
+  const stateRef = useRef({ dots: 0, wordIdx: 0 });
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    let running = true;
+
+    const tick = () => {
+      if (!running) return;
+      const s = stateRef.current;
+
+      if (s.dots < 3) {
+        s.dots += 1;
+        setDots(s.dots);
+        timer = setTimeout(tick, 420);
+      } else {
+        setFade("out");
+        timer = setTimeout(() => {
+          if (!running) return;
+          s.wordIdx = (s.wordIdx + 1) % THINKING_WORDS.length;
+          s.dots = 0;
+          setWord(THINKING_WORDS[s.wordIdx]);
+          setDots(0);
+          setFade("in");
+          timer = setTimeout(tick, 420);
+        }, 300);
+      }
+    };
+
+    timer = setTimeout(tick, 420);
+    return () => {
+      running = false;
+      clearTimeout(timer);
+    };
+  }, []);
+
+  const displayWord = text !== undefined ? text : word;
 
   return (
-    <div className={`msg--thinking ${isInline ? "msg--thinking--inline" : ""}`}>
-      <div className="loader">
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-      </div>
-      {phrase && <span className="msg--thinking__text">{phrase}</span>}
+    <div className={`thinking ${isInline ? "thinking--inline" : ""}`}>
+      {displayWord && <span className={`thinking__word ${fade === "out" ? "out" : ""}`}>{displayWord}</span>}
+      <span className="thinking__dots">
+        {[0, 1, 2].map((i) => (
+          <span key={i} className={`thinking__dot ${dots > i ? "on" : ""}`}>
+            .
+          </span>
+        ))}
+      </span>
     </div>
   );
 }

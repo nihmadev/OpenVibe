@@ -1,9 +1,6 @@
-use std::collections::HashMap;
 use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-
-use tokio::sync::oneshot;
 
 use crate::agent::Agent;
 use crate::chat::{ChatMessage, ToolCall, ToolCallFunction};
@@ -85,7 +82,6 @@ impl Agent {
         executor: &dyn ToolExecutor,
         client: &reqwest::Client,
         emit: &(dyn for<'a> Fn(&'a str, serde_json::Value) + Send + Sync),
-        confirm_senders: &mut HashMap<String, oneshot::Sender<String>>,
     ) {
         let content: serde_json::Value;
         let display: String;
@@ -135,7 +131,11 @@ impl Agent {
             reasoning_content: None,
         });
 
-        emit("vibe:agent:user", serde_json::json!({"text": display}));
+        let user_index = self.messages.len() - 1;
+        emit(
+            "vibe:agent:user",
+            serde_json::json!({"text": display, "index": user_index}),
+        );
         emit("vibe:agent:busy", serde_json::json!({"busy": true}));
 
         let tool_defs = executor.definitions();
@@ -161,7 +161,6 @@ impl Agent {
 
             let cb_chunk = {
                 let chunk_buf = chunk_buf.clone();
-                let emit = emit;
                 move |chunk: &str| {
                     if let Ok(mut sb) = chunk_buf.lock() {
                         sb.buf.push_str(chunk);
@@ -181,7 +180,6 @@ impl Agent {
 
             let cb_reasoning = {
                 let reason_buf = reason_buf.clone();
-                let emit = emit;
                 move |chunk: &str| {
                     if let Ok(mut sb) = reason_buf.lock() {
                         sb.buf.push_str(chunk);
@@ -201,7 +199,6 @@ impl Agent {
 
             let cb_reasoning_end = {
                 let reason_buf = reason_buf.clone();
-                let emit = emit;
                 move || {
                     if let Ok(mut sb) = reason_buf.lock() {
                         if !sb.buf.is_empty() {
@@ -306,134 +303,170 @@ impl Agent {
                 break;
             }
 
-            for call in &cleaned_tool_calls {
-                if self.cancel.load(Ordering::Relaxed) {
-                    break;
+            let is_all_read_only = cleaned_tool_calls.len() > 1
+                && cleaned_tool_calls
+                    .iter()
+                    .all(|c| executor.is_read_only(&c.function.name));
+
+            if is_all_read_only {
+                let mut prepared_calls = Vec::new();
+                for call in &cleaned_tool_calls {
+                    if self.cancel.load(Ordering::Relaxed) {
+                        break;
+                    }
+                    let tool_name = &call.function.name;
+                    let args_str = &call.function.arguments;
+                    let parsed_args: serde_json::Value = if args_str.trim().is_empty() {
+                        serde_json::Value::Object(serde_json::Map::new())
+                    } else {
+                        match serde_json::from_str(args_str) {
+                            Ok(v) => v,
+                            Err(e) => {
+                                let err_msg = format!("Invalid JSON arguments: {e}");
+                                emit(
+                                    "vibe:agent:tool-result",
+                                    serde_json::json!({
+                                        "id": call.id, "ok": false, "text": err_msg,
+                                    }),
+                                );
+                                self.messages.push(ChatMessage {
+                                    role: "tool".to_string(),
+                                    content: Some(serde_json::Value::String(err_msg)),
+                                    name: None,
+                                    tool_call_id: Some(call.id.clone()),
+                                    tool_calls: None,
+                                    reasoning_content: None,
+                                });
+                                continue;
+                            }
+                        }
+                    };
+
+                    emit(
+                        "vibe:agent:tool-call",
+                        serde_json::json!({"id": call.id, "name": tool_name, "args": parsed_args}),
+                    );
+                    prepared_calls.push((call, tool_name.clone(), parsed_args));
                 }
 
-                let tool_name = &call.function.name;
-                let args_str = &call.function.arguments;
+                let execution_futs =
+                    prepared_calls
+                        .iter()
+                        .map(|(_call, tool_name, parsed_args)| {
+                            executor.execute(tool_name, parsed_args, &cwd, &self.cancel, emit)
+                        });
 
-                let parsed_args: serde_json::Value = if args_str.trim().is_empty() {
-                    serde_json::Value::Object(serde_json::Map::new())
-                } else {
-                    match serde_json::from_str(args_str) {
-                        Ok(v) => v,
-                        Err(e) => {
-                            let err_msg = format!("Invalid JSON arguments: {e}");
-                            emit(
-                                "vibe:agent:tool-result",
-                                serde_json::json!({
-                                    "id": call.id, "ok": false, "text": err_msg,
-                                }),
-                            );
-                            self.messages.push(ChatMessage {
-                                role: "tool".to_string(),
-                                content: Some(serde_json::Value::String(err_msg)),
-                                name: None,
-                                tool_call_id: Some(call.id.clone()),
-                                tool_calls: None,
-                                reasoning_content: None,
-                            });
-                            continue;
-                        }
-                    }
-                };
+                let results = futures::future::join_all(execution_futs).await;
 
-                emit(
-                    "vibe:agent:tool-call",
-                    serde_json::json!({"id": call.id, "name": tool_name, "args": parsed_args}),
-                );
+                for ((call, _, _), result) in prepared_calls.into_iter().zip(results) {
+                    let is_ok = result.is_ok();
+                    let result_text = result.unwrap_or_else(|e| e);
 
-                // Snapshot files before write/edit
-                let is_modify = tool_name == "write_file" || tool_name == "edit_file";
-                let snap_path = if is_modify {
-                    parsed_args.get("path").and_then(|v| v.as_str()).map(|p| {
-                        if std::path::Path::new(p).is_absolute() {
-                            p.to_string()
-                        } else {
-                            std::path::Path::new(&cwd)
-                                .join(p)
-                                .to_string_lossy()
-                                .to_string()
-                        }
-                    })
-                } else {
-                    None
-                };
-                let snapshot = snap_path.as_ref().and_then(|p| take_file_snapshot(p));
-
-                // Confirmation for sensitive tools
-                if executor.requires_confirmation(tool_name)
-                    && !self.always_allow().contains(&format!("{tool_name}:all"))
-                {
-                    let (tx, rx) = oneshot::channel();
-                    confirm_senders.insert(call.id.clone(), tx);
                     emit(
-                        "vibe:agent:confirm-request",
+                        "vibe:agent:tool-result",
                         serde_json::json!({
-                            "id": call.id, "toolName": tool_name, "args": parsed_args,
+                            "id": call.id, "ok": is_ok, "text": result_text,
                         }),
                     );
-                    let response = rx.await.unwrap_or_default();
-                    if !response.starts_with("y")
-                        && response != "1"
-                        && response != "always"
-                        && response != "aa"
-                    {
-                        emit(
-                            "vibe:agent:tool-denied",
-                            serde_json::json!({
-                                "id": call.id, "name": tool_name,
-                            }),
-                        );
-                        self.messages.push(ChatMessage {
-                            role: "tool".to_string(),
-                            content: Some(serde_json::Value::String(
-                                "[Tool execution denied by user]".to_string(),
-                            )),
-                            name: None,
-                            tool_call_id: Some(call.id.clone()),
-                            tool_calls: None,
-                            reasoning_content: None,
-                        });
-                        continue;
-                    }
-                    if response == "always" || response == "aa" {
-                        self.always_allow_mut().insert(format!("{tool_name}:all"));
-                    }
-                }
 
-                let result = executor
-                    .execute(tool_name, &parsed_args, &cwd, &self.cancel, emit)
-                    .await;
-                let is_ok = result.is_ok();
-                let result_text = result.unwrap_or_else(|e| e);
-
-                // Store snapshot if file was modified
-                if let Some(snap) = snapshot {
-                    let msg_idx = self.messages.len();
-                    self.file_snapshots.push(crate::snapshot::SnapshotEntry {
-                        message_index: msg_idx,
-                        snapshot: snap,
+                    self.messages.push(ChatMessage {
+                        role: "tool".to_string(),
+                        content: Some(serde_json::Value::String(result_text)),
+                        name: None,
+                        tool_call_id: Some(call.id.clone()),
+                        tool_calls: None,
+                        reasoning_content: None,
                     });
                 }
+            } else {
+                for call in &cleaned_tool_calls {
+                    if self.cancel.load(Ordering::Relaxed) {
+                        break;
+                    }
 
-                emit(
-                    "vibe:agent:tool-result",
-                    serde_json::json!({
-                        "id": call.id, "ok": is_ok, "text": result_text,
-                    }),
-                );
+                    let tool_name = &call.function.name;
+                    let args_str = &call.function.arguments;
 
-                self.messages.push(ChatMessage {
-                    role: "tool".to_string(),
-                    content: Some(serde_json::Value::String(result_text)),
-                    name: None,
-                    tool_call_id: Some(call.id.clone()),
-                    tool_calls: None,
-                    reasoning_content: None,
-                });
+                    let parsed_args: serde_json::Value = if args_str.trim().is_empty() {
+                        serde_json::Value::Object(serde_json::Map::new())
+                    } else {
+                        match serde_json::from_str(args_str) {
+                            Ok(v) => v,
+                            Err(e) => {
+                                let err_msg = format!("Invalid JSON arguments: {e}");
+                                emit(
+                                    "vibe:agent:tool-result",
+                                    serde_json::json!({
+                                        "id": call.id, "ok": false, "text": err_msg,
+                                    }),
+                                );
+                                self.messages.push(ChatMessage {
+                                    role: "tool".to_string(),
+                                    content: Some(serde_json::Value::String(err_msg)),
+                                    name: None,
+                                    tool_call_id: Some(call.id.clone()),
+                                    tool_calls: None,
+                                    reasoning_content: None,
+                                });
+                                continue;
+                            }
+                        }
+                    };
+
+                    emit(
+                        "vibe:agent:tool-call",
+                        serde_json::json!({"id": call.id, "name": tool_name, "args": parsed_args}),
+                    );
+
+                    // Snapshot files before write/edit
+                    let is_modify = tool_name == "write_file" || tool_name == "edit_file";
+                    let snap_path = if is_modify {
+                        parsed_args.get("path").and_then(|v| v.as_str()).map(|p| {
+                            if std::path::Path::new(p).is_absolute() {
+                                p.to_string()
+                            } else {
+                                std::path::Path::new(&cwd)
+                                    .join(p)
+                                    .to_string_lossy()
+                                    .to_string()
+                            }
+                        })
+                    } else {
+                        None
+                    };
+                    let snapshot = snap_path.as_ref().and_then(|p| take_file_snapshot(p));
+
+                    let result = executor
+                        .execute(tool_name, &parsed_args, &cwd, &self.cancel, emit)
+                        .await;
+                    let is_ok = result.is_ok();
+                    let result_text = result.unwrap_or_else(|e| e);
+
+                    // Store snapshot if file was modified
+                    if let Some(snap) = snapshot {
+                        let msg_idx = self.messages.len();
+                        self.file_snapshots.push(crate::snapshot::SnapshotEntry {
+                            message_index: msg_idx,
+                            snapshot: snap,
+                        });
+                    }
+
+                    emit(
+                        "vibe:agent:tool-result",
+                        serde_json::json!({
+                            "id": call.id, "ok": is_ok, "text": result_text,
+                        }),
+                    );
+
+                    self.messages.push(ChatMessage {
+                        role: "tool".to_string(),
+                        content: Some(serde_json::Value::String(result_text)),
+                        name: None,
+                        tool_call_id: Some(call.id.clone()),
+                        tool_calls: None,
+                        reasoning_content: None,
+                    });
+                }
             }
         }
 
