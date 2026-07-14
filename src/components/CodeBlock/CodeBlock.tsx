@@ -111,8 +111,9 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<Monaco>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
-  const codeRef = useRef(code);
-  codeRef.current = code;
+  const displayCode = code.trimEnd();
+  const codeRef = useRef(displayCode);
+  codeRef.current = displayCode;
 
   const { currentTheme, previewTheme, colorScheme } = useTheme();
   const activeTheme = previewTheme ?? currentTheme;
@@ -127,7 +128,6 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
   const monacoThemeName = `vibe-codeblock-${activeTheme.id}-${resolvedScheme}`;
 
   const monacoLang = SHORT_LANG_TO_MONACO[language.toLowerCase()] ?? language;
-  const displayCode = code.trimEnd();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -155,12 +155,12 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
           horizontal: "hidden",
           handleMouseWheel: false,
         },
-        lineNumbers: "on",
+        lineNumbers: "off",
         folding: false,
-        glyphMargin: true,
-        lineDecorationsWidth: 8,
-        lineNumbersMinChars: 4,
-        padding: { top: 10, bottom: 10 },
+        glyphMargin: false,
+        lineDecorationsWidth: 0,
+        lineNumbersMinChars: 0,
+        padding: { top: 6, bottom: 6 },
         overviewRulerLanes: 0,
         hideCursorInOverviewRuler: true,
       });
@@ -244,7 +244,7 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
     if (model.getValue() !== latestCode) {
       model.setValue(latestCode);
       try {
-        const h = Math.min(ed.getContentHeight(), 600);
+        const h = Math.max(Math.min(ed.getContentHeight(), 600), 20);
         if (containerRef.current) {
           containerRef.current.style.height = `${h}px`;
         }
@@ -253,7 +253,7 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
         // editor might be disposed during rapid streaming
       }
     }
-  }, [code]);
+  }, [displayCode]);
 
   useEffect(() => {
     const m = monacoRef.current;

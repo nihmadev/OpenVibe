@@ -178,12 +178,13 @@ function renderInlineHtml(html: string, noFileIcons?: boolean): React.ReactNode[
 
 function AccentCodeBlock({ code }: { code: string }): React.ReactElement {
   const [copied, setCopied] = useState(false);
+  const displayCode = code.trimEnd();
   const handleCopy = () => {
-    navigator.clipboard.writeText(code);
+    navigator.clipboard.writeText(displayCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-  const escaped = escapeHtmlCode(code);
+  const escaped = escapeHtmlCode(displayCode);
   return (
     <div className="code-block">
       <Tooltip text="Copy">
