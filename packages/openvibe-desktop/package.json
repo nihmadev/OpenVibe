@@ -6,7 +6,7 @@
   "author": "mt-studio <lolz@nihmadev.fun>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nihmadev/OpenVibe"
+    "url": "git+https://github.com/nihmadev/OpenVibe.git"
   },
   "type": "module",
   "bin": {

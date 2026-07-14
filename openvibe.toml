@@ -5,6 +5,6 @@ args = [
     "-y",
     "@coding-solo/godot-mcp",
 ]
-enabled = true
+enabled = false
 
 [mcp.servers.env]
