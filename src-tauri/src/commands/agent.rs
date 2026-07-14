@@ -60,6 +60,13 @@ pub async fn agent_send(
         let _ = app_handle.emit(event, data);
     };
 
+    // Refresh dynamic SCG2 context before agent send
+    let cwd_path = std::path::Path::new(&agent.config().cwd);
+    let scg2_context = state.scg2_engine.get_smart_context(cwd_path, Some(&input));
+    if !scg2_context.trim().is_empty() {
+        agent.update_system_prompt(Some(&scg2_context));
+    }
+
     agent.send(input, content_parts, &executor, &state.http_client, &emit).await;
 
     // Clean up cancel token now that send is done
