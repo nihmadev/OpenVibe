@@ -29,12 +29,6 @@ export type VibeEvent =
   | { kind: "error"; text: string }
   | { kind: "done" };
 
-export interface ConfirmPayload {
-  id: string;
-  toolName: string;
-  args: unknown;
-}
-
 export interface FsEntry {
   name: string;
   path: string;
@@ -140,7 +134,6 @@ export interface VibeApi {
   revertUndo: () => Promise<void>;
   reset: () => Promise<void>;
   stop: () => Promise<void>;
-  decide: (id: string, decision: "yes" | "no" | "always") => Promise<void>;
   pickWorkspace: () => Promise<string | null>;
   window: {
     minimize: () => Promise<void>;
@@ -153,10 +146,12 @@ export interface VibeApi {
   };
 
   editor: {
-    preloadTypes: (
-      cwd: string,
-    ) => Promise<
-      | { ok: true; types: Array<{ path: string; content: string }>; packages: Array<{ name: string; typePath: string; content: string }> }
+    preloadTypes: (cwd: string) => Promise<
+      | {
+          ok: true;
+          types: Array<{ path: string; content: string }>;
+          packages: Array<{ name: string; typePath: string; content: string }>;
+        }
       | { ok: false; error: string }
     >;
   };
@@ -232,10 +227,7 @@ export interface VibeApi {
       include?: string,
       exclude?: string,
       maxFiles?: number,
-    ) => Promise<
-      | { ok: true; files: FileGroupEntry[]; totalMatches: number }
-      | { ok: false; error: string }
-    >;
+    ) => Promise<{ ok: true; files: FileGroupEntry[]; totalMatches: number } | { ok: false; error: string }>;
     searchContentFileMatches: (
       root: string,
       query: string,
@@ -247,10 +239,7 @@ export interface VibeApi {
       filePath: string,
       offset: number,
       limit: number,
-    ) => Promise<
-      | { ok: true; total: number; matches: ContentMatch[] }
-      | { ok: false; error: string }
-    >;
+    ) => Promise<{ ok: true; total: number; matches: ContentMatch[] } | { ok: false; error: string }>;
     projectInfo: (dir: string) => Promise<{ ok: true; name: string | null; version: string | null } | { ok: false }>;
   };
   whisper: {
@@ -261,7 +250,6 @@ export interface VibeApi {
   };
   onEvent: (cb: (e: VibeEvent) => void) => () => void;
   onBusy: (cb: (busy: boolean) => void) => () => void;
-  onConfirm: (cb: (p: ConfirmPayload) => void) => () => void;
   onChatsUpdated: (cb: () => void) => () => void;
   onFsChanged: (cb: () => void) => () => void;
   term: {
@@ -274,10 +262,7 @@ export interface VibeApi {
   };
 }
 
-export type McpStatus =
-  | { type: "running" }
-  | { type: "stopped" }
-  | { type: "error"; message: string };
+export type McpStatus = { type: "running" } | { type: "stopped" } | { type: "error"; message: string };
 
 export interface McpServerStatus {
   name: string;
@@ -303,4 +288,3 @@ declare global {
     vibe: VibeApi;
   }
 }
-

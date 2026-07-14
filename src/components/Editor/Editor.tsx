@@ -55,39 +55,39 @@ async function loadTypeDefinitions(m: typeof monaco, cwd: string) {
 
   // Load type data from backend once per cwd
   if (!TYPES_LOADING_PROMISES.has(cwd)) {
-    TYPES_LOADING_PROMISES.set(cwd, (async () => {
-      try {
-        const res = await window.vibe.editor.preloadTypes(cwd);
+    TYPES_LOADING_PROMISES.set(
+      cwd,
+      (async () => {
+        try {
+          const res = await window.vibe.editor.preloadTypes(cwd);
 
-        const packagePaths: Record<string, string[]> = {};
-        if (res.ok && res.packages) {
-          for (const pkg of res.packages) {
-            const typeFilePath = pkg.typePath.replace(/\\/g, "/");
-            if (typeFilePath.startsWith(baseUrl)) {
-              packagePaths[pkg.name] = ["./" + typeFilePath.slice(baseUrl.length)];
+          const packagePaths: Record<string, string[]> = {};
+          if (res.ok && res.packages) {
+            for (const pkg of res.packages) {
+              const typeFilePath = pkg.typePath.replace(/\\/g, "/");
+              if (typeFilePath.startsWith(baseUrl)) {
+                packagePaths[pkg.name] = ["./" + typeFilePath.slice(baseUrl.length)];
+              }
             }
           }
-        }
-        PACKAGE_PATHS_CACHE.set(cwd, packagePaths);
+          PACKAGE_PATHS_CACHE.set(cwd, packagePaths);
 
-        if (res.ok) {
-          for (const tf of res.types) {
-            try {
-              m.typescript.typescriptDefaults.addExtraLib(
-                tf.content,
-                tf.path.replace(/\\/g, "/"),
-              );
-            } catch (e) {
-              /* ignore per-file errors */
+          if (res.ok) {
+            for (const tf of res.types) {
+              try {
+                m.typescript.typescriptDefaults.addExtraLib(tf.content, tf.path.replace(/\\/g, "/"));
+              } catch (e) {
+                /* ignore per-file errors */
+              }
             }
           }
+        } catch (e) {
+          console.error("Failed to load type definitions:", e);
+          TYPES_LOADING_PROMISES.delete(cwd);
+          PACKAGE_PATHS_CACHE.delete(cwd);
         }
-      } catch (e) {
-        console.error("Failed to load type definitions:", e);
-        TYPES_LOADING_PROMISES.delete(cwd);
-        PACKAGE_PATHS_CACHE.delete(cwd);
-      }
-    })());
+      })(),
+    );
   }
 
   await TYPES_LOADING_PROMISES.get(cwd);
@@ -97,7 +97,7 @@ async function loadTypeDefinitions(m: typeof monaco, cwd: string) {
   m.typescript.typescriptDefaults.setCompilerOptions({
     target: m.typescript.ScriptTarget.ESNext,
     allowNonTsExtensions: true,
-    moduleResolution: 100 as any, /* ModuleResolutionKind.Bundler */
+    moduleResolution: 100 as any /* ModuleResolutionKind.Bundler */,
     module: m.typescript.ModuleKind.ESNext,
     noEmit: true,
     typeRoots: [baseUrl + "node_modules/@types"],
@@ -135,32 +135,34 @@ const LOCAL_IMPORT_RE = /(?:from|import|require|export\s+\*)\s*\(?\s*['"](\.\.?\
 async function preloadLocalImports(m: typeof monaco, content: string, currentPath: string) {
   const matches = [...content.matchAll(LOCAL_IMPORT_RE)];
 
-  await Promise.all(matches.map(async (match) => {
-    const relPath = match[1];
-    const absolutePath = resolveRelativePath(currentPath, relPath);
+  await Promise.all(
+    matches.map(async (match) => {
+      const relPath = match[1];
+      const absolutePath = resolveRelativePath(currentPath, relPath);
 
-    // Strip existing extension so .js imports resolve to .ts/.tsx source files
-    const lastSlash = absolutePath.lastIndexOf("/");
-    const lastDot = absolutePath.lastIndexOf(".");
-    const basePath = lastDot > lastSlash ? absolutePath.slice(0, lastDot) : absolutePath;
+      // Strip existing extension so .js imports resolve to .ts/.tsx source files
+      const lastSlash = absolutePath.lastIndexOf("/");
+      const lastDot = absolutePath.lastIndexOf(".");
+      const basePath = lastDot > lastSlash ? absolutePath.slice(0, lastDot) : absolutePath;
 
-    const extensions = ["", ".tsx", ".ts", ".js", ".jsx", "/index.tsx", "/index.ts", "/index.js"];
-    for (const ext of extensions) {
-      const targetPath = basePath + ext;
-      const uri = m.Uri.file(targetPath.replace(/\\/g, "/"));
-      if (m.editor.getModel(uri)) return;
-      const res = await window.vibe.fs.read(targetPath);
-      if (res.ok) {
-        try {
-          const model = m.editor.createModel(res.content, getLanguage(targetPath), uri);
-          MODEL_CACHE.set(targetPath, { model, originalContent: res.content });
-        } catch (e) {
-          /* model might have been created in parallel */
+      const extensions = ["", ".tsx", ".ts", ".js", ".jsx", "/index.tsx", "/index.ts", "/index.js"];
+      for (const ext of extensions) {
+        const targetPath = basePath + ext;
+        const uri = m.Uri.file(targetPath.replace(/\\/g, "/"));
+        if (m.editor.getModel(uri)) return;
+        const res = await window.vibe.fs.read(targetPath);
+        if (res.ok) {
+          try {
+            const model = m.editor.createModel(res.content, getLanguage(targetPath), uri);
+            MODEL_CACHE.set(targetPath, { model, originalContent: res.content });
+          } catch (e) {
+            /* model might have been created in parallel */
+          }
+          return;
         }
-        return;
       }
-    }
-  }));
+    }),
+  );
 }
 
 // Model cache to prevent "white text" and enable instant switching

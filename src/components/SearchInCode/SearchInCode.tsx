@@ -1,5 +1,20 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { ChevronRightIcon, RefreshIcon, CollapseAllIcon, FileIcon, FolderIcon, Loader2Icon, MatchCaseIcon, WholeWordIcon, RegexIcon, PreserveCaseIcon, ReplaceAllIcon, ThreeDotIcon, ClearIcon, TreeViewIcon } from "../icons/index.js";
+import {
+  ChevronRightIcon,
+  RefreshIcon,
+  CollapseAllIcon,
+  FileIcon,
+  FolderIcon,
+  Loader2Icon,
+  MatchCaseIcon,
+  WholeWordIcon,
+  RegexIcon,
+  PreserveCaseIcon,
+  ReplaceAllIcon,
+  ThreeDotIcon,
+  ClearIcon,
+  TreeViewIcon,
+} from "../icons/index.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
 import { useTranslate } from "../../hooks/useI18n.js";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -961,17 +976,7 @@ export function SearchInCode({ cwd, onOpenFile, onClose }: SearchInCodeProps): R
         return;
       }
     },
-    [
-      flatRows,
-      selectedIndex,
-      viewAsTree,
-      fileEntries,
-      collapsedFiles,
-      fileMatchesMap,
-      toggleFile,
-      onOpenFile,
-      onClose,
-    ],
+    [flatRows, selectedIndex, viewAsTree, fileEntries, collapsedFiles, fileMatchesMap, toggleFile, onOpenFile, onClose],
   );
 
   // Auto-scroll virtualizer to selected item (only on keyboard nav)
@@ -996,49 +1001,68 @@ export function SearchInCode({ cwd, onOpenFile, onClose }: SearchInCodeProps): R
   // ── Custom event listeners for global search shortcuts ──
 
   useEffect(() => {
-    function handler() { setMatchCase((v) => !v); requery(); }
+    function handler() {
+      setMatchCase((v) => !v);
+      requery();
+    }
     window.addEventListener("vibe:search-toggle-match-case", handler);
     return () => window.removeEventListener("vibe:search-toggle-match-case", handler);
   }, [requery]);
 
   useEffect(() => {
-    function handler() { setMatchWholeWord((v) => !v); requery(); }
+    function handler() {
+      setMatchWholeWord((v) => !v);
+      requery();
+    }
     window.addEventListener("vibe:search-toggle-whole-word", handler);
     return () => window.removeEventListener("vibe:search-toggle-whole-word", handler);
   }, [requery]);
 
   useEffect(() => {
-    function handler() { setUseRegex((v) => !v); scheduleSearch(query); }
+    function handler() {
+      setUseRegex((v) => !v);
+      scheduleSearch(query);
+    }
     window.addEventListener("vibe:search-toggle-regex", handler);
     return () => window.removeEventListener("vibe:search-toggle-regex", handler);
   }, [query, scheduleSearch]);
 
   useEffect(() => {
-    function handler() { setReplaceOpen((v) => !v); }
+    function handler() {
+      setReplaceOpen((v) => !v);
+    }
     window.addEventListener("vibe:search-toggle-replace", handler);
     return () => window.removeEventListener("vibe:search-toggle-replace", handler);
   }, []);
 
   useEffect(() => {
-    function handler() { setShowFilters((v) => !v); }
+    function handler() {
+      setShowFilters((v) => !v);
+    }
     window.addEventListener("vibe:search-toggle-filters", handler);
     return () => window.removeEventListener("vibe:search-toggle-filters", handler);
   }, []);
 
   useEffect(() => {
-    function handler() { setViewAsTree((v) => !v); }
+    function handler() {
+      setViewAsTree((v) => !v);
+    }
     window.addEventListener("vibe:search-toggle-tree", handler);
     return () => window.removeEventListener("vibe:search-toggle-tree", handler);
   }, []);
 
   useEffect(() => {
-    function handler() { handleRefresh(); }
+    function handler() {
+      handleRefresh();
+    }
     window.addEventListener("vibe:search-refresh", handler);
     return () => window.removeEventListener("vibe:search-refresh", handler);
   }, [handleRefresh]);
 
   useEffect(() => {
-    function handler() { handleClear(); }
+    function handler() {
+      handleClear();
+    }
     window.addEventListener("vibe:search-clear", handler);
     return () => window.removeEventListener("vibe:search-clear", handler);
   }, [handleClear]);
@@ -1097,7 +1121,10 @@ export function SearchInCode({ cwd, onOpenFile, onClose }: SearchInCodeProps): R
               key={`match-${m.path}:${m.line}`}
               className="sc-match-row"
               style={{ paddingLeft: 8 + (depth + 1) * 10 + 14 }}
-              onClick={() => { onOpenFile(m.path, m.line, m.column, committedQueryRef.current.query.length); onClose(); }}
+              onClick={() => {
+                onOpenFile(m.path, m.line, m.column, committedQueryRef.current.query.length);
+                onClose();
+              }}
             >
               {guidePositions.map((pos, i) => (
                 <span key={i} className="sc-guide-line" style={{ left: pos }} />
@@ -1139,7 +1166,13 @@ export function SearchInCode({ cwd, onOpenFile, onClose }: SearchInCodeProps): R
     }) => {
       const { query: cq, matchCase: cmc } = committedQueryRef.current;
       return (
-        <div className={`sc-match-row${isLastMatch ? " sc-match-row--last" : ""}${isSelected ? " sc-match-row--selected" : ""}`} onClick={() => { onOpenFile(m.path, m.line, m.column, cq.length); onClose(); }}>
+        <div
+          className={`sc-match-row${isLastMatch ? " sc-match-row--last" : ""}${isSelected ? " sc-match-row--selected" : ""}`}
+          onClick={() => {
+            onOpenFile(m.path, m.line, m.column, cq.length);
+            onClose();
+          }}
+        >
           <span className="sc-match-content">{getCachedHighlight(m.content, lang, cq, cmc)}</span>
         </div>
       );
@@ -1386,7 +1419,13 @@ export function SearchInCode({ cwd, onOpenFile, onClose }: SearchInCodeProps): R
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
                   >
-                    <div                     className={"sc-file-header" + (virtualRow.index === selectedIndex ? " sc-file-header--selected" : "")} onClick={() => toggleFile(entry.path)} onMouseEnter={() => setSelectedIndex(virtualRow.index)}>
+                    <div
+                      className={
+                        "sc-file-header" + (virtualRow.index === selectedIndex ? " sc-file-header--selected" : "")
+                      }
+                      onClick={() => toggleFile(entry.path)}
+                      onMouseEnter={() => setSelectedIndex(virtualRow.index)}
+                    >
                       <span className="sc-chev">
                         <ChevronRightIcon open={!collapsed} />
                       </span>
@@ -1427,7 +1466,10 @@ export function SearchInCode({ cwd, onOpenFile, onClose }: SearchInCodeProps): R
                 return (
                   <div
                     key={row.key}
-                    className={"sc-match-row sc-match-row--last" + (virtualRow.index === selectedIndex ? " sc-match-row--selected" : "")}
+                    className={
+                      "sc-match-row sc-match-row--last" +
+                      (virtualRow.index === selectedIndex ? " sc-match-row--selected" : "")
+                    }
                     style={{
                       position: "absolute",
                       top: 0,
@@ -1464,7 +1506,14 @@ export function SearchInCode({ cwd, onOpenFile, onClose }: SearchInCodeProps): R
                   onMouseEnter={() => setSelectedIndex(virtualRow.index)}
                 >
                   {row.matchIndex < 200 ? (
-                    <MatchRowMemo m={m} lang={lang} isLastMatch={isLastMatch} isSelected={isSelected} onOpenFile={onOpenFile} onClose={onClose} />
+                    <MatchRowMemo
+                      m={m}
+                      lang={lang}
+                      isLastMatch={isLastMatch}
+                      isSelected={isSelected}
+                      onOpenFile={onOpenFile}
+                      onClose={onClose}
+                    />
                   ) : null}
                 </div>
               );

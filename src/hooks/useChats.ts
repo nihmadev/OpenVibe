@@ -60,6 +60,18 @@ export function useChats() {
   const handlePickChat = useCallback(
     async (id: string, onChatChange: (record: ChatRecord | null) => void) => {
       if (id === activeChatRef.current) return;
+
+      // If the current active chat is not in the list (i.e. it's an empty new chat
+      // that was never persisted with real messages), delete it from the DB so it
+      // doesn't appear as a ghost "New Chat" entry in the session list.
+      const prevId = activeChatRef.current;
+      if (prevId) {
+        const prevInList = chatsRef.current.find((c) => c.id === prevId);
+        if (!prevInList) {
+          window.vibe.chats.delete(prevId).catch(() => {});
+        }
+      }
+
       const record = await window.vibe.chats.open(id);
       setActiveChatSynced(id);
       onChatChange(record);

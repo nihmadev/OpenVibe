@@ -32,7 +32,6 @@ import { McpSettingsPanel } from "./McpSettingsPanel.js";
 
 type Tab = "general" | "design" | "providers" | "models" | "hotkeys" | "mcp";
 
-
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -228,8 +227,16 @@ export function Settings({
         const providerId = template?.id ?? p.id;
         const providerName = template?.name ?? p.name;
         const providerIcon = template?.icon ?? "";
-        const customHeaders = p.headers?.filter((h: any) => h.key?.trim()).map((h: any) => [h.key.trim(), h.value.trim()] as [string, string]);
-        const res = await window.vibe.models.fetch(p.baseUrl, p.apiKey, providerId, p.modelsUrl ?? undefined, customHeaders);
+        const customHeaders = p.headers
+          ?.filter((h: any) => h.key?.trim())
+          .map((h: any) => [h.key.trim(), h.value.trim()] as [string, string]);
+        const res = await window.vibe.models.fetch(
+          p.baseUrl,
+          p.apiKey,
+          providerId,
+          p.modelsUrl ?? undefined,
+          customHeaders,
+        );
         if (!res.ok) {
           console.error("Failed to fetch models for", providerName, res.error);
           return;
@@ -429,9 +436,7 @@ export function Settings({
               </svg>,
             )}
             {renderSidebarItem("mcp", t("mcpServers"), <Server size={14} />)}
-
           </div>
-
 
           <div className="settings__sidebar-footer">
             <div className="settings__app-info">
@@ -738,13 +743,7 @@ export function Settings({
                         <div className="settings__control-label">{t("animMultiplier")}</div>
                         <div className="settings__control-desc">{t("animMultiplierDesc")}</div>
                       </div>
-                      <NumberInput
-                        value={animMultiplier}
-                        step={0.1}
-                        min={0}
-                        max={5}
-                        onChange={setAnimMultiplier}
-                      />
+                      <NumberInput value={animMultiplier} step={0.1} min={0} max={5} onChange={setAnimMultiplier} />
                     </div>
                   </div>
                 </div>
@@ -762,11 +761,7 @@ export function Settings({
                           <div key={p.id} className="settings__provider-row">
                             <div className="settings__provider-info">
                               {hasCustomIcon ? (
-                                <img
-                                  src={p.customIcon!}
-                                  className="settings__provider-icon"
-                                  alt=""
-                                />
+                                <img src={p.customIcon!} className="settings__provider-icon" alt="" />
                               ) : template ? (
                                 <img
                                   src={getProviderIconPath(template.icon, resolvedScheme === "light")}
@@ -972,16 +967,13 @@ export function Settings({
                         })}
                       </div>
                     );
-                  })())}
+                  })()
+                )}
               </div>
             ) : activeTab === "mcp" ? (
-
-
-
               <McpSettingsPanel />
             ) : (
               <div className="settings__section">
-
                 {!shortcuts || shortcuts.length === 0 ? (
                   <div className="settings__models-empty">
                     <p>{t("noHotkeys")}</p>
@@ -989,7 +981,15 @@ export function Settings({
                 ) : (
                   <div className="settings__hotkeys-list">
                     {(() => {
-                      const categoryOrder: ShortcutCategory[] = ["navigation", "search", "chat", "workspace", "terminal", "project", "editor"];
+                      const categoryOrder: ShortcutCategory[] = [
+                        "navigation",
+                        "search",
+                        "chat",
+                        "workspace",
+                        "terminal",
+                        "project",
+                        "editor",
+                      ];
                       const grouped: Record<string, ShortcutDef[]> = {};
                       for (const h of shortcuts) {
                         if (!grouped[h.category]) grouped[h.category] = [];
@@ -1000,9 +1000,7 @@ export function Settings({
                         if (!items || items.length === 0) return null;
                         return (
                           <div key={cat} className="settings__hotkeys-section">
-                            <div className="settings__hotkeys-section-header">
-                              {t(cat)}
-                            </div>
+                            <div className="settings__hotkeys-section-header">{t(cat)}</div>
                             {items.map((h) => {
                               const isRecording = recordingId === h.id;
                               return (
@@ -1011,7 +1009,9 @@ export function Settings({
                                     <div className="settings__control-label">{h.label}</div>
                                   </div>
                                   <button
-                                    className={"settings__hotkey-btn" + (isRecording ? " settings__hotkey-btn--recording" : "")}
+                                    className={
+                                      "settings__hotkey-btn" + (isRecording ? " settings__hotkey-btn--recording" : "")
+                                    }
                                     onClick={() => {
                                       if (isRecording) return;
                                       setRecordingId(h.id);
@@ -1048,7 +1048,10 @@ export function Settings({
           editProvider={editing.editId ? providers.find((p) => p.id === editing.editId) : null}
           onConnect={async (formData) => {
             const serializePairs = (pairs: { key: string; value: string }[]) =>
-              pairs.filter((p) => p.key.trim()).map((p) => `${p.key.trim()}:${p.value.trim()}`).join("\n");
+              pairs
+                .filter((p) => p.key.trim())
+                .map((p) => `${p.key.trim()}:${p.value.trim()}`)
+                .join("\n");
 
             if (editing.editId) {
               const updated = providers.map((p) =>

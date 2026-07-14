@@ -25,8 +25,12 @@ export interface AnimationSettings {
 export type AnimKey = keyof AnimationSettings;
 
 const ANIM_STYLE_KEYS: (keyof AnimationSettings)[] = [
-  "projectHover", "projectSwitch", "sidebarSlide",
-  "contextMenu", "buttons", "panelAppear",
+  "projectHover",
+  "projectSwitch",
+  "sidebarSlide",
+  "contextMenu",
+  "buttons",
+  "panelAppear",
 ];
 
 const DEFAULTS: AnimationSettings = {
@@ -141,7 +145,7 @@ export function AnimationProvider({ children }: { children: React.ReactNode }) {
           if (mult) {
             const parsed = parseFloat(mult as string);
             if (!isNaN(parsed) && parsed >= 0) {
-              next.animMultiplier = (parsed).toString();
+              next.animMultiplier = parsed.toString();
             }
           }
           applyAnimVars(next);

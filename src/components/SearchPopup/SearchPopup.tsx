@@ -93,9 +93,7 @@ export function SearchPopup({
   }, [onClose]);
 
   const showingResults = query.trim().length > 0;
-  const totalItems = showingResults
-    ? commandMatches.length + matches.length
-    : actions.length;
+  const totalItems = showingResults ? commandMatches.length + matches.length : actions.length;
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -128,7 +126,18 @@ export function SearchPopup({
         }
       }
     },
-    [commandMatches, matches, actions, selectedIdx, totalItems, showingResults, onClose, onOpenFile, onRevealFolder, onCommand],
+    [
+      commandMatches,
+      matches,
+      actions,
+      selectedIdx,
+      totalItems,
+      showingResults,
+      onClose,
+      onOpenFile,
+      onRevealFolder,
+      onCommand,
+    ],
   );
 
   return (
@@ -170,17 +179,14 @@ export function SearchPopup({
                   {cmd.shortcut && <span className="search-popup__cmd-kbd">{cmd.shortcut}</span>}
                 </div>
               ))}
-              {commandMatches.length > 0 && matches.length > 0 && (
-                <div className="search-popup__separator" />
-              )}
+              {commandMatches.length > 0 && matches.length > 0 && <div className="search-popup__separator" />}
               {matches.map((m, i) => {
                 const idx = commandMatches.length + i;
                 return (
                   <div
                     key={m.path}
                     className={
-                      "search-popup__result-item" +
-                      (idx === selectedIdx ? " search-popup__result-item--active" : "")
+                      "search-popup__result-item" + (idx === selectedIdx ? " search-popup__result-item--active" : "")
                     }
                     onMouseEnter={() => setSelectedIdx(idx)}
                     onClick={() => {
@@ -210,8 +216,7 @@ export function SearchPopup({
                 <div
                   key={a.id}
                   className={
-                    "search-popup__action-row" +
-                    (i === selectedIdx ? " search-popup__action-row--active" : "")
+                    "search-popup__action-row" + (i === selectedIdx ? " search-popup__action-row--active" : "")
                   }
                   onMouseEnter={() => setSelectedIdx(i)}
                   onClick={() => {

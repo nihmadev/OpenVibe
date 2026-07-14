@@ -26,7 +26,12 @@ function getDropHeight(optionCount: number) {
 function clampDropdown(triggerRect: DOMRect, dropUp: boolean, dropHeight: number) {
   const containerRect = getContainerRect();
   if (!containerRect) {
-    return { left: triggerRect.left, width: triggerRect.width, top: triggerRect.bottom, bottom: window.innerHeight - triggerRect.top };
+    return {
+      left: triggerRect.left,
+      width: triggerRect.width,
+      top: triggerRect.bottom,
+      bottom: window.innerHeight - triggerRect.top,
+    };
   }
 
   const left = Math.max(triggerRect.left, containerRect.left + 4);
@@ -137,9 +142,7 @@ export function Select({ value, options, onChange, onHover }: SelectProps) {
               position: "fixed",
               left: pos.left,
               width: pos.width,
-              ...(dropUp
-                ? { bottom: pos.bottom, top: "auto" }
-                : { top: pos.top, bottom: "auto" }),
+              ...(dropUp ? { bottom: pos.bottom, top: "auto" } : { top: pos.top, bottom: "auto" }),
               borderRadius: dropUp ? "var(--radius-md) var(--radius-md) 0 0" : "0 0 var(--radius-md) var(--radius-md)",
               borderTop: dropUp ? undefined : 0,
               borderBottom: dropUp ? 0 : undefined,

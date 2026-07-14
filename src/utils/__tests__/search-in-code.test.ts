@@ -163,18 +163,14 @@ describe("syntaxHighlightLine", () => {
   it("highlights cyrillic query", () => {
     const nodes = syntaxHighlightLine("Привет, мир!", "", "мир", false);
     const marks = nodes.filter((n: any) =>
-      n.props?.children?.some?.((c: any) =>
-        c.props?.className === "sc-match-highlight"
-      )
+      n.props?.children?.some?.((c: any) => c.props?.className === "sc-match-highlight"),
     );
     expect(marks.length).toBeGreaterThan(0);
   });
 
   it("respects case sensitivity", () => {
     const nodes = syntaxHighlightLine("Foo foo FOO", "", "foo", true);
-    const spans = nodes.flatMap((n: any) =>
-      n.props?.children ?? []
-    );
+    const spans = nodes.flatMap((n: any) => n.props?.children ?? []);
     const marks = spans.filter((s: any) => s.props?.className === "sc-match-highlight");
     expect(marks.length).toBe(1);
   });
@@ -196,9 +192,7 @@ describe("syntaxHighlightLine", () => {
 
   it("handles dollar sign in query", () => {
     const nodes = syntaxHighlightLine("const $el = 1;", "", "$el", false);
-    const spans = nodes.flatMap((n: any) =>
-      n.props?.children ?? []
-    );
+    const spans = nodes.flatMap((n: any) => n.props?.children ?? []);
     const marks = spans.filter((s: any) => s.props?.className === "sc-match-highlight");
     expect(marks.length).toBeGreaterThan(0);
   });
@@ -322,11 +316,7 @@ describe("filterResults", () => {
   });
 
   it("filters by whole word", () => {
-    const m = [
-      makeMatch("a.ts", "the cat"),
-      makeMatch("b.ts", "caterpillar"),
-      makeMatch("c.ts", "cat"),
-    ];
+    const m = [makeMatch("a.ts", "the cat"), makeMatch("b.ts", "caterpillar"), makeMatch("c.ts", "cat")];
     const result = filterResults(m, "cat", false, true, false, "", "");
     expect(result).toHaveLength(2); // "the cat" and "cat" but not "caterpillar"
     expect(result[0].rel).toBe("a.ts");
@@ -334,12 +324,7 @@ describe("filterResults", () => {
   });
 
   it("filters by regex", () => {
-    const m = [
-      makeMatch("a.ts", "cat"),
-      makeMatch("b.ts", "cot"),
-      makeMatch("c.ts", "cut"),
-      makeMatch("d.ts", "dog"),
-    ];
+    const m = [makeMatch("a.ts", "cat"), makeMatch("b.ts", "cot"), makeMatch("c.ts", "cut"), makeMatch("d.ts", "dog")];
     const result = filterResults(m, "c[ou]t", false, false, true, "", "");
     expect(result).toHaveLength(2);
   });
@@ -435,9 +420,7 @@ describe("buildTree", () => {
   });
 
   it("builds nested tree", () => {
-    const groups = [
-      { path: "/root/a/b/c/d.ts", rel: "a/b/c/d.ts", name: "d.ts", matches: [] },
-    ];
+    const groups = [{ path: "/root/a/b/c/d.ts", rel: "a/b/c/d.ts", name: "d.ts", matches: [] }];
     const tree = buildTree(groups);
     expect(tree).toHaveLength(1);
     expect(tree[0].name).toBe("a");
@@ -486,10 +469,14 @@ describe("sortNodes", () => {
   it("recursively sorts children", () => {
     const nodes = sortNodes([
       {
-        name: "src", path: "src", isDir: true, children: [
+        name: "src",
+        path: "src",
+        isDir: true,
+        children: [
           { name: "z.ts", path: "src/z.ts", isDir: false, children: [], matches: [] },
           { name: "a.ts", path: "src/a.ts", isDir: false, children: [], matches: [] },
-        ], matches: [],
+        ],
+        matches: [],
       },
     ]);
     expect(nodes[0].children[0].name).toBe("a.ts");

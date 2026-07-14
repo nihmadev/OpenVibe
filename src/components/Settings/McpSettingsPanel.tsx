@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { McpConfig, McpServerConfig, McpServerStatus } from "../../types.js";
-import {
-  mcpGetConfig,
-  mcpSaveConfig,
-  mcpGetServers,
-  mcpStartServer,
-  mcpStopServer,
-} from "../../tauri-bridge.js";
+import { mcpGetConfig, mcpSaveConfig, mcpGetServers, mcpStartServer, mcpStopServer } from "../../tauri-bridge.js";
 import { Server, Plus, Edit2, Trash2, Sliders, FileCode2, Download, Upload, Check, AlertCircle } from "lucide-react";
 
 import { useTranslate } from "../../hooks/useI18n.js";
@@ -230,13 +224,13 @@ export function McpSettingsPanel(): React.ReactElement {
     reader.readAsText(file);
   };
 
-  const getServerStatusBadge = (name: string) => {
+  const getStatusDotClass = (name: string) => {
     const st = statuses.find((s) => s.name === name);
-    if (!st || !st.enabled) return <span className="mcp-badge mcp-badge--disabled">{t("mcpDisabled")}</span>;
+    if (!st || !st.enabled) return "mcp-dot--gray";
     const statusType = typeof st.status === "string" ? st.status : st.status.type;
-    if (statusType === "running") return <span className="mcp-badge mcp-badge--running">{t("mcpRunning")}</span>;
-    if (statusType === "stopped") return <span className="mcp-badge mcp-badge--stopped">{t("mcpStopped")}</span>;
-    return <span className="mcp-badge mcp-badge--error">{t("mcpErrorStatus")}</span>;
+    if (statusType === "running") return "mcp-dot--green";
+    if (statusType === "stopped") return "mcp-dot--yellow";
+    return "mcp-dot--red";
   };
 
   const currentServers = getServers(config);
@@ -294,7 +288,6 @@ enabled = false`}
             </button>
           </div>
         </div>
-
       ) : (
         <div className="mcp-server-list">
           {currentServers.length === 0 ? (
@@ -305,14 +298,12 @@ enabled = false`}
             </div>
           ) : (
             currentServers.map((server) => {
-
-              const statusObj = statuses.find((s) => s.name === server.name);
               return (
                 <div key={server.name} className="mcp-server-card">
                   <div className="mcp-server-card__header">
                     <div className="mcp-server-card__title">
+                      <span className={`mcp-dot ${getStatusDotClass(server.name)}`} />
                       <h3>{server.name}</h3>
-                      {getServerStatusBadge(server.name)}
                     </div>
                     <div className="mcp-server-card__actions">
                       <button
@@ -337,31 +328,6 @@ enabled = false`}
                         <Trash2 size={14} />
                       </button>
                     </div>
-                  </div>
-
-                  <div className="mcp-server-card__details">
-                    <div className="mcp-detail-row">
-                      <span className="mcp-detail-label">{t("mcpCommandLabel")}</span>
-                      <code className="mcp-detail-code">
-                        {server.command} {(server.args || []).join(" ")}
-                      </code>
-                    </div>
-                    {server.env && Object.keys(server.env).length > 0 && (
-                      <div className="mcp-detail-row">
-                        <span className="mcp-detail-label">{t("mcpEnvLabel")}</span>
-                        <span className="mcp-detail-env">
-                          {Object.keys(server.env)
-                            .map((k) => `${k}=***`)
-                            .join(", ")}
-                        </span>
-                      </div>
-                    )}
-                    {statusObj?.error && (
-                      <div className="mcp-detail-error">
-                        <AlertCircle size={12} />
-                        <span>{statusObj.error}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
               );
@@ -472,7 +438,6 @@ enabled = false`}
                   <span className="mcp-switch__thumb" />
                 </button>
               </div>
-
             </div>
 
             <div className="mcp-modal__footer">
@@ -486,7 +451,6 @@ enabled = false`}
           </div>
         </div>
       )}
-
     </div>
   );
 }

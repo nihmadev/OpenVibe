@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { VibeEvent, ConfirmPayload } from "../types.js";
+import type { VibeEvent } from "../types.js";
 import { localId, playAudio } from "../utils.js";
 import type { HistoryItem } from "../components/chat-history/ChatHistory.js";
 
@@ -42,7 +42,6 @@ function useRafBatching() {
 export function useVibeEvents(onActivity: () => void) {
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [busy, setBusy] = useState(false);
-  const [pending, setPending] = useState<ConfirmPayload | null>(null);
   const [streamingNow, setStreamingNow] = useState<string | null>(null);
   const streamingId = useRef<string | null>(null);
   const pendingAttachments = useRef<HistoryItem["attachments"]>(undefined);
@@ -210,12 +209,10 @@ export function useVibeEvents(onActivity: () => void) {
     });
 
     const offBusy = window.vibe.onBusy(setBusy);
-    const offConfirm = window.vibe.onConfirm(setPending);
 
     return () => {
       offEvent();
       offBusy();
-      offConfirm();
     };
   }, [onActivity, schedule, flush]);
 
@@ -224,8 +221,6 @@ export function useVibeEvents(onActivity: () => void) {
     setItems,
     busy,
     setBusy,
-    pending,
-    setPending,
     streamingNow,
     setStreamingNow,
     pendingAttachments,

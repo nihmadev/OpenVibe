@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open as shellOpen } from "@tauri-apps/plugin-shell";
-import type { VibeEvent, ConfirmPayload, ContentPart, RollbackPreview } from "./types.js";
+import type { VibeEvent, ContentPart, RollbackPreview } from "./types.js";
 
 let activeChatId: string | null = null;
 let currentConfig: {
@@ -17,7 +17,6 @@ let currentConfig: {
 // Callback arrays replacing SessionBus
 const eventListeners: Array<(e: VibeEvent) => void> = [];
 const busyListeners: Array<(b: boolean) => void> = [];
-const confirmListeners: Array<(r: ConfirmPayload) => void> = [];
 
 // Tauri event listener cleanup — prevents message duplication when
 // initVibeBridge() is called more than once (StrictMode, HMR, remounts)
@@ -32,9 +31,6 @@ function emitEvent(e: VibeEvent) {
 }
 function emitBusy(b: boolean) {
   for (const cb of busyListeners) cb(b);
-}
-function emitConfirm(r: ConfirmPayload) {
-  for (const cb of confirmListeners) cb(r);
 }
 
 async function initVibeBridge() {
@@ -53,7 +49,7 @@ async function initVibeBridge() {
   };
 
   // Create Rust agent
-  await invoke("agent_new", { cwd: currentConfig.cwd }).catch(() => {});
+  await invoke("agent_new", { cwd: currentConfig.cwd }).catch(() => { });
 
   // ---- Listen for Rust agent events and translate to VibeEvent ----
   // Clean up any previously registered Tauri listeners to prevent
@@ -75,12 +71,12 @@ async function initVibeBridge() {
             if (current && current.title === "New chat") {
               invoke<string>("agent_summarize").then((title) => {
                 if (title && title !== "New chat") {
-                  invoke("chats_rename", { id: activeChatId, title }).catch(() => {});
+                  invoke("chats_rename", { id: activeChatId, title }).catch(() => { });
                 }
               });
             }
           })
-          .catch(() => {});
+          .catch(() => { });
       }
     }),
   );
@@ -144,15 +140,6 @@ async function initVibeBridge() {
         kind: "tool-denied",
         id: e.payload.id ?? "",
         name: e.payload.name ?? "",
-      });
-    }),
-  );
-  tauriUnlistenFns.push(
-    await listen<any>("vibe:agent:confirm-request", (e) => {
-      emitConfirm({
-        id: e.payload.id ?? "",
-        toolName: e.payload.toolName ?? "",
-        args: e.payload.args ?? {},
       });
     }),
   );
@@ -225,7 +212,7 @@ async function initVibeBridge() {
       const record = await invoke<any>("chats_open", { id: lastChatId });
       if (record && Array.isArray(record.messages)) {
         activeChatId = lastChatId;
-        await invoke("agent_set_messages", { messages: record.messages }).catch(() => {});
+        await invoke("agent_set_messages", { messages: record.messages }).catch(() => { });
         window.dispatchEvent(new CustomEvent("vibe:chat:restored", { detail: record }));
       }
     }
@@ -272,19 +259,15 @@ export const vibe = {
   },
 
   revertUndo: async () => {
-    await invoke("agent_revert_undo").catch(() => {});
+    await invoke("agent_revert_undo").catch(() => { });
   },
 
   reset: async () => {
-    await invoke("agent_reset").catch(() => {});
+    await invoke("agent_reset").catch(() => { });
   },
 
   stop: async () => {
-    await invoke("agent_stop").catch(() => {});
-  },
-
-  decide: async (id: string, decision: "yes" | "no" | "always") => {
-    await invoke("agent_confirm", { id, decision }).catch(() => {});
+    await invoke("agent_stop").catch(() => { });
   },
 
   pickWorkspace: async () => {
@@ -330,8 +313,13 @@ export const vibe = {
   },
 
   models: {
-    fetch: (baseUrl: string, apiKey: string, providerId?: string, modelsUrl?: string, customHeaders?: [string, string][]) =>
-      wrap(() => invoke("models_fetch", { baseUrl, apiKey, providerId, modelsUrl, customHeaders })),
+    fetch: (
+      baseUrl: string,
+      apiKey: string,
+      providerId?: string,
+      modelsUrl?: string,
+      customHeaders?: [string, string][],
+    ) => wrap(() => invoke("models_fetch", { baseUrl, apiKey, providerId, modelsUrl, customHeaders })),
     listDisabled: () => invoke("models_list_disabled"),
     toggleDisabled: (modelId: string) => invoke("models_toggle_disabled", { modelId }),
     listEnabled: () => invoke("models_list_enabled"),
@@ -352,7 +340,7 @@ export const vibe = {
         }
       }
       // Reset agent for fresh conversation
-      await invoke("agent_reset").catch(() => {});
+      await invoke("agent_reset").catch(() => { });
 
       // Create a new chat (reuses current if empty, otherwise allocates new ID)
       const result = await invoke<any>("chats_new");
@@ -365,8 +353,9 @@ export const vibe = {
     open: async (id: string) => {
       if (activeChatId && activeChatId !== id) {
         try {
-          const msgs = await invoke("agent_get_messages");
-          await invoke("chats_save", { id: activeChatId, messages: msgs });
+          const msgs = await invoke<any[]>("agent_get_messages");
+          const toSave = msgs.filter((m: any) => m.role !== "system");
+          await invoke("chats_save", { id: activeChatId, messages: toSave });
         } catch {
           /* ignore */
         }
@@ -377,7 +366,7 @@ export const vibe = {
       localStorage.setItem("openvibe:activeChatId", id);
       // Restore messages into the Rust agent
       if (Array.isArray(record.messages)) {
-        await invoke("agent_set_messages", { messages: record.messages }).catch(() => {});
+        await invoke("agent_set_messages", { messages: record.messages }).catch(() => { });
       }
       return record;
     },
@@ -409,7 +398,11 @@ export const vibe = {
   editor: {
     preloadTypes: (cwd: string) =>
       wrap(
-        () => invoke<{ types: Array<{ path: string; content: string }>; packages: Array<{ name: string; typePath: string; content: string }> }>("editor_preload_types", { cwd }),
+        () =>
+          invoke<{
+            types: Array<{ path: string; content: string }>;
+            packages: Array<{ name: string; typePath: string; content: string }>;
+          }>("editor_preload_types", { cwd }),
         (result) => ({ types: result.types, packages: result.packages }),
       ),
   },
@@ -466,8 +459,18 @@ export const vibe = {
       include?: string,
       exclude?: string,
     ) =>
-      wrap(() =>
-        invoke("fs_search_content", { root, query, maxResults, matchCase, matchWholeWord, useRegex, include, exclude }),
+      wrap(
+        () =>
+          invoke("fs_search_content", {
+            root,
+            query,
+            maxResults,
+            matchCase,
+            matchWholeWord,
+            useRegex,
+            include,
+            exclude,
+          }),
         (matches) => ({ matches }),
       ),
     searchContentFilter: (
@@ -481,8 +484,19 @@ export const vibe = {
       offset: number,
       limit: number,
     ) =>
-      wrap(() =>
-        invoke("fs_search_content_filter", { root, query, matchCase, matchWholeWord, useRegex, include, exclude, offset, limit }),
+      wrap(
+        () =>
+          invoke("fs_search_content_filter", {
+            root,
+            query,
+            matchCase,
+            matchWholeWord,
+            useRegex,
+            include,
+            exclude,
+            offset,
+            limit,
+          }),
         (result) => result,
       ),
     searchContentFiles: (
@@ -495,18 +509,23 @@ export const vibe = {
       exclude?: string,
       maxFiles?: number,
     ) =>
-      wrap(() =>
-        invoke("fs_search_content_files", { root, query, matchCase, matchWholeWord, useRegex, include, exclude, maxFiles }),
+      wrap(
+        () =>
+          invoke("fs_search_content_files", {
+            root,
+            query,
+            matchCase,
+            matchWholeWord,
+            useRegex,
+            include,
+            exclude,
+            maxFiles,
+          }),
         (result: any) => ({ files: result.files, totalMatches: result.totalMatches }),
       ),
-    highlightLines: (
-      lines: string[],
-      fileName: string,
-      query: string,
-      matchCase: boolean,
-    ) =>
-      wrap(() =>
-        invoke("fs_highlight_lines", { lines, fileName, query, matchCase }),
+    highlightLines: (lines: string[], fileName: string, query: string, matchCase: boolean) =>
+      wrap(
+        () => invoke("fs_highlight_lines", { lines, fileName, query, matchCase }),
         (result) => result as { text: string; className: string }[][],
       ),
     searchContentFileMatches: (
@@ -521,8 +540,20 @@ export const vibe = {
       offset: number,
       limit: number,
     ) =>
-      wrap(() =>
-        invoke("fs_search_content_file_matches", { root, query, matchCase, matchWholeWord, useRegex, include, exclude, filePath, offset, limit }),
+      wrap(
+        () =>
+          invoke("fs_search_content_file_matches", {
+            root,
+            query,
+            matchCase,
+            matchWholeWord,
+            useRegex,
+            include,
+            exclude,
+            filePath,
+            offset,
+            limit,
+          }),
         (result: any) => ({ total: result.total, matches: result.matches }),
       ),
     projectInfo: (dir: string) =>
@@ -535,46 +566,47 @@ export const vibe = {
   },
 
   git: {
-    repoInfo: (cwd: string) => wrap(
-      () => invoke("git_repo_info", { path: cwd }),
-      (r) => ({ data: r }),
-    ),
-    status: (cwd: string) => wrap(
-      () => invoke("git_status", { path: cwd }),
-      (r) => ({ data: r }),
-    ),
-    stageFile: (cwd: string, filePath: string) =>
-      wrap(() => invoke("git_stage_file", { path: cwd, filePath })),
-    stageAll: (cwd: string) =>
-      wrap(() => invoke("git_stage_all", { path: cwd })),
-    unstageFile: (cwd: string, filePath: string) =>
-      wrap(() => invoke("git_unstage_file", { path: cwd, filePath })),
-    revertFile: (cwd: string, filePath: string) =>
-      wrap(() => invoke("git_revert_file", { path: cwd, filePath })),
-    commit: (cwd: string, message: string) =>
-      wrap(() => invoke("git_commit", { path: cwd, message })),
-    branches: (cwd: string) => wrap(
-      () => invoke("git_branches", { path: cwd }),
-      (r) => ({ data: r }),
-    ),
-    commits: (cwd: string, maxCount: number) => wrap(
-      () => invoke("git_commits", { path: cwd, maxCount }),
-      (r) => ({ data: r }),
-    ),
-    graph: (cwd: string, maxCount: number) => wrap(
-      () => invoke("git_graph", { path: cwd, maxCount }),
-      (r) => ({ data: r }),
-    ),
-    publishBranch: (cwd: string, branch: string) =>
-      wrap(() => invoke("git_publish_branch", { path: cwd, branch })),
-    currentBranch: (cwd: string) => wrap(
-      () => invoke("git_current_branch", { path: cwd }),
-      (r) => ({ data: r }),
-    ),
-    commitDetails: (cwd: string, oid: string) => wrap(
-      () => invoke("git_commit_details", { path: cwd, oid }),
-      (r) => ({ data: r }),
-    ),
+    repoInfo: (cwd: string) =>
+      wrap(
+        () => invoke("git_repo_info", { path: cwd }),
+        (r) => ({ data: r }),
+      ),
+    status: (cwd: string) =>
+      wrap(
+        () => invoke("git_status", { path: cwd }),
+        (r) => ({ data: r }),
+      ),
+    stageFile: (cwd: string, filePath: string) => wrap(() => invoke("git_stage_file", { path: cwd, filePath })),
+    stageAll: (cwd: string) => wrap(() => invoke("git_stage_all", { path: cwd })),
+    unstageFile: (cwd: string, filePath: string) => wrap(() => invoke("git_unstage_file", { path: cwd, filePath })),
+    revertFile: (cwd: string, filePath: string) => wrap(() => invoke("git_revert_file", { path: cwd, filePath })),
+    commit: (cwd: string, message: string) => wrap(() => invoke("git_commit", { path: cwd, message })),
+    branches: (cwd: string) =>
+      wrap(
+        () => invoke("git_branches", { path: cwd }),
+        (r) => ({ data: r }),
+      ),
+    commits: (cwd: string, maxCount: number) =>
+      wrap(
+        () => invoke("git_commits", { path: cwd, maxCount }),
+        (r) => ({ data: r }),
+      ),
+    graph: (cwd: string, maxCount: number) =>
+      wrap(
+        () => invoke("git_graph", { path: cwd, maxCount }),
+        (r) => ({ data: r }),
+      ),
+    publishBranch: (cwd: string, branch: string) => wrap(() => invoke("git_publish_branch", { path: cwd, branch })),
+    currentBranch: (cwd: string) =>
+      wrap(
+        () => invoke("git_current_branch", { path: cwd }),
+        (r) => ({ data: r }),
+      ),
+    commitDetails: (cwd: string, oid: string) =>
+      wrap(
+        () => invoke("git_commit_details", { path: cwd, oid }),
+        (r) => ({ data: r }),
+      ),
   },
   term: {
     start: (id: string, cols: number, rows: number) => invoke("term_start", { id, cols, rows }),
@@ -609,14 +641,6 @@ export const vibe = {
     };
   },
 
-  onConfirm: (cb: (p: ConfirmPayload) => void) => {
-    confirmListeners.push(cb);
-    return () => {
-      const idx = confirmListeners.indexOf(cb);
-      if (idx !== -1) confirmListeners.splice(idx, 1);
-    };
-  },
-
   onChatsUpdated: (cb: () => void) => {
     const handler = () => cb();
     window.addEventListener("vibe:chats:updated", handler);
@@ -632,7 +656,7 @@ export const vibe = {
 
 // ===== HELPERS =====
 
-function ok<T>(data: T): { ok: true; [key: string]: any } {
+function ok<T>(data: T): { ok: true;[key: string]: any } {
   if (typeof data === "object" && data !== null) {
     return { ok: true, ...(data as any) };
   }
@@ -686,4 +710,3 @@ export async function mcpSaveConfig(config: import("./types.js").McpConfig): Pro
 export async function mcpListTools(serverName: string): Promise<string[]> {
   return invoke("mcp_list_tools", { serverName });
 }
-
