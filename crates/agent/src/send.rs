@@ -161,7 +161,6 @@ impl Agent {
 
             let cb_chunk = {
                 let chunk_buf = chunk_buf.clone();
-                let emit = emit;
                 move |chunk: &str| {
                     if let Ok(mut sb) = chunk_buf.lock() {
                         sb.buf.push_str(chunk);
@@ -181,7 +180,6 @@ impl Agent {
 
             let cb_reasoning = {
                 let reason_buf = reason_buf.clone();
-                let emit = emit;
                 move |chunk: &str| {
                     if let Ok(mut sb) = reason_buf.lock() {
                         sb.buf.push_str(chunk);
@@ -201,7 +199,6 @@ impl Agent {
 
             let cb_reasoning_end = {
                 let reason_buf = reason_buf.clone();
-                let emit = emit;
                 move || {
                     if let Ok(mut sb) = reason_buf.lock() {
                         if !sb.buf.is_empty() {

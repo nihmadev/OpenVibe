@@ -558,11 +558,7 @@ export function VibingLoader({ text }: { text?: string }): React.ReactElement {
 
   return (
     <div className="thinking">
-      {displayWord && (
-        <span className={`thinking__word ${fade === "out" ? "out" : ""}`}>
-          {displayWord}
-        </span>
-      )}
+      {displayWord && <span className={`thinking__word ${fade === "out" ? "out" : ""}`}>{displayWord}</span>}
       <span className="thinking__dots">
         {[0, 1, 2].map((i) => (
           <span key={i} className={`thinking__dot ${dots > i ? "on" : ""}`}>

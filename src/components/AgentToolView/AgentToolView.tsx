@@ -182,8 +182,11 @@ function getToolResultLang(item: HistoryItem): string {
 
 function ListDirBlock({ item }: { item: HistoryItem }) {
   const content = item.text || "";
-  const lines = content.split("\n").map(l => l.trim()).filter(Boolean);
-  
+  const lines = content
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+
   if (lines.length === 0 || (lines.length === 1 && lines[0] === "(empty)")) {
     return <div className="tool__diff-loading">Empty directory.</div>;
   }
@@ -196,7 +199,7 @@ function ListDirBlock({ item }: { item: HistoryItem }) {
         return (
           <div key={i} className="list-dir-row">
             <span className="list-dir-icon">
-               {isDir ? <FolderIcon open={false} name={name} /> : <FileIcon name={name} />}
+              {isDir ? <FolderIcon open={false} name={name} /> : <FileIcon name={name} />}
             </span>
             <span className="list-dir-name">{name}</span>
           </div>
@@ -271,8 +274,7 @@ export function AgentToolView({
   const hasResultText = item.ok === true && !!item.text;
   const stateCls = isStreaming ? "tool--streaming" : isPending ? "tool--pending" : isErr ? "tool--err" : "tool--ok";
   const isReadFile = item.toolName === "read_file";
-  const hasExpandable =
-    (diffInfo !== null || hasResultText || isStreaming) && !isSearchCodebase && !isReadFile;
+  const hasExpandable = (diffInfo !== null || hasResultText || isStreaming) && !isSearchCodebase && !isReadFile;
 
   return (
     <div className={`tool ${isMcp ? "tool--mcp" : ""} ${stateCls}${hasExpandable ? " tool--has-diff" : ""}`}>
@@ -300,19 +302,17 @@ export function AgentToolView({
                 </span>
               </span>
             )}
-              <button
-                className="tool__chevron"
-                onClick={() => setOpen(!open)}
-                aria-label={open ? "Collapse" : "Expand"}
-              >
-                <ChevronRightIcon open={open} />
-              </button>
+            <button className="tool__chevron" onClick={() => setOpen(!open)} aria-label={open ? "Collapse" : "Expand"}>
+              <ChevronRightIcon open={open} />
+            </button>
           </>
         )}
         {suffix ? <span className="tool__suffix"> {suffix}</span> : null}
       </span>
       {hasExpandable && (
-        <div className={`tool__diff-block${open ? "" : " tool__diff-block--hidden"}${isListDir ? " tool__diff-block--list" : ""}`}>
+        <div
+          className={`tool__diff-block${open ? "" : " tool__diff-block--hidden"}${isListDir ? " tool__diff-block--list" : ""}`}
+        >
           {isStreaming && item.toolStream ? (
             <StreamingCodeBlock toolStream={item.toolStream} toolName={item.toolName} />
           ) : item.toolName === "edit_file" ? (

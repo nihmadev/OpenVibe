@@ -9,6 +9,7 @@ use crate::transform::{
     flatten_for_text_only, messages_to_api_json, supports_vision, trim_messages,
 };
 
+#[allow(clippy::too_many_arguments)]
 pub async fn stream_chat(
     config: &LlmConfig,
     messages: Vec<ChatMessage>,

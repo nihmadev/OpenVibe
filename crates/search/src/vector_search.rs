@@ -54,7 +54,7 @@ pub fn build_index(root: &str) -> Result<(), String> {
     let mut file_meta: Vec<(String, usize)> = Vec::new();
 
     for entry in jwalk::WalkDir::new(root).into_iter().filter(|e| match e {
-        Ok(e) => !should_skip(&e.file_name().to_string_lossy().to_string()),
+        Ok(e) => !should_skip(e.file_name().to_string_lossy().as_ref()),
         Err(_) => false,
     }) {
         let entry = match entry {
@@ -104,7 +104,7 @@ pub fn build_index(root: &str) -> Result<(), String> {
 
     let entries: Vec<IndexEntry> = file_meta
         .into_iter()
-        .zip(file_texts.into_iter().zip(embeddings.into_iter()))
+        .zip(file_texts.into_iter().zip(embeddings))
         .map(|((path, line), (content, embedding))| IndexEntry {
             path,
             line,

@@ -254,7 +254,9 @@ export function McpSettingsPanel(): React.ReactElement {
           </div>
           <div className="settings__control-row">
             <div className="settings__control-info">
-              <div className="settings__control-label">{t("mcpExport")} / {t("mcpImport")}</div>
+              <div className="settings__control-label">
+                {t("mcpExport")} / {t("mcpImport")}
+              </div>
             </div>
             <div style={{ display: "flex", gap: "8px" }}>
               <button className="settings__edit-btn" onClick={handleExport}>
@@ -277,7 +279,13 @@ export function McpSettingsPanel(): React.ReactElement {
             className="settings__input"
             value={rawToml}
             onChange={(e) => setRawToml(e.target.value)}
-            style={{ width: "100%", fontFamily: "monospace", minHeight: 300, resize: "vertical", boxSizing: "border-box" }}
+            style={{
+              width: "100%",
+              fontFamily: "monospace",
+              minHeight: 300,
+              resize: "vertical",
+              boxSizing: "border-box",
+            }}
             placeholder={`[mcp]
 
 [[mcp.server]]
@@ -329,7 +337,7 @@ enabled = true`}
                 </div>
               </div>
             ))}
-            
+
             <div className="settings__provider-row">
               <div className="settings__provider-info">
                 <div className="settings__provider-icon-placeholder">
@@ -366,7 +374,16 @@ enabled = true`}
 
             <div className="connect-popup__body">
               {formError && (
-                <div style={{ color: "var(--error-fg, #e74c3c)", fontSize: 12, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                <div
+                  style={{
+                    color: "var(--error-fg, #e74c3c)",
+                    fontSize: 12,
+                    marginBottom: 8,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
                   <AlertCircle size={14} />
                   <span>{formError}</span>
                 </div>

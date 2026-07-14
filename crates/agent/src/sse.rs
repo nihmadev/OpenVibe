@@ -102,6 +102,7 @@ pub async fn parse_sse_stream(
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn process_sse_line(
     line: &str,
     content: &mut String,
@@ -118,8 +119,8 @@ fn process_sse_line(
         return;
     }
 
-    let payload = if trimmed.starts_with("data:") {
-        trimmed[5..].trim()
+    let payload = if let Some(stripped) = trimmed.strip_prefix("data:") {
+        stripped.trim()
     } else if trimmed.starts_with('{') && trimmed.ends_with('}') {
         trimmed
     } else {

@@ -394,11 +394,7 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
               </button>
             </Tooltip>
             <Tooltip text={t("runCommand")}>
-              <button
-                className="code-block__action-btn"
-                onClick={() => runCommand(code)}
-                aria-label={t("runCommand")}
-              >
+              <button className="code-block__action-btn" onClick={() => runCommand(code)} aria-label={t("runCommand")}>
                 <RunIcon />
               </button>
             </Tooltip>
@@ -406,11 +402,7 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
         )}
       </div>
       <div className="code-block__body" style={{ minHeight: `${estimatedHeight}px` }}>
-        <div
-          ref={containerRef}
-          className="code-block__container"
-          style={{ height: `${estimatedHeight}px` }}
-        />
+        <div ref={containerRef} className="code-block__container" style={{ height: `${estimatedHeight}px` }} />
         {!isEditorReady && (
           <pre className="code-block__pre code-block__pre--overlay">
             <code className="code-block__code">{displayCode}</code>
@@ -420,4 +412,3 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
     </div>
   );
 });
-

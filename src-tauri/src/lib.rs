@@ -173,7 +173,7 @@ pub fn run() {
             let (initial_cwd, initial_project_id) = {
                 let active = project_store.get_active();
                 match active {
-                    Some(ref p) if Path::new(&p.path).exists() => (p.path.clone(), Some(p.id.clone())),
+                    Ok(Some(ref p)) if Path::new(&p.path).exists() => (p.path.clone(), Some(p.id.clone())),
                     _ => (String::new(), None),
                 }
             };
@@ -186,7 +186,7 @@ pub fn run() {
 
             // If config has no api_key, try loading from a provider in DB
             if cfg.api_key.is_empty() {
-                let providers = project_store.list_providers();
+                let providers = project_store.list_providers().unwrap_or_default();
                 // Prefer matching by provider_id, otherwise take the most recently added
                 let active_provider = cfg
                     .provider_id
@@ -204,11 +204,10 @@ pub fn run() {
             // Setup chat store if project exists
             let chat_store = initial_project_id
                 .as_ref()
-                .map(|pid| {
+                .and_then(|pid| {
                     let db_path = project_store.chats_db(pid);
                     ChatStore::new(&db_path).ok()
-                })
-                .flatten();
+                });
 
             // Setup terminal manager
             let term_mgr = terminal::manager::TerminalManager::new(&initial_cwd);

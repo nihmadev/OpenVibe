@@ -365,9 +365,16 @@ export function tokenizeLine(line: string, lang: string): Token[] {
 
 export function syntaxHighlightLine(line: string, lang: string, query: string, matchCase: boolean): React.ReactNode[] {
   const tokens = tokenizeLine(line, lang);
+  let key = 0;
+  if (!query) {
+    return tokens.map((token) => (
+      <span key={key++} className={token.className}>
+        {token.text}
+      </span>
+    ));
+  }
   const result: React.ReactNode[] = [];
   const q = matchCase ? query : query.toLowerCase();
-  let key = 0;
   for (const token of tokens) {
     const txt = matchCase ? token.text : token.text.toLowerCase();
     let lastIdx = 0;
@@ -433,55 +440,87 @@ interface TreeNode {
   name: string;
   path: string;
   isDir: boolean;
+  relDir: string;
   children: TreeNode[];
+  matchesCount: number;
   matches: ContentMatch[];
 }
 
 export function groupByFile(matches: ContentMatch[]): FileGroup[] {
-  const map = new Map<string, ContentMatch[]>();
+  const map = new Map<string, FileGroup>();
   for (const m of matches) {
-    const existing = map.get(m.path);
-    if (existing) existing.push(m);
-    else map.set(m.path, [m]);
+    let group = map.get(m.rel);
+    if (!group) {
+      group = { path: m.path, rel: m.rel, name: m.name, matches: [] };
+      map.set(m.rel, group);
+    }
+    group.matches.push(m);
   }
-  const groups: FileGroup[] = [];
-  for (const [path, ms] of map) {
-    groups.push({ path, rel: ms[0].rel, name: ms[0].name, matches: ms });
-  }
-  return groups;
+  return Array.from(map.values());
 }
 
 export function buildTree(groups: FileGroup[]): TreeNode[] {
-  const root: TreeNode = { name: "", path: "", isDir: true, children: [], matches: [] };
-  for (const g of groups) {
-    const parts = g.rel.split("/");
-    let current = root;
-    for (let i = 0; i < parts.length - 1; i++) {
-      const part = parts[i]!;
-      let child = current.children.find((c) => c.name === part && c.isDir);
-      if (!child) {
-        const dirPath = parts.slice(0, i + 1).join("/");
-        child = { name: part, path: dirPath, isDir: true, children: [], matches: [] };
-        current.children.push(child);
-      }
-      current = child;
-    }
-    current.children.push({
-      name: g.name,
-      path: g.rel,
-      isDir: false,
+  const rootNodes: TreeNode[] = [];
+  const dirMap = new Map<string, TreeNode>();
+
+  function getOrCreateDir(dirPath: string): TreeNode {
+    if (dirMap.has(dirPath)) return dirMap.get(dirPath)!;
+    const parts = dirPath.split("/");
+    const name = parts[parts.length - 1];
+    const parentPath = parts.slice(0, -1).join("/");
+    const node: TreeNode = {
+      name,
+      path: dirPath,
+      isDir: true,
+      relDir: dirPath,
       children: [],
-      matches: g.matches,
-    });
+      matchesCount: 0,
+      matches: [],
+    };
+    dirMap.set(dirPath, node);
+    if (parentPath) {
+      const parent = getOrCreateDir(parentPath);
+      parent.children.push(node);
+    } else {
+      rootNodes.push(node);
+    }
+    return node;
   }
-  return root.children;
+
+  for (const group of groups) {
+    const parts = group.rel.split("/");
+    const fileName = parts.pop()!;
+    const dirPath = parts.join("/");
+    const fileNode: TreeNode = {
+      name: fileName,
+      path: group.rel,
+      isDir: false,
+      relDir: dirPath,
+      children: [],
+      matchesCount: group.matches.length,
+      matches: group.matches,
+    };
+    if (dirPath) {
+      const parent = getOrCreateDir(dirPath);
+      parent.children.push(fileNode);
+      let curr: string | undefined = dirPath;
+      while (curr) {
+        const d = dirMap.get(curr);
+        if (d) d.matchesCount += group.matches.length;
+        const p = curr.split("/").slice(0, -1).join("/");
+        curr = p || undefined;
+      }
+    } else {
+      rootNodes.push(fileNode);
+    }
+  }
+
+  return sortNodes(rootNodes);
 }
 
 export function sortNodes(nodes: TreeNode[]): TreeNode[] {
-  const dirs = nodes.filter((n) => n.isDir);
-  const files = nodes.filter((n) => !n.isDir);
-  dirs.sort((a, b) => a.name.localeCompare(b.name));
-  files.sort((a, b) => a.name.localeCompare(b.name));
+  const dirs = nodes.filter((n) => n.isDir).sort((a, b) => a.name.localeCompare(b.name));
+  const files = nodes.filter((n) => !n.isDir).sort((a, b) => a.name.localeCompare(b.name));
   for (const d of dirs) {
     d.children = sortNodes(d.children);
   }
@@ -493,8 +532,13 @@ export function globToRegex(pattern: string): RegExp {
   for (let i = 0; i < pattern.length; i++) {
     const ch = pattern[i];
     if (ch === "*" && pattern[i + 1] === "*") {
-      re += ".*";
-      i++;
+      if (pattern[i + 2] === "/") {
+        re += "(?:.*/)?";
+        i += 2;
+      } else {
+        re += ".*";
+        i++;
+      }
     } else if (ch === "*") {
       re += "[^/]*";
     } else if (ch === "?") {
@@ -505,7 +549,8 @@ export function globToRegex(pattern: string): RegExp {
       re += ch;
     }
   }
-  return new RegExp(re);
+  const prefix = pattern.includes("/") ? "^" : "(?:^|.*/)";
+  return new RegExp(`${prefix}${re}$`);
 }
 
 export function matchesGlob(path: string, patterns: string[]): boolean {
@@ -539,7 +584,9 @@ export function filterResults(
   if (useRegex && query) {
     try {
       regexRe = new RegExp(query, matchCase ? "" : "i");
-    } catch {}
+    } catch {
+      // ignore invalid regex query
+    }
   }
   const qLower = !useRegex ? query.toLowerCase() : "";
   return matches.filter((m) => {
@@ -552,8 +599,6 @@ export function filterResults(
     return line.toLowerCase().includes(qLower);
   });
 }
-
-// ── Icons (now imported from icons) ──
 
 // (icons now imported from ../icons/index.js)
 

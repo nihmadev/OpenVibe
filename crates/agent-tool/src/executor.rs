@@ -11,6 +11,12 @@ pub struct AgentToolExecutor {
     mcp_manager: Option<Arc<mcp::McpManager>>,
 }
 
+impl Default for AgentToolExecutor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AgentToolExecutor {
     pub fn new() -> Self {
         Self {

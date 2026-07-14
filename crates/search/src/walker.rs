@@ -109,8 +109,8 @@ fn score(haystack: &str, needle: &str) -> f64 {
     let h = haystack.to_lowercase();
     let n = needle.to_lowercase();
     let base = h
-        .split(|c: char| c == '/' || c == '\\')
-        .last()
+        .split(['/', '\\'])
+        .next_back()
         .unwrap_or(&h)
         .to_string();
     if base.contains(&n) {

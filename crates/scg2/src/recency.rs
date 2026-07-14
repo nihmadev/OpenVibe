@@ -134,7 +134,7 @@ impl RecencyStore {
             None => return 0.0,
         };
 
-        let is_active = self.active_file.as_ref().map_or(false, |p| p == path);
+        let is_active = self.active_file.as_ref().is_some_and(|p| p == path);
         let active_weight = if is_active { 1.0 } else { 0.0 };
 
         let elapsed = now.duration_since(entry.last_accessed).as_secs_f32();

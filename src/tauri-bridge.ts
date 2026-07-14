@@ -49,7 +49,7 @@ async function initVibeBridge() {
   };
 
   // Create Rust agent
-  await invoke("agent_new", { cwd: currentConfig.cwd }).catch(() => { });
+  await invoke("agent_new", { cwd: currentConfig.cwd }).catch(() => {});
 
   // ---- Listen for Rust agent events and translate to VibeEvent ----
   // Clean up any previously registered Tauri listeners to prevent
@@ -71,12 +71,12 @@ async function initVibeBridge() {
             if (current && current.title === "New chat") {
               invoke<string>("agent_summarize").then((title) => {
                 if (title && title !== "New chat") {
-                  invoke("chats_rename", { id: activeChatId, title }).catch(() => { });
+                  invoke("chats_rename", { id: activeChatId, title }).catch(() => {});
                 }
               });
             }
           })
-          .catch(() => { });
+          .catch(() => {});
       }
     }),
   );
@@ -212,7 +212,7 @@ async function initVibeBridge() {
       const record = await invoke<any>("chats_open", { id: lastChatId });
       if (record && Array.isArray(record.messages)) {
         activeChatId = lastChatId;
-        await invoke("agent_set_messages", { messages: record.messages }).catch(() => { });
+        await invoke("agent_set_messages", { messages: record.messages }).catch(() => {});
         window.dispatchEvent(new CustomEvent("vibe:chat:restored", { detail: record }));
       }
     }
@@ -259,15 +259,15 @@ export const vibe = {
   },
 
   revertUndo: async () => {
-    await invoke("agent_revert_undo").catch(() => { });
+    await invoke("agent_revert_undo").catch(() => {});
   },
 
   reset: async () => {
-    await invoke("agent_reset").catch(() => { });
+    await invoke("agent_reset").catch(() => {});
   },
 
   stop: async () => {
-    await invoke("agent_stop").catch(() => { });
+    await invoke("agent_stop").catch(() => {});
   },
 
   pickWorkspace: async () => {
@@ -340,7 +340,7 @@ export const vibe = {
         }
       }
       // Reset agent for fresh conversation
-      await invoke("agent_reset").catch(() => { });
+      await invoke("agent_reset").catch(() => {});
 
       // Create a new chat (reuses current if empty, otherwise allocates new ID)
       const result = await invoke<any>("chats_new");
@@ -366,7 +366,7 @@ export const vibe = {
       localStorage.setItem("openvibe:activeChatId", id);
       // Restore messages into the Rust agent
       if (Array.isArray(record.messages)) {
-        await invoke("agent_set_messages", { messages: record.messages }).catch(() => { });
+        await invoke("agent_set_messages", { messages: record.messages }).catch(() => {});
       }
       return record;
     },
@@ -656,7 +656,7 @@ export const vibe = {
 
 // ===== HELPERS =====
 
-function ok<T>(data: T): { ok: true;[key: string]: any } {
+function ok<T>(data: T): { ok: true; [key: string]: any } {
   if (typeof data === "object" && data !== null) {
     return { ok: true, ...(data as any) };
   }

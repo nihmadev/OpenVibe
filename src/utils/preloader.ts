@@ -53,4 +53,3 @@ export function preloadAll(): void {
   preloadCommonIcons();
   loader.init().catch(() => {});
 }
-

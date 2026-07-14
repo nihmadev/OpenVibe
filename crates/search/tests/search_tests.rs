@@ -16,14 +16,14 @@ fn temp_dir() -> std::path::PathBuf {
 
 #[test]
 fn test_clip_short_text() {
-    let result = search::content_search::clip("hello world", 100);
+    let result = search::clip("hello world", 100);
     assert_eq!(result, "hello world");
 }
 
 #[test]
 fn test_clip_exact_boundary() {
     let text = "a".repeat(100);
-    let result = search::content_search::clip(&text, 100);
+    let result = search::clip(&text, 100);
     assert_eq!(result.len(), 100);
     assert!(!result.contains("[truncated"));
 }
@@ -31,7 +31,7 @@ fn test_clip_exact_boundary() {
 #[test]
 fn test_clip_long_text() {
     let text = "a".repeat(200);
-    let result = search::content_search::clip(&text, 100);
+    let result = search::clip(&text, 100);
     assert!(result.contains("[truncated"));
     assert!(result.len() < 200);
 }
@@ -39,7 +39,7 @@ fn test_clip_long_text() {
 #[test]
 fn test_clip_cyrillic_boundary() {
     let text = "Привет, мир! Как дела?";
-    let result = search::content_search::clip(text, 20);
+    let result = search::clip(text, 20);
     assert!(
         !result.contains('�'),
         "clip must not produce replacement characters"
@@ -50,7 +50,7 @@ fn test_clip_cyrillic_boundary() {
 #[test]
 fn test_clip_emoji_boundary() {
     let text = "a🚀b🚀c🚀d🚀e🚀f🚀g";
-    let result = search::content_search::clip(text, 10);
+    let result = search::clip(text, 10);
     assert!(
         !result.contains('�'),
         "clip must not split multi-byte emoji"
@@ -60,26 +60,26 @@ fn test_clip_emoji_boundary() {
 #[test]
 fn test_clip_chinese_boundary() {
     let text = "你好世界你好世界你好世界";
-    let result = search::content_search::clip(text, 15);
+    let result = search::clip(text, 15);
     assert!(!result.contains('�'));
 }
 
 #[test]
 fn test_clip_empty() {
-    assert_eq!(search::content_search::clip("", 100), "");
+    assert_eq!(search::clip("", 100), "");
 }
 
 #[test]
 fn test_clip_zero_max() {
     let text = "hello";
-    let result = search::content_search::clip(text, 0);
+    let result = search::clip(text, 0);
     assert_eq!(result, "\n…[truncated, 5 more chars]");
 }
 
 #[test]
 fn test_clip_special_chars() {
     let text = "foo\x00bar\x1bbaz\tqux\nnewline";
-    let result = search::content_search::clip(text, 10);
+    let result = search::clip(text, 10);
     assert!(!result.is_empty());
 }
 
@@ -87,19 +87,19 @@ fn test_clip_special_chars() {
 
 #[test]
 fn test_compile_patterns_empty() {
-    let pats = search::content_search::compile_patterns("");
+    let pats = search::compile_patterns("");
     assert!(pats.is_empty());
 }
 
 #[test]
 fn test_compile_patterns_multiple() {
-    let pats = search::content_search::compile_patterns("*.rs, *.ts, *.js");
+    let pats = search::compile_patterns("*.rs, *.ts, *.js");
     assert_eq!(pats.len(), 3);
 }
 
 #[test]
 fn test_compile_patterns_cyrillic_glob() {
-    let pats = search::content_search::compile_patterns("*файл*");
+    let pats = search::compile_patterns("*файл*");
     assert_eq!(pats.len(), 1);
     assert!(pats[0].is_match("мой_файл.rs"));
     assert!(!pats[0].is_match("main.rs"));
@@ -108,7 +108,7 @@ fn test_compile_patterns_cyrillic_glob() {
 #[test]
 fn test_compile_patterns_all_escape_to_valid() {
     // glob_to_regex escapes everything, so all patterns compile successfully
-    let pats = search::content_search::compile_patterns("*.rs, [special], *.ts");
+    let pats = search::compile_patterns("*.rs, [special], *.ts");
     assert_eq!(pats.len(), 3);
 }
 
@@ -116,17 +116,17 @@ fn test_compile_patterns_all_escape_to_valid() {
 
 #[test]
 fn test_matches_any_empty() {
-    assert!(search::content_search::matches_any("foo.rs", &[]));
+    assert!(search::matches_any("foo.rs", &[]));
 }
 
 #[test]
 fn test_matches_any_cyrillic_path() {
-    let pats = search::content_search::compile_patterns("*файл*");
-    assert!(search::content_search::matches_any(
+    let pats = search::compile_patterns("*файл*");
+    assert!(search::matches_any(
         "src/мой_файл.rs",
         &pats
     ));
-    assert!(!search::content_search::matches_any("src/main.rs", &pats));
+    assert!(!search::matches_any("src/main.rs", &pats));
 }
 
 // ── search_content_structured() with temp files ──

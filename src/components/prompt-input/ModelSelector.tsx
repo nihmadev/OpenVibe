@@ -134,6 +134,10 @@ export function ModelSelector({ currentModel, onPickModel, onOpenSettings }: Mod
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  useEffect(() => {
     if (open) {
       fetch().then(() => {
         inputRef.current?.focus();

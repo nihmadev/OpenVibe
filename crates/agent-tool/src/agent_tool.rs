@@ -81,7 +81,7 @@ pub async fn execute(
             sub_messages.clone(),
             read_only_tools.clone(),
             &cancel_sub,
-            &client,
+            client,
             &|_| {},
             &|_| {},
             &|| {},

@@ -96,7 +96,7 @@ pub async fn agent_send(
             }
             drop(chat_store);
             if let Ok(projects) = state.projects.lock() {
-                if let Some(active_proj) = projects.get_active() {
+                if let Ok(Some(active_proj)) = projects.get_active() {
                     db_p = Some(projects.chats_db(&active_proj.id));
                 }
             }

@@ -320,8 +320,8 @@ impl AstService {
             let end = (start + 2)
                 .min(sym.range.end_line as usize)
                 .min(lines.len());
-            for i in start..end {
-                out.push_str(lines[i]);
+            for line in &lines[start..end] {
+                out.push_str(line);
                 out.push('\n');
             }
             out.push_str("    // ...\n");

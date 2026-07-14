@@ -484,11 +484,7 @@ function VibingLoader({ text, isInline }: { text?: string; isInline?: boolean })
 
   return (
     <div className={`thinking ${isInline ? "thinking--inline" : ""}`}>
-      {displayWord && (
-        <span className={`thinking__word ${fade === "out" ? "out" : ""}`}>
-          {displayWord}
-        </span>
-      )}
+      {displayWord && <span className={`thinking__word ${fade === "out" ? "out" : ""}`}>{displayWord}</span>}
       <span className="thinking__dots">
         {[0, 1, 2].map((i) => (
           <span key={i} className={`thinking__dot ${dots > i ? "on" : ""}`}>

@@ -325,9 +325,9 @@ impl ContextAssembler {
 
         for (idx, snippet) in snippets.iter().enumerate() {
             out.push_str(&format!(
-                "Snippet #{} [{}]\nPath: {} (Lines {}-{})\nReason: {}\n```\n{}\n```\n\n",
+                "Snippet #{} [{:.2}]\nPath: {} (Lines {}-{})\nReason: {}\n```\n{}\n```\n\n",
                 idx + 1,
-                format!("{:.2}", snippet.score),
+                snippet.score,
                 snippet.path.display(),
                 snippet.range.start_line,
                 snippet.range.end_line,

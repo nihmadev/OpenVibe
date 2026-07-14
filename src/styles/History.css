@@ -181,7 +181,9 @@
 
 .thinking__word {
   display: inline-block;
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
   opacity: 1;
   transform: translateY(0);
   will-change: opacity, transform;

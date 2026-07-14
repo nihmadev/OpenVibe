@@ -100,9 +100,10 @@ impl ContextGraph {
                         break;
                     }
                 }
-            } else if ext == "ts" || ext == "tsx" || ext == "js" || ext == "jsx" {
-                if import.starts_with(".") {
-                    if let Some(parent) = file_path.parent() {
+            } else if (ext == "ts" || ext == "tsx" || ext == "js" || ext == "jsx")
+                && import.starts_with('.')
+            {
+                if let Some(parent) = file_path.parent() {
                         let mut resolved = parent.to_path_buf();
                         for part in import.split('/') {
                             if part == "." {
@@ -129,7 +130,6 @@ impl ContextGraph {
                             }
                         }
                     }
-                }
             }
 
             if let Some(target_node) = resolved_node {

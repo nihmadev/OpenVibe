@@ -124,7 +124,7 @@ impl Agent {
                     if !line.is_empty() {
                         let mut res: String = line.chars().take(30).collect();
                         if line.chars().count() > 30 {
-                            res.push_str("…");
+                            res.push('…');
                         }
                         return res;
                     }

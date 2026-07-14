@@ -3,7 +3,9 @@ use tauri::State;
 
 #[tauri::command]
 pub async fn mcp_get_servers(state: State<'_, crate::AppState>) -> Result<Vec<McpServerStatus>, String> {
-    Ok(state.mcp_manager.get_servers().await)
+    let servers = state.mcp_manager.get_servers().await;
+    println!("mcp_get_servers called, returning: {:?}", servers);
+    Ok(servers)
 }
 
 #[tauri::command]

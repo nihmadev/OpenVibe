@@ -173,23 +173,23 @@ async fn do_fetch(
 #[tauri::command]
 pub fn models_list_disabled(state: State<AppState>) -> Result<Vec<String>, String> {
     let store = state.projects.lock().map_err(|e| e.to_string())?;
-    Ok(store.list_disabled_models())
+    store.list_disabled_models().map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn models_toggle_disabled(state: State<AppState>, model_id: String) -> Result<bool, String> {
     let store = state.projects.lock().map_err(|e| e.to_string())?;
-    Ok(store.toggle_disabled_model(&model_id))
+    store.toggle_disabled_model(&model_id).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn models_list_enabled(state: State<AppState>) -> Result<Vec<String>, String> {
     let store = state.projects.lock().map_err(|e| e.to_string())?;
-    Ok(store.list_enabled_models())
+    store.list_enabled_models().map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn models_toggle_enabled(state: State<AppState>, model_id: String) -> Result<bool, String> {
     let store = state.projects.lock().map_err(|e| e.to_string())?;
-    Ok(store.toggle_enabled_model(&model_id))
+    store.toggle_enabled_model(&model_id).map_err(|e| e.to_string())
 }

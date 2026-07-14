@@ -5,13 +5,13 @@ use tauri::State;
 #[tauri::command]
 pub fn projects_list(state: State<AppState>) -> Result<Vec<Project>, String> {
     let store = state.projects.lock().map_err(|e| e.to_string())?;
-    Ok(store.list())
+    store.list().map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn projects_active(state: State<AppState>) -> Result<Option<Project>, String> {
     let store = state.projects.lock().map_err(|e| e.to_string())?;
-    Ok(store.get_active())
+    store.get_active().map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -25,7 +25,7 @@ pub async fn projects_add(state: State<'_, AppState>, app_handle: tauri::AppHand
     };
 
     let mut store = state.projects.lock().map_err(|e| e.to_string())?;
-    let project = store.add(&path);
+    let project = store.add(&path).map_err(|e| e.to_string())?;
     drop(store);
     Ok(Some(project))
 }
@@ -33,7 +33,7 @@ pub async fn projects_add(state: State<'_, AppState>, app_handle: tauri::AppHand
 #[tauri::command]
 pub fn projects_set_active(state: State<AppState>, id: String) -> Result<Option<Project>, String> {
     let store = state.projects.lock().map_err(|e| e.to_string())?;
-    let project = store.set_active(&id);
+    let project = store.set_active(&id).map_err(|e| e.to_string())?;
     if let Some(ref p) = project {
         let cwd = p.path.clone();
         let pid = p.id.clone();
@@ -46,7 +46,7 @@ pub fn projects_set_active(state: State<AppState>, id: String) -> Result<Option<
 #[tauri::command]
 pub fn projects_remove(state: State<AppState>, id: String) -> Result<Option<Project>, String> {
     let mut store = state.projects.lock().map_err(|e| e.to_string())?;
-    let next = store.remove(&id);
+    let next = store.remove(&id).map_err(|e| e.to_string())?;
     drop(store);
     if let Some(ref p) = next {
         let cwd = p.path.clone();
@@ -61,14 +61,14 @@ pub fn projects_remove(state: State<AppState>, id: String) -> Result<Option<Proj
 #[tauri::command]
 pub fn projects_rename(state: State<AppState>, id: String, name: String) -> Result<(), String> {
     let store = state.projects.lock().map_err(|e| e.to_string())?;
-    store.rename(&id, &name);
+    store.rename(&id, &name).map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
 pub fn projects_close(state: State<AppState>) -> Result<(), String> {
     let store = state.projects.lock().map_err(|e| e.to_string())?;
-    store.clear_active();
+    store.clear_active().map_err(|e| e.to_string())?;
     drop(store);
     state.reset_project_state();
     Ok(())
@@ -77,20 +77,20 @@ pub fn projects_close(state: State<AppState>) -> Result<(), String> {
 #[tauri::command]
 pub fn projects_set_color(state: State<AppState>, id: String, color: String) -> Result<(), String> {
     let store = state.projects.lock().map_err(|e| e.to_string())?;
-    store.set_color(&id, &color);
+    store.set_color(&id, &color).map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
 pub fn projects_set_icon(state: State<AppState>, id: String, icon: Option<String>) -> Result<(), String> {
     let store = state.projects.lock().map_err(|e| e.to_string())?;
-    store.set_icon(&id, icon.as_deref());
+    store.set_icon(&id, icon.as_deref()).map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
 pub fn projects_set_photo(state: State<AppState>, id: String, photo: Option<String>) -> Result<(), String> {
     let store = state.projects.lock().map_err(|e| e.to_string())?;
-    store.set_photo(&id, photo.as_deref());
+    store.set_photo(&id, photo.as_deref()).map_err(|e| e.to_string())?;
     Ok(())
 }

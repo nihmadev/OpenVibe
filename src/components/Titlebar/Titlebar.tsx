@@ -94,7 +94,8 @@ export function Titlebar({
     try {
       const list = await mcpGetServers();
       setMcpServers(list || []);
-    } catch {
+    } catch (e) {
+      console.error("fetchMcpServers error:", e);
       // Ignore if backend not connected or error
     }
   }, []);

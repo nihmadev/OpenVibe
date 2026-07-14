@@ -50,7 +50,6 @@ export interface ShortcutActions {
   pickProject: (index: number) => void;
 }
 
-
 interface BindingDef {
   id: string;
   label: string;
@@ -487,6 +486,9 @@ export function useShortcuts(actions: ShortcutActions) {
       for (const b of DEFAULT_BINDINGS) {
         const combo = customCombos.get(b.id) ?? b.defaultCombo;
         if (matchCombo(e, combo)) {
+          if (isInputFocused() && !combo.ctrl && !combo.alt) {
+            continue;
+          }
           e.preventDefault();
           e.stopPropagation();
           b.action(actionsRef.current);

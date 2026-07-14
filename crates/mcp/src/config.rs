@@ -172,13 +172,13 @@ pub fn load_mcp_config<P: AsRef<Path>>(path: P) -> Result<McpConfig, String> {
             if let Some(array) = cand.and_then(|c| c.as_array()) {
                 for item in array {
                     if let Ok(cfg) = item.clone().try_into::<McpServerConfig>() {
-                        if !cfg.name.is_empty() && !cfg.command.is_empty() {
-                            if !recovered_servers
+                        if !cfg.name.is_empty()
+                            && !cfg.command.is_empty()
+                            && !recovered_servers
                                 .iter()
                                 .any(|s: &McpServerConfig| s.name == cfg.name)
-                            {
-                                recovered_servers.push(cfg);
-                            }
+                        {
+                            recovered_servers.push(cfg);
                         }
                     }
                 }

@@ -56,10 +56,14 @@ impl McpServerProcess {
     }
 
     pub async fn start(&self) -> Result<(), String> {
-        let mut status = self.status.lock().await;
-        if matches!(*status, McpStatus::Running) {
-            return Ok(());
+        {
+            let status = self.status.lock().await;
+            if matches!(*status, McpStatus::Running) {
+                return Ok(());
+            }
         }
+
+        let _ = self.stop().await;
 
         let mut attempts = 0;
         let max_attempts = 3;
@@ -70,7 +74,7 @@ impl McpServerProcess {
             attempts += 1;
             match self.spawn_and_init().await {
                 Ok(_) => {
-                    *status = McpStatus::Running;
+                    *self.status.lock().await = McpStatus::Running;
                     info!(server = %server_name, "MCP server started successfully");
                     return Ok(());
                 }
@@ -84,7 +88,7 @@ impl McpServerProcess {
             }
         }
 
-        *status = McpStatus::Error(last_err.clone());
+        *self.status.lock().await = McpStatus::Error(last_err.clone());
         Err(last_err)
     }
 
@@ -191,9 +195,19 @@ impl McpServerProcess {
         });
         self.send_notification_internal(&init_notif).await?;
 
-        if let Ok(tools) = self.list_tools().await {
-            if let Ok(mut cache) = self.tools_cache.lock() {
-                *cache = tools;
+        let req_id = self.request_id.fetch_add(1, Ordering::SeqCst);
+        let list_msg = json!({
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "method": "tools/list",
+            "params": {}
+        });
+
+        if let Ok(resp) = self.send_request_internal(req_id, &list_msg, Duration::from_secs(5)).await {
+            if let Some(tools) = resp.get("result").and_then(|r| r.get("tools")).and_then(|t| t.as_array()) {
+                if let Ok(mut cache) = self.tools_cache.lock() {
+                    *cache = tools.clone();
+                }
             }
         }
 

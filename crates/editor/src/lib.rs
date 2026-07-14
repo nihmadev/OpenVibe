@@ -45,7 +45,7 @@ fn collect_dts_files(dir: &Path, result: &mut Vec<String>, depth: usize) {
                 collect_dts_files(&path, result, depth + 1);
             } else if path
                 .file_name()
-                .map_or(false, |n| n.to_string_lossy().ends_with(".d.ts"))
+                .is_some_and(|n| n.to_string_lossy().ends_with(".d.ts"))
             {
                 result.push(path.to_string_lossy().to_string());
             }
@@ -146,15 +146,11 @@ pub fn preload_types(cwd: &str) -> Result<PreloadTypesResult, String> {
             };
             seen_paths.insert(p_str.clone());
 
-            if p.extension().map_or(false, |e| e == "json") {
+            if p.extension().is_some_and(|e| e == "json") {
                 if let Ok(pkg) = serde_json::from_str::<serde_json::Value>(&content) {
                     let types_field = pkg.get("types").or_else(|| pkg.get("typings"));
                     if let Some(types_val) = types_field.and_then(|v| v.as_str()) {
-                        let types_rel = if types_val.starts_with("./") {
-                            &types_val[2..]
-                        } else {
-                            types_val
-                        };
+                        let types_rel = types_val.strip_prefix("./").unwrap_or(types_val);
                         let types_file = p.parent().unwrap().join(types_rel);
                         let tf_str = types_file.to_string_lossy().to_string();
                         if !seen_paths.contains(&tf_str) {
@@ -264,9 +260,9 @@ pub fn preload_types(cwd: &str) -> Result<PreloadTypesResult, String> {
     }
 
     // 6. Find local type declaration files in the project
-    let mut local_matches = walker::find_files(&cwd, "**/*.d.ts", 45);
+    let mut local_matches = walker::find_files(cwd, "**/*.d.ts", 45);
     // Also include .ts files that commonly contain global declarations (e.g. types.ts)
-    local_matches.extend(walker::find_files(&cwd, "types.ts", 5));
+    local_matches.extend(walker::find_files(cwd, "types.ts", 5));
 
     for file_match in local_matches {
         if seen_paths.contains(&file_match.path) {

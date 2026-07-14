@@ -49,7 +49,7 @@ pub fn get_co_committed_files(repo_path: &str, active_file: &str, limit: usize) 
 
     // 3. Sort by frequency descending
     let mut sorted: Vec<(String, usize)> = file_counts.into_iter().collect();
-    sorted.sort_by(|a, b| b.1.cmp(&a.1));
+    sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
 
     sorted.into_iter().take(limit).map(|(f, _)| f).collect()
 }

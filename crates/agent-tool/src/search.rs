@@ -33,7 +33,7 @@ pub async fn tool_search_codebase(cwd: &str, args: &serde_json::Value) -> Result
         .get("query")
         .and_then(|v| v.as_str())
         .ok_or_else(|| "Missing 'query' argument".to_string())?;
-    let root = if cwd.is_empty() { "." } else { &cwd };
+    let root = if cwd.is_empty() { "." } else { cwd };
     let resolved_root = resolve_path(root, ".");
 
     let is_regex_query = regex::Regex::new(&format!("(?i){}", query)).is_ok();
