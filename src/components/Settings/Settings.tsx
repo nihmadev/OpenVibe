@@ -26,7 +26,12 @@ interface DiscoveredModel {
   providerIcon: string;
 }
 
-type Tab = "general" | "design" | "providers" | "models" | "hotkeys";
+import { Server } from "lucide-react";
+
+import { McpSettingsPanel } from "./McpSettingsPanel.js";
+
+type Tab = "general" | "design" | "providers" | "models" | "hotkeys" | "mcp";
+
 
 interface Props {
   open: boolean;
@@ -423,7 +428,10 @@ export function Settings({
                 <line x1="12" y1="22.08" x2="12" y2="12" />
               </svg>,
             )}
+            {renderSidebarItem("mcp", t("mcpServers"), <Server size={14} />)}
+
           </div>
+
 
           <div className="settings__sidebar-footer">
             <div className="settings__app-info">
@@ -444,8 +452,11 @@ export function Settings({
                     ? t("models")
                     : activeTab === "providers"
                       ? t("providers")
-                      : t("hotkeys")}
+                      : activeTab === "mcp"
+                        ? t("mcpServers")
+                        : t("hotkeys")}
             </h2>
+
             <button className="settings__close" onClick={onClose}>
               ×
             </button>
@@ -961,11 +972,16 @@ export function Settings({
                         })}
                       </div>
                     );
-                  })()
-                )}
+                  })())}
               </div>
+            ) : activeTab === "mcp" ? (
+
+
+
+              <McpSettingsPanel />
             ) : (
               <div className="settings__section">
+
                 {!shortcuts || shortcuts.length === 0 ? (
                   <div className="settings__models-empty">
                     <p>{t("noHotkeys")}</p>

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+
 import "../../styles/Titlebar.css";
 import { Tooltip } from "../Tooltip/Tooltip.js";
 import { useI18n } from "../../hooks/useI18n.js";
@@ -17,6 +18,11 @@ import {
   MaximizeIcon,
   CloseIcon,
 } from "../icons/index.js";
+import { Server } from "lucide-react";
+
+import { McpStatusDropdown } from "./McpStatusDropdown.js";
+import { mcpGetServers, mcpStartServer, mcpStopServer } from "../../tauri-bridge.js";
+import type { McpServerStatus } from "../../types.js";
 
 interface TitlebarProps {
   chatSideOpen?: boolean;
@@ -33,7 +39,9 @@ interface TitlebarProps {
   onToggleFileTree?: () => void;
   folder?: string | null;
   onSearchOpen?: () => void;
+  onOpenSettings?: (tab?: string) => void;
 }
+
 
 const STORAGE_KEY = "titlebar:hidden";
 
@@ -72,12 +80,72 @@ export function Titlebar({
   onToggleFileTree = () => {},
   folder,
   onSearchOpen = () => {},
+  onOpenSettings,
 }: TitlebarProps): React.ReactElement {
   const { t } = useI18n();
   const [hidden, setHidden] = useState<Set<BtnId>>(loadHidden);
   const [hiding, setHiding] = useState<Set<BtnId>>(new Set());
   const [showing, setShowing] = useState<Set<BtnId>>(new Set());
   const [ctx, setCtx] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null);
+
+  const [mcpServers, setMcpServers] = useState<McpServerStatus[]>([]);
+  const [mcpDropdownOpen, setMcpDropdownOpen] = useState(false);
+
+  const fetchMcpServers = useCallback(async () => {
+    try {
+      const list = await mcpGetServers();
+      setMcpServers(list || []);
+    } catch {
+      // Ignore if backend not connected or error
+    }
+  }, []);
+
+  const mcpContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!mcpDropdownOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (mcpContainerRef.current && !mcpContainerRef.current.contains(e.target as Node)) {
+        setMcpDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [mcpDropdownOpen]);
+
+  useEffect(() => {
+    fetchMcpServers();
+    const interval = setInterval(fetchMcpServers, 5000);
+    return () => clearInterval(interval);
+  }, [fetchMcpServers]);
+
+
+  const handleToggleMcpServer = async (name: string, enable: boolean) => {
+    try {
+      if (enable) {
+        await mcpStartServer(name);
+      } else {
+        await mcpStopServer(name);
+      }
+      fetchMcpServers();
+    } catch (e) {
+      console.error("Failed to toggle MCP server:", e);
+    }
+  };
+
+  const getMcpGlobalDotClass = (servers: McpServerStatus[]) => {
+    if (servers.length === 0) return "titlebar__mcp-dot--gray";
+    const enabled = servers.filter((s) => s.enabled);
+    if (enabled.length === 0) return "titlebar__mcp-dot--gray";
+
+    const runningCount = enabled.filter((s) => s.status.type === "running").length;
+
+
+    if (runningCount === enabled.length) return "titlebar__mcp-dot--green";
+    if (runningCount > 0) return "titlebar__mcp-dot--yellow";
+    return "titlebar__mcp-dot--red";
+  };
+
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...hidden]));
@@ -253,7 +321,36 @@ export function Titlebar({
       </div>
 
       <div className="titlebar__right" onContextMenu={(e) => onSectionCtx(e, RIGHT_BTNS)}>
+        <div className="titlebar__mcp-container" ref={mcpContainerRef}>
+
+          <Tooltip text={t("mcpServers")} side="bottom">
+            <button
+              className={`titlebar__action-btn titlebar__mcp-btn ${mcpDropdownOpen ? "titlebar__action-btn--active" : ""}`}
+              onClick={() => {
+                fetchMcpServers();
+                setMcpDropdownOpen(!mcpDropdownOpen);
+              }}
+              aria-label={t("mcpServers")}
+            >
+              <Server size={15} />
+
+              <span className={`titlebar__mcp-badge ${getMcpGlobalDotClass(mcpServers)}`} />
+            </button>
+          </Tooltip>
+          {mcpDropdownOpen && (
+            <McpStatusDropdown
+              servers={mcpServers}
+              onToggleServer={handleToggleMcpServer}
+              onOpenSettings={() => {
+                setMcpDropdownOpen(false);
+                if (onOpenSettings) onOpenSettings("mcp");
+              }}
+              onRefresh={fetchMcpServers}
+            />
+          )}
+        </div>
         {isVisible("terminal") && (
+
           <Tooltip text={t("toggleTerminal")} side="bottom">
             <button
               className={btnClasses("terminal", terminalOpen ? "titlebar__action-btn--active" : "")}
@@ -289,7 +386,6 @@ export function Titlebar({
             </button>
           </Tooltip>
         )}
-
         <div className="titlebar__controls">
           <button
             className="titlebar__btn"

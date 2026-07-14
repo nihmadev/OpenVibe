@@ -8,7 +8,9 @@ import { FileIcon } from "../icons/file-icons.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { CodeBlock, resolveMonacoLang } from "../CodeBlock/CodeBlock.js";
 import { DiffEditor } from "../DiffEditor/DiffEditor.js";
+import { Server } from "lucide-react";
 import "../../styles/Tool.css";
+
 
 // ─── Animated counter ─────────────────────────────────────────────────────
 
@@ -75,7 +77,7 @@ function StreamingCodeBlock({ toolStream, toolName }: { toolStream: string; tool
     <div className="code-block">
       <div className="code-block__body">
         <pre className="code-block__pre">
-          <code className="code-block__code">{det.content}</code>
+          <code className="code-block__code">{det.content.trimEnd()}</code>
         </pre>
       </div>
     </div>
@@ -242,6 +244,7 @@ export function AgentToolView({
     );
   }
 
+  const isMcp = item.toolName?.startsWith("mcp__");
   const hasResultText = item.ok === true && !!item.text;
   const stateCls = isStreaming ? "tool--streaming" : isPending ? "tool--pending" : isErr ? "tool--err" : "tool--ok";
   const isReadFile = item.toolName === "read_file";
@@ -249,14 +252,19 @@ export function AgentToolView({
     (diffInfo !== null || hasResultText || isStreaming) && !isListDir && !isSearchCodebase && !isReadFile;
 
   return (
-    <div className={`tool ${stateCls}${hasExpandable ? " tool--has-diff" : ""}`}>
-      {isErr && (
-        <span className="tool__icon">
+    <div className={`tool ${isMcp ? "tool--mcp" : ""} ${stateCls}${hasExpandable ? " tool--has-diff" : ""}`}>
+      <span className="tool__icon">
+        {isPending ? (
+          <Loader2Icon />
+        ) : isErr ? (
           <FailIcon />
-        </span>
-      )}
+        ) : isMcp ? (
+          <Server size={14} />
+        ) : null}
+      </span>
       <span className="tool__line">
         <span className="tool__verb">{verb}</span>
+
         {file ? (
           <>
             {" "}

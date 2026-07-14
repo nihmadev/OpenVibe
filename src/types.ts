@@ -253,9 +253,6 @@ export interface VibeApi {
     >;
     projectInfo: (dir: string) => Promise<{ ok: true; name: string | null; version: string | null } | { ok: false }>;
   };
-  clipboard: {
-    writeText: (text: string) => void;
-  };
   whisper: {
     transcribe: (
       audioBase64: string,
@@ -277,8 +274,33 @@ export interface VibeApi {
   };
 }
 
+export type McpStatus =
+  | { type: "running" }
+  | { type: "stopped" }
+  | { type: "error"; message: string };
+
+export interface McpServerStatus {
+  name: string;
+  status: McpStatus;
+  enabled: boolean;
+  error?: string;
+}
+
+export interface McpServerConfig {
+  name: string;
+  command: string;
+  args: string[];
+  env: Record<string, string>;
+  enabled: boolean;
+}
+
+export interface McpConfig {
+  servers: McpServerConfig[];
+}
+
 declare global {
   interface Window {
     vibe: VibeApi;
   }
 }
+

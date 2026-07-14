@@ -1,6 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { open as shellOpen } from "@tauri-apps/plugin-shell";
 import type { VibeEvent, ConfirmPayload, ContentPart, RollbackPreview } from "./types.js";
 
@@ -530,17 +529,53 @@ export const vibe = {
       wrap(() => invoke<{ name: string | null; version: string | null }>("fs_project_info", { dir })),
   },
 
-  clipboard: {
-    writeText: (text: string) => {
-      writeText(text);
-    },
-  },
-
   whisper: {
     transcribe: (audioBase64: string, mimeType: string) =>
       wrap(() => invoke("whisper_transcribe", { audioBase64, mimeType })),
   },
 
+  git: {
+    repoInfo: (cwd: string) => wrap(
+      () => invoke("git_repo_info", { path: cwd }),
+      (r) => ({ data: r }),
+    ),
+    status: (cwd: string) => wrap(
+      () => invoke("git_status", { path: cwd }),
+      (r) => ({ data: r }),
+    ),
+    stageFile: (cwd: string, filePath: string) =>
+      wrap(() => invoke("git_stage_file", { path: cwd, filePath })),
+    stageAll: (cwd: string) =>
+      wrap(() => invoke("git_stage_all", { path: cwd })),
+    unstageFile: (cwd: string, filePath: string) =>
+      wrap(() => invoke("git_unstage_file", { path: cwd, filePath })),
+    revertFile: (cwd: string, filePath: string) =>
+      wrap(() => invoke("git_revert_file", { path: cwd, filePath })),
+    commit: (cwd: string, message: string) =>
+      wrap(() => invoke("git_commit", { path: cwd, message })),
+    branches: (cwd: string) => wrap(
+      () => invoke("git_branches", { path: cwd }),
+      (r) => ({ data: r }),
+    ),
+    commits: (cwd: string, maxCount: number) => wrap(
+      () => invoke("git_commits", { path: cwd, maxCount }),
+      (r) => ({ data: r }),
+    ),
+    graph: (cwd: string, maxCount: number) => wrap(
+      () => invoke("git_graph", { path: cwd, maxCount }),
+      (r) => ({ data: r }),
+    ),
+    publishBranch: (cwd: string, branch: string) =>
+      wrap(() => invoke("git_publish_branch", { path: cwd, branch })),
+    currentBranch: (cwd: string) => wrap(
+      () => invoke("git_current_branch", { path: cwd }),
+      (r) => ({ data: r }),
+    ),
+    commitDetails: (cwd: string, oid: string) => wrap(
+      () => invoke("git_commit_details", { path: cwd, oid }),
+      (r) => ({ data: r }),
+    ),
+  },
   term: {
     start: (id: string, cols: number, rows: number) => invoke("term_start", { id, cols, rows }),
     write: (id: string, data: string) => invoke("term_write", { id, data }),
@@ -618,3 +653,37 @@ async function wrap<T>(fn: () => Promise<T>, transform?: (t: T) => any): Promise
 }
 
 (window as any).vibe = vibe;
+
+// ===== MCP BRIDGE FUNCTIONS =====
+export async function mcpGetServers(): Promise<import("./types.js").McpServerStatus[]> {
+  return invoke("mcp_get_servers");
+}
+
+export async function mcpStartServer(name: string): Promise<void> {
+  return invoke("mcp_start_server", { name });
+}
+
+export async function mcpStopServer(name: string): Promise<void> {
+  return invoke("mcp_stop_server", { name });
+}
+
+export async function mcpRestartServer(name: string): Promise<void> {
+  return invoke("mcp_restart_server", { name });
+}
+
+export async function mcpGetStatus(name: string): Promise<import("./types.js").McpStatus> {
+  return invoke("mcp_get_status", { name });
+}
+
+export async function mcpGetConfig(): Promise<import("./types.js").McpConfig> {
+  return invoke("mcp_get_config");
+}
+
+export async function mcpSaveConfig(config: import("./types.js").McpConfig): Promise<void> {
+  return invoke("mcp_save_config", { config });
+}
+
+export async function mcpListTools(serverName: string): Promise<string[]> {
+  return invoke("mcp_list_tools", { serverName });
+}
+

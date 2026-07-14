@@ -278,3 +278,41 @@
   background: var(--bg);
   min-height: 60px;
 }
+
+/* ── MCP Tool Call ── */
+.tool--mcp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  font-size: 14px;
+}
+
+.tool--mcp.tool--pending .tool__verb {
+  font-weight: 400;
+  background-image:
+    linear-gradient(90deg, transparent 0px, transparent 20px, var(--fg) 60px, transparent 100px, transparent 160px),
+    linear-gradient(var(--fg-dim), var(--fg-dim));
+  background-size:
+    160px 100%,
+    100% 100%;
+  background-repeat: no-repeat, no-repeat;
+  background-position:
+    -160px center,
+    0 0;
+  -webkit-background-clip: text, text;
+  background-clip: text, text;
+  -webkit-text-fill-color: transparent;
+  animation: tool-shimmer 2.5s linear infinite;
+}
+
+.tool--mcp .tool__verb {
+  font-weight: 400;
+  color: var(--fg-dim);
+}
+
+
+
