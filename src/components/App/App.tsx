@@ -419,7 +419,9 @@ export function App(): React.ReactElement {
                 onToggleFileTree={() => setFileTreeOpen(!fileTreeOpen)}
                 folder={folder}
                 onSearchOpen={handleOpenSearch}
+                onOpenSettings={handleOpenSettings}
               />
+
               {searchOpen && (
                 <SearchPopup
                   folder={folder}
@@ -489,31 +491,32 @@ export function App(): React.ReactElement {
               onToggleSearchInCode={handleToggleSearchInCode}
               fileTreeOpen={fileTreeOpen}
               onToggleFileTree={() => setFileTreeOpen(!fileTreeOpen)}
-              folder={folder}
-              onSearchOpen={handleOpenSearch}
-            />
-            {searchOpen && (
-              <SearchPopup
-                folder={folder}
-                onClose={handleCloseSearch}
-                onNewChat={() => {
-                  handleNewChat(() => setItems([]));
-                  setSearchOpen(false);
-                }}
-                onSwitchChat={(dir) => {
-                  handleSwitchChat(dir);
-                  setSearchOpen(false);
-                }}
-                onToggleTerminal={() => {
-                  setTerminalOpen((o) => !o);
-                  setSearchOpen(false);
-                }}
-                onOpenFile={handleOpenFile}
-                onRevealFolder={setRevealPath}
-                onCommand={handleCommand}
-              />
-            )}
-            <AppMain
+               folder={folder}
+               onSearchOpen={handleOpenSearch}
+               onOpenSettings={handleOpenSettings}
+             />
+             {searchOpen && (
+               <SearchPopup
+                 folder={folder}
+                 onClose={handleCloseSearch}
+                 onNewChat={() => {
+                   handleNewChat(() => setItems([]));
+                   setSearchOpen(false);
+                 }}
+                 onSwitchChat={(dir) => {
+                   handleSwitchChat(dir);
+                   setSearchOpen(false);
+                 }}
+                 onToggleTerminal={() => {
+                   setTerminalOpen((o) => !o);
+                   setSearchOpen(false);
+                 }}
+                 onOpenFile={handleOpenFile}
+                 onRevealFolder={setRevealPath}
+                 onCommand={handleCommand}
+               />
+             )}
+             <AppMain
               revealPath={revealPath}
               projects={projects}
               activeProject={activeProject}

@@ -42,6 +42,11 @@ pub fn system_prompt(cwd: &str) -> String {
         "- If a tool returns an error — explain it clearly and offer solutions.",
         "- Do not be overly robotic. Natural responses are preferred.",
         "",
+        "MODEL CONTEXT PROTOCOL (MCP):",
+        "- You have full access to Model Context Protocol (MCP) servers and tools when they are connected and enabled.",
+        "- MCP tools are dynamically provided in your available functions list with names like `mcp__<server>__<tool>` (e.g. `mcp__godot__...`, `mcp__github__...`).",
+        "- When the user asks to interact with an MCP server or perform tasks involving connected services (e.g. Godot, GitHub, filesystem), call the corresponding `mcp__*` tools.",
+        "",
         "For math: use LaTeX format (\\( \\) inline, \\[ \\] block).",
     ]
     .join("\n")

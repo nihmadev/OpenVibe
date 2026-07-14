@@ -51,7 +51,10 @@ fn test_clip_cyrillic_boundary() {
 fn test_clip_emoji_boundary() {
     let text = "a🚀b🚀c🚀d🚀e🚀f🚀g";
     let result = search::content_search::clip(text, 10);
-    assert!(!result.contains('�'), "clip must not split multi-byte emoji");
+    assert!(
+        !result.contains('�'),
+        "clip must not split multi-byte emoji"
+    );
 }
 
 #[test]
@@ -379,11 +382,7 @@ async fn test_search_content_structured_special_chars_in_query() {
 #[tokio::test]
 async fn test_search_content_structured_regex_special_chars() {
     let dir = temp_dir();
-    fs::write(
-        dir.join("test.txt"),
-        "foo.bar\nfooXbar\nfoo\nbar\n",
-    )
-    .unwrap();
+    fs::write(dir.join("test.txt"), "foo.bar\nfooXbar\nfoo\nbar\n").unwrap();
 
     // Regex query: dot matches any char
     let results = search::search_content_structured(
@@ -409,14 +408,10 @@ async fn test_search_content_basic() {
     let dir = temp_dir();
     fs::write(dir.join("test.txt"), "hello world\nfoo bar\nbaz").unwrap();
 
-    let result = search::search_content(
-        &dir.to_string_lossy(),
-        "hello",
-        &dir.to_string_lossy(),
-        100,
-    )
-    .await
-    .unwrap();
+    let result =
+        search::search_content(&dir.to_string_lossy(), "hello", &dir.to_string_lossy(), 100)
+            .await
+            .unwrap();
     assert!(!result.contains("(no matches)"));
     assert!(result.contains("hello world"));
 }
@@ -426,14 +421,10 @@ async fn test_search_content_no_matches() {
     let dir = temp_dir();
     fs::write(dir.join("test.txt"), "hello world").unwrap();
 
-    let result = search::search_content(
-        &dir.to_string_lossy(),
-        "zzzzz",
-        &dir.to_string_lossy(),
-        100,
-    )
-    .await
-    .unwrap();
+    let result =
+        search::search_content(&dir.to_string_lossy(), "zzzzz", &dir.to_string_lossy(), 100)
+            .await
+            .unwrap();
     assert_eq!(result, "(no matches)");
 }
 
@@ -462,14 +453,9 @@ async fn test_search_content_max_results() {
     }
     fs::write(dir.join("big.txt"), &content).unwrap();
 
-    let result = search::search_content(
-        &dir.to_string_lossy(),
-        "match",
-        &dir.to_string_lossy(),
-        5,
-    )
-    .await
-    .unwrap();
+    let result = search::search_content(&dir.to_string_lossy(), "match", &dir.to_string_lossy(), 5)
+        .await
+        .unwrap();
     let lines: Vec<&str> = result.lines().collect();
     assert_eq!(lines.len(), 5);
 }
@@ -483,14 +469,10 @@ async fn test_ensure_cached_and_filter_cached() {
     fs::write(dir.join("b.txt"), "foo\nbaz").unwrap();
     search::clear_search_cache();
 
-    let cached = search::ensure_cached(
-        &dir.to_string_lossy(),
-        "foo",
-        &dir.to_string_lossy(),
-        false,
-    )
-    .await
-    .unwrap();
+    let cached =
+        search::ensure_cached(&dir.to_string_lossy(), "foo", &dir.to_string_lossy(), false)
+            .await
+            .unwrap();
     assert_eq!(cached.len(), 3);
 
     let (total, page) = search::filter_cached(
@@ -516,14 +498,9 @@ async fn test_ensure_cached_filter_by_case() {
     fs::write(dir.join("a.txt"), "foo\nFoo\nFOO").unwrap();
     search::clear_search_cache();
 
-    search::ensure_cached(
-        &dir.to_string_lossy(),
-        "Foo",
-        &dir.to_string_lossy(),
-        false,
-    )
-    .await
-    .unwrap();
+    search::ensure_cached(&dir.to_string_lossy(), "Foo", &dir.to_string_lossy(), false)
+        .await
+        .unwrap();
 
     let (total, page) = search::filter_cached(
         &dir.to_string_lossy(),
@@ -584,10 +561,7 @@ fn test_filter_cached_no_cache_error() {
         10,
     );
     assert!(result.is_err());
-    assert!(result
-        .err()
-        .unwrap()
-        .contains("No cached search found"));
+    assert!(result.err().unwrap().contains("No cached search found"));
 }
 
 #[test]
@@ -824,8 +798,13 @@ fn test_find_files_skip_dirs() {
     // by calling with a slightly different approach
     let results = search::find_files(&root, "rs", 100);
     let names: Vec<&str> = results.iter().map(|r| r.name.as_str()).collect();
-    assert_eq!(results.len(), 2, "expected 2 files (main.rs, lib.rs), got {names:?} from {root}");
-    assert!(!results.iter().any(|r| r.name == "lib.rs" && (r.rel.contains("node_modules") || r.rel.contains("node_modules"))));
+    assert_eq!(
+        results.len(),
+        2,
+        "expected 2 files (main.rs, lib.rs), got {names:?} from {root}"
+    );
+    assert!(!results.iter().any(|r| r.name == "lib.rs"
+        && (r.rel.contains("node_modules") || r.rel.contains("node_modules"))));
 }
 
 #[test]
@@ -921,9 +900,7 @@ fn test_tokenize_line_identifiers() {
 #[test]
 fn test_tokenize_line_string_cyrillic() {
     let tokens = search::tokenize_line(r#"greeting("Привет, мир!");"#, "rs");
-    assert!(tokens
-        .iter()
-        .any(|t| t.text == "\"Привет, мир!\""));
+    assert!(tokens.iter().any(|t| t.text == "\"Привет, мир!\""));
 }
 
 #[test]
@@ -935,25 +912,19 @@ fn test_tokenize_line_empty() {
 #[test]
 fn test_tokenize_line_comment() {
     let tokens = search::tokenize_line("// комментарий", "rs");
-    assert!(tokens
-        .iter()
-        .any(|t| t.class_name == "sc-token-comment"));
+    assert!(tokens.iter().any(|t| t.class_name == "sc-token-comment"));
 }
 
 #[test]
 fn test_highlight_line_no_match() {
     let tokens = search::highlight_line("hello world", "rs", "xyz", false);
-    assert!(tokens
-        .iter()
-        .all(|t| t.class_name != "sc-match-highlight"));
+    assert!(tokens.iter().all(|t| t.class_name != "sc-match-highlight"));
 }
 
 #[test]
 fn test_highlight_line_empty_query() {
     let tokens = search::highlight_line("hello", "rs", "", false);
-    assert!(tokens
-        .iter()
-        .all(|t| t.class_name != "sc-match-highlight"));
+    assert!(tokens.iter().all(|t| t.class_name != "sc-match-highlight"));
 }
 
 #[test]
@@ -981,7 +952,10 @@ fn test_highlight_line_cyrillic_query() {
     // Single cyrillic char queries work within a single punctuation token.
     let tokens = search::highlight_line("Привет, мир!", "", "м", false);
     let has_match = tokens.iter().any(|t| t.class_name == "sc-match-highlight");
-    assert!(has_match, "expected match highlight for 'м' in 'Привет, мир!'");
+    assert!(
+        has_match,
+        "expected match highlight for 'м' in 'Привет, мир!'"
+    );
 }
 
 #[test]
@@ -992,15 +966,16 @@ fn test_highlight_line_cyrillic_multiword_spans_tokens() {
     // The function should not panic and should return valid tokens.
     let tokens = search::highlight_line("Привет, мир!", "", "мир", false);
     // Should not panic — even if no match is found across token boundaries
-    assert!(tokens.iter().all(|t| !t.text.is_empty()), "all tokens must be non-empty");
+    assert!(
+        tokens.iter().all(|t| !t.text.is_empty()),
+        "all tokens must be non-empty"
+    );
 }
 
 #[test]
 fn test_highlight_line_match_at_end() {
     let tokens = search::highlight_line("end match", "", "match", false);
-    assert!(tokens
-        .iter()
-        .any(|t| t.class_name == "sc-match-highlight"));
+    assert!(tokens.iter().any(|t| t.class_name == "sc-match-highlight"));
 }
 
 #[test]
@@ -1008,16 +983,24 @@ fn test_highlight_lines_batch() {
     let lines = vec!["foo bar", "baz foo", "hello"];
     let result = search::highlight_lines(&lines, "test.txt", "foo", false);
     assert_eq!(result.len(), 3);
-    assert!(result[0].iter().any(|t| t.class_name == "sc-match-highlight"));
-    assert!(result[1].iter().any(|t| t.class_name == "sc-match-highlight"));
-    assert!(result[2].iter().all(|t| t.class_name != "sc-match-highlight"));
+    assert!(result[0]
+        .iter()
+        .any(|t| t.class_name == "sc-match-highlight"));
+    assert!(result[1]
+        .iter()
+        .any(|t| t.class_name == "sc-match-highlight"));
+    assert!(result[2]
+        .iter()
+        .all(|t| t.class_name != "sc-match-highlight"));
 }
 
 #[test]
 fn test_highlight_lines_rust_file() {
     let lines = vec!["fn main() {", "    println!(\"hello\");", "}"];
     let result = search::highlight_lines(&lines, "main.rs", "main", false);
-    assert!(result[0].iter().any(|t| t.class_name == "sc-match-highlight"));
+    assert!(result[0]
+        .iter()
+        .any(|t| t.class_name == "sc-match-highlight"));
 }
 
 // ── config constants ──

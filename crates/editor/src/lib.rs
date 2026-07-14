@@ -43,9 +43,10 @@ fn collect_dts_files(dir: &Path, result: &mut Vec<String>, depth: usize) {
             let path = entry.path();
             if path.is_dir() {
                 collect_dts_files(&path, result, depth + 1);
-            } else if path.file_name().map_or(false, |n| {
-                n.to_string_lossy().ends_with(".d.ts")
-            }) {
+            } else if path
+                .file_name()
+                .map_or(false, |n| n.to_string_lossy().ends_with(".d.ts"))
+            {
                 result.push(path.to_string_lossy().to_string());
             }
         }
@@ -109,14 +110,24 @@ pub fn preload_types(cwd: &str) -> Result<PreloadTypesResult, String> {
     // 3. Resolve and read type files for each discovered name
     for type_name in &type_names {
         let paths_to_try = [
-            cwd_path.join("node_modules").join(type_name).join("package.json"),
-            cwd_path.join("node_modules").join("@types").join(type_name).join("package.json"),
+            cwd_path
+                .join("node_modules")
+                .join(type_name)
+                .join("package.json"),
+            cwd_path
+                .join("node_modules")
+                .join("@types")
+                .join(type_name)
+                .join("package.json"),
             cwd_path
                 .join("node_modules")
                 .join("@types")
                 .join(type_name.replace("/", "__"))
                 .join("package.json"),
-            cwd_path.join("node_modules").join(type_name).join("index.d.ts"),
+            cwd_path
+                .join("node_modules")
+                .join(type_name)
+                .join("index.d.ts"),
             cwd_path
                 .join("node_modules")
                 .join("@types")
@@ -210,15 +221,27 @@ pub fn preload_types(cwd: &str) -> Result<PreloadTypesResult, String> {
             continue;
         }
         // Skip if this package already lives under @types (already handled in step 4)
-        if cwd_path.join("node_modules").join("@types").join(type_name).is_dir() {
+        if cwd_path
+            .join("node_modules")
+            .join("@types")
+            .join(type_name)
+            .is_dir()
+        {
             continue;
         }
         // Check that this package actually ships type declarations
-        let has_types = read_small_file(&pkg_dir.join("package.json")).and_then(|raw| {
-            serde_json::from_str::<serde_json::Value>(&raw).ok().and_then(|pkg| {
-                pkg.get("types").or_else(|| pkg.get("typings")).and_then(|v| v.as_str()).map(|_| ())
+        let has_types = read_small_file(&pkg_dir.join("package.json"))
+            .and_then(|raw| {
+                serde_json::from_str::<serde_json::Value>(&raw)
+                    .ok()
+                    .and_then(|pkg| {
+                        pkg.get("types")
+                            .or_else(|| pkg.get("typings"))
+                            .and_then(|v| v.as_str())
+                            .map(|_| ())
+                    })
             })
-        }).is_some();
+            .is_some();
         if !has_types {
             continue;
         }

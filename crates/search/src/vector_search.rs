@@ -53,13 +53,10 @@ pub fn build_index(root: &str) -> Result<(), String> {
     let mut file_texts: Vec<String> = Vec::new();
     let mut file_meta: Vec<(String, usize)> = Vec::new();
 
-    for entry in jwalk::WalkDir::new(root)
-        .into_iter()
-        .filter(|e| match e {
-            Ok(e) => !should_skip(&e.file_name().to_string_lossy().to_string()),
-            Err(_) => false,
-        })
-    {
+    for entry in jwalk::WalkDir::new(root).into_iter().filter(|e| match e {
+        Ok(e) => !should_skip(&e.file_name().to_string_lossy().to_string()),
+        Err(_) => false,
+    }) {
         let entry = match entry {
             Ok(e) => e,
             Err(_) => continue,

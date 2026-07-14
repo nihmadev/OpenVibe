@@ -142,9 +142,7 @@ pub async fn fs_search_content(
     include: Option<String>,
     exclude: Option<String>,
 ) -> Result<Vec<search::types::ContentMatch>, String> {
-    let cwd = std::env::current_dir()
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_default();
+    let cwd = std::env::current_dir().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
     let use_regex = use_regex.unwrap_or(false);
     let match_case = match_case.unwrap_or(false);
     let match_whole_word = match_whole_word.unwrap_or(false);
@@ -155,10 +153,16 @@ pub async fn fs_search_content(
     // Populate cache via broad search, then return a filtered page
     search::ensure_cached(&cwd, &query, &root, use_regex).await?;
     let (_total, page) = search::filter_cached(
-        &cwd, &query, &root, use_regex,
-        match_case, match_whole_word,
-        &include, &exclude,
-        0, max,
+        &cwd,
+        &query,
+        &root,
+        use_regex,
+        match_case,
+        match_whole_word,
+        &include,
+        &exclude,
+        0,
+        max,
     )?;
     Ok(page)
 }
@@ -175,14 +179,18 @@ pub async fn fs_search_content_filter(
     offset: usize,
     limit: usize,
 ) -> Result<FilteredResult, String> {
-    let cwd = std::env::current_dir()
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_default();
+    let cwd = std::env::current_dir().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
     let (total, matches) = search::filter_cached(
-        &cwd, &query, &root, use_regex,
-        match_case, match_whole_word,
-        &include, &exclude,
-        offset, limit,
+        &cwd,
+        &query,
+        &root,
+        use_regex,
+        match_case,
+        match_whole_word,
+        &include,
+        &exclude,
+        offset,
+        limit,
     )?;
     Ok(FilteredResult { total, matches })
 }
@@ -198,9 +206,7 @@ pub async fn fs_search_content_files(
     exclude: Option<String>,
     max_files: Option<usize>,
 ) -> Result<FileGroupsResult, String> {
-    let cwd = std::env::current_dir()
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_default();
+    let cwd = std::env::current_dir().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
     let use_regex = use_regex.unwrap_or(false);
     let match_case = match_case.unwrap_or(false);
     let match_whole_word = match_whole_word.unwrap_or(false);
@@ -211,9 +217,14 @@ pub async fn fs_search_content_files(
     // Use file_groups_from_cache — iterates cached matches with refs, no cloning of all matches
     search::ensure_cached(&cwd, &query, &root, use_regex).await?;
     let (files, total_matches) = search::file_groups_from_cache(
-        &cwd, &query, &root, use_regex,
-        match_case, match_whole_word,
-        &include, &exclude,
+        &cwd,
+        &query,
+        &root,
+        use_regex,
+        match_case,
+        match_whole_word,
+        &include,
+        &exclude,
         max_files,
     )?;
 
@@ -233,16 +244,21 @@ pub async fn fs_search_content_file_matches(
     offset: usize,
     limit: usize,
 ) -> Result<FilteredResult, String> {
-    let cwd = std::env::current_dir()
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_default();
+    let cwd = std::env::current_dir().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
 
     search::ensure_cached(&cwd, &query, &root, use_regex).await?;
     let (page, total) = search::file_matches_from_cache(
-        &cwd, &query, &root, use_regex,
-        match_case, match_whole_word,
-        &include, &exclude,
-        &file_path, offset, limit,
+        &cwd,
+        &query,
+        &root,
+        use_regex,
+        match_case,
+        match_whole_word,
+        &include,
+        &exclude,
+        &file_path,
+        offset,
+        limit,
     )?;
 
     Ok(FilteredResult { total, matches: page })

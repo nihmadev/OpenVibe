@@ -129,8 +129,21 @@ export function describe(
         suffix: args?.task ?? "",
       };
     }
-    default:
+    default: {
+      if (item.toolName?.startsWith("mcp__")) {
+        const parts = item.toolName.split("__");
+        const serverName = parts[1] || "mcp";
+        const toolName = parts.slice(2).join("__");
+        const verb = t("mcpCall");
+        return {
+          verb,
+          file: null,
+          suffix: `[${serverName}] ${toolName}`,
+        };
+      }
       return { verb: item.toolName ?? t("tool"), file, suffix: "" };
+    }
+
   }
 }
 

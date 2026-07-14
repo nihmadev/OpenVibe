@@ -33,9 +33,6 @@
     "fs:allow-remove",
     "fs:allow-rename",
     "fs:allow-stat",
-    "fs:allow-read-dir",
-    "clipboard-manager:default",
-    "clipboard-manager:allow-write-text",
-    "clipboard-manager:allow-read-text"
+    "fs:allow-read-dir"
   ]
 }

@@ -59,7 +59,8 @@ pub async fn agent_send(
         std::mem::take(&mut *lock)
     };
 
-    let executor = agent_tool::AgentToolExecutor::new();
+    let executor = agent_tool::AgentToolExecutor::with_mcp(state.mcp_manager.clone());
+
     let emit = |event: &str, data: serde_json::Value| {
         let _ = app_handle.emit(event, data);
     };

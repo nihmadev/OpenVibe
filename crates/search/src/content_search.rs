@@ -61,26 +61,32 @@ pub async fn search_content(
         let q_lower = q.to_lowercase();
 
         let root_path = std::path::PathBuf::from(&root_clone);
-        let walk = jwalk::WalkDir::new(&root_path).process_read_dir(move |_depth, _path, _state, children| {
-            children.retain(|entry_result| {
-                let entry = match entry_result {
-                    Ok(e) => e,
-                    Err(_) => return false,
-                };
-                let name = entry.file_name.to_string_lossy().to_string();
-                if skip_clone.iter().any(|s| s == &name) {
-                    return false;
-                }
-                if let Some(ref gi) = gitignore {
-                    if let Ok(rel) = entry.path().strip_prefix(&root_path) {
-                        if crate::gitignore_filter::is_ignored(gi, rel, entry.file_type().is_dir()) {
-                            return false;
+        let walk = jwalk::WalkDir::new(&root_path).process_read_dir(
+            move |_depth, _path, _state, children| {
+                children.retain(|entry_result| {
+                    let entry = match entry_result {
+                        Ok(e) => e,
+                        Err(_) => return false,
+                    };
+                    let name = entry.file_name.to_string_lossy().to_string();
+                    if skip_clone.iter().any(|s| s == &name) {
+                        return false;
+                    }
+                    if let Some(ref gi) = gitignore {
+                        if let Ok(rel) = entry.path().strip_prefix(&root_path) {
+                            if crate::gitignore_filter::is_ignored(
+                                gi,
+                                rel,
+                                entry.file_type().is_dir(),
+                            ) {
+                                return false;
+                            }
                         }
                     }
-                }
-                true
-            });
-        });
+                    true
+                });
+            },
+        );
         for entry in walk.into_iter() {
             if results.len() >= max_results {
                 break;
@@ -259,7 +265,11 @@ pub async fn search_content_structured(
         } else {
             None
         };
-        let q_lower = if match_case { q.clone() } else { q.to_lowercase() };
+        let q_lower = if match_case {
+            q.clone()
+        } else {
+            q.to_lowercase()
+        };
         let whole_word_re = if match_whole_word {
             let word_pattern = if match_case {
                 format!(r"\b{}\b", regex::escape(&q))
@@ -272,26 +282,32 @@ pub async fn search_content_structured(
         };
 
         let root_path = std::path::PathBuf::from(&root_clone);
-        let walk = jwalk::WalkDir::new(&root_path).process_read_dir(move |_depth, _path, _state, children| {
-            children.retain(|entry_result| {
-                let entry = match entry_result {
-                    Ok(e) => e,
-                    Err(_) => return false,
-                };
-                let name = entry.file_name.to_string_lossy().to_string();
-                if skip_clone.iter().any(|s| s == &name) {
-                    return false;
-                }
-                if let Some(ref gi) = gitignore {
-                    if let Ok(rel) = entry.path().strip_prefix(&root_path) {
-                        if crate::gitignore_filter::is_ignored(gi, rel, entry.file_type().is_dir()) {
-                            return false;
+        let walk = jwalk::WalkDir::new(&root_path).process_read_dir(
+            move |_depth, _path, _state, children| {
+                children.retain(|entry_result| {
+                    let entry = match entry_result {
+                        Ok(e) => e,
+                        Err(_) => return false,
+                    };
+                    let name = entry.file_name.to_string_lossy().to_string();
+                    if skip_clone.iter().any(|s| s == &name) {
+                        return false;
+                    }
+                    if let Some(ref gi) = gitignore {
+                        if let Ok(rel) = entry.path().strip_prefix(&root_path) {
+                            if crate::gitignore_filter::is_ignored(
+                                gi,
+                                rel,
+                                entry.file_type().is_dir(),
+                            ) {
+                                return false;
+                            }
                         }
                     }
-                }
-                true
-            });
-        });
+                    true
+                });
+            },
+        );
         for entry in walk.into_iter() {
             if results.len() >= max_results {
                 break;
@@ -487,26 +503,32 @@ pub async fn ensure_cached(
         let q_lower = q.to_ascii_lowercase();
 
         let root_path = std::path::PathBuf::from(&root_clone);
-        let walk = jwalk::WalkDir::new(&root_path).process_read_dir(move |_depth, _path, _state, children| {
-            children.retain(|entry_result| {
-                let entry = match entry_result {
-                    Ok(e) => e,
-                    Err(_) => return false,
-                };
-                let name = entry.file_name.to_string_lossy().to_string();
-                if skip_clone.iter().any(|s| s == &name) {
-                    return false;
-                }
-                if let Some(ref gi) = gitignore {
-                    if let Ok(rel) = entry.path().strip_prefix(&root_path) {
-                        if crate::gitignore_filter::is_ignored(gi, rel, entry.file_type().is_dir()) {
-                            return false;
+        let walk = jwalk::WalkDir::new(&root_path).process_read_dir(
+            move |_depth, _path, _state, children| {
+                children.retain(|entry_result| {
+                    let entry = match entry_result {
+                        Ok(e) => e,
+                        Err(_) => return false,
+                    };
+                    let name = entry.file_name.to_string_lossy().to_string();
+                    if skip_clone.iter().any(|s| s == &name) {
+                        return false;
+                    }
+                    if let Some(ref gi) = gitignore {
+                        if let Ok(rel) = entry.path().strip_prefix(&root_path) {
+                            if crate::gitignore_filter::is_ignored(
+                                gi,
+                                rel,
+                                entry.file_type().is_dir(),
+                            ) {
+                                return false;
+                            }
                         }
                     }
-                }
-                true
-            });
-        });
+                    true
+                });
+            },
+        );
         for entry in walk.into_iter() {
             if results.len() >= CACHE_MAX {
                 break;
@@ -626,7 +648,13 @@ pub fn filter_cached(
         if !exclude_pats.is_empty() && matches_any(&m.rel, &exclude_pats) {
             return false;
         }
-        if !line_matches(&m.content, query, match_case, query_re.as_ref(), &query_lower) {
+        if !line_matches(
+            &m.content,
+            query,
+            match_case,
+            query_re.as_ref(),
+            &query_lower,
+        ) {
             return false;
         }
         true
@@ -667,39 +695,147 @@ struct LangDef {
 }
 
 const LANG_KEYWORDS: &[LangDef] = &[
-    LangDef { exts: &["ts", "js"], keywords: &[
-        "const", "let", "var", "function", "return", "if", "else", "for", "while",
-        "class", "import", "export", "from", "async", "await", "type", "interface",
-        "extends", "implements", "new", "this", "throw", "try", "catch", "finally",
-        "switch", "case", "default", "break", "continue", "typeof", "instanceof",
-        "in", "of", "as", "keyof", "readonly", "static", "private", "protected",
-        "public", "abstract", "declare", "delete", "void", "true", "false",
-    ]},
-    LangDef { exts: &["rs"], keywords: &[
-        "fn", "let", "mut", "const", "if", "else", "for", "while", "loop", "return",
-        "match", "pub", "use", "mod", "struct", "enum", "impl", "trait", "async",
-        "await", "move", "ref", "self", "super", "crate", "where", "type", "dyn",
-        "in", "as", "true", "false", "Some", "None", "Ok", "Err", "unsafe", "extern",
-        "static", "match",
-    ]},
-    LangDef { exts: &["py"], keywords: &[
-        "def", "class", "return", "if", "elif", "else", "for", "while", "import",
-        "from", "as", "with", "try", "except", "finally", "raise", "yield", "lambda",
-        "pass", "break", "continue", "and", "or", "not", "in", "is", "True", "False",
-        "None", "self", "async", "await",
-    ]},
-    LangDef { exts: &["go"], keywords: &[
-        "func", "return", "if", "else", "for", "range", "switch", "case", "default",
-        "break", "continue", "var", "const", "type", "struct", "interface", "import",
-        "package", "map", "chan", "go", "defer", "select", "fallthrough",
-    ]},
-    LangDef { exts: &["java"], keywords: &[
-        "public", "private", "protected", "static", "final", "class", "interface",
-        "extends", "implements", "return", "if", "else", "for", "while", "do",
-        "switch", "case", "default", "break", "continue", "new", "this", "super",
-        "import", "package", "void", "int", "boolean", "String", "null", "true",
-        "false", "throw", "throws", "try", "catch", "finally",
-    ]},
+    LangDef {
+        exts: &["ts", "js"],
+        keywords: &[
+            "const",
+            "let",
+            "var",
+            "function",
+            "return",
+            "if",
+            "else",
+            "for",
+            "while",
+            "class",
+            "import",
+            "export",
+            "from",
+            "async",
+            "await",
+            "type",
+            "interface",
+            "extends",
+            "implements",
+            "new",
+            "this",
+            "throw",
+            "try",
+            "catch",
+            "finally",
+            "switch",
+            "case",
+            "default",
+            "break",
+            "continue",
+            "typeof",
+            "instanceof",
+            "in",
+            "of",
+            "as",
+            "keyof",
+            "readonly",
+            "static",
+            "private",
+            "protected",
+            "public",
+            "abstract",
+            "declare",
+            "delete",
+            "void",
+            "true",
+            "false",
+        ],
+    },
+    LangDef {
+        exts: &["rs"],
+        keywords: &[
+            "fn", "let", "mut", "const", "if", "else", "for", "while", "loop", "return", "match",
+            "pub", "use", "mod", "struct", "enum", "impl", "trait", "async", "await", "move",
+            "ref", "self", "super", "crate", "where", "type", "dyn", "in", "as", "true", "false",
+            "Some", "None", "Ok", "Err", "unsafe", "extern", "static", "match",
+        ],
+    },
+    LangDef {
+        exts: &["py"],
+        keywords: &[
+            "def", "class", "return", "if", "elif", "else", "for", "while", "import", "from", "as",
+            "with", "try", "except", "finally", "raise", "yield", "lambda", "pass", "break",
+            "continue", "and", "or", "not", "in", "is", "True", "False", "None", "self", "async",
+            "await",
+        ],
+    },
+    LangDef {
+        exts: &["go"],
+        keywords: &[
+            "func",
+            "return",
+            "if",
+            "else",
+            "for",
+            "range",
+            "switch",
+            "case",
+            "default",
+            "break",
+            "continue",
+            "var",
+            "const",
+            "type",
+            "struct",
+            "interface",
+            "import",
+            "package",
+            "map",
+            "chan",
+            "go",
+            "defer",
+            "select",
+            "fallthrough",
+        ],
+    },
+    LangDef {
+        exts: &["java"],
+        keywords: &[
+            "public",
+            "private",
+            "protected",
+            "static",
+            "final",
+            "class",
+            "interface",
+            "extends",
+            "implements",
+            "return",
+            "if",
+            "else",
+            "for",
+            "while",
+            "do",
+            "switch",
+            "case",
+            "default",
+            "break",
+            "continue",
+            "new",
+            "this",
+            "super",
+            "import",
+            "package",
+            "void",
+            "int",
+            "boolean",
+            "String",
+            "null",
+            "true",
+            "false",
+            "throw",
+            "throws",
+            "try",
+            "catch",
+            "finally",
+        ],
+    },
 ];
 
 fn keywords_for_lang(lang: &str) -> &[&str] {
@@ -724,10 +860,14 @@ pub fn tokenize_line(line: &str, lang: &str) -> Vec<crate::types::SyntaxToken> {
             let start = i;
             i += 1;
             while i < bytes.len() && bytes[i] != quote {
-                if bytes[i] == b'\\' { i += 1; }
+                if bytes[i] == b'\\' {
+                    i += 1;
+                }
                 i += 1;
             }
-            if i < bytes.len() { i += 1; }
+            if i < bytes.len() {
+                i += 1;
+            }
             tokens.push(crate::types::SyntaxToken {
                 text: line[start..i].to_string(),
                 class_name: "sc-token-string".to_string(),
@@ -735,7 +875,8 @@ pub fn tokenize_line(line: &str, lang: &str) -> Vec<crate::types::SyntaxToken> {
             continue;
         }
         // Comments
-        if i + 1 < bytes.len() && bytes[i] == b'/' && (bytes[i + 1] == b'/' || bytes[i + 1] == b'*') {
+        if i + 1 < bytes.len() && bytes[i] == b'/' && (bytes[i + 1] == b'/' || bytes[i + 1] == b'*')
+        {
             tokens.push(crate::types::SyntaxToken {
                 text: line[i..].to_string(),
                 class_name: "sc-token-comment".to_string(),
@@ -745,7 +886,9 @@ pub fn tokenize_line(line: &str, lang: &str) -> Vec<crate::types::SyntaxToken> {
         // Numbers
         if bytes[i].is_ascii_digit() {
             let start = i;
-            while i < bytes.len() && (bytes[i].is_ascii_digit() || bytes[i] == b'.') { i += 1; }
+            while i < bytes.len() && (bytes[i].is_ascii_digit() || bytes[i] == b'.') {
+                i += 1;
+            }
             tokens.push(crate::types::SyntaxToken {
                 text: line[start..i].to_string(),
                 class_name: "sc-token-number".to_string(),
@@ -755,11 +898,17 @@ pub fn tokenize_line(line: &str, lang: &str) -> Vec<crate::types::SyntaxToken> {
         // Identifiers / keywords
         if bytes[i].is_ascii_alphabetic() || bytes[i] == b'_' || bytes[i] == b'$' {
             let start = i;
-            while i < bytes.len() && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_' || bytes[i] == b'$') {
+            while i < bytes.len()
+                && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_' || bytes[i] == b'$')
+            {
                 i += 1;
             }
             let word = &line[start..i];
-            let class = if keywords.contains(&word) { "sc-token-keyword" } else { "sc-token-identifier" };
+            let class = if keywords.contains(&word) {
+                "sc-token-keyword"
+            } else {
+                "sc-token-identifier"
+            };
             tokens.push(crate::types::SyntaxToken {
                 text: word.to_string(),
                 class_name: class.to_string(),
@@ -769,7 +918,9 @@ pub fn tokenize_line(line: &str, lang: &str) -> Vec<crate::types::SyntaxToken> {
         // Whitespace
         if bytes[i].is_ascii_whitespace() {
             let start = i;
-            while i < bytes.len() && bytes[i].is_ascii_whitespace() { i += 1; }
+            while i < bytes.len() && bytes[i].is_ascii_whitespace() {
+                i += 1;
+            }
             tokens.push(crate::types::SyntaxToken {
                 text: line[start..i].to_string(),
                 class_name: "sc-token-ws".to_string(),
@@ -777,7 +928,10 @@ pub fn tokenize_line(line: &str, lang: &str) -> Vec<crate::types::SyntaxToken> {
             continue;
         }
         // Punctuation / other (handle multi-byte UTF-8)
-        let ch = line[i..].chars().next().unwrap_or(std::char::REPLACEMENT_CHARACTER);
+        let ch = line[i..]
+            .chars()
+            .next()
+            .unwrap_or(std::char::REPLACEMENT_CHARACTER);
         let char_len = ch.len_utf8();
         tokens.push(crate::types::SyntaxToken {
             text: line[i..i + char_len].to_string(),
@@ -801,11 +955,19 @@ pub fn highlight_line(
         return tokens;
     }
 
-    let q = if match_case { query.to_string() } else { query.to_ascii_lowercase() };
+    let q = if match_case {
+        query.to_string()
+    } else {
+        query.to_ascii_lowercase()
+    };
     let mut result = Vec::new();
 
     for token in &tokens {
-        let txt = if match_case { &token.text } else { &token.text.to_ascii_lowercase() };
+        let txt = if match_case {
+            &token.text
+        } else {
+            &token.text.to_ascii_lowercase()
+        };
         let mut last = 0usize;
         let mut in_match = false;
         let mut match_started = last;
@@ -868,7 +1030,10 @@ pub fn highlight_lines(
     match_case: bool,
 ) -> Vec<Vec<crate::types::SyntaxToken>> {
     let lang = lang_from_filename(file_name);
-    lines.iter().map(|line| highlight_line(line, lang, query, match_case)).collect()
+    lines
+        .iter()
+        .map(|line| highlight_line(line, lang, query, match_case))
+        .collect()
 }
 
 pub fn clear_search_cache() {
@@ -916,7 +1081,13 @@ pub fn file_groups_from_cache(
         if !exclude_pats.is_empty() && matches_any(&m.rel, &exclude_pats) {
             continue;
         }
-        if !line_matches(&m.content, query, match_case, query_re.as_ref(), &query_lower) {
+        if !line_matches(
+            &m.content,
+            query,
+            match_case,
+            query_re.as_ref(),
+            &query_lower,
+        ) {
             continue;
         }
         let count = file_map
@@ -988,7 +1159,13 @@ pub fn file_matches_from_cache(
         if !exclude_pats.is_empty() && matches_any(&m.rel, &exclude_pats) {
             return false;
         }
-        if !line_matches(&m.content, query, match_case, query_re.as_ref(), &query_lower) {
+        if !line_matches(
+            &m.content,
+            query,
+            match_case,
+            query_re.as_ref(),
+            &query_lower,
+        ) {
             return false;
         }
         true

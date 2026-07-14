@@ -12,7 +12,9 @@ pub use content_search::{
     search_content_with_vector, tokenize_line,
 };
 pub use gitignore_filter::{is_ignored, load as load_gitignore};
-pub use types::{ContentMatch, FileGroupEntry, FileMatch, FileResult, FsEntry, SearchResult, SyntaxToken};
+pub use types::{
+    ContentMatch, FileGroupEntry, FileMatch, FileResult, FsEntry, SearchResult, SyntaxToken,
+};
 pub use vector_search::{
     build_index, clear_all_caches, clear_cache, cosine_similarity, embed_texts, ensure_model,
     search_codebase_vector,

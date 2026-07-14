@@ -18,7 +18,8 @@ pub async fn tools_execute(
     };
 
     let cancel = std::sync::atomic::AtomicBool::new(false);
-    let executor = agent_tool::AgentToolExecutor::new();
+    let executor = agent_tool::AgentToolExecutor::with_mcp(state.mcp_manager.clone());
+
     let emit = |_: &str, _: serde_json::Value| {};
     agent_tool::execute_tool(&name, &args, &cwd, &cancel, &emit, &executor).await
 }
