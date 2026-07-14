@@ -3,12 +3,14 @@ pub mod diff;
 pub mod error;
 pub mod repository;
 pub mod status;
+pub mod history;
 
 pub use commit::*;
 pub use diff::*;
 pub use error::{GitError, Result};
 pub use repository::*;
 pub use status::*;
+pub use history::*;
 
 pub fn is_repository(path: &str) -> bool {
     git2::Repository::discover(path).is_ok()
