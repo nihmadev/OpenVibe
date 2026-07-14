@@ -9,6 +9,7 @@ export function useModels(
   const [enabledModels, setEnabledModels] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    // Load enabled models immediately on mount, then refresh on config/settings changes
     window.vibe.models
       .listEnabled()
       .then((ids) => {

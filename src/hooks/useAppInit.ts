@@ -35,11 +35,13 @@ export function useAppInit({
       setFolder(res.config.cwd);
       setState({ kind: "ok" });
 
-      // Parallel IPC calls — providers, projects, and active project are independent
+      // Parallel IPC calls — providers, projects, active project, and models are independent
       const [providerList, projectList, activeProject] = await Promise.all([
         window.vibe.providers.list(),
         window.vibe.projects.list(),
         window.vibe.projects.active(),
+        // Preload enabled models in background to avoid lazy load on first interaction
+        window.vibe.models.listEnabled().catch(() => []),
       ]);
       if (cancelled) return;
 
@@ -55,6 +57,16 @@ export function useAppInit({
 
       setActiveProject(activeProject.id);
       setFolder(activeProject.path);
+
+      // Background warm-up tasks — run in parallel without blocking UI
+      Promise.all([
+        // Preload Monaco editor types for faster code editing
+        window.vibe.editor?.preloadTypes?.().catch(() => {}),
+        // Warm up git repo info cache if project is a git repository
+        window.vibe.git?.repoInfo?.().catch(() => {}),
+        // Prime file tree cache with shallow listing
+        window.vibe.fs?.list?.(activeProject.path, 1).catch(() => {}),
+      ]);
 
       const list = await window.vibe.chats.list();
       if (cancelled) return;
