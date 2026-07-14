@@ -11,7 +11,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager};
-use tokio::sync::{oneshot, watch};
+use tokio::sync::watch;
 
 pub struct AppState {
     pub projects: Mutex<db::ProjectStore>,
@@ -23,7 +23,6 @@ pub struct AppState {
     pub llm_cancels: Mutex<HashMap<String, Arc<AtomicBool>>>,
     pub agent: Mutex<Option<agent::Agent>>,
     pub agent_cancel: Mutex<Option<Arc<AtomicBool>>>,
-    pub pending_confirms: Mutex<HashMap<String, oneshot::Sender<String>>>,
     pub http_client: reqwest::Client,
     pub provider_url: Arc<tokio::sync::Mutex<String>>,
     pub warmer_stop_tx: Mutex<Option<watch::Sender<bool>>>,
@@ -241,7 +240,6 @@ pub fn run() {
                 llm_cancels: Mutex::new(HashMap::new()),
                 agent: Mutex::new(None),
                 agent_cancel: Mutex::new(None),
-                pending_confirms: Mutex::new(HashMap::new()),
                 http_client: shared_client,
                 provider_url,
                 warmer_stop_tx: Mutex::new(Some(warmer_stop_tx)),
@@ -264,7 +262,6 @@ pub fn run() {
             commands::agent::agent_stop,
             commands::agent::agent_reset,
             commands::agent::agent_summarize,
-            commands::agent::agent_confirm,
             commands::agent::agent_set_messages,
             commands::agent::agent_get_messages,
             commands::agent::agent_instant_revert,

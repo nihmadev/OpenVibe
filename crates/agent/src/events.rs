@@ -37,14 +37,6 @@ pub struct ToolDeniedEvent {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ConfirmRequestEvent {
-    pub id: String,
-    pub tool_name: String,
-    pub args: serde_json::Value,
-}
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct ErrorEvent {
     pub text: String,
 }

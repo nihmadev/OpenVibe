@@ -5,7 +5,9 @@ use std::sync::atomic::AtomicBool;
 pub trait ToolExecutor: Send + Sync {
     fn definitions(&self) -> Vec<ToolDefinition>;
 
-    fn requires_confirmation(&self, name: &str) -> bool;
+    fn is_read_only(&self, _name: &str) -> bool {
+        false
+    }
 
     async fn execute(
         &self,
@@ -16,3 +18,4 @@ pub trait ToolExecutor: Send + Sync {
         emit: &(dyn for<'a> Fn(&'a str, serde_json::Value) + Send + Sync),
     ) -> Result<String, String>;
 }
+

@@ -140,20 +140,6 @@ pub fn build_readonly_tool_definitions() -> Vec<ToolDefinition> {
         ToolDefinition {
             type_: "function".to_string(),
             function: agent::ToolDefFunction {
-                name: "bash".to_string(),
-                description: "Run a shell command (read-only).".to_string(),
-                parameters: serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "command": { "type": "string" }
-                    },
-                    "required": ["command"]
-                }),
-            },
-        },
-        ToolDefinition {
-            type_: "function".to_string(),
-            function: agent::ToolDefFunction {
                 name: "search_codebase".to_string(),
                 description: "Search the codebase.".to_string(),
                 parameters: serde_json::json!({
@@ -168,6 +154,3 @@ pub fn build_readonly_tool_definitions() -> Vec<ToolDefinition> {
     ]
 }
 
-pub fn requires_confirmation(name: &str) -> bool {
-    matches!(name, "bash")
-}

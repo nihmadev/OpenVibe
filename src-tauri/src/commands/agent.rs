@@ -54,18 +54,13 @@ pub async fn agent_send(
     }
     .ok_or_else(|| "No agent created yet. Call agent_new first.".to_string())?;
 
-    let mut confirm_senders = {
-        let mut lock = state.pending_confirms.lock().map_err(|e| e.to_string())?;
-        std::mem::take(&mut *lock)
-    };
-
     let executor = agent_tool::AgentToolExecutor::with_mcp(state.mcp_manager.clone());
 
     let emit = |event: &str, data: serde_json::Value| {
         let _ = app_handle.emit(event, data);
     };
 
-    agent.send(input, content_parts, &executor, &state.http_client, &emit, &mut confirm_senders).await;
+    agent.send(input, content_parts, &executor, &state.http_client, &emit).await;
 
     // Clean up cancel token now that send is done
     {
@@ -73,32 +68,63 @@ pub async fn agent_send(
         *cancel_lock = None;
     }
 
-    {
-        let mut lock = state.pending_confirms.lock().map_err(|e| e.to_string())?;
-        *lock = confirm_senders;
-    }
-
-    {
+    let (needs_title, active_id, db_path, agent_cfg, msgs) = {
         let msgs = agent.messages.clone();
         let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as i64;
         let active = state.active_chat_id.lock().map_err(|e| e.to_string())?;
+        let mut is_new = false;
+        let mut cur_id = None;
+        let mut db_p = None;
+
         if let Some(ref id) = *active {
+            cur_id = Some(id.clone());
             let chat_store = state.chat_store.lock().map_err(|e| e.to_string())?;
             if let Some(ref store) = *chat_store {
                 if let Some(mut record) = store.get(id) {
-                    record.messages = msgs;
+                    is_new = record.title == "New chat" || record.title.trim().is_empty();
+                    record.messages = msgs.clone();
                     record.updated_at = ts;
                     store.save(&record);
                 }
             }
             drop(chat_store);
+            if let Ok(projects) = state.projects.lock() {
+                if let Some(active_proj) = projects.get_active() {
+                    db_p = Some(projects.chats_db(&active_proj.id));
+                }
+            }
+
         }
         drop(active);
         let app = state.app_handle.lock().map_err(|e| e.to_string())?;
         if let Some(ref handle) = *app {
             let _ = handle.emit("vibe:chats:updated", ());
         }
+        (is_new, cur_id, db_p, agent.config().clone(), msgs)
+    };
+
+    if needs_title {
+        if let (Some(chat_id), Some(db_path)) = (active_id, db_path) {
+            let http_client = state.http_client.clone();
+            let app_handle_clone = app_handle.clone();
+            tokio::spawn(async move {
+                let title = Agent::summarize_with(agent_cfg, msgs, &http_client).await;
+                if !title.is_empty() && title != "New chat" {
+                    if let Ok(store) = chats::ChatStore::new(&db_path) {
+                        if let Some(mut record) = store.get(&chat_id) {
+                            if record.title == "New chat" || record.title.trim().is_empty() {
+                                record.title = title;
+                                store.save(&record);
+                                let _ = app_handle_clone.emit("vibe:chats:updated", ());
+                            }
+                        }
+                    }
+                }
+            });
+        }
     }
+
+
 
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     *agent_lock = Some(agent);
@@ -147,15 +173,6 @@ pub async fn agent_summarize(state: State<'_, AppState>) -> Result<String, Strin
     let title = Agent::summarize_with(cfg, messages, &state.http_client).await;
 
     Ok(title)
-}
-
-#[tauri::command]
-pub async fn agent_confirm(state: State<'_, AppState>, id: String, decision: String) -> Result<(), String> {
-    let mut confirm_senders = state.pending_confirms.lock().map_err(|e| e.to_string())?;
-    if let Some(sender) = confirm_senders.remove(&id) {
-        let _ = sender.send(decision);
-    }
-    Ok(())
 }
 
 #[tauri::command]

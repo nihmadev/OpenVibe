@@ -20,6 +20,7 @@ pub struct McpServerProcess {
     stdin: Arc<Mutex<Option<ChildStdin>>>,
     pending_requests: Arc<Mutex<HashMap<u64, oneshot::Sender<Value>>>>,
     stderr_logs: Arc<Mutex<Vec<String>>>,
+    tools_cache: Arc<std::sync::Mutex<Vec<Value>>>,
     request_id: AtomicU64,
 }
 
@@ -32,6 +33,7 @@ impl McpServerProcess {
             stdin: Arc::new(Mutex::new(None)),
             pending_requests: Arc::new(Mutex::new(HashMap::new())),
             stderr_logs: Arc::new(Mutex::new(Vec::new())),
+            tools_cache: Arc::new(std::sync::Mutex::new(Vec::new())),
             request_id: AtomicU64::new(1),
         }
     }
@@ -189,7 +191,17 @@ impl McpServerProcess {
         });
         self.send_notification_internal(&init_notif).await?;
 
+        if let Ok(tools) = self.list_tools().await {
+            if let Ok(mut cache) = self.tools_cache.lock() {
+                *cache = tools;
+            }
+        }
+
         Ok(())
+    }
+
+    pub fn get_cached_tools_sync(&self) -> Vec<Value> {
+        self.tools_cache.lock().map(|cache| cache.clone()).unwrap_or_default()
     }
 
     async fn send_notification_internal(&self, msg: &Value) -> Result<(), String> {
@@ -258,6 +270,9 @@ impl McpServerProcess {
         }
         *self.stdin.lock().await = None;
         self.pending_requests.lock().await.clear();
+        if let Ok(mut cache) = self.tools_cache.lock() {
+            cache.clear();
+        }
         *status = McpStatus::Stopped;
         Ok(())
     }
@@ -288,6 +303,9 @@ impl McpServerProcess {
             .as_array()
             .cloned()
             .unwrap_or_default();
+        if let Ok(mut cache) = self.tools_cache.lock() {
+            *cache = tools.clone();
+        }
         Ok(tools)
     }
 

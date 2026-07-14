@@ -41,9 +41,7 @@ impl ToolExecutor for AgentToolExecutor {
         let mut defs = definition::build_tool_definitions();
 
         if let Some(ref mcp) = self.mcp_manager {
-            let mcp_tools = tokio::task::block_in_place(|| {
-                tokio::runtime::Handle::current().block_on(async { mcp.list_all_tools().await })
-            });
+            let mcp_tools = mcp.get_cached_tools();
 
             for (server_name, tool_val) in mcp_tools {
                 let tool_name = tool_val["name"].as_str().unwrap_or("unknown");
@@ -71,12 +69,28 @@ impl ToolExecutor for AgentToolExecutor {
         defs
     }
 
-    fn requires_confirmation(&self, name: &str) -> bool {
-        if name.starts_with("mcp__") {
-            return false;
+    fn is_read_only(&self, name: &str) -> bool {
+        if matches!(name, "read_file" | "list_dir" | "search_codebase") {
+            return true;
         }
-        definition::requires_confirmation(name)
+        if name.starts_with("mcp__") {
+            let parts: Vec<&str> = name.splitn(3, "__").collect();
+            if parts.len() == 3 {
+                let tool_name = parts[2].to_lowercase();
+                if tool_name.starts_with("read_")
+                    || tool_name.starts_with("get_")
+                    || tool_name.starts_with("list_")
+                    || tool_name.starts_with("search_")
+                    || tool_name.starts_with("find_")
+                    || tool_name.starts_with("fetch_")
+                {
+                    return true;
+                }
+            }
+        }
+        false
     }
+
 
     async fn execute(
         &self,

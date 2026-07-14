@@ -20,7 +20,7 @@ pub use chat::{AssistantTurn, ChatMessage, ToolCall, ToolCallFunction};
 pub use config::AgentConfig;
 pub use definition::{ToolDefFunction, ToolDefinition};
 pub use events::{
-    BusyEvent, ChunkEvent, ConfirmRequestEvent, ErrorEvent, ToolCallEvent, ToolDeniedEvent,
+    BusyEvent, ChunkEvent, ErrorEvent, ToolCallEvent, ToolDeniedEvent,
     ToolResultEvent, UserEvent,
 };
 pub use executor::ToolExecutor;

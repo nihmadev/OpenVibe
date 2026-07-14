@@ -13,6 +13,23 @@ use crate::{bash, list_dir, read, search};
 
 const MAX_TURNS: usize = 25;
 
+static SUB_AGENT_CLIENT: std::sync::OnceLock<reqwest::Client> = std::sync::OnceLock::new();
+
+fn get_sub_agent_client() -> &'static reqwest::Client {
+    SUB_AGENT_CLIENT.get_or_init(|| {
+        reqwest::Client::builder()
+            .pool_max_idle_per_host(2)
+            .pool_idle_timeout(std::time::Duration::from_secs(60))
+            .http2_keep_alive_interval(Some(std::time::Duration::from_secs(30)))
+            .http2_keep_alive_timeout(std::time::Duration::from_secs(5))
+            .tcp_keepalive(Some(std::time::Duration::from_secs(15)))
+            .connect_timeout(std::time::Duration::from_secs(10))
+            .tcp_nodelay(true)
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new())
+    })
+}
+
 pub async fn execute(
     cwd: &str,
     args: &serde_json::Value,
@@ -31,16 +48,7 @@ pub async fn execute(
 
     let config = llm_config.ok_or_else(|| "Sub-agent: LLM not configured".to_string())?;
 
-    let client = reqwest::Client::builder()
-        .pool_max_idle_per_host(2)
-        .pool_idle_timeout(std::time::Duration::from_secs(60))
-        .http2_keep_alive_interval(Some(std::time::Duration::from_secs(30)))
-        .http2_keep_alive_timeout(std::time::Duration::from_secs(5))
-        .tcp_keepalive(Some(std::time::Duration::from_secs(15)))
-        .connect_timeout(std::time::Duration::from_secs(10))
-        .tcp_nodelay(true)
-        .build()
-        .map_err(|e| format!("Failed to build http client: {e}"))?;
+    let client = get_sub_agent_client();
     let cancel_sub = Arc::new(AtomicBool::new(false));
     let mut sub_messages: Vec<ChatMessage> = vec![
         ChatMessage {
@@ -116,6 +124,7 @@ pub async fn execute(
             return Ok(full_result.trim().to_string());
         }
 
+        let mut prepared_calls = Vec::new();
         for call in &turn.tool_calls {
             if cancel.load(Ordering::Relaxed) {
                 return Err("Aborted".to_string());
@@ -155,14 +164,24 @@ pub async fn execute(
                 },
             );
 
-            let result = match tool_name.as_str() {
-                "read_file" => read::tool_read_file(cwd, &parsed_args).await,
-                "search_codebase" => search::tool_search_codebase(cwd, &parsed_args).await,
-                "list_dir" => list_dir::tool_list_dir(cwd, &parsed_args).await,
-                "bash" => bash::tool_bash(cwd, &parsed_args, cancel).await,
-                _ => Err(format!("Unknown tool: {tool_name}")),
-            };
+            prepared_calls.push((call, tool_name.clone(), parsed_args));
+        }
 
+        let futures = prepared_calls
+            .iter()
+            .map(|(_call, tool_name, parsed_args)| async move {
+                match tool_name.as_str() {
+                    "read_file" => read::tool_read_file(cwd, parsed_args).await,
+                    "search_codebase" => search::tool_search_codebase(cwd, parsed_args).await,
+                    "list_dir" => list_dir::tool_list_dir(cwd, parsed_args).await,
+                    "bash" => bash::tool_bash(cwd, parsed_args, cancel).await,
+                    _ => Err(format!("Unknown tool: {tool_name}")),
+                }
+            });
+
+        let results = futures::future::join_all(futures).await;
+
+        for ((call, _, _), result) in prepared_calls.into_iter().zip(results) {
             let is_ok = result.is_ok();
             let result_text = result.unwrap_or_else(|e| e);
 
@@ -187,6 +206,7 @@ pub async fn execute(
                 reasoning_content: None,
             });
         }
+
     }
 
     if full_result.trim().is_empty() {

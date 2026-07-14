@@ -22,8 +22,9 @@ impl Agent {
             msgs.extend_from_slice(&messages[start..]);
             msgs
         } else {
-            messages
+            messages.clone()
         };
+
 
         let mut prompt = context_messages;
         prompt.push(ChatMessage {
@@ -98,16 +99,45 @@ impl Agent {
                     t.truncate(t.len().saturating_sub(1));
                 }
                 let t = t.trim().to_string();
-                if t.is_empty() || t.len() > 60 {
-                    return "New chat".to_string();
+                if !t.is_empty() && t.len() <= 60 {
+                    return t;
                 }
-                t
+                Self::fallback_title(&messages)
             }
-            Err(_) => "New chat".to_string(),
+            Err(_) => Self::fallback_title(&messages),
         }
     }
+
+    fn fallback_title(messages: &[ChatMessage]) -> String {
+        for msg in messages {
+            if msg.role == "user" {
+                if let Some(ref content) = msg.content {
+                    let text = match content {
+                        serde_json::Value::String(s) => s.clone(),
+                        serde_json::Value::Array(arr) => arr
+                            .iter()
+                            .filter_map(|p| p.get("text").and_then(|v| v.as_str()))
+                            .collect::<Vec<_>>()
+                            .join(" "),
+                        _ => String::new(),
+                    };
+                    let line = text.lines().next().unwrap_or("").trim();
+                    if !line.is_empty() {
+                        let mut res: String = line.chars().take(30).collect();
+                        if line.chars().count() > 30 {
+                            res.push_str("…");
+                        }
+                        return res;
+                    }
+                }
+            }
+        }
+        "New chat".to_string()
+    }
+
 
     pub async fn summarize(&self, client: &reqwest::Client) -> String {
         Self::summarize_with(self.config().clone(), self.messages.clone(), client).await
     }
 }
+

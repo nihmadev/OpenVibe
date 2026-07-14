@@ -150,6 +150,20 @@ impl McpManager {
         Ok(tool_names)
     }
 
+    pub fn get_cached_tools(&self) -> Vec<(String, Value)> {
+        let Ok(servers_guard) = self.servers.try_read() else {
+            return Vec::new();
+        };
+        let mut all_tools = Vec::new();
+        for (server_name, proc) in servers_guard.iter() {
+            let tools = proc.get_cached_tools_sync();
+            for tool in tools {
+                all_tools.push((server_name.clone(), tool));
+            }
+        }
+        all_tools
+    }
+
     pub async fn list_all_tools(&self) -> Vec<(String, Value)> {
         let servers_guard = self.servers.read().await;
         let mut all_tools = Vec::new();

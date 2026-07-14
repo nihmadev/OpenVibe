@@ -4,23 +4,21 @@ use crate::chat::ChatMessage;
 
 pub fn supports_vision(model: &str) -> bool {
     let m = model.to_lowercase();
-    if m.starts_with("gpt-4o") || m.starts_with("gpt-4-vision") || m.starts_with("gpt-4-turbo") {
-        return true;
-    }
-    if m.contains("claude") && (m.contains("opus") || m.contains("sonnet")) {
-        return true;
-    }
-    if m.contains("llama") && m.contains("vision") {
-        return true;
-    }
-    if m.contains("gemini") && (m.contains("pro") || m.contains("flash")) {
-        return true;
-    }
-    if m.contains("pixtral") || m.contains("llava") {
-        return true;
-    }
-    false
+    m.contains("vision")
+        || m.contains("-vl")
+        || m.contains("_vl")
+        || m.contains("vl-")
+        || m.contains("multimodal")
+        || m.contains("gpt-4o")
+        || m.contains("gpt-4-turbo")
+        || m.contains("o1")
+        || m.contains("o3")
+        || m.contains("claude-3")
+        || m.contains("gemini")
+        || m.contains("pixtral")
+        || m.contains("llava")
 }
+
 
 pub fn flatten_for_text_only(messages: Vec<ChatMessage>) -> Vec<ChatMessage> {
     messages
