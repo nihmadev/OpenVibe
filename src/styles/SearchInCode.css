@@ -44,7 +44,9 @@
   cursor: pointer;
   color: var(--fg-muted);
   background: transparent;
-  transition: color var(--anim-buttons-duration, 0.15s) var(--anim-buttons-easing, ease), background var(--anim-buttons-duration, 0.15s) var(--anim-buttons-easing, ease);
+  transition:
+    color var(--anim-buttons-duration, 0.15s) var(--anim-buttons-easing, ease),
+    background var(--anim-buttons-duration, 0.15s) var(--anim-buttons-easing, ease);
   flex-shrink: 0;
 }
 
@@ -114,7 +116,11 @@
   color: var(--fg-muted);
   padding: 0;
   flex-shrink: 0;
-  transition: height 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.15s, border-color 0.15s, background 0.15s;
+  transition:
+    height 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.15s,
+    border-color 0.15s,
+    background 0.15s;
   height: 28px;
 }
 
@@ -183,7 +189,9 @@
   cursor: pointer;
   color: var(--fg-muted);
   background: transparent;
-  transition: color var(--anim-buttons-duration, 0.15s) var(--anim-buttons-easing, ease), background var(--anim-buttons-duration, 0.15s) var(--anim-buttons-easing, ease);
+  transition:
+    color var(--anim-buttons-duration, 0.15s) var(--anim-buttons-easing, ease),
+    background var(--anim-buttons-duration, 0.15s) var(--anim-buttons-easing, ease);
   font-size: 10px;
 }
 
@@ -246,8 +254,13 @@
 }
 
 @keyframes sc-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 /* ── Results ── */
@@ -425,8 +438,12 @@
 }
 
 @keyframes sc-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .sc-match-row {
@@ -437,7 +454,9 @@
   cursor: pointer;
   color: var(--fg-dim);
   min-height: 22px;
-  transition: background var(--anim-buttons-duration, 0.18s) var(--anim-buttons-easing, ease), color var(--anim-buttons-duration, 0.18s) var(--anim-buttons-easing, ease);
+  transition:
+    background var(--anim-buttons-duration, 0.18s) var(--anim-buttons-easing, ease),
+    color var(--anim-buttons-duration, 0.18s) var(--anim-buttons-easing, ease);
   position: relative;
 }
 
@@ -458,7 +477,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 11px;
-  font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+  font-family: "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas", monospace;
   line-height: 1.5;
 }
 
@@ -510,7 +529,9 @@
   user-select: none;
   color: var(--fg-dim);
   position: relative;
-  transition: background var(--anim-buttons-duration, 0.18s) var(--anim-buttons-easing, ease), color var(--anim-buttons-duration, 0.18s) var(--anim-buttons-easing, ease);
+  transition:
+    background var(--anim-buttons-duration, 0.18s) var(--anim-buttons-easing, ease),
+    color var(--anim-buttons-duration, 0.18s) var(--anim-buttons-easing, ease);
 }
 
 .sc-tree-row:hover {

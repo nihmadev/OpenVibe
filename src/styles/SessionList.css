@@ -9,8 +9,10 @@
   z-index: 50;
   border-radius: var(--radius-md) 0 0 var(--radius-md);
   transition:
-    width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1)) var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
-    min-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1)) var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1));
+    width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+      var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    min-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+      var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .session-list--open {
@@ -51,8 +53,6 @@
   z-index: 100;
 }
 
-
-
 .session-list__head {
   padding: 4px 8px 14px;
 }
@@ -90,8 +90,10 @@
   font-size: 12.5px;
   font-weight: 500;
   transition:
-    background calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1)) var(--anim-buttons-easing, ease),
-    border-color calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1)) var(--anim-buttons-easing, ease);
+    background calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1))
+      var(--anim-buttons-easing, ease),
+    border-color calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1))
+      var(--anim-buttons-easing, ease);
 }
 
 .session-list__newsession:hover {
@@ -157,8 +159,10 @@
   border: 1px solid transparent;
   color: var(--fg);
   transition:
-    background calc(var(--anim-buttons-duration, 0.12s) * var(--anim-buttons-enabled, 1)) var(--anim-buttons-easing, ease),
-    border-color calc(var(--anim-buttons-duration, 0.12s) * var(--anim-buttons-enabled, 1)) var(--anim-buttons-easing, ease),
+    background calc(var(--anim-buttons-duration, 0.12s) * var(--anim-buttons-enabled, 1))
+      var(--anim-buttons-easing, ease),
+    border-color calc(var(--anim-buttons-duration, 0.12s) * var(--anim-buttons-enabled, 1))
+      var(--anim-buttons-easing, ease),
     color calc(var(--anim-buttons-duration, 0.12s) * var(--anim-buttons-enabled, 1)) var(--anim-buttons-easing, ease);
   gap: 6px;
 }

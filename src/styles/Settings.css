@@ -906,7 +906,9 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .connect-popup__icon-btn:hover {
@@ -960,7 +962,9 @@
   font-weight: 500;
   padding: 5px 10px;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
   margin-top: 2px;
 }
 
@@ -988,7 +992,9 @@
   font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .connect-popup__btn:hover {
@@ -2401,7 +2407,36 @@
 .mcp-server-card__title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+/* Status Dot */
+.mcp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.mcp-dot--green {
+  background: #34c759;
+  box-shadow: 0 0 4px rgba(52, 199, 89, 0.5);
+}
+
+.mcp-dot--yellow {
+  background: #ffcc00;
+  box-shadow: 0 0 4px rgba(255, 204, 0, 0.5);
+}
+
+.mcp-dot--red {
+  background: #ff3b30;
+  box-shadow: 0 0 4px rgba(255, 59, 48, 0.5);
+}
+
+.mcp-dot--gray {
+  background: #8e8e93;
+  box-shadow: 0 0 4px rgba(142, 142, 147, 0.3);
 }
 
 .mcp-server-card__title h3 {
@@ -2415,65 +2450,6 @@
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.mcp-badge {
-  padding: 3px 8px;
-  border-radius: 10px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.mcp-badge--running {
-  background: var(--bg-3);
-  color: var(--fg);
-  border: 1px solid var(--line-strong);
-}
-
-.mcp-badge--stopped {
-  background: var(--bg-2);
-  color: var(--fg-muted);
-  border: 1px solid var(--line);
-}
-
-.mcp-badge--error {
-  background: rgba(231, 76, 60, 0.15);
-  color: var(--red, #e74c3c);
-  border: 1px solid rgba(231, 76, 60, 0.3);
-}
-
-.mcp-badge--disabled {
-  background: var(--bg);
-  color: var(--fg-dim);
-  border: 1px solid var(--line);
-}
-
-.mcp-toggle-btn {
-  background: var(--bg);
-  border: 1px solid var(--line);
-  color: var(--fg-muted);
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.mcp-toggle-btn:hover {
-  background: var(--bg-3);
-  color: var(--fg);
-  border-color: var(--line-strong);
-}
-
-.mcp-toggle-btn.active {
-  background: var(--bg-3);
-  color: var(--fg);
-  border-color: var(--line-strong);
 }
 
 .mcp-icon-btn {
@@ -2496,49 +2472,6 @@
 .mcp-icon-btn--danger:hover {
   background: rgba(231, 76, 60, 0.15);
   color: var(--red, #e74c3c);
-}
-
-.mcp-server-card__details {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 12px;
-  border-top: 1px solid var(--line);
-  padding-top: 10px;
-}
-
-.mcp-detail-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.mcp-detail-label {
-  color: var(--fg-muted);
-  width: 70px;
-  font-weight: 500;
-}
-
-.mcp-detail-code {
-  font-family: monospace;
-  background: var(--bg);
-  padding: 3px 8px;
-  border-radius: var(--radius-xs);
-  color: var(--fg);
-  border: 1px solid var(--line);
-}
-
-.mcp-detail-env {
-  color: var(--fg-dim);
-  font-family: monospace;
-}
-
-.mcp-detail-error {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--red, #e74c3c);
-  font-size: 11px;
 }
 
 .mcp-raw-editor {
@@ -2686,7 +2619,9 @@
   border-radius: var(--radius-md);
   color: var(--fg);
   font-size: 12px;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
 .mcp-form-group input[type="text"]:focus {
@@ -2722,7 +2657,9 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
   position: relative;
 }
 
@@ -2736,13 +2673,12 @@
   height: 14px;
   border-radius: 50%;
   background: var(--fg-muted);
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease;
+  transition:
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.2s ease;
 }
 
 .mcp-switch--active .mcp-switch__thumb {
   transform: translateX(18px);
   background: var(--bg);
 }
-
-
-

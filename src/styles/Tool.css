@@ -152,7 +152,6 @@
 
 .tool--has-diff {
   flex-wrap: wrap;
-  gap: 4px;
 }
 
 .tool__diff-stats {
@@ -281,7 +280,8 @@
 
 /* ── MCP Tool Call ── */
 .tool--mcp {
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   align-items: center;
   gap: 6px;
   padding: 2px 0;
@@ -290,6 +290,7 @@
   box-shadow: none;
   font-size: 14px;
 }
+
 
 .tool--mcp.tool--pending .tool__verb {
   font-weight: 400;
@@ -314,5 +315,44 @@
   color: var(--fg-dim);
 }
 
+/* ── ListDirBlock ── */
+.tool__diff-block--list {
+  border: none;
+  background: transparent;
+  padding-left: 20px;
+  border-radius: 0;
+}
 
+.list-dir-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
 
+.list-dir-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--fg);
+}
+
+.list-dir-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.list-dir-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

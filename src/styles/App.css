@@ -79,9 +79,12 @@
   min-height: 0;
   overflow: hidden;
   transition:
-    flex calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1)) var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
-    min-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1)) var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
-    max-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1)) var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1));
+    flex calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+      var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    min-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+      var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    max-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+      var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1));
 }
 .layout__search-code-wrap--closed {
   overflow: hidden;
@@ -139,13 +142,14 @@ body.is-resizing {
   min-height: 0;
   min-width: 0;
   transition:
-    flex calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1)) var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
-    min-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1)) var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
-    max-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1)) var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1));
+    flex calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+      var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    min-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+      var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    max-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+      var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1));
 }
 .sidebar--closed {
   overflow: hidden;
   padding: 0;
 }
-
-

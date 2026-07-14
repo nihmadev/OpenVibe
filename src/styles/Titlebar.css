@@ -203,7 +203,9 @@
   z-index: 2;
   pointer-events: none;
   box-shadow: 0 0 0 2px var(--bg);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .titlebar__mcp-btn:hover .titlebar__mcp-badge,
@@ -258,7 +260,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 6px 14px;
   border-bottom: 1px solid var(--line);
   font-weight: 600;
   color: var(--fg);
@@ -356,23 +358,6 @@
   background: var(--bg-3);
   color: var(--fg);
   border-color: var(--line-strong);
-}
-
-.titlebar__mcp-footer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border-top: 1px solid var(--line);
-  color: var(--fg);
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 12px;
-  transition: background 0.15s ease;
-}
-
-.titlebar__mcp-footer:hover {
-  background: var(--bg-3);
 }
 
 
