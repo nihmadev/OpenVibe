@@ -27,6 +27,7 @@ pub struct AppState {
     pub http_client: reqwest::Client,
     pub provider_url: Arc<tokio::sync::Mutex<String>>,
     pub warmer_stop_tx: Mutex<Option<watch::Sender<bool>>>,
+    pub mcp_manager: Arc<mcp::McpManager>,
 }
 
 impl AppState {
@@ -159,7 +160,6 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_clipboard_manager::init())
         .setup(move |app| {
             // Initialize project store
             let data_dir = dirs::data_dir().unwrap_or_else(|| std::path::PathBuf::from(".")).join("openvibe");
@@ -221,6 +221,15 @@ pub fn run() {
             // Запускаем connection warmer (держит соединение с провайдером тёплым)
             http_client::spawn_connection_warmer(shared_client.clone(), provider_url.clone(), warmer_stop_rx);
 
+            // MCP Manager
+            let mcp_config_path = mcp::resolve_config_path(&initial_cwd);
+
+            let mcp_manager = Arc::new(mcp::McpManager::new(mcp_config_path));
+            let mcp_clone = mcp_manager.clone();
+            tauri::async_runtime::spawn(async move {
+                mcp_clone.init_and_autostart().await;
+            });
+
             // Create state
             let state = AppState {
                 projects: Mutex::new(project_store),
@@ -236,6 +245,7 @@ pub fn run() {
                 http_client: shared_client,
                 provider_url,
                 warmer_stop_tx: Mutex::new(Some(warmer_stop_tx)),
+                mcp_manager,
             };
 
             // Setup watcher if cwd exists
@@ -313,6 +323,20 @@ pub fn run() {
             commands::models::models_toggle_disabled,
             commands::models::models_list_enabled,
             commands::models::models_toggle_enabled,
+            // Git commands
+            commands::git::git_repo_info,
+            commands::git::git_status,
+            commands::git::git_stage_file,
+            commands::git::git_stage_all,
+            commands::git::git_unstage_file,
+            commands::git::git_revert_file,
+            commands::git::git_commit,
+            commands::git::git_branches,
+            commands::git::git_commits,
+            commands::git::git_graph,
+            commands::git::git_publish_branch,
+            commands::git::git_current_branch,
+            commands::git::git_commit_details,
             // Terminal commands
             commands::terminals::term_start,
             commands::terminals::term_write,
@@ -338,6 +362,15 @@ pub fn run() {
             // Tool commands
             commands::tools::tools_definitions,
             commands::tools::tools_execute,
+            // MCP commands
+            commands::mcp::mcp_get_servers,
+            commands::mcp::mcp_start_server,
+            commands::mcp::mcp_stop_server,
+            commands::mcp::mcp_restart_server,
+            commands::mcp::mcp_get_status,
+            commands::mcp::mcp_get_config,
+            commands::mcp::mcp_save_config,
+            commands::mcp::mcp_list_tools,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
