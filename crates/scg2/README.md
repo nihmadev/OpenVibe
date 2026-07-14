@@ -17,16 +17,16 @@ The `scg2` (Smart Context Generation 2) crate provides code context assembly, AS
 
 ## Architecture and Modules
 
-| Module | Description |
-| :--- | :--- |
-| `engine` ([`src/engine.rs`](src/engine.rs)) | `Scg2Engine` orchestration engine, background worker loop, and telemetry event consumer. |
-| `ast` ([`src/ast.rs`](src/ast.rs)) | Tree-Sitter parsing integration (`AstService`) for Rust, JS, TS, and Python grammar trees. |
-| `graph` ([`src/graph.rs`](src/graph.rs)) | Dependency graph assembly (`ContextGraph`) leveraging `petgraph` directed graphs. |
-| `recency` ([`src/recency.rs`](src/recency.rs)) | Time-decay algorithms (`RecencyStore`) evaluating recently focused and edited files. |
-| `git_delta` ([`src/git_delta.rs`](src/git_delta.rs)) | Git diff prioritization analyzing recent commit history via the `git` crate. |
-| `diagnostics` ([`src/diagnostics.rs`](src/diagnostics.rs)) | Stores active linter and compiler diagnostics (`EditorDiagnostic`). |
-| `assembler` ([`src/assembler.rs`](src/assembler.rs)) | `ContextAssembler` selecting and formatting top-ranked code snippets within token limits. |
-| `types` ([`src/types.rs`](src/types.rs)) | Data types (`ContextSnippet`, `Scg2Config`, `EditorEventBatch`, `CursorPosition`, `LineRange`). |
+| Module                                                     | Description                                                                                     |
+| :--------------------------------------------------------- | :---------------------------------------------------------------------------------------------- |
+| `engine` ([`src/engine.rs`](src/engine.rs))                | `Scg2Engine` orchestration engine, background worker loop, and telemetry event consumer.        |
+| `ast` ([`src/ast.rs`](src/ast.rs))                         | Tree-Sitter parsing integration (`AstService`) for Rust, JS, TS, and Python grammar trees.      |
+| `graph` ([`src/graph.rs`](src/graph.rs))                   | Dependency graph assembly (`ContextGraph`) leveraging `petgraph` directed graphs.               |
+| `recency` ([`src/recency.rs`](src/recency.rs))             | Time-decay algorithms (`RecencyStore`) evaluating recently focused and edited files.            |
+| `git_delta` ([`src/git_delta.rs`](src/git_delta.rs))       | Git diff prioritization analyzing recent commit history via the `git` crate.                    |
+| `diagnostics` ([`src/diagnostics.rs`](src/diagnostics.rs)) | Stores active linter and compiler diagnostics (`EditorDiagnostic`).                             |
+| `assembler` ([`src/assembler.rs`](src/assembler.rs))       | `ContextAssembler` selecting and formatting top-ranked code snippets within token limits.       |
+| `types` ([`src/types.rs`](src/types.rs))                   | Data types (`ContextSnippet`, `Scg2Config`, `EditorEventBatch`, `CursorPosition`, `LineRange`). |
 
 ---
 

@@ -16,12 +16,12 @@ The `db` crate serves as the core database access layer for OpenVibe. Built on S
 
 ## Architecture and Modules
 
-| Module | Description |
-| :--- | :--- |
+| Module                                      | Description                                                                                  |
+| :------------------------------------------ | :------------------------------------------------------------------------------------------- |
 | `models` ([`src/models.rs`](src/models.rs)) | Defines database models `Project` and `Provider` with SQLite row conversion implementations. |
-| `store` ([`src/store/`](src/store)) | Implements persistence interfaces (`ProjectStore`) for SQLite database tables. |
-| `error` ([`src/error.rs`](src/error.rs)) | Defines `DbError` enum using `thiserror`. |
-| `utils` ([`src/utils.rs`](src/utils.rs)) | Database initialization and helper routines. |
+| `store` ([`src/store/`](src/store))         | Implements persistence interfaces (`ProjectStore`) for SQLite database tables.               |
+| `error` ([`src/error.rs`](src/error.rs))    | Defines `DbError` enum using `thiserror`.                                                    |
+| `utils` ([`src/utils.rs`](src/utils.rs))    | Database initialization and helper routines.                                                 |
 
 ---
 

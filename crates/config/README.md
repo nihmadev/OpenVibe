@@ -16,12 +16,12 @@ The `config` crate manages application-wide configuration loading for OpenVibe. 
 
 ## Architecture and Modules
 
-| Module | Description |
-| :--- | :--- |
-| `loader` ([`src/loader.rs`](src/loader.rs)) | Contains logic for reading configuration files from disk, merging defaults, and environment variables. |
-| `types` ([`src/types.rs`](src/types.rs)) | Defines the primary `Config` struct and conversion methods to `AgentConfig`. |
-| `provider` ([`src/provider.rs`](src/provider.rs)) | Handles provider-specific settings and presets. |
-| `dotenv` ([`src/dotenv.rs`](src/dotenv.rs)) | Parses `.env` key-value files. |
+| Module                                            | Description                                                                                            |
+| :------------------------------------------------ | :----------------------------------------------------------------------------------------------------- |
+| `loader` ([`src/loader.rs`](src/loader.rs))       | Contains logic for reading configuration files from disk, merging defaults, and environment variables. |
+| `types` ([`src/types.rs`](src/types.rs))          | Defines the primary `Config` struct and conversion methods to `AgentConfig`.                           |
+| `provider` ([`src/provider.rs`](src/provider.rs)) | Handles provider-specific settings and presets.                                                        |
+| `dotenv` ([`src/dotenv.rs`](src/dotenv.rs))       | Parses `.env` key-value files.                                                                         |
 
 ---
 
@@ -33,7 +33,7 @@ use config::load_config;
 fn main() {
     // Load application configuration
     let cfg = load_config();
-    
+
     println!("Loaded Model: {}", cfg.model);
     println!("Base URL: {}", cfg.base_url);
 

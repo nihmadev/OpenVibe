@@ -19,18 +19,18 @@ The `agent-tool` crate defines and implements built-in tool execution capabiliti
 
 ## Architecture and Modules
 
-| Module | Description |
-| :--- | :--- |
+| Module                                                  | Description                                                                                                 |
+| :------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------- |
 | `definition` ([`src/definition.rs`](src/definition.rs)) | Defines tool specifications (`build_tool_definitions`, `build_readonly_tool_definitions`) and JSON schemas. |
-| `executor` ([`src/executor.rs`](src/executor.rs)) | Implements `AgentToolExecutor`, implementing the `ToolExecutor` trait from the `agent` crate. |
-| `execute` ([`src/execute.rs`](src/execute.rs)) | Dispatches tool call requests by matching function names to specific handlers. |
-| `read` ([`src/read.rs`](src/read.rs)) | Handles file reading logic. |
-| `write` ([`src/write.rs`](src/write.rs)) | Handles new file creation logic. |
-| `edit` ([`src/edit.rs`](src/edit.rs)) | Handles precise string replacement in existing files. |
-| `list_dir` ([`src/list_dir.rs`](src/list_dir.rs)) | Handles directory traversal and entry enumeration. |
-| `bash` ([`src/bash.rs`](src/bash.rs)) | Executes asynchronous shell processes with timeouts. |
-| `search` ([`src/search.rs`](src/search.rs)) | Integrates with codebase searching capabilities. |
-| `agent_tool` ([`src/agent_tool.rs`](src/agent_tool.rs)) | Manages sub-agent lifecycle and execution flows. |
+| `executor` ([`src/executor.rs`](src/executor.rs))       | Implements `AgentToolExecutor`, implementing the `ToolExecutor` trait from the `agent` crate.               |
+| `execute` ([`src/execute.rs`](src/execute.rs))          | Dispatches tool call requests by matching function names to specific handlers.                              |
+| `read` ([`src/read.rs`](src/read.rs))                   | Handles file reading logic.                                                                                 |
+| `write` ([`src/write.rs`](src/write.rs))                | Handles new file creation logic.                                                                            |
+| `edit` ([`src/edit.rs`](src/edit.rs))                   | Handles precise string replacement in existing files.                                                       |
+| `list_dir` ([`src/list_dir.rs`](src/list_dir.rs))       | Handles directory traversal and entry enumeration.                                                          |
+| `bash` ([`src/bash.rs`](src/bash.rs))                   | Executes asynchronous shell processes with timeouts.                                                        |
+| `search` ([`src/search.rs`](src/search.rs))             | Integrates with codebase searching capabilities.                                                            |
+| `agent_tool` ([`src/agent_tool.rs`](src/agent_tool.rs)) | Manages sub-agent lifecycle and execution flows.                                                            |
 
 ---
 

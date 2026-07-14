@@ -16,18 +16,18 @@ The `search` crate provides full-text regex matching, high-performance file tree
 
 ## Architecture and Modules
 
-| Module | Description |
-| :--- | :--- |
-| `text_search` ([`src/text_search.rs`](src/text_search.rs)) | Text and regular expression content matching across workspace files. |
-| `vector_search` ([`src/vector_search.rs`](src/vector_search.rs)) | `fastembed` integration, embedding generation, index construction, and cosine similarity scoring. |
-| `walker` ([`src/walker.rs`](src/walker.rs)) | Parallel directory walker (`find_files`, `find_all`) leveraging `jwalk`. |
-| `cache` ([`src/cache.rs`](src/cache.rs)) | Search result caching (`file_matches_from_cache`, `clear_search_cache`). |
-| `syntax` ([`src/syntax.rs`](src/syntax.rs)) | Syntax highlighting and token generation (`SyntaxToken`). |
-| `gitignore_filter` ([`src/gitignore_filter.rs`](src/gitignore_filter.rs)) | `.gitignore` rules parsing and path filtering. |
-| `commands` ([`src/commands.rs`](src/commands.rs)) | High-level search command entry points. |
-| `config` ([`src/config.rs`](src/config.rs)) | File size thresholds (`MAX_FILE_BYTES`) and skip rules. |
-| `types` ([`src/types.rs`](src/types.rs)) | Data structures (`SearchResult`, `FileMatch`, `ContentMatch`, `FsEntry`, `SyntaxToken`). |
-| `utils` ([`src/utils.rs`](src/utils.rs)) | Glob-to-regex transformation and text clipping helpers. |
+| Module                                                                    | Description                                                                                       |
+| :------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------ |
+| `text_search` ([`src/text_search.rs`](src/text_search.rs))                | Text and regular expression content matching across workspace files.                              |
+| `vector_search` ([`src/vector_search.rs`](src/vector_search.rs))          | `fastembed` integration, embedding generation, index construction, and cosine similarity scoring. |
+| `walker` ([`src/walker.rs`](src/walker.rs))                               | Parallel directory walker (`find_files`, `find_all`) leveraging `jwalk`.                          |
+| `cache` ([`src/cache.rs`](src/cache.rs))                                  | Search result caching (`file_matches_from_cache`, `clear_search_cache`).                          |
+| `syntax` ([`src/syntax.rs`](src/syntax.rs))                               | Syntax highlighting and token generation (`SyntaxToken`).                                         |
+| `gitignore_filter` ([`src/gitignore_filter.rs`](src/gitignore_filter.rs)) | `.gitignore` rules parsing and path filtering.                                                    |
+| `commands` ([`src/commands.rs`](src/commands.rs))                         | High-level search command entry points.                                                           |
+| `config` ([`src/config.rs`](src/config.rs))                               | File size thresholds (`MAX_FILE_BYTES`) and skip rules.                                           |
+| `types` ([`src/types.rs`](src/types.rs))                                  | Data structures (`SearchResult`, `FileMatch`, `ContentMatch`, `FsEntry`, `SyntaxToken`).          |
+| `utils` ([`src/utils.rs`](src/utils.rs))                                  | Glob-to-regex transformation and text clipping helpers.                                           |
 
 ---
 

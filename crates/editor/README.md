@@ -15,8 +15,8 @@ The `editor` crate provides specialized editor workspace services, type definiti
 
 ## Architecture and Modules
 
-| Module | Description |
-| :--- | :--- |
+| Module                                | Description                                                                                                                         |
+| :------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------- |
 | `lib.rs` ([`src/lib.rs`](src/lib.rs)) | Contains main type scanning logic (`preload_types`), `.d.ts` collector algorithms, package.json parsing, and JSON type definitions. |
 
 ---

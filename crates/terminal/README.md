@@ -16,11 +16,11 @@ The `terminal` crate manages interactive shell sessions and terminal processes f
 
 ## Architecture and Modules
 
-| Module | Description |
-| :--- | :--- |
-| `manager` ([`src/manager.rs`](src/manager.rs)) | `TerminalManager` managing the session registry map and routing write/kill calls. |
+| Module                                         | Description                                                                                |
+| :--------------------------------------------- | :----------------------------------------------------------------------------------------- |
+| `manager` ([`src/manager.rs`](src/manager.rs)) | `TerminalManager` managing the session registry map and routing write/kill calls.          |
 | `session` ([`src/session.rs`](src/session.rs)) | `TerminalSession` wrapping child process handles, stdin/stdout streams, and exit handlers. |
-| `shell` ([`src/shell.rs`](src/shell.rs)) | Shell detection utilities selecting system shell binaries and environment variables. |
+| `shell` ([`src/shell.rs`](src/shell.rs))       | Shell detection utilities selecting system shell binaries and environment variables.       |
 
 ---
 

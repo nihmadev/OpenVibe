@@ -16,14 +16,14 @@ The `mcp` crate provides an implementation of the Model Context Protocol (MCP) c
 
 ## Architecture and Modules
 
-| Module | Description |
-| :--- | :--- |
-| `config` ([`src/config.rs`](src/config.rs)) | Configuration loading (`load_mcp_config`, `save_mcp_config`), path resolution, and resilient deserialization. |
-| `manager` ([`src/manager.rs`](src/manager.rs)) | `McpManager` orchestrator for starting, stopping, and routing requests across configured MCP servers. |
-| `process` ([`src/process.rs`](src/process.rs)) | `McpServerProcess` handling low-level stdin/stdout communication and JSON-RPC messages. |
-| `path` ([`src/path.rs`](src/path.rs)) | System path resolution and runtime binary discovery (`node`, `python3`, `npx`). |
-| `types` ([`src/types.rs`](src/types.rs)) | Status structures `McpStatus` and `McpServerStatus`. |
-| `server` ([`src/server.rs`](src/server.rs)) | Server connection parameters and options. |
+| Module                                         | Description                                                                                                   |
+| :--------------------------------------------- | :------------------------------------------------------------------------------------------------------------ |
+| `config` ([`src/config.rs`](src/config.rs))    | Configuration loading (`load_mcp_config`, `save_mcp_config`), path resolution, and resilient deserialization. |
+| `manager` ([`src/manager.rs`](src/manager.rs)) | `McpManager` orchestrator for starting, stopping, and routing requests across configured MCP servers.         |
+| `process` ([`src/process.rs`](src/process.rs)) | `McpServerProcess` handling low-level stdin/stdout communication and JSON-RPC messages.                       |
+| `path` ([`src/path.rs`](src/path.rs))          | System path resolution and runtime binary discovery (`node`, `python3`, `npx`).                               |
+| `types` ([`src/types.rs`](src/types.rs))       | Status structures `McpStatus` and `McpServerStatus`.                                                          |
+| `server` ([`src/server.rs`](src/server.rs))    | Server connection parameters and options.                                                                     |
 
 ---
 
