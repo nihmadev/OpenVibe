@@ -94,8 +94,7 @@ export function UserMessageActions({
 }
 
 export function ToolBlock({ item }: { item: HistoryItem }): React.ReactElement {
-  const { t } = useI18n();
-  const { verb, file, suffix } = describe(item, t);
+  const { verb, file, suffix } = describe(item);
   const stateCls = item.ok === undefined ? "tool--pending" : item.ok ? "tool--ok" : "tool--err";
 
   return (
@@ -118,7 +117,6 @@ export function ToolBlock({ item }: { item: HistoryItem }): React.ReactElement {
 }
 
 export function ToolGroup({ items, cwd }: { items: HistoryItem[]; cwd?: string }): React.ReactElement {
-  const { t } = useI18n();
   const [open, setOpen] = React.useState(false);
 
   const counts = React.useMemo(() => {
@@ -131,40 +129,34 @@ export function ToolGroup({ items, cwd }: { items: HistoryItem[]; cwd?: string }
   }, [items]);
 
   const isAnalysisGroup = React.useMemo(() => {
-    const analysisTools = new Set(["read_file", "search_codebase", "list_dir", "agent"]);
+    const analysisTools = new Set(["read_file", "view_file", "search_codebase", "grep_search", "list_dir", "agent"]);
     return items.every((item) => analysisTools.has(item.toolName ?? ""));
   }, [items]);
 
-  const toolNameToKey: Record<string, string> = {
-    read_file: "analysisRead",
-    search_codebase: "analysisSearch",
-    write_file: "analysisWrite",
-    edit_file: "analysisEdit",
-    bash: "analysisBash",
-    list_dir: "analysisList",
-    agent: "analysisAgent",
+  const toolNameToLabel: Record<string, { one: string; other: string }> = {
+    read_file: { one: "file", other: "files" },
+    view_file: { one: "file", other: "files" },
+    search_codebase: { one: "search", other: "searches" },
+    grep_search: { one: "search", other: "searches" },
+    write_file: { one: "write", other: "writes" },
+    edit_file: { one: "edit", other: "edits" },
+    bash: { one: "run", other: "runs" },
+    run_command: { one: "run", other: "runs" },
+    list_dir: { one: "folder", other: "folders" },
+    agent: { one: "exploration", other: "explorations" },
   };
 
   const hasPending = items.some((item) => item.ok === undefined);
 
-  const pluralizeCount = (count: number, keyBase: string): string => {
-    const mod10 = count % 10;
-    const mod100 = count % 100;
-    let suffix: string;
-    if (mod10 === 1 && mod100 !== 11) {
-      suffix = t(`${keyBase}_one`);
-    } else if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
-      suffix = t(`${keyBase}_few`);
-    } else {
-      suffix = t(keyBase);
-    }
+  const pluralizeCount = (count: number, name: string): string => {
+    const label = toolNameToLabel[name];
+    const suffix = label ? (count === 1 ? label.one : label.other) : name;
     return `${count} ${suffix}`;
   };
 
   const parts: string[] = [];
   for (const [name, count] of counts) {
-    const keyBase = toolNameToKey[name] ?? name;
-    parts.push(pluralizeCount(count, keyBase));
+    parts.push(pluralizeCount(count, name));
   }
   const summary = parts.join(", ");
 
@@ -183,7 +175,7 @@ export function ToolGroup({ items, cwd }: { items: HistoryItem[]; cwd?: string }
         }}
       >
         <span className={`tool-group__label${hasPending ? " tool-group__label--pending" : ""}`}>
-          {isAnalysisGroup ? t("analysis") : t("changes")}
+          {isAnalysisGroup ? "Exploring" : "Changes"}
         </span>
         <span className="tool-group__summary">{summary}</span>
         <span className="tool-group__chevron">
@@ -521,29 +513,63 @@ export function ThinkingBlock({
   );
 }
 
+const THINKING_WORDS = ["Working", "Computing", "Thinking", "Analyzing", "Processing"];
+
 export function VibingLoader({ text }: { text?: string }): React.ReactElement {
-  const { t } = useI18n();
-  const phrases = [
-    t("vibing"),
-    t("catchingFlow"),
-    t("brewingCode"),
-    t("feelingLogic"),
-    t("chillingBits"),
-    t("surfingSyntax"),
-  ];
-  const phrase = React.useMemo(() => {
-    if (text !== undefined) return text;
-    return phrases[Math.floor(Math.random() * phrases.length)];
-  }, [text, phrases]);
+  const [word, setWord] = React.useState(THINKING_WORDS[0]);
+  const [dots, setDots] = React.useState(0);
+  const [fade, setFade] = React.useState<"in" | "out">("in");
+  const stateRef = React.useRef({ dots: 0, wordIdx: 0 });
+
+  React.useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    let running = true;
+
+    const tick = () => {
+      if (!running) return;
+      const s = stateRef.current;
+
+      if (s.dots < 3) {
+        s.dots += 1;
+        setDots(s.dots);
+        timer = setTimeout(tick, 420);
+      } else {
+        setFade("out");
+        timer = setTimeout(() => {
+          if (!running) return;
+          s.wordIdx = (s.wordIdx + 1) % THINKING_WORDS.length;
+          s.dots = 0;
+          setWord(THINKING_WORDS[s.wordIdx]);
+          setDots(0);
+          setFade("in");
+          timer = setTimeout(tick, 420);
+        }, 300);
+      }
+    };
+
+    timer = setTimeout(tick, 420);
+    return () => {
+      running = false;
+      clearTimeout(timer);
+    };
+  }, []);
+
+  const displayWord = text !== undefined ? text : word;
 
   return (
-    <div className="msg--thinking">
-      <div className="loader">
-        {[...Array(9)].map((_, i) => (
-          <span key={i} className="loader__dot" />
+    <div className="thinking">
+      {displayWord && (
+        <span className={`thinking__word ${fade === "out" ? "out" : ""}`}>
+          {displayWord}
+        </span>
+      )}
+      <span className="thinking__dots">
+        {[0, 1, 2].map((i) => (
+          <span key={i} className={`thinking__dot ${dots > i ? "on" : ""}`}>
+            .
+          </span>
         ))}
-      </div>
-      {phrase && <span className="msg--thinking__text">{phrase}</span>}
+      </span>
     </div>
   );
 }

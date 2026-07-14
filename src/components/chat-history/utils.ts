@@ -68,11 +68,8 @@ export function toRelativePath(filePath: string, cwd?: string): string {
   return filePath;
 }
 
-type TranslateFn = (key: string, params?: Record<string, string>) => string;
-
 export function describe(
   item: HistoryItem,
-  t: TranslateFn,
   cwd?: string,
 ): { verb: string; file: FileBadgeInfo | null; suffix: string } {
   const file = pickFile(item.toolArgs);
@@ -82,16 +79,16 @@ export function describe(
   const pending = item.ok === undefined;
   switch (item.toolName) {
     case "read_file":
-      return { verb: pending ? t("reading") : t("read"), file, suffix: "" };
+      return { verb: pending ? "Reading" : "Read", file, suffix: "" };
     case "write_file":
       return {
-        verb: item.ok === false ? t("failedWrite") : pending ? t("writing") : t("edited"),
+        verb: item.ok === false ? "Failed to write" : pending ? "Writing" : "Edited",
         file,
         suffix: "",
       };
     case "edit_file":
       return {
-        verb: item.ok === false ? t("failedEdit") : pending ? t("editing") : t("edited"),
+        verb: item.ok === false ? "Failed to edit" : pending ? "Editing" : "Edited",
         file,
         suffix: "",
       };
@@ -99,7 +96,7 @@ export function describe(
       const args = item.toolArgs as { path?: string } | undefined;
       const path = args?.path ?? ".";
       return {
-        verb: pending ? t("listing") : t("listed"),
+        verb: pending ? "Listing" : "Listed",
         file: { name: basename(path) || path, ext: "", cls: "dir", rawPath: path },
         suffix: "",
       };
@@ -108,7 +105,7 @@ export function describe(
       const args = item.toolArgs as { query?: string } | undefined;
       const text = args?.query ?? "";
       return {
-        verb: pending ? t("searchingCodebase") : t("searchedCodebase"),
+        verb: pending ? "Searching in codebase" : "Search in codebase",
         file: null,
         suffix: text ? `"${text}"` : "",
       };
@@ -116,7 +113,7 @@ export function describe(
     case "bash": {
       const args = item.toolArgs as { command?: string } | undefined;
       return {
-        verb: pending ? t("running") : t("ran"),
+        verb: pending ? "Running" : "Ran",
         file: null,
         suffix: args?.command ?? "",
       };
@@ -124,7 +121,7 @@ export function describe(
     case "agent": {
       const args = item.toolArgs as { task?: string } | undefined;
       return {
-        verb: pending ? t("exploring") : t("explored"),
+        verb: pending ? "Exploring" : "Explored",
         file: null,
         suffix: args?.task ?? "",
       };
@@ -134,16 +131,14 @@ export function describe(
         const parts = item.toolName.split("__");
         const serverName = parts[1] || "mcp";
         const toolName = parts.slice(2).join("__");
-        const verb = t("mcpCall");
         return {
-          verb,
+          verb: "MCP Call",
           file: null,
           suffix: `[${serverName}] ${toolName}`,
         };
       }
-      return { verb: item.toolName ?? t("tool"), file, suffix: "" };
+      return { verb: item.toolName ?? "Tool", file, suffix: "" };
     }
-
   }
 }
 

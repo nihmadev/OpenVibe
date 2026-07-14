@@ -900,13 +900,7 @@ export function PromptInput({
                   disabled={!stopping && !editorText().trim() && attachments.length === 0}
                   aria-label={tipText}
                 >
-                  {stopping ? (
-                    <StopIcon />
-                  ) : mode === "shell" ? (
-                    <RefreshCwIcon />
-                  ) : (
-                    <ArrowUpIcon />
-                  )}
+                  {stopping ? <StopIcon /> : mode === "shell" ? <RefreshCwIcon /> : <ArrowUpIcon />}
                 </button>
               </Tooltip>
             </div>

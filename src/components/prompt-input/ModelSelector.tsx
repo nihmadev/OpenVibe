@@ -3,7 +3,14 @@ import type { Provider } from "../../types.js";
 import { PROVIDER_TEMPLATES, getProviderIconPath } from "../../constants.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { useTheme } from "../../hooks/useTheme.js";
-import { ChevronRightIcon, ChevronDownIcon, SearchMiniIcon, AttachPlusIcon, FilterIcon, CheckIcon } from "../icons/icons.js";
+import {
+  ChevronRightIcon,
+  ChevronDownIcon,
+  SearchMiniIcon,
+  AttachPlusIcon,
+  FilterIcon,
+  CheckIcon,
+} from "../icons/icons.js";
 
 interface ModelGroup {
   providerId: string;
@@ -265,9 +272,7 @@ export function ModelSelector({ currentModel, onPickModel, onOpenSettings }: Mod
                           <span className="model-selector__item-name" style={{ textAlign: "left" }}>
                             {m.name}
                           </span>
-                          {m.id === currentModel && (
-                            <CheckIcon />
-                          )}
+                          {m.id === currentModel && <CheckIcon />}
                         </button>
                       ))}
                     </div>

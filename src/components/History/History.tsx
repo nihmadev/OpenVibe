@@ -4,7 +4,19 @@ import "../../styles/History.css";
 import "../../styles/Tool.css";
 import "../../styles/FBadge.css";
 import { useI18n } from "../../hooks/useI18n.js";
-import { ChevronRightIcon, CircularProgress, LikeIcon, DislikeIcon, CheckCircleIcon, FailIcon, SpinIcon, DiffIcon, CheckIcon, CopyIcon, RefreshIcon2 } from "../icons/icons.js";
+import {
+  ChevronRightIcon,
+  CircularProgress,
+  LikeIcon,
+  DislikeIcon,
+  CheckCircleIcon,
+  FailIcon,
+  SpinIcon,
+  DiffIcon,
+  CheckIcon,
+  CopyIcon,
+  RefreshIcon2,
+} from "../icons/icons.js";
 
 export interface AttachmentView {
   id: string;
@@ -410,7 +422,13 @@ function MessageFooter({
         </div>
         <div className="msg__footer-right">
           <button className="msg__footer-btn" onClick={onCopy} title="Copy">
-            {copied ? <span style={{ color: "var(--green)" }}><CheckIcon /></span> : <CopyIcon />}
+            {copied ? (
+              <span style={{ color: "var(--green)" }}>
+                <CheckIcon />
+              </span>
+            ) : (
+              <CopyIcon />
+            )}
           </button>
           <button className="msg__footer-btn" onClick={() => onRegenerate?.(item.id)} title="Regenerate">
             <RefreshIcon2 />
@@ -421,35 +439,63 @@ function MessageFooter({
   );
 }
 
-const VIBE_PHRASES = [
-  "Vibing...",
-  "Catching the flow...",
-  "Brewing code...",
-  "Feeling the logic...",
-  "Chilling with the bits...",
-  "Surfing the syntax...",
-];
+const THINKING_WORDS = ["Working", "Computing", "Thinking", "Analyzing", "Processing"];
 
 function VibingLoader({ text, isInline }: { text?: string; isInline?: boolean }): React.ReactElement {
-  const phrase = React.useMemo(() => {
-    if (text !== undefined) return text;
-    return VIBE_PHRASES[Math.floor(Math.random() * VIBE_PHRASES.length)];
-  }, [text]);
+  const [word, setWord] = useState(THINKING_WORDS[0]);
+  const [dots, setDots] = useState(0);
+  const [fade, setFade] = useState<"in" | "out">("in");
+  const stateRef = useRef({ dots: 0, wordIdx: 0 });
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    let running = true;
+
+    const tick = () => {
+      if (!running) return;
+      const s = stateRef.current;
+
+      if (s.dots < 3) {
+        s.dots += 1;
+        setDots(s.dots);
+        timer = setTimeout(tick, 420);
+      } else {
+        setFade("out");
+        timer = setTimeout(() => {
+          if (!running) return;
+          s.wordIdx = (s.wordIdx + 1) % THINKING_WORDS.length;
+          s.dots = 0;
+          setWord(THINKING_WORDS[s.wordIdx]);
+          setDots(0);
+          setFade("in");
+          timer = setTimeout(tick, 420);
+        }, 300);
+      }
+    };
+
+    timer = setTimeout(tick, 420);
+    return () => {
+      running = false;
+      clearTimeout(timer);
+    };
+  }, []);
+
+  const displayWord = text !== undefined ? text : word;
 
   return (
-    <div className={`msg--thinking ${isInline ? "msg--thinking--inline" : ""}`}>
-      <div className="loader">
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-        <span className="loader__dot" />
-      </div>
-      {phrase && <span className="msg--thinking__text">{phrase}</span>}
+    <div className={`thinking ${isInline ? "thinking--inline" : ""}`}>
+      {displayWord && (
+        <span className={`thinking__word ${fade === "out" ? "out" : ""}`}>
+          {displayWord}
+        </span>
+      )}
+      <span className="thinking__dots">
+        {[0, 1, 2].map((i) => (
+          <span key={i} className={`thinking__dot ${dots > i ? "on" : ""}`}>
+            .
+          </span>
+        ))}
+      </span>
     </div>
   );
 }

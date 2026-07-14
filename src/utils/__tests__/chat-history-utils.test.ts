@@ -73,108 +73,106 @@ suite("pickFile", () => {
 });
 
 suite("describe", () => {
-  const t = (key: string, _params?: Record<string, string>) => key;
-
   it("describes read_file (pending)", () => {
     const item = { toolName: "read_file", toolArgs: { path: "/a/b.ts" } } as HistoryItem;
-    const d = describeItem(item, t);
-    expect(d.verb).toBe("reading");
+    const d = describeItem(item);
+    expect(d.verb).toBe("Reading");
     expect(d.file).toEqual({ name: "b.ts", ext: "ts", cls: "ts", rawPath: "/a/b.ts" });
   });
 
   it("describes read_file with cwd", () => {
     const item = { toolName: "read_file", toolArgs: { path: "/home/user/proj/src/file.ts" }, ok: true } as HistoryItem;
-    const d = describeItem(item, t, "/home/user/proj");
-    expect(d.verb).toBe("read");
+    const d = describeItem(item, "/home/user/proj");
+    expect(d.verb).toBe("Read");
     expect(d.file?.rawPath).toBe("src/file.ts");
   });
 
   it("describes read_file (done)", () => {
     const item = { toolName: "read_file", toolArgs: { path: "/a/b.ts" }, ok: true } as HistoryItem;
-    const d = describeItem(item, t);
-    expect(d.verb).toBe("read");
+    const d = describeItem(item);
+    expect(d.verb).toBe("Read");
   });
 
   it("describes write_file (pending)", () => {
     const item = { toolName: "write_file", toolArgs: { path: "f.ts" } } as HistoryItem;
-    const d = describeItem(item, t);
-    expect(d.verb).toBe("writing");
+    const d = describeItem(item);
+    expect(d.verb).toBe("Writing");
   });
 
   it("describes write_file (failed)", () => {
     const item = { toolName: "write_file", toolArgs: { path: "f.ts" }, ok: false } as HistoryItem;
-    const d = describeItem(item, t);
-    expect(d.verb).toBe("failedWrite");
+    const d = describeItem(item);
+    expect(d.verb).toBe("Failed to write");
   });
 
   it("describes edit_file", () => {
     const item = { toolName: "edit_file", toolArgs: { path: "f.ts" }, ok: true } as HistoryItem;
-    const d = describeItem(item, t);
-    expect(d.verb).toBe("edited");
+    const d = describeItem(item);
+    expect(d.verb).toBe("Edited");
   });
 
   it("describes list_dir (pending)", () => {
     const item = { toolName: "list_dir", toolArgs: { path: "/src" } } as HistoryItem;
-    const d = describeItem(item, t);
-    expect(d.verb).toBe("listing");
+    const d = describeItem(item);
+    expect(d.verb).toBe("Listing");
     expect(d.file).toEqual({ name: "src", ext: "", cls: "dir", rawPath: "/src" });
   });
 
   it("describes list_dir (done)", () => {
     const item = { toolName: "list_dir", toolArgs: { path: "/src" }, ok: true } as HistoryItem;
-    const d = describeItem(item, t);
-    expect(d.verb).toBe("listed");
+    const d = describeItem(item);
+    expect(d.verb).toBe("Listed");
   });
 
   it("describes list_dir with no path", () => {
     const item = { toolName: "list_dir" } as HistoryItem;
-    const d = describeItem(item, t);
+    const d = describeItem(item);
     expect(d.file?.name).toBe(".");
   });
 
   it("describes search_codebase (pending)", () => {
     const item = { toolName: "search_codebase", toolArgs: { query: "foo" } } as HistoryItem;
-    const d = describeItem(item, t);
-    expect(d.verb).toBe("searchingCodebase");
+    const d = describeItem(item);
+    expect(d.verb).toBe("Searching in codebase");
     expect(d.suffix).toBe('"foo"');
     expect(d.file).toBeNull();
   });
 
   it("describes search_codebase (done)", () => {
     const item = { toolName: "search_codebase", toolArgs: { query: "foo" }, ok: true } as HistoryItem;
-    const d = describeItem(item, t);
-    expect(d.verb).toBe("searchedCodebase");
+    const d = describeItem(item);
+    expect(d.verb).toBe("Search in codebase");
   });
 
   it("describes bash (pending)", () => {
     const item = { toolName: "bash", toolArgs: { command: "ls -la" } } as HistoryItem;
-    const d = describeItem(item, t);
-    expect(d.verb).toBe("running");
+    const d = describeItem(item);
+    expect(d.verb).toBe("Running");
     expect(d.suffix).toBe("ls -la");
   });
 
   it("describes bash (done)", () => {
     const item = { toolName: "bash", toolArgs: { command: "ls -la" }, ok: true } as HistoryItem;
-    const d = describeItem(item, t);
-    expect(d.verb).toBe("ran");
+    const d = describeItem(item);
+    expect(d.verb).toBe("Ran");
   });
 
   it("describes agent (pending)", () => {
     const item = { toolName: "agent", toolArgs: { task: "find bugs" } } as HistoryItem;
-    const d = describeItem(item, t);
-    expect(d.verb).toBe("exploring");
+    const d = describeItem(item);
+    expect(d.verb).toBe("Exploring");
     expect(d.suffix).toBe("find bugs");
   });
 
   it("describes agent (done)", () => {
     const item = { toolName: "agent", toolArgs: { task: "find bugs" }, ok: true } as HistoryItem;
-    const d = describeItem(item, t);
-    expect(d.verb).toBe("explored");
+    const d = describeItem(item);
+    expect(d.verb).toBe("Explored");
   });
 
   it("describes unknown tool", () => {
     const item = { toolName: "custom_tool", toolArgs: { path: "x.txt" } } as HistoryItem;
-    const d = describeItem(item, t);
+    const d = describeItem(item);
     expect(d.verb).toBe("custom_tool");
     expect(d.file).toEqual({ name: "x.txt", ext: "txt", cls: "", rawPath: "x.txt" });
   });

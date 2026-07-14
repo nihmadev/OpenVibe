@@ -170,17 +170,13 @@ function processItems(input: HistoryItem[]): ProcessedItem[] {
   const result: ProcessedItem[] = [];
   let run: HistoryItem[] = [];
 
-  const analysisTools = new Set(["read_file", "search_codebase", "list_dir"]);
+  const analysisTools = new Set(["read_file", "view_file", "search_codebase", "grep_search", "list_dir", "agent"]);
 
   const isAnalysisTool = (item: HistoryItem): boolean => item.kind === "tool" && analysisTools.has(item.toolName ?? "");
 
   const flush = () => {
     if (run.length === 0) return;
-    if (run.length >= 2) {
-      result.push({ kind: "group", items: run });
-    } else {
-      result.push({ kind: "single", item: run[0]! });
-    }
+    result.push({ kind: "group", items: run });
     run = [];
   };
 
