@@ -11,16 +11,20 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ["react", "react-dom"],
-          markdown: [
-            "react-markdown",
-            "react-syntax-highlighter",
-            "katex",
-            "remark-gfm",
-            "remark-math",
-            "rehype-katex",
-          ],
+        manualChunks(id) {
+          if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/")) {
+            return "vendor";
+          }
+          if (
+            id.includes("node_modules/react-markdown") ||
+            id.includes("node_modules/react-syntax-highlighter") ||
+            id.includes("node_modules/katex") ||
+            id.includes("node_modules/remark-gfm") ||
+            id.includes("node_modules/remark-math") ||
+            id.includes("node_modules/rehype-katex")
+          ) {
+            return "markdown";
+          }
         },
       },
     },
