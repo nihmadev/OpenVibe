@@ -94,7 +94,7 @@ export function App(): React.ReactElement {
 
   const { connectedModels, handlePickModel } = useModels(config, setConfig, settingsOpen);
 
-  const { items, setItems, busy, pending, streamingNow, pendingAttachments } = useVibeEvents(useCallback(() => {}, []));
+  const { items, setItems, busy, streamingNow, pendingAttachments } = useVibeEvents(useCallback(() => {}, []));
 
   const { handleSubmit } = useAppHandlers({
     setItems,
@@ -156,14 +156,6 @@ export function App(): React.ReactElement {
       }
     },
     [projects],
-  );
-
-  const handleDecide = useCallback(
-    (decision: "yes" | "no" | "always") => {
-      if (!pending) return;
-      window.vibe.decide(pending.id, decision);
-    },
-    [pending],
   );
 
   const handleOpenFile = useCallback((path: string, line?: number, column?: number, matchLength?: number) => {
@@ -491,32 +483,32 @@ export function App(): React.ReactElement {
               onToggleSearchInCode={handleToggleSearchInCode}
               fileTreeOpen={fileTreeOpen}
               onToggleFileTree={() => setFileTreeOpen(!fileTreeOpen)}
-               folder={folder}
-               onSearchOpen={handleOpenSearch}
-               onOpenSettings={handleOpenSettings}
-             />
-             {searchOpen && (
-               <SearchPopup
-                 folder={folder}
-                 onClose={handleCloseSearch}
-                 onNewChat={() => {
-                   handleNewChat(() => setItems([]));
-                   setSearchOpen(false);
-                 }}
-                 onSwitchChat={(dir) => {
-                   handleSwitchChat(dir);
-                   setSearchOpen(false);
-                 }}
-                 onToggleTerminal={() => {
-                   setTerminalOpen((o) => !o);
-                   setSearchOpen(false);
-                 }}
-                 onOpenFile={handleOpenFile}
-                 onRevealFolder={setRevealPath}
-                 onCommand={handleCommand}
-               />
-             )}
-             <AppMain
+              folder={folder}
+              onSearchOpen={handleOpenSearch}
+              onOpenSettings={handleOpenSettings}
+            />
+            {searchOpen && (
+              <SearchPopup
+                folder={folder}
+                onClose={handleCloseSearch}
+                onNewChat={() => {
+                  handleNewChat(() => setItems([]));
+                  setSearchOpen(false);
+                }}
+                onSwitchChat={(dir) => {
+                  handleSwitchChat(dir);
+                  setSearchOpen(false);
+                }}
+                onToggleTerminal={() => {
+                  setTerminalOpen((o) => !o);
+                  setSearchOpen(false);
+                }}
+                onOpenFile={handleOpenFile}
+                onRevealFolder={setRevealPath}
+                onCommand={handleCommand}
+              />
+            )}
+            <AppMain
               revealPath={revealPath}
               projects={projects}
               activeProject={activeProject}
@@ -546,7 +538,6 @@ export function App(): React.ReactElement {
               items={items}
               streamingNow={streamingNow}
               busy={busy}
-              pending={pending}
               handlePickModel={handlePickModel}
               handleSubmit={handleSubmit}
               onStop={() => window.vibe.stop()}
@@ -559,7 +550,6 @@ export function App(): React.ReactElement {
               handleOpenFile={handleOpenFile}
               handleCloseFile={handleCloseFile}
               handleActivateFile={handleActivateFile}
-              handleDecide={handleDecide}
               setItems={setItems}
               setProjects={setProjects}
               searchInCodeOpen={searchInCodeOpen}

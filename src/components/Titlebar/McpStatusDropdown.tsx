@@ -33,9 +33,14 @@ export function McpStatusDropdown({
           <Server size={14} />
           <span>{t("mcpServersCount", { count: String(servers.length) })}</span>
         </div>
-        <button className="titlebar__mcp-refresh-btn" onClick={onRefresh} title={t("mcpRefreshStatuses")}>
-          <RefreshCw size={12} />
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+          <button className="titlebar__mcp-refresh-btn" onClick={onOpenSettings} title={t("mcpOpenSettings")}>
+            <SettingsIcon size={14} />
+          </button>
+          <button className="titlebar__mcp-refresh-btn" onClick={onRefresh} title={t("mcpRefreshStatuses")}>
+            <RefreshCw size={14} />
+          </button>
+        </div>
       </div>
 
       <div className="titlebar__mcp-server-list">
@@ -65,12 +70,6 @@ export function McpStatusDropdown({
           })
         )}
       </div>
-
-      <div className="titlebar__mcp-footer" onClick={onOpenSettings}>
-        <SettingsIcon size={12} />
-        <span>{t("mcpOpenSettings")}</span>
-      </div>
     </div>
   );
 }
-

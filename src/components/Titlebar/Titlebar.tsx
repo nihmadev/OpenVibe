@@ -42,7 +42,6 @@ interface TitlebarProps {
   onOpenSettings?: (tab?: string) => void;
 }
 
-
 const STORAGE_KEY = "titlebar:hidden";
 
 type BtnId = "sidebar" | "new-session" | "nav-prev" | "nav-next" | "terminal" | "search-in-code" | "file-tree";
@@ -119,7 +118,6 @@ export function Titlebar({
     return () => clearInterval(interval);
   }, [fetchMcpServers]);
 
-
   const handleToggleMcpServer = async (name: string, enable: boolean) => {
     try {
       if (enable) {
@@ -140,12 +138,10 @@ export function Titlebar({
 
     const runningCount = enabled.filter((s) => s.status.type === "running").length;
 
-
     if (runningCount === enabled.length) return "titlebar__mcp-dot--green";
     if (runningCount > 0) return "titlebar__mcp-dot--yellow";
     return "titlebar__mcp-dot--red";
   };
-
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...hidden]));
@@ -322,7 +318,6 @@ export function Titlebar({
 
       <div className="titlebar__right" onContextMenu={(e) => onSectionCtx(e, RIGHT_BTNS)}>
         <div className="titlebar__mcp-container" ref={mcpContainerRef}>
-
           <Tooltip text={t("mcpServers")} side="bottom">
             <button
               className={`titlebar__action-btn titlebar__mcp-btn ${mcpDropdownOpen ? "titlebar__action-btn--active" : ""}`}
@@ -350,7 +345,6 @@ export function Titlebar({
           )}
         </div>
         {isVisible("terminal") && (
-
           <Tooltip text={t("toggleTerminal")} side="bottom">
             <button
               className={btnClasses("terminal", terminalOpen ? "titlebar__action-btn--active" : "")}

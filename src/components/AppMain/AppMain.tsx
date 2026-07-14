@@ -4,7 +4,6 @@ import { ProjectRail } from "../ProjectRail/ProjectRail.js";
 import { SessionList } from "../session-list/SessionList.js";
 import { ChatHistory } from "../chat-history/ChatHistory.js";
 import { SubAgentView } from "../SubAgentView/SubAgentView.js";
-import { Confirm } from "../Confirm/Confirm.js";
 import { PromptInput } from "../prompt-input/PromptInput.js";
 import { Terminals } from "../Terminals/Terminals.js";
 import { EditorArea } from "../Editor/EditorArea.js";
@@ -110,7 +109,6 @@ interface AppMainProps {
   items: any[];
   streamingNow: string | null;
   busy: boolean;
-  pending: any;
   handlePickModel: (model: string) => void;
   handleSubmit: (payload: any) => void;
   onStop: () => void;
@@ -123,7 +121,6 @@ interface AppMainProps {
   handleOpenFile: (path: string, line?: number, column?: number) => void;
   handleCloseFile: (path: string) => void;
   handleActivateFile: (path: string) => void;
-  handleDecide: (decision: "yes" | "no" | "always") => void;
   setItems: React.Dispatch<React.SetStateAction<any[]>>;
   revealPath?: string | null;
   setProjects?: (projects: Project[]) => void;
@@ -163,7 +160,6 @@ export function AppMain({
   items,
   streamingNow,
   busy,
-  pending,
   handlePickModel,
   handleSubmit,
   onStop,
@@ -175,7 +171,6 @@ export function AppMain({
   handleOpenFile,
   handleCloseFile,
   handleActivateFile,
-  handleDecide,
   setItems,
   fileTreeOpen,
   revealPath,
@@ -391,7 +386,7 @@ export function AppMain({
                 <ChatHistory
                   items={items}
                   streamingId={streamingNow}
-                  busy={busy && !pending}
+                  busy={busy}
                   cwd={cwd}
                   onPickModel={handlePickModel}
                   onRevert={async (id: string) => {
@@ -447,27 +442,23 @@ export function AppMain({
                   onDrillDown={handleDrillDown}
                 />
 
-                {pending ? (
-                  <Confirm payload={pending} onDecide={handleDecide} />
-                ) : (
-                  <PromptInput
-                    disabled={busy}
-                    workspace={cwd}
-                    onSubmit={handleSubmit}
-                    onStop={onStop}
-                    models={connectedModels}
-                    currentModel={config.model ?? ""}
-                    onPickModel={handlePickModel}
-                    onOpenSettings={onOpenSettings}
-                    initialText={rollbackText || undefined}
-                    rollbackActive={rollbackIndex !== null && !pending}
-                    rollbackText={rollbackText}
-                    rollbackFileCount={rollbackChanged.length}
-                    rollbackFilesChanged={rollbackChanged}
-                    rollbackMessagesRemoved={rollbackRemoved}
-                    onRollbackRestore={handleUndoRollback}
-                  />
-                )}
+                <PromptInput
+                  disabled={busy}
+                  workspace={cwd}
+                  onSubmit={handleSubmit}
+                  onStop={onStop}
+                  models={connectedModels}
+                  currentModel={config.model ?? ""}
+                  onPickModel={handlePickModel}
+                  onOpenSettings={onOpenSettings}
+                  initialText={rollbackText || undefined}
+                  rollbackActive={rollbackIndex !== null}
+                  rollbackText={rollbackText}
+                  rollbackFileCount={rollbackChanged.length}
+                  rollbackFilesChanged={rollbackChanged}
+                  rollbackMessagesRemoved={rollbackRemoved}
+                  onRollbackRestore={handleUndoRollback}
+                />
               </>
             )}
 
