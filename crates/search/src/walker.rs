@@ -108,11 +108,7 @@ fn score(haystack: &str, needle: &str) -> f64 {
     }
     let h = haystack.to_lowercase();
     let n = needle.to_lowercase();
-    let base = h
-        .split(['/', '\\'])
-        .next_back()
-        .unwrap_or(&h)
-        .to_string();
+    let base = h.split(['/', '\\']).next_back().unwrap_or(&h).to_string();
     if base.contains(&n) {
         let bonus = if base.starts_with(&n) { 50.0 } else { 0.0 };
         return 100.0 + bonus - h.len() as f64 / 1000.0;

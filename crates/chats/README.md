@@ -16,12 +16,12 @@ The `chats` crate handles persistent storage, retrieval, and schema migrations f
 
 ## Architecture and Modules
 
-| Module | Description |
-| :--- | :--- |
-| `store` ([`src/store.rs`](src/store.rs)) | Implements `ChatStore`, providing methods to create, update, fetch, and delete chat records in SQLite. |
-| `types` ([`src/types.rs`](src/types.rs)) | Defines core data structures `ChatSummary` and `ChatRecord`. |
-| `migration` ([`src/migration.rs`](src/migration.rs)) | Handles database schema initialisation and migration scripts. |
-| `utils` ([`src/utils.rs`](src/utils.rs)) | Contains timestamp and random string generation helper routines. |
+| Module                                               | Description                                                                                            |
+| :--------------------------------------------------- | :----------------------------------------------------------------------------------------------------- |
+| `store` ([`src/store.rs`](src/store.rs))             | Implements `ChatStore`, providing methods to create, update, fetch, and delete chat records in SQLite. |
+| `types` ([`src/types.rs`](src/types.rs))             | Defines core data structures `ChatSummary` and `ChatRecord`.                                           |
+| `migration` ([`src/migration.rs`](src/migration.rs)) | Handles database schema initialisation and migration scripts.                                          |
+| `utils` ([`src/utils.rs`](src/utils.rs))             | Contains timestamp and random string generation helper routines.                                       |
 
 ---
 

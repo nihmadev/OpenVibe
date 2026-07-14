@@ -202,12 +202,10 @@ pub fn run() {
             }
 
             // Setup chat store if project exists
-            let chat_store = initial_project_id
-                .as_ref()
-                .and_then(|pid| {
-                    let db_path = project_store.chats_db(pid);
-                    ChatStore::new(&db_path).ok()
-                });
+            let chat_store = initial_project_id.as_ref().and_then(|pid| {
+                let db_path = project_store.chats_db(pid);
+                ChatStore::new(&db_path).ok()
+            });
 
             // Setup terminal manager
             let term_mgr = terminal::manager::TerminalManager::new(&initial_cwd);

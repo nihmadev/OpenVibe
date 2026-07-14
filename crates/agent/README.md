@@ -17,24 +17,24 @@ The `agent` crate provides the core AI agent logic for the OpenVibe ecosystem. I
 
 ## Architecture and Modules
 
-| Module | Description |
-| :--- | :--- |
-| `agent` ([`src/agent.rs`](src/agent.rs)) | Defines the primary `Agent` structure, maintaining conversation history, configuration, cancellation flags, and file snapshot states. |
-| `chat` ([`src/chat.rs`](src/chat.rs)) | Contains data structures for messages (`ChatMessage`), function calls (`ToolCall`), and assistant response turns (`AssistantTurn`). |
-| `config` ([`src/config.rs`](src/config.rs)) | Manages runtime agent configuration (`AgentConfig`), including model selection, API keys, endpoints, working directory (`cwd`), timeouts, and token limits. |
-| `definition` ([`src/definition.rs`](src/definition.rs)) | Defines tool specifications (`ToolDefinition`, `ToolDefFunction`) exposed to the LLM. |
-| `events` ([`src/events.rs`](src/events.rs)) | Defines agent life-cycle events (`ChunkEvent`, `ToolCallEvent`, `ToolResultEvent`, `ErrorEvent`, `BusyEvent`). |
-| `executor` ([`src/executor.rs`](src/executor.rs)) | Provides the `ToolExecutor` trait for executing requested tools asynchronously. |
-| `prompt` ([`src/prompt.rs`](src/prompt.rs)) | Assembles system prompts tailored to the current working directory and SCG2 codebase context. |
-| `request` ([`src/request.rs`](src/request.rs)) | Constructs HTTP request payloads for target LLM endpoints. |
-| `send` ([`src/send.rs`](src/send.rs)) | Orchestrates the primary execution loop (`send_message`), managing API communications and tool dispatching. |
-| `sse` ([`src/sse.rs`](src/sse.rs)) | Implements streaming response parsing for Server-Sent Events. |
-| `snapshot` ([`src/snapshot.rs`](src/snapshot.rs)) | Manages file state records (`FileSnapshot`, `SnapshotEntry`) used for state recovery. |
-| `rollback` ([`src/rollback.rs`](src/rollback.rs)) | Executes file restoration logic using saved snapshots. |
-| `sub_trace` ([`src/sub_trace.rs`](src/sub_trace.rs)) | Tracks detailed internal execution events for debugging. |
-| `summarize` ([`src/summarize.rs`](src/summarize.rs)) | Handles context compaction by summarizing long message threads. |
-| `token` ([`src/token.rs`](src/token.rs)) | Calculates token counts across conversation messages. |
-| `transform` ([`src/transform.rs`](src/transform.rs)) | Normalizes and sanitizes message formats prior to API dispatch. |
+| Module                                                  | Description                                                                                                                                                 |
+| :------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent` ([`src/agent.rs`](src/agent.rs))                | Defines the primary `Agent` structure, maintaining conversation history, configuration, cancellation flags, and file snapshot states.                       |
+| `chat` ([`src/chat.rs`](src/chat.rs))                   | Contains data structures for messages (`ChatMessage`), function calls (`ToolCall`), and assistant response turns (`AssistantTurn`).                         |
+| `config` ([`src/config.rs`](src/config.rs))             | Manages runtime agent configuration (`AgentConfig`), including model selection, API keys, endpoints, working directory (`cwd`), timeouts, and token limits. |
+| `definition` ([`src/definition.rs`](src/definition.rs)) | Defines tool specifications (`ToolDefinition`, `ToolDefFunction`) exposed to the LLM.                                                                       |
+| `events` ([`src/events.rs`](src/events.rs))             | Defines agent life-cycle events (`ChunkEvent`, `ToolCallEvent`, `ToolResultEvent`, `ErrorEvent`, `BusyEvent`).                                              |
+| `executor` ([`src/executor.rs`](src/executor.rs))       | Provides the `ToolExecutor` trait for executing requested tools asynchronously.                                                                             |
+| `prompt` ([`src/prompt.rs`](src/prompt.rs))             | Assembles system prompts tailored to the current working directory and SCG2 codebase context.                                                               |
+| `request` ([`src/request.rs`](src/request.rs))          | Constructs HTTP request payloads for target LLM endpoints.                                                                                                  |
+| `send` ([`src/send.rs`](src/send.rs))                   | Orchestrates the primary execution loop (`send_message`), managing API communications and tool dispatching.                                                 |
+| `sse` ([`src/sse.rs`](src/sse.rs))                      | Implements streaming response parsing for Server-Sent Events.                                                                                               |
+| `snapshot` ([`src/snapshot.rs`](src/snapshot.rs))       | Manages file state records (`FileSnapshot`, `SnapshotEntry`) used for state recovery.                                                                       |
+| `rollback` ([`src/rollback.rs`](src/rollback.rs))       | Executes file restoration logic using saved snapshots.                                                                                                      |
+| `sub_trace` ([`src/sub_trace.rs`](src/sub_trace.rs))    | Tracks detailed internal execution events for debugging.                                                                                                    |
+| `summarize` ([`src/summarize.rs`](src/summarize.rs))    | Handles context compaction by summarizing long message threads.                                                                                             |
+| `token` ([`src/token.rs`](src/token.rs))                | Calculates token counts across conversation messages.                                                                                                       |
+| `transform` ([`src/transform.rs`](src/transform.rs))    | Normalizes and sanitizes message formats prior to API dispatch.                                                                                             |
 
 ---
 

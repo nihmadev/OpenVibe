@@ -16,14 +16,14 @@ The `git` crate provides native Git repository integration for OpenVibe. Leverag
 
 ## Architecture and Modules
 
-| Module | Description |
-| :--- | :--- |
-| `repository` ([`src/repository.rs`](src/repository.rs)) | High-level repository wrapper routines and workspace branch information. |
-| `status` ([`src/status.rs`](src/status.rs)) | Git status collection, categorizing modified, untracked, and deleted files. |
-| `diff` ([`src/diff.rs`](src/diff.rs)) | Unified diff calculation and line patch formatting. |
-| `commit` ([`src/commit.rs`](src/commit.rs)) | Commit operations and commit detail extraction. |
-| `history` ([`src/history.rs`](src/history.rs)) | Log traversal and historical revision queries. |
-| `error` ([`src/error.rs`](src/error.rs)) | Custom `GitError` enum and result types. |
+| Module                                                  | Description                                                                 |
+| :------------------------------------------------------ | :-------------------------------------------------------------------------- |
+| `repository` ([`src/repository.rs`](src/repository.rs)) | High-level repository wrapper routines and workspace branch information.    |
+| `status` ([`src/status.rs`](src/status.rs))             | Git status collection, categorizing modified, untracked, and deleted files. |
+| `diff` ([`src/diff.rs`](src/diff.rs))                   | Unified diff calculation and line patch formatting.                         |
+| `commit` ([`src/commit.rs`](src/commit.rs))             | Commit operations and commit detail extraction.                             |
+| `history` ([`src/history.rs`](src/history.rs))          | Log traversal and historical revision queries.                              |
+| `error` ([`src/error.rs`](src/error.rs))                | Custom `GitError` enum and result types.                                    |
 
 ---
 

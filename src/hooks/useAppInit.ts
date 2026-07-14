@@ -61,11 +61,9 @@ export function useAppInit({
       // Background warm-up tasks — run in parallel without blocking UI
       Promise.all([
         // Preload Monaco editor types for faster code editing
-        window.vibe.editor?.preloadTypes?.().catch(() => {}),
-        // Warm up git repo info cache if project is a git repository
-        window.vibe.git?.repoInfo?.().catch(() => {}),
+        window.vibe.editor?.preloadTypes?.(activeProject.path).catch(() => {}),
         // Prime file tree cache with shallow listing
-        window.vibe.fs?.list?.(activeProject.path, 1).catch(() => {}),
+        window.vibe.fs?.list?.(activeProject.path).catch(() => {}),
       ]);
 
       const list = await window.vibe.chats.list();
