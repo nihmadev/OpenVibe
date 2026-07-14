@@ -238,6 +238,13 @@ pub fn run() {
                 scg2_clone.start_background_worker().await;
             });
 
+            // Pre-initialize agent if we have valid credentials to avoid first-request latency
+            let initial_agent = if !cfg.api_key.is_empty() && !cfg.base_url.is_empty() {
+                Some(agent::Agent::new(cfg.to_agent_config()))
+            } else {
+                None
+            };
+
             // Create state
             let state = AppState {
                 projects: Mutex::new(project_store),
@@ -247,7 +254,7 @@ pub fn run() {
                 active_chat_id: Mutex::new(None),
                 app_handle: Mutex::new(Some(app_handle.clone())),
                 llm_cancels: Mutex::new(HashMap::new()),
-                agent: Mutex::new(None),
+                agent: Mutex::new(initial_agent),
                 agent_cancel: Mutex::new(None),
                 http_client: shared_client,
                 provider_url,
