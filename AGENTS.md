@@ -1,11 +1,13 @@
 # MCP Server Implementation Plan
 
 ## Overview
+
 Implement real MCP (Model Context Protocol) server support in OpenVibe. Users should be able to configure MCP servers, toggle them on/off, and see their connection status from the titlebar.
 
 ## New files to create
 
 ### Rust: `crates/mcp/`
+
 New workspace crate `mcp` in `crates/mcp/` with:
 
 - **`Cargo.toml`** — depends on `serde`, `serde_json`, `toml`, `tokio`, `tower`, `tower-lsp`, `tracing`. Add to workspace `Cargo.toml`.
@@ -17,15 +19,16 @@ New workspace crate `mcp` in `crates/mcp/` with:
   - `McpStatus` enum: Running | Stopped | Error(String)
 
 - **`src/config.rs`** — load/save `openvibe.toml` from project root. Format:
+
   ```toml
   [mcp]
-  
+
   [[mcp.server]]
   name = "filesystem"
   command = "npx"
   args = ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
   enabled = true
-  
+
   [[mcp.server]]
   name = "github"
   command = "uvx"
@@ -51,23 +54,27 @@ New workspace crate `mcp` in `crates/mcp/` with:
   - `mcp_list_tools(server_name: String)` -> Vec<String>
 
 ### Rust: `src-tauri/src/lib.rs`
+
 - Register `mcp` module in Tauri app
 - Add `McpManager` to Tauri managed state (`app.manage(mcp_manager)`)
 - Setup: load config on startup, auto-start servers marked `enabled = true`
 - Teardown: kill all server processes on app close
 
 ### Rust: `src-tauri/src/commands/mod.rs`
+
 - Add `pub mod mcp;`
 
 ### Rust: `src-tauri/Cargo.toml`
+
 - Add `mcp = { path = "../crates/mcp" }` to dependencies
 
 ### TypeScript: `src/types.ts`
+
 - Add types:
   ```ts
   interface McpServerStatus {
     name: string;
-    status: 'running' | 'stopped' | 'error';
+    status: "running" | "stopped" | "error";
     error?: string;
     enabled: boolean;
   }
@@ -84,9 +91,11 @@ New workspace crate `mcp` in `crates/mcp/` with:
   ```
 
 ### TypeScript: `src/tauri-bridge.ts`
+
 - Add bridge functions for new commands
 
 ### React: `src/components/Titlebar/Titlebar.tsx`
+
 - Add **MCP status button** in `.titlebar__right` next to terminal toggle:
   - Icon: `Cpu` (or `PlugZap`) from lucide-react
   - Colored dot indicator: green (all enabled running), yellow (some stopped), red (all stopped/error), gray (no MCP configured)
@@ -94,9 +103,11 @@ New workspace crate `mcp` in `crates/mcp/` with:
   - Dropdown has "Open MCP Settings" link at bottom
 
 ### React: `src/styles/Titlebar.css`
+
 - Add styles for `.titlebar__mcp` button and dropdown
 
 ### React: `src/components/Settings/Settings.tsx`
+
 - Add new tab `"mcp"` in the sidebar:
   - Tab icon: `Cpu`
   - Content:
@@ -107,12 +118,15 @@ New workspace crate `mcp` in `crates/mcp/` with:
     - Import/Export buttons
 
 ### React: `src/styles/Settings.css`
+
 - Add styles for MCP settings panel
 
 ### React: `src/components/Titlebar/McpStatusDropdown.tsx`
+
 - New component for the dropdown panel showing servers and their statuses
 
 ### Config file: `openvibe.toml`
+
 - Created in project root by default
 - Auto-created with empty `[mcp]` section if missing
 - Hot-reload on file change (watch via `notify` crate)
@@ -120,6 +134,7 @@ New workspace crate `mcp` in `crates/mcp/` with:
 ## Implementation details
 
 ### MCP Protocol
+
 - Transport: stdio (child process stdin/stdout)
 - Protocol: JSON-RPC 2.0
 - Key methods to support:
@@ -131,6 +146,7 @@ New workspace crate `mcp` in `crates/mcp/` with:
 - Error handling: stderr capture, timeout (5s for init)
 
 ### Status indicator logic
+
 ```
 no servers configured          -> gray dot, no click action
 all enabled servers running    -> green dot
@@ -139,6 +155,7 @@ all enabled servers stopped    -> red dot
 ```
 
 ### Auto-start behavior
+
 - On app launch, start all servers with `enabled = true`
 - Retry logic: 3 attempts with 1s delay
 - If server binary not found -> status=Error, user sees in dropdown
@@ -146,6 +163,7 @@ all enabled servers stopped    -> red dot
 ## Dependencies to add
 
 ### Cargo
+
 - `toml` = "0.8" (deserialize/serialize TOML)
 - `serde` with derive
 - `serde_json` (JSON-RPC parsing)
@@ -153,9 +171,11 @@ all enabled servers stopped    -> red dot
 - `tracing` (logging)
 
 ### npm
+
 - Already has `lucide-react` — use `Cpu`, `PlugZap`, `Circle` icons
 
 ## Edge cases
+
 - Server process crashes -> auto-restart (max 3 times, then mark Error)
 - Config file manually edited while app is open -> hot-reload (debounce 500ms)
 - Multiple servers with same name -> validation error on save
@@ -166,6 +186,7 @@ all enabled servers stopped    -> red dot
 - Non-UTF8 stderr -> lossy conversion
 
 ## Testing
+
 - Unit tests for config parsing (happy path, malformed toml, missing fields)
 - Unit tests for status logic
 - Integration test: spawn a real MCP echo server, call init, verify response

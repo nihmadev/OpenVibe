@@ -1,12 +1,12 @@
-import { createHash } from 'node:crypto';
-import { readFile, writeFile, mkdir, unlink } from 'node:fs/promises';
-import { existsSync, createReadStream } from 'node:fs';
-import { join } from 'node:path';
-import { get } from 'node:https';
-import { request as httpGet } from 'node:http';
-import { exec as execCb } from 'node:child_process';
+import { createHash } from "node:crypto";
+import { readFile, writeFile, mkdir, unlink } from "node:fs/promises";
+import { existsSync, createReadStream } from "node:fs";
+import { join } from "node:path";
+import { get } from "node:https";
+import { request as httpGet } from "node:http";
+import { exec as execCb } from "node:child_process";
 
-const GITHUB_REPO = 'nihmadev/OpenVibe';
+const GITHUB_REPO = "nihmadev/OpenVibe";
 const API_BASE = process.env.OPENVIBE_API_URL || `https://api.github.com/repos/${GITHUB_REPO}`;
 
 export interface UpdateInfo {
@@ -25,15 +25,15 @@ export interface PlatformInfo {
 
 export function getPlatform(): PlatformInfo {
   const archMap: Record<string, string> = {
-    x64: 'x64',
-    arm64: 'arm64',
-    ia32: 'x86',
+    x64: "x64",
+    arm64: "arm64",
+    ia32: "x86",
   };
 
   const platformMap: Record<string, string> = {
-    linux: 'linux',
-    darwin: 'macos',
-    win32: 'windows',
+    linux: "linux",
+    darwin: "macos",
+    win32: "windows",
   };
 
   const platform = platformMap[process.platform];
@@ -46,53 +46,56 @@ export function getPlatform(): PlatformInfo {
 }
 
 export function getInstallDir(): string {
-  const home = process.env.HOME || process.env.USERPROFILE || '';
-  return join(home, '.openvibe');
+  const home = process.env.HOME || process.env.USERPROFILE || "";
+  return join(home, ".openvibe");
 }
 
 export function getBinDir(): string {
-  return join(getInstallDir(), 'bin');
+  return join(getInstallDir(), "bin");
 }
 
 export function getVersionDir(version: string): string {
-  return join(getInstallDir(), 'versions', version);
+  return join(getInstallDir(), "versions", version);
 }
 
 function fetchJSON(url: string): Promise<any> {
   return new Promise((resolve, reject) => {
-    const protocol = url.startsWith('https') ? get : httpGet;
-    const req = protocol(url, { headers: { 'Accept': 'application/json', 'User-Agent': 'openvibe-desktop' } }, (res) => {
-      let data = '';
-      res.on('data', (chunk) => data += chunk);
-      res.on('end', () => {
+    const protocol = url.startsWith("https") ? get : httpGet;
+    const req = protocol(url, { headers: { Accept: "application/json", "User-Agent": "openvibe-desktop" } }, (res) => {
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      res.on("end", () => {
         if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-          try { resolve(JSON.parse(data)); }
-          catch (e) { reject(new Error(`invalid JSON: ${data.slice(0, 200)}`)); }
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            reject(new Error(`invalid JSON: ${data.slice(0, 200)}`));
+          }
         } else {
           reject(new Error(`HTTP ${res.statusCode}: ${data.slice(0, 200)}`));
         }
       });
     });
-    req.on('error', reject);
+    req.on("error", reject);
     req.end();
   });
 }
 
 function downloadFile(url: string, dest: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const protocol = url.startsWith('https') ? get : httpGet;
-    const req = protocol(url, { headers: { 'User-Agent': 'openvibe-desktop' } }, async (res) => {
+    const protocol = url.startsWith("https") ? get : httpGet;
+    const req = protocol(url, { headers: { "User-Agent": "openvibe-desktop" } }, async (res) => {
       if (!res.statusCode || res.statusCode >= 300) {
         reject(new Error(`download failed: HTTP ${res.statusCode}`));
         return;
       }
       const chunks: Buffer[] = [];
       for await (const chunk of res) chunks.push(chunk as Buffer);
-      await mkdir(join(dest, '..'), { recursive: true });
+      await mkdir(join(dest, ".."), { recursive: true });
       await writeFile(dest, Buffer.concat(chunks));
       resolve();
     });
-    req.on('error', reject);
+    req.on("error", reject);
     req.end();
   });
 }
@@ -101,11 +104,11 @@ export async function checkForUpdate(versionFile: string): Promise<UpdateInfo | 
   const { platform, arch } = getPlatform();
 
   try {
-    const baseURL = API_BASE.replace(/\/+$/, '');
+    const baseURL = API_BASE.replace(/\/+$/, "");
     const url = `${baseURL}/releases/latest`;
 
     // Try the Go API first
-    if (!process.env.OPENVIBE_API_URL && baseURL.includes('api.github.com')) {
+    if (!process.env.OPENVIBE_API_URL && baseURL.includes("api.github.com")) {
       return await checkViaGitHub(platform, arch);
     }
 
@@ -119,19 +122,19 @@ export async function checkForUpdate(versionFile: string): Promise<UpdateInfo | 
 
 async function checkViaGitHub(platform: string, arch: string): Promise<UpdateInfo | null> {
   const data = await fetchJSON(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`);
-  const version = (data.tag_name as string).replace(/^v/, '');
+  const version = (data.tag_name as string).replace(/^v/, "");
 
   const extMap: Record<string, string> = {
-    linux: '.AppImage',
-    macos: '.dmg',
-    windows: '.exe',
+    linux: ".AppImage",
+    macos: ".dmg",
+    windows: ".exe",
   };
 
   const ext = extMap[platform];
   if (!ext) return null;
 
-  const asset = (data.assets as any[]).find(a =>
-    (a.name as string).endsWith(ext) && (a.name as string).includes(platform)
+  const asset = (data.assets as any[]).find(
+    (a) => (a.name as string).endsWith(ext) && (a.name as string).includes(platform),
   );
 
   if (!asset) return null;
@@ -152,7 +155,7 @@ export async function downloadAndVerify(info: UpdateInfo): Promise<string> {
   await mkdir(versionDir, { recursive: true });
   await mkdir(binDir, { recursive: true });
 
-  const fileName = info.url.split('/').pop() || `openvibe-${info.platform}-${info.arch}`;
+  const fileName = info.url.split("/").pop() || `openvibe-${info.platform}-${info.arch}`;
   const filePath = join(versionDir, fileName);
 
   if (existsSync(filePath)) {
@@ -175,7 +178,7 @@ export async function downloadAndVerify(info: UpdateInfo): Promise<string> {
       await unlink(filePath);
       throw new Error(`SHA256 mismatch: expected ${info.sha256}, got ${hash}`);
     }
-    console.log('SHA256 verified');
+    console.log("SHA256 verified");
   }
 
   return makeExecutableAndLink(filePath, binDir, info);
@@ -185,22 +188,26 @@ async function makeExecutableAndLink(filePath: string, binDir: string, info: Upd
   // Get the actual binary path (for dmg we need to extract)
   const { platform } = info;
 
-  if (platform === 'linux') {
+  if (platform === "linux") {
     await exec(`chmod +x "${filePath}"`);
-    const link = join(binDir, 'openvibe');
-    await writeFile(link.replace(/openvibe$/, '.version'), info.version);
+    const link = join(binDir, "openvibe");
+    await writeFile(link.replace(/openvibe$/, ".version"), info.version);
     // Symlink the binary
-    try { await unlink(link); } catch { /* ignore */ }
+    try {
+      await unlink(link);
+    } catch {
+      /* ignore */
+    }
     await exec(`ln -sf "${filePath}" "${link}"`);
     return link;
   }
 
-  if (platform === 'macos') {
+  if (platform === "macos") {
     // Mount dmg, copy .app, detach
     const mountPoint = `/tmp/openvibe-mount-${Date.now()}`;
     await exec(`mkdir -p "${mountPoint}"`);
     await exec(`hdiutil attach "${filePath}" -mountpoint "${mountPoint}" -nobrowse -quiet`);
-    const appPath = join(binDir, 'OpenVibe.app');
+    const appPath = join(binDir, "OpenVibe.app");
     if (existsSync(appPath)) {
       await exec(`rm -rf "${appPath}"`);
     }
@@ -212,15 +219,19 @@ async function makeExecutableAndLink(filePath: string, binDir: string, info: Upd
     }
     await exec(`hdiutil detach "${mountPoint}" -quiet -force`);
     await exec(`rm -rf "${mountPoint}"`);
-    await writeFile(join(binDir, '.version'), info.version);
-    return join(appPath, 'Contents/MacOS/openvibe');
+    await writeFile(join(binDir, ".version"), info.version);
+    return join(appPath, "Contents/MacOS/openvibe");
   }
 
-  if (platform === 'windows') {
-    const link = join(binDir, 'openvibe.exe');
-    await writeFile(link.replace(/openvibe\.exe$/, '.version'), info.version);
+  if (platform === "windows") {
+    const link = join(binDir, "openvibe.exe");
+    await writeFile(link.replace(/openvibe\.exe$/, ".version"), info.version);
     // For exe installer, just symlink
-    try { await unlink(link); } catch { /* ignore */ }
+    try {
+      await unlink(link);
+    } catch {
+      /* ignore */
+    }
     await exec(`mklink "${link}" "${filePath}"`, true);
     return link;
   }
@@ -230,11 +241,11 @@ async function makeExecutableAndLink(filePath: string, binDir: string, info: Upd
 
 function sha256File(filePath: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const hash = createHash('sha256');
+    const hash = createHash("sha256");
     const stream = createReadStream(filePath);
-    stream.on('data', (chunk: string | Buffer) => hash.update(chunk));
-    stream.on('end', () => resolve(hash.digest('hex')));
-    stream.on('error', reject);
+    stream.on("data", (chunk: string | Buffer) => hash.update(chunk));
+    stream.on("end", () => resolve(hash.digest("hex")));
+    stream.on("error", reject);
   });
 }
 

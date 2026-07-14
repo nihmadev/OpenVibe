@@ -12,3 +12,5 @@ src-tauri/target
 my_folder/
 .fastembed_cache
 src-tauri/tests
+vscode/
+openvibe.toml

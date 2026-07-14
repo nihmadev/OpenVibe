@@ -4,3 +4,4 @@ TODO
 - Improve bash tool UX and error handling
 - Add questions tool for interactive user prompting
 - Fix agent confirmation dialog design
+- Decomposite monolite files
