@@ -51,7 +51,6 @@ pub async fn stream_chat(
             body["tool_choice"] = serde_json::json!("auto");
         }
 
-
         let req = client.post(&url).headers(headers).json(&body);
 
         match req.send().await {
@@ -169,8 +168,14 @@ fn build_request(config: &LlmConfig) -> (String, reqwest::header::HeaderMap) {
                 config.api_key
             )
         } else if is_github {
-            headers.insert("Accept", reqwest::header::HeaderValue::from_static("application/vnd.github+json"));
-            headers.insert("X-GitHub-Api-Version", reqwest::header::HeaderValue::from_static("2026-03-10"));
+            headers.insert(
+                "Accept",
+                reqwest::header::HeaderValue::from_static("application/vnd.github+json"),
+            );
+            headers.insert(
+                "X-GitHub-Api-Version",
+                reqwest::header::HeaderValue::from_static("2026-03-10"),
+            );
             format!(
                 "{}/inference/chat/completions",
                 config.base_url.trim_end_matches('/')

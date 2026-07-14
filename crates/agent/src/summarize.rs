@@ -25,7 +25,6 @@ impl Agent {
             messages.clone()
         };
 
-
         let mut prompt = context_messages;
         prompt.push(ChatMessage {
             role: "user".to_string(),
@@ -135,9 +134,7 @@ impl Agent {
         "New chat".to_string()
     }
 
-
     pub async fn summarize(&self, client: &reqwest::Client) -> String {
         Self::summarize_with(self.config().clone(), self.messages.clone(), client).await
     }
 }
-

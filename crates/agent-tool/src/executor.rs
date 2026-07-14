@@ -91,7 +91,6 @@ impl ToolExecutor for AgentToolExecutor {
         false
     }
 
-
     async fn execute(
         &self,
         name: &str,

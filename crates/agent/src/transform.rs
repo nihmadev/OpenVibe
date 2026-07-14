@@ -19,7 +19,6 @@ pub fn supports_vision(model: &str) -> bool {
         || m.contains("llava")
 }
 
-
 pub fn flatten_for_text_only(messages: Vec<ChatMessage>) -> Vec<ChatMessage> {
     messages
         .into_iter()

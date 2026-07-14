@@ -1,6 +1,6 @@
 import { loader } from "@monaco-editor/react";
 
-// Preload only the most common file/folder icons to reduce HTTP flood on startup
+/** Frequently used file icon vector assets cached during startup. */
 const COMMON_FILE_ICONS = [
   "js.svg",
   "ts.svg",
@@ -19,6 +19,7 @@ const COMMON_FILE_ICONS = [
   "gear.svg",
 ];
 
+/** Frequently used directory icon vector assets cached during startup. */
 const COMMON_FOLDER_ICONS = [
   "folder-src.svg",
   "folder-node-modules.svg",
@@ -31,11 +32,13 @@ const COMMON_FOLDER_ICONS = [
   "folder-documents.svg",
 ];
 
+/** Pre-downloads a remote static image resource into the browser cache. */
 function prefetchImage(url: string): void {
   const img = new Image();
   img.src = url;
 }
 
+/** Preloads primary workspace file and directory icons to minimize UI paint latency. */
 export function preloadCommonIcons(): void {
   for (const icon of COMMON_FILE_ICONS) {
     prefetchImage(`icons/symbols/files/${icon}`);
@@ -45,7 +48,9 @@ export function preloadCommonIcons(): void {
   }
 }
 
+/** Pre-initializes critical asset bundles including Monaco Editor workers and common icons. */
 export function preloadAll(): void {
   preloadCommonIcons();
   loader.init().catch(() => {});
 }
+

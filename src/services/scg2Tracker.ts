@@ -1,6 +1,12 @@
 import type * as monaco from "monaco-editor";
 import { pushScg2Events, SCG2EventBatch } from "../tauri-bridge.js";
 
+/**
+ * Front-end telemetry service tracking active Monaco Editor interactions for Smart Context Generation 2 (SCG2).
+ *
+ * Collects throttled metrics (cursor movements, active selections, visible viewports, content changes,
+ * and compiler markers) and transmits structured snapshot batches across the Tauri RPC bridge.
+ */
 class SCG2TrackerService {
   private activePath: string | null = null;
   private editor: monaco.editor.IStandaloneCodeEditor | null = null;
@@ -10,12 +16,19 @@ class SCG2TrackerService {
   private editTimer: ReturnType<typeof setTimeout> | null = null;
   private selectionTimer: ReturnType<typeof setTimeout> | null = null;
 
+  /**
+   * Attaches telemetry listeners to an active Monaco editor instance.
+   *
+   * @param editor Target Monaco editor handle.
+   * @param path File path of the currently active document.
+   * @param m Optional top-level Monaco editor namespace for diagnostic marker querying.
+   */
   public attach(editor: monaco.editor.IStandaloneCodeEditor, path: string, m?: typeof monaco) {
     this.editor = editor;
     this.activePath = path;
     if (m) this.monacoInstance = m;
 
-    // Immediately emit active file switch
+    // Emit initial active file switch payload
     this.emitBatch(false);
 
     // 1. Throttled Cursor Position Listener (150ms)
@@ -59,6 +72,9 @@ class SCG2TrackerService {
     }
   }
 
+  /**
+   * Updates the active document path state and triggers a file switch batch if changed.
+   */
   public updateActivePath(path: string) {
     if (this.activePath !== path) {
       this.activePath = path;

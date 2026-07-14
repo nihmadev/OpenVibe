@@ -37,7 +37,8 @@ fn load_project_rules(cwd: &str) -> Option<String> {
                     (trimmed, false)
                 };
 
-                let mut section = format!("--- Rules from {} ---\n{}", relative_path, final_content);
+                let mut section =
+                    format!("--- Rules from {} ---\n{}", relative_path, final_content);
                 if is_truncated {
                     section.push_str("\n[Rules truncated for context length]");
                 }
@@ -46,7 +47,11 @@ fn load_project_rules(cwd: &str) -> Option<String> {
                 sections.push(section);
             }
             Err(err) => {
-                tracing::warn!("Failed to read project rules from {}: {}", path.display(), err);
+                tracing::warn!(
+                    "Failed to read project rules from {}: {}",
+                    path.display(),
+                    err
+                );
             }
         }
     }
@@ -221,4 +226,3 @@ mod tests {
         assert!(prompt.contains("OpenVibe nested rule"));
     }
 }
-

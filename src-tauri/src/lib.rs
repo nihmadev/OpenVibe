@@ -115,7 +115,7 @@ impl AppState {
                 ".vite",
                 "target",
                 "__pycache__/",
-                "vendor/"
+                "vendor/",
             ];
 
             // Trailing-edge debounce: emit only after a quiet period (no events for 300ms)
@@ -215,12 +215,12 @@ pub fn run() {
 
             let app_handle = app.handle().clone();
 
-            // Создаём общий HTTP клиент с HTTP/2, keep-alive, tcp_nodelay
+            // Initialize optimized HTTP client pool (HTTP/2, TCP keep-alive, low latency)
             let shared_client = http_client::create_shared_client();
             let provider_url = Arc::new(tokio::sync::Mutex::new(cfg.base_url.clone()));
             let (warmer_stop_tx, warmer_stop_rx) = watch::channel(false);
 
-            // Запускаем connection warmer (держит соединение с провайдером тёплым)
+            // Spawn background task to keep provider TCP/TLS connections warm
             http_client::spawn_connection_warmer(shared_client.clone(), provider_url.clone(), warmer_stop_rx);
 
             // MCP Manager

@@ -201,7 +201,10 @@ impl McpServerProcess {
     }
 
     pub fn get_cached_tools_sync(&self) -> Vec<Value> {
-        self.tools_cache.lock().map(|cache| cache.clone()).unwrap_or_default()
+        self.tools_cache
+            .lock()
+            .map(|cache| cache.clone())
+            .unwrap_or_default()
     }
 
     async fn send_notification_internal(&self, msg: &Value) -> Result<(), String> {

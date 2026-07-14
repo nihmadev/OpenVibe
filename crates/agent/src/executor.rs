@@ -18,4 +18,3 @@ pub trait ToolExecutor: Send + Sync {
         emit: &(dyn for<'a> Fn(&'a str, serde_json::Value) + Send + Sync),
     ) -> Result<String, String>;
 }
-

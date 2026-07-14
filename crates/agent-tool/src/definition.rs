@@ -153,4 +153,3 @@ pub fn build_readonly_tool_definitions() -> Vec<ToolDefinition> {
         },
     ]
 }
-

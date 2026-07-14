@@ -48,12 +48,20 @@ impl ContextGraph {
         node_idx
     }
 
-    pub fn update_file_symbols(&mut self, file_path: &Path, symbols: Vec<SymbolDefinition>, imported_modules: Vec<String>) {
+    pub fn update_file_symbols(
+        &mut self,
+        file_path: &Path,
+        symbols: Vec<SymbolDefinition>,
+        imported_modules: Vec<String>,
+    ) {
         let file_node = self.get_or_create_file_node(file_path);
 
         // Remove old symbols for this file
         let mut edges_to_remove = Vec::new();
-        for edge in self.graph.edges_directed(file_node, petgraph::Direction::Outgoing) {
+        for edge in self
+            .graph
+            .edges_directed(file_node, petgraph::Direction::Outgoing)
+        {
             if *edge.weight() == EdgeKind::Defines {
                 edges_to_remove.push(edge.target());
             }
@@ -78,13 +86,13 @@ impl ContextGraph {
         for import in imported_modules {
             let mut resolved_node = None;
             let ext = file_path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            
+
             if ext == "rs" {
                 let parts: Vec<&str> = import.trim_start_matches("crate::").split("::").collect();
                 let joined = parts.join("/");
                 let suffix1 = format!("{}.rs", joined);
                 let suffix2 = format!("{}/mod.rs", joined);
-                
+
                 for (known_file, &known_node) in &self.node_by_file {
                     let known_str = known_file.to_string_lossy().replace("\\", "/");
                     if known_str.ends_with(&suffix1) || known_str.ends_with(&suffix2) {
@@ -97,16 +105,24 @@ impl ContextGraph {
                     if let Some(parent) = file_path.parent() {
                         let mut resolved = parent.to_path_buf();
                         for part in import.split('/') {
-                            if part == "." { continue; }
-                            else if part == ".." { resolved.pop(); }
-                            else { resolved.push(part); }
+                            if part == "." {
+                                continue;
+                            } else if part == ".." {
+                                resolved.pop();
+                            } else {
+                                resolved.push(part);
+                            }
                         }
                         let resolved_str = resolved.to_string_lossy().replace("\\", "/");
                         for (known_file, &known_node) in &self.node_by_file {
                             let known_str = known_file.to_string_lossy().replace("\\", "/");
                             if known_str.starts_with(&resolved_str) {
                                 let remainder = &known_str[resolved_str.len()..];
-                                if remainder == ".ts" || remainder == ".tsx" || remainder == ".js" || remainder == "/index.ts" {
+                                if remainder == ".ts"
+                                    || remainder == ".tsx"
+                                    || remainder == ".js"
+                                    || remainder == "/index.ts"
+                                {
                                     resolved_node = Some(known_node);
                                     break;
                                 }
@@ -115,16 +131,20 @@ impl ContextGraph {
                     }
                 }
             }
-            
+
             if let Some(target_node) = resolved_node {
-                self.graph.add_edge(file_node, target_node, EdgeKind::Imports);
+                self.graph
+                    .add_edge(file_node, target_node, EdgeKind::Imports);
             } else {
                 // Fallback to substring heuristic
                 let import_lower = import.to_lowercase();
                 for (known_file, &known_node) in &self.node_by_file {
                     let known_file_str = known_file.to_string_lossy().to_lowercase();
-                    if import_lower.contains(&known_file_str) || known_file_str.contains(&import_lower) {
-                        self.graph.add_edge(file_node, known_node, EdgeKind::Imports);
+                    if import_lower.contains(&known_file_str)
+                        || known_file_str.contains(&import_lower)
+                    {
+                        self.graph
+                            .add_edge(file_node, known_node, EdgeKind::Imports);
                     }
                 }
             }
@@ -191,7 +211,10 @@ mod tests {
                 name: "Config".to_string(),
                 kind: SymbolKind::Struct,
                 file_path: f2.clone(),
-                range: LineRange { start_line: 1, end_line: 15 },
+                range: LineRange {
+                    start_line: 1,
+                    end_line: 15,
+                },
             }],
             vec![],
         );
@@ -202,7 +225,10 @@ mod tests {
                 name: "main".to_string(),
                 kind: SymbolKind::Function,
                 file_path: f1.clone(),
-                range: LineRange { start_line: 1, end_line: 10 },
+                range: LineRange {
+                    start_line: 1,
+                    end_line: 10,
+                },
             }],
             vec!["types".to_string()],
         );

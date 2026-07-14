@@ -9,6 +9,6 @@ pub mod misc;
 pub mod models;
 pub mod projects;
 pub mod providers;
+pub mod scg2;
 pub mod terminals;
 pub mod tools;
-pub mod scg2;

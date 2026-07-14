@@ -45,19 +45,27 @@ impl AstService {
     pub fn new() -> Self {
         let mut parser_rust = Parser::new();
         let language_rust = tree_sitter_rust::LANGUAGE.into();
-        parser_rust.set_language(&language_rust).expect("Error loading Rust tree-sitter grammar");
+        parser_rust
+            .set_language(&language_rust)
+            .expect("Error loading Rust tree-sitter grammar");
 
         let mut parser_js = Parser::new();
         let language_js = tree_sitter_javascript::LANGUAGE.into();
-        parser_js.set_language(&language_js).expect("Error loading JS tree-sitter grammar");
+        parser_js
+            .set_language(&language_js)
+            .expect("Error loading JS tree-sitter grammar");
 
         let mut parser_ts = Parser::new();
         let language_ts = tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into();
-        parser_ts.set_language(&language_ts).expect("Error loading TS tree-sitter grammar");
+        parser_ts
+            .set_language(&language_ts)
+            .expect("Error loading TS tree-sitter grammar");
 
         let mut parser_py = Parser::new();
         let language_py = tree_sitter_python::LANGUAGE.into();
-        parser_py.set_language(&language_py).expect("Error loading Python tree-sitter grammar");
+        parser_py
+            .set_language(&language_py)
+            .expect("Error loading Python tree-sitter grammar");
 
         Self {
             parser_rust,
@@ -67,18 +75,31 @@ impl AstService {
         }
     }
 
-    pub fn parse_file(&mut self, path: &Path, content: &str) -> (Vec<SymbolDefinition>, FileImports) {
+    pub fn parse_file(
+        &mut self,
+        path: &Path,
+        content: &str,
+    ) -> (Vec<SymbolDefinition>, FileImports) {
         let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
         match ext {
             "rs" => Self::parse_with_tree_sitter(path, content, &mut self.parser_rust, "rust"),
-            "js" | "jsx" => Self::parse_with_tree_sitter(path, content, &mut self.parser_js, "javascript"),
-            "ts" | "tsx" => Self::parse_with_tree_sitter(path, content, &mut self.parser_ts, "typescript"),
+            "js" | "jsx" => {
+                Self::parse_with_tree_sitter(path, content, &mut self.parser_js, "javascript")
+            }
+            "ts" | "tsx" => {
+                Self::parse_with_tree_sitter(path, content, &mut self.parser_ts, "typescript")
+            }
             "py" => Self::parse_with_tree_sitter(path, content, &mut self.parser_py, "python"),
             _ => self.parse_heuristic(path, content),
         }
     }
 
-    fn parse_with_tree_sitter(path: &Path, content: &str, parser: &mut Parser, lang: &str) -> (Vec<SymbolDefinition>, FileImports) {
+    fn parse_with_tree_sitter(
+        path: &Path,
+        content: &str,
+        parser: &mut Parser,
+        lang: &str,
+    ) -> (Vec<SymbolDefinition>, FileImports) {
         let mut symbols = Vec::new();
         let mut imported_modules = Vec::new();
 
@@ -89,63 +110,101 @@ impl AstService {
             // Simple BFS or DFS using tree-sitter child iteration (only checking top-level nodes for speed)
             for child in root.children(&mut cursor) {
                 let kind = child.kind();
-                
+
                 if kind.contains("function") || kind.contains("method") {
                     if let Some(name_node) = child.child_by_field_name("name") {
-                        let name = name_node.utf8_text(content.as_bytes()).unwrap_or("").to_string();
+                        let name = name_node
+                            .utf8_text(content.as_bytes())
+                            .unwrap_or("")
+                            .to_string();
                         let start_line = child.start_position().row as u32 + 1;
                         let end_line = child.end_position().row as u32 + 1;
                         symbols.push(SymbolDefinition {
                             name,
                             kind: SymbolKind::Function,
                             file_path: path.to_path_buf(),
-                            range: LineRange { start_line, end_line },
+                            range: LineRange {
+                                start_line,
+                                end_line,
+                            },
                         });
                     }
-                } else if kind.contains("class") || kind.contains("struct") || kind.contains("interface") {
+                } else if kind.contains("class")
+                    || kind.contains("struct")
+                    || kind.contains("interface")
+                {
                     if let Some(name_node) = child.child_by_field_name("name") {
-                        let name = name_node.utf8_text(content.as_bytes()).unwrap_or("").to_string();
+                        let name = name_node
+                            .utf8_text(content.as_bytes())
+                            .unwrap_or("")
+                            .to_string();
                         let start_line = child.start_position().row as u32 + 1;
                         let end_line = child.end_position().row as u32 + 1;
                         symbols.push(SymbolDefinition {
                             name,
                             kind: SymbolKind::Struct,
                             file_path: path.to_path_buf(),
-                            range: LineRange { start_line, end_line },
+                            range: LineRange {
+                                start_line,
+                                end_line,
+                            },
                         });
                     }
                 } else if kind == "enum_item" || kind == "enum_declaration" {
                     if let Some(name_node) = child.child_by_field_name("name") {
-                        let name = name_node.utf8_text(content.as_bytes()).unwrap_or("").to_string();
+                        let name = name_node
+                            .utf8_text(content.as_bytes())
+                            .unwrap_or("")
+                            .to_string();
                         let start_line = child.start_position().row as u32 + 1;
                         let end_line = child.end_position().row as u32 + 1;
                         symbols.push(SymbolDefinition {
                             name,
                             kind: SymbolKind::Enum,
                             file_path: path.to_path_buf(),
-                            range: LineRange { start_line, end_line },
+                            range: LineRange {
+                                start_line,
+                                end_line,
+                            },
                         });
                     }
                 } else if kind == "trait_item" {
                     if let Some(name_node) = child.child_by_field_name("name") {
-                        let name = name_node.utf8_text(content.as_bytes()).unwrap_or("").to_string();
+                        let name = name_node
+                            .utf8_text(content.as_bytes())
+                            .unwrap_or("")
+                            .to_string();
                         let start_line = child.start_position().row as u32 + 1;
                         let end_line = child.end_position().row as u32 + 1;
                         symbols.push(SymbolDefinition {
                             name,
                             kind: SymbolKind::Trait,
                             file_path: path.to_path_buf(),
-                            range: LineRange { start_line, end_line },
+                            range: LineRange {
+                                start_line,
+                                end_line,
+                            },
                         });
                     }
-                } else if kind == "use_declaration" || kind == "import_statement" || kind == "import_declaration" || kind == "import_from_statement" {
+                } else if kind == "use_declaration"
+                    || kind == "import_statement"
+                    || kind == "import_declaration"
+                    || kind == "import_from_statement"
+                {
                     let use_text = child.utf8_text(content.as_bytes()).unwrap_or("");
                     if lang == "rust" {
-                        let cleaned = use_text.trim_start_matches("use ").trim_end_matches(';').trim();
+                        let cleaned = use_text
+                            .trim_start_matches("use ")
+                            .trim_end_matches(';')
+                            .trim();
                         imported_modules.push(cleaned.to_string());
                     } else if lang == "javascript" || lang == "typescript" {
                         if let Some(source_node) = child.child_by_field_name("source") {
-                            let src = source_node.utf8_text(content.as_bytes()).unwrap_or("").trim_matches('\'').trim_matches('\"');
+                            let src = source_node
+                                .utf8_text(content.as_bytes())
+                                .unwrap_or("")
+                                .trim_matches('\'')
+                                .trim_matches('\"');
                             imported_modules.push(src.to_string());
                         }
                     } else if lang == "python" {
@@ -159,7 +218,10 @@ impl AstService {
                     }
                 } else if kind == "mod_item" {
                     if let Some(name_node) = child.child_by_field_name("name") {
-                        let name = name_node.utf8_text(content.as_bytes()).unwrap_or("").to_string();
+                        let name = name_node
+                            .utf8_text(content.as_bytes())
+                            .unwrap_or("")
+                            .to_string();
                         imported_modules.push(name.clone());
                         let start_line = child.start_position().row as u32 + 1;
                         let end_line = child.end_position().row as u32 + 1;
@@ -167,17 +229,23 @@ impl AstService {
                             name,
                             kind: SymbolKind::Module,
                             file_path: path.to_path_buf(),
-                            range: LineRange { start_line, end_line },
+                            range: LineRange {
+                                start_line,
+                                end_line,
+                            },
                         });
                     }
                 }
             }
         }
 
-        (symbols, FileImports {
-            file_path: path.to_path_buf(),
-            imported_modules,
-        })
+        (
+            symbols,
+            FileImports {
+                file_path: path.to_path_buf(),
+                imported_modules,
+            },
+        )
     }
 
     fn parse_heuristic(&self, path: &Path, content: &str) -> (Vec<SymbolDefinition>, FileImports) {
@@ -188,29 +256,47 @@ impl AstService {
             let line_num = idx as u32 + 1;
             let trimmed = line.trim();
 
-            if trimmed.starts_with("import ") || trimmed.starts_with("from ") || trimmed.starts_with("require(") {
+            if trimmed.starts_with("import ")
+                || trimmed.starts_with("from ")
+                || trimmed.starts_with("require(")
+            {
                 imported_modules.push(trimmed.to_string());
-            } else if trimmed.starts_with("function ") || trimmed.starts_with("export function ") || trimmed.starts_with("const ") && trimmed.contains("=>") {
+            } else if trimmed.starts_with("function ")
+                || trimmed.starts_with("export function ")
+                || trimmed.starts_with("const ") && trimmed.contains("=>")
+            {
                 symbols.push(SymbolDefinition {
                     name: trimmed.to_string(),
                     kind: SymbolKind::Function,
                     file_path: path.to_path_buf(),
-                    range: LineRange { start_line: line_num, end_line: line_num + 5 },
+                    range: LineRange {
+                        start_line: line_num,
+                        end_line: line_num + 5,
+                    },
                 });
-            } else if trimmed.starts_with("class ") || trimmed.starts_with("export class ") || trimmed.starts_with("interface ") {
+            } else if trimmed.starts_with("class ")
+                || trimmed.starts_with("export class ")
+                || trimmed.starts_with("interface ")
+            {
                 symbols.push(SymbolDefinition {
                     name: trimmed.to_string(),
                     kind: SymbolKind::Struct,
                     file_path: path.to_path_buf(),
-                    range: LineRange { start_line: line_num, end_line: line_num + 10 },
+                    range: LineRange {
+                        start_line: line_num,
+                        end_line: line_num + 10,
+                    },
                 });
             }
         }
 
-        (symbols, FileImports {
-            file_path: path.to_path_buf(),
-            imported_modules,
-        })
+        (
+            symbols,
+            FileImports {
+                file_path: path.to_path_buf(),
+                imported_modules,
+            },
+        )
     }
 
     pub fn skeletonize_file(&mut self, path: &Path, content: &str) -> String {
@@ -231,13 +317,18 @@ impl AstService {
 
         for sym in symbols {
             let start = sym.range.start_line.saturating_sub(1) as usize;
-            let end = (start + 2).min(sym.range.end_line as usize).min(lines.len());
+            let end = (start + 2)
+                .min(sym.range.end_line as usize)
+                .min(lines.len());
             for i in start..end {
                 out.push_str(lines[i]);
                 out.push('\n');
             }
             out.push_str("    // ...\n");
-            if sym.kind == SymbolKind::Struct || sym.kind == SymbolKind::Enum || sym.kind == SymbolKind::Trait {
+            if sym.kind == SymbolKind::Struct
+                || sym.kind == SymbolKind::Enum
+                || sym.kind == SymbolKind::Trait
+            {
                 out.push_str("}\n");
             }
             out.push('\n');

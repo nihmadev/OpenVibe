@@ -52,7 +52,11 @@ impl GitDeltaProvider {
         snippets
     }
 
-    pub fn get_temporally_coupled_snippets(cwd: &Path, active_file: &Path, max_files: usize) -> Vec<ContextSnippet> {
+    pub fn get_temporally_coupled_snippets(
+        cwd: &Path,
+        active_file: &Path,
+        max_files: usize,
+    ) -> Vec<ContextSnippet> {
         let cwd_str = match cwd.to_str() {
             Some(s) => s,
             None => return Vec::new(),
@@ -65,12 +69,12 @@ impl GitDeltaProvider {
 
         // Call the new history API
         let coupled = git::get_co_committed_files(cwd_str, active_str, max_files);
-        
+
         let mut snippets = Vec::new();
         for file in coupled {
             let path = PathBuf::from(&file);
             let abs_path = cwd.join(&path);
-            
+
             if let Ok(content) = std::fs::read_to_string(&abs_path) {
                 // In a real implementation we might pass ast_service to skeletonize here,
                 // but since git_delta is a generic provider, we can just return the first few lines
@@ -79,17 +83,20 @@ impl GitDeltaProvider {
                 let lines: Vec<&str> = content.lines().collect();
                 let end = 50.min(lines.len());
                 let snippet_text = lines[0..end].join("\n");
-                
+
                 snippets.push(ContextSnippet {
                     path,
-                    range: LineRange { start_line: 1, end_line: end as u32 },
+                    range: LineRange {
+                        start_line: 1,
+                        end_line: end as u32,
+                    },
                     content: snippet_text,
                     score: 0.75, // Good score for temporal coupling
                     reason: "Temporal Git Coupling (Co-committed)".to_string(),
                 });
             }
         }
-        
+
         snippets
     }
 }

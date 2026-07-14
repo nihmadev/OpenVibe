@@ -7,15 +7,18 @@ use std::fs;
 use std::path::Path;
 use std::time::Instant;
 
+/// Evaluates candidate code snippets across workspace heuristics and constructs token-bounded LLM prompt blocks.
 pub struct ContextAssembler {
     config: Scg2Config,
 }
 
 impl ContextAssembler {
+    /// Creates a new `ContextAssembler` instance with specified configuration limits.
     pub fn new(config: Scg2Config) -> Self {
         Self { config }
     }
 
+    /// Evaluates recency decay, AST symbol dependency links, workspace diagnostics, and project rules to rank snippets.
     pub fn assemble_context(
         &self,
         recency: &RecencyStore,
@@ -36,8 +39,14 @@ impl ContextAssembler {
             if viberules.exists() {
                 if let Ok(content) = fs::read_to_string(&viberules) {
                     candidates.push(ContextSnippet {
-                        path: viberules.strip_prefix(cwd).unwrap_or(&viberules).to_path_buf(),
-                        range: LineRange { start_line: 1, end_line: content.lines().count() as u32 },
+                        path: viberules
+                            .strip_prefix(cwd)
+                            .unwrap_or(&viberules)
+                            .to_path_buf(),
+                        range: LineRange {
+                            start_line: 1,
+                            end_line: content.lines().count() as u32,
+                        },
                         content,
                         score: 1.0,
                         reason: "Project Rules (.viberules)".to_string(),
@@ -47,8 +56,14 @@ impl ContextAssembler {
             } else if cursorrules.exists() {
                 if let Ok(content) = fs::read_to_string(&cursorrules) {
                     candidates.push(ContextSnippet {
-                        path: cursorrules.strip_prefix(cwd).unwrap_or(&cursorrules).to_path_buf(),
-                        range: LineRange { start_line: 1, end_line: content.lines().count() as u32 },
+                        path: cursorrules
+                            .strip_prefix(cwd)
+                            .unwrap_or(&cursorrules)
+                            .to_path_buf(),
+                        range: LineRange {
+                            start_line: 1,
+                            end_line: content.lines().count() as u32,
+                        },
                         content,
                         score: 1.0,
                         reason: "Project Rules (.cursorrules)".to_string(),
@@ -90,7 +105,11 @@ impl ContextAssembler {
 
         // 3.5 Temporal Git Coupling (Score 0.75)
         if let Some(active_file) = recency.active_file() {
-            candidates.extend(GitDeltaProvider::get_temporally_coupled_snippets(cwd, active_file, 2));
+            candidates.extend(GitDeltaProvider::get_temporally_coupled_snippets(
+                cwd,
+                active_file,
+                2,
+            ));
         }
 
         // 4. Primary Focus Snippet (Active file & visible line range - Score 0.9)
@@ -115,7 +134,10 @@ impl ContextAssembler {
 
                     candidates.push(ContextSnippet {
                         path: rel_path.to_path_buf(),
-                        range: LineRange { start_line: start, end_line: end },
+                        range: LineRange {
+                            start_line: start,
+                            end_line: end,
+                        },
                         content: snippet_text,
                         score: 0.9,
                         reason: "Active Editor Focus & Cursor Neighborhood".to_string(),
@@ -137,7 +159,10 @@ impl ContextAssembler {
 
                     candidates.push(ContextSnippet {
                         path: rel_path.to_path_buf(),
-                        range: LineRange { start_line: 1, end_line: snippet_text.lines().count() as u32 },
+                        range: LineRange {
+                            start_line: 1,
+                            end_line: snippet_text.lines().count() as u32,
+                        },
                         content: snippet_text,
                         score,
                         reason: "Direct Dependency (Skeletonized)".to_string(),
@@ -164,7 +189,10 @@ impl ContextAssembler {
 
                 candidates.push(ContextSnippet {
                     path: rel_path.to_path_buf(),
-                    range: LineRange { start_line: 1, end_line: snippet_text.lines().count() as u32 },
+                    range: LineRange {
+                        start_line: 1,
+                        end_line: snippet_text.lines().count() as u32,
+                    },
                     content: snippet_text,
                     score: rec_score,
                     reason: "Recently Focused File (Skeletonized)".to_string(),
@@ -174,7 +202,11 @@ impl ContextAssembler {
 
         // Semantic Search Boost
         if let Some(query) = _user_query {
-            let terms: Vec<String> = query.to_lowercase().split_whitespace().map(|s| s.to_string()).collect();
+            let terms: Vec<String> = query
+                .to_lowercase()
+                .split_whitespace()
+                .map(|s| s.to_string())
+                .collect();
             for snippet in &mut candidates {
                 let content_lower = snippet.content.to_lowercase();
                 let mut match_count = 0;
@@ -191,15 +223,16 @@ impl ContextAssembler {
         }
 
         // Deduplication (Range Merging)
-        let mut grouped: std::collections::HashMap<std::path::PathBuf, Vec<ContextSnippet>> = std::collections::HashMap::new();
+        let mut grouped: std::collections::HashMap<std::path::PathBuf, Vec<ContextSnippet>> =
+            std::collections::HashMap::new();
         for snip in candidates {
             grouped.entry(snip.path.clone()).or_default().push(snip);
         }
-        
+
         let mut deduplicated: Vec<ContextSnippet> = Vec::new();
         for (path, mut snippets) in grouped {
             snippets.sort_by_key(|s| s.range.start_line);
-            
+
             let mut merged = Vec::new();
             let mut iter = snippets.into_iter();
             if let Some(mut current) = iter.next() {
@@ -210,11 +243,15 @@ impl ContextAssembler {
                         if !current.reason.contains(&next.reason) {
                             current.reason = format!("{} | {}", current.reason, next.reason);
                         }
-                        
+
                         let abs_path = cwd.join(&path);
                         if let Ok(file_content) = fs::read_to_string(&abs_path) {
                             let lines: Vec<&str> = file_content.lines().collect();
-                            current.content = self.extract_lines(&lines, current.range.start_line, current.range.end_line);
+                            current.content = self.extract_lines(
+                                &lines,
+                                current.range.start_line,
+                                current.range.end_line,
+                            );
                         } else {
                             current.content.push_str("\n...\n");
                             current.content.push_str(&next.content);
@@ -228,32 +265,36 @@ impl ContextAssembler {
             }
             deduplicated.extend(merged);
         }
-        
+
         let mut candidates = deduplicated;
 
         // Sort candidates by score descending
-        candidates.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        candidates.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         // Smart Budget Allocator (Bucketing and Smart Truncation)
         let mut selected = Vec::new();
         let max_chars = self.config.max_token_budget * 4; // ~4 chars per token heuristic
         let max_snippet_size = max_chars / 3; // Cap single snippet to 1/3 of total budget
-        
+
         let mut used_chars = 0;
 
         for mut snippet in candidates {
             if used_chars >= max_chars {
                 break;
             }
-            
+
             let mut snippet_len = snippet.content.len();
             let mut limit = max_chars.saturating_sub(used_chars).min(max_snippet_size);
-            
+
             // Allow rules or explicit selection to bypass the 1/3 cap if there's global budget
             if snippet.score >= 1.0 {
                 limit = max_chars.saturating_sub(used_chars);
             }
-            
+
             if snippet_len > limit {
                 // Smart truncation at newline
                 let mut truncate_at = limit;
@@ -261,10 +302,12 @@ impl ContextAssembler {
                     truncate_at = last_newline;
                 }
                 snippet.content.truncate(truncate_at);
-                snippet.content.push_str("\n... (truncated due to context size)");
+                snippet
+                    .content
+                    .push_str("\n... (truncated due to context size)");
                 snippet_len = snippet.content.len();
             }
-            
+
             used_chars += snippet_len;
             selected.push(snippet);
         }

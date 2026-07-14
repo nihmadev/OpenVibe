@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
+/** Functional categorizations for application keyboard shortcut keybindings. */
 export type ShortcutCategory = "navigation" | "chat" | "workspace" | "project" | "editor" | "terminal" | "search";
 
+/** Represents a combination of modifier key flags and key code values. */
 export interface KeyCombo {
   code: string;
   ctrl: boolean;
@@ -9,6 +11,7 @@ export interface KeyCombo {
   alt: boolean;
 }
 
+/** Describes a registered shortcut entry for display in UI keybinding settings. */
 export interface ShortcutDef {
   id: string;
   label: string;
@@ -16,6 +19,7 @@ export interface ShortcutDef {
   category: ShortcutCategory;
 }
 
+/** Handler functions mapped to shortcut trigger actions. */
 export interface ShortcutActions {
   newChat: () => void;
   switchChat: (dir: "prev" | "next") => void;
@@ -45,6 +49,7 @@ export interface ShortcutActions {
   closeTerminal: () => void;
   pickProject: (index: number) => void;
 }
+
 
 interface BindingDef {
   id: string;

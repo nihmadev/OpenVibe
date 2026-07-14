@@ -3,17 +3,26 @@ use std::collections::{HashMap, VecDeque};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
+/// Metrics and telemetry access history recorded for an individual workspace file.
 #[derive(Debug, Clone)]
 pub struct FileAccessEntry {
+    /// Absolute or relative path to the tracked file.
     pub path: PathBuf,
+    /// Instant when the file was last focused or mutated.
     pub last_accessed: Instant,
+    /// Cumulative duration (in seconds) the editor focused this file.
     pub total_focus_time_secs: f32,
+    /// Last known cursor position within the file.
     pub active_cursor: Option<CursorPosition>,
+    /// Last active text selection range within the file.
     pub active_selection: Option<SelectionRange>,
+    /// Lines currently visible in the active viewport.
     pub visible_ranges: Vec<LineRange>,
+    /// Total number of editing actions performed in this file session.
     pub edit_count: u32,
 }
 
+/// In-memory cache and LRU queue managing recency metrics, focus tracking, and exponential score decay.
 pub struct RecencyStore {
     entries: HashMap<PathBuf, FileAccessEntry>,
     recent_order: VecDeque<PathBuf>,
@@ -36,15 +45,18 @@ impl RecencyStore {
 
         if let Some(ref path) = batch.active_file {
             self.active_file = Some(path.clone());
-            let entry = self.entries.entry(path.clone()).or_insert_with(|| FileAccessEntry {
-                path: path.clone(),
-                last_accessed: now,
-                total_focus_time_secs: 0.0,
-                active_cursor: None,
-                active_selection: None,
-                visible_ranges: Vec::new(),
-                edit_count: 0,
-            });
+            let entry = self
+                .entries
+                .entry(path.clone())
+                .or_insert_with(|| FileAccessEntry {
+                    path: path.clone(),
+                    last_accessed: now,
+                    total_focus_time_secs: 0.0,
+                    active_cursor: None,
+                    active_selection: None,
+                    visible_ranges: Vec::new(),
+                    edit_count: 0,
+                });
 
             let elapsed = now.duration_since(entry.last_accessed).as_secs_f32();
             if elapsed < 300.0 {
@@ -81,16 +93,19 @@ impl RecencyStore {
 
     pub fn boost_file(&mut self, path: &Path) {
         let now = Instant::now();
-        let entry = self.entries.entry(path.to_path_buf()).or_insert_with(|| FileAccessEntry {
-            path: path.to_path_buf(),
-            last_accessed: now,
-            total_focus_time_secs: 0.0,
-            active_cursor: None,
-            active_selection: None,
-            visible_ranges: Vec::new(),
-            edit_count: 0,
-        });
-        
+        let entry = self
+            .entries
+            .entry(path.to_path_buf())
+            .or_insert_with(|| FileAccessEntry {
+                path: path.to_path_buf(),
+                last_accessed: now,
+                total_focus_time_secs: 0.0,
+                active_cursor: None,
+                active_selection: None,
+                visible_ranges: Vec::new(),
+                edit_count: 0,
+            });
+
         // Faking focus time increase for boost
         entry.total_focus_time_secs += 60.0;
         entry.last_accessed = now;
@@ -123,11 +138,14 @@ impl RecencyStore {
         let active_weight = if is_active { 1.0 } else { 0.0 };
 
         let elapsed = now.duration_since(entry.last_accessed).as_secs_f32();
-        
+
         let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        let is_config = file_name == "Cargo.toml" || file_name == ".viberules" || file_name == "package.json" || file_name == "tsconfig.json";
+        let is_config = file_name == "Cargo.toml"
+            || file_name == ".viberules"
+            || file_name == "package.json"
+            || file_name == "tsconfig.json";
         let decay_multiplier = if is_config { 5.0 } else { 1.0 };
-        
+
         let lambda = (2.0f32).ln() / (self.config.decay_half_life_secs.max(1.0) * decay_multiplier);
         let recency_weight = (-lambda * elapsed).exp();
 
@@ -152,8 +170,14 @@ mod tests {
 
         let batch = EditorEventBatch {
             active_file: Some(file.clone()),
-            cursor: Some(CursorPosition { line: 10, column: 5 }),
-            visible_ranges: vec![LineRange { start_line: 1, end_line: 25 }],
+            cursor: Some(CursorPosition {
+                line: 10,
+                column: 5,
+            }),
+            visible_ranges: vec![LineRange {
+                start_line: 1,
+                end_line: 25,
+            }],
             selection: None,
             diagnostics: vec![],
             is_edit: true,
@@ -166,7 +190,13 @@ mod tests {
         assert_eq!(store.active_file(), Some(&file));
         let entry = store.get_entry(&file).unwrap();
         assert_eq!(entry.edit_count, 1);
-        assert_eq!(entry.active_cursor, Some(CursorPosition { line: 10, column: 5 }));
+        assert_eq!(
+            entry.active_cursor,
+            Some(CursorPosition {
+                line: 10,
+                column: 5
+            })
+        );
 
         let score = store.calculate_score(&file, Instant::now());
         assert!(score > 0.5);

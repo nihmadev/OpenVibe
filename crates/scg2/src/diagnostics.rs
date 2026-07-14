@@ -19,7 +19,11 @@ impl DiagnosticsStore {
         }
     }
 
-    pub fn update_diagnostics(&mut self, active_file: Option<&PathBuf>, diagnostics: Vec<EditorDiagnostic>) {
+    pub fn update_diagnostics(
+        &mut self,
+        active_file: Option<&PathBuf>,
+        diagnostics: Vec<EditorDiagnostic>,
+    ) {
         if let Some(file) = active_file {
             if diagnostics.is_empty() {
                 self.diagnostics_by_file.remove(file);
@@ -35,7 +39,9 @@ impl DiagnosticsStore {
         for (path, diags) in &self.diagnostics_by_file {
             let errors: Vec<&EditorDiagnostic> = diags
                 .iter()
-                .filter(|d| d.severity.to_lowercase() == "error" || d.severity.to_lowercase() == "warning")
+                .filter(|d| {
+                    d.severity.to_lowercase() == "error" || d.severity.to_lowercase() == "warning"
+                })
                 .collect();
 
             if errors.is_empty() {

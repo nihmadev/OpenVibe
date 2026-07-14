@@ -307,7 +307,9 @@ impl Agent {
             }
 
             let is_all_read_only = cleaned_tool_calls.len() > 1
-                && cleaned_tool_calls.iter().all(|c| executor.is_read_only(&c.function.name));
+                && cleaned_tool_calls
+                    .iter()
+                    .all(|c| executor.is_read_only(&c.function.name));
 
             if is_all_read_only {
                 let mut prepared_calls = Vec::new();
@@ -350,9 +352,12 @@ impl Agent {
                     prepared_calls.push((call, tool_name.clone(), parsed_args));
                 }
 
-                let execution_futs = prepared_calls.iter().map(|(_call, tool_name, parsed_args)| {
-                    executor.execute(tool_name, parsed_args, &cwd, &self.cancel, emit)
-                });
+                let execution_futs =
+                    prepared_calls
+                        .iter()
+                        .map(|(_call, tool_name, parsed_args)| {
+                            executor.execute(tool_name, parsed_args, &cwd, &self.cancel, emit)
+                        });
 
                 let results = futures::future::join_all(execution_futs).await;
 

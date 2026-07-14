@@ -206,7 +206,6 @@ pub async fn execute(
                 reasoning_content: None,
             });
         }
-
     }
 
     if full_result.trim().is_empty() {

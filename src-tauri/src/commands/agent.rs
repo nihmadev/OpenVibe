@@ -100,7 +100,6 @@ pub async fn agent_send(
                     db_p = Some(projects.chats_db(&active_proj.id));
                 }
             }
-
         }
         drop(active);
         let app = state.app_handle.lock().map_err(|e| e.to_string())?;
@@ -130,8 +129,6 @@ pub async fn agent_send(
             });
         }
     }
-
-
 
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     *agent_lock = Some(agent);

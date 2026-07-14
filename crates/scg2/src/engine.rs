@@ -11,6 +11,10 @@ use std::sync::Arc;
 use tokio::sync::mpsc;
 use tracing::debug;
 
+/// The central orchestration engine for Smart Context Generation 2 (SCG2).
+///
+/// `Scg2Engine` manages async background processing of telemetry event batches emitted by editor sessions,
+/// coordinates AST symbol indexing, maintains recency decay state, and provides dynamic prompt context assembly.
 pub struct Scg2Engine {
     recency: Arc<Mutex<RecencyStore>>,
     graph: Arc<Mutex<ContextGraph>>,
@@ -22,6 +26,7 @@ pub struct Scg2Engine {
 }
 
 impl Scg2Engine {
+    /// Constructs a new `Scg2Engine` instance initialized with the provided configuration limits.
     pub fn new(config: Scg2Config) -> Self {
         let recency = Arc::new(Mutex::new(RecencyStore::new(config.clone())));
         let graph = Arc::new(Mutex::new(ContextGraph::new()));
@@ -41,6 +46,10 @@ impl Scg2Engine {
         }
     }
 
+    /// Spawns the main background loop consuming incoming telemetry batches and debouncing AST re-parsing.
+    ///
+    /// The event processing queue uses a 500ms timeout window to aggregate high-frequency UI events
+    /// before triggering tree-sitter syntax tree updates.
     pub async fn start_background_worker(&self) {
         let mut rx_events = match self.rx_events.lock().take() {
             Some(rx) => rx,
@@ -59,14 +68,15 @@ impl Scg2Engine {
 
             match tokio::time::timeout(timeout_duration, rx_events.recv()).await {
                 Ok(Some(batch)) => {
-                    // Update recency store
+                    // Update recency scoring metrics from incoming telemetry batch
                     recency.lock().process_batch(&batch);
 
-                    // Update diagnostics store
+                    // Synchronize compiler/linter error and warning diagnostics
                     diagnostics_store
                         .lock()
                         .update_diagnostics(batch.active_file.as_ref(), batch.diagnostics);
 
+                    // Boost relevancy rank for symbol definitions matching active cursor hover state
                     if let Some(word) = batch.hovered_word {
                         let g = graph.lock();
                         let defs = g.find_symbol_definitions(&word);
@@ -76,10 +86,11 @@ impl Scg2Engine {
                         }
                     }
 
-                    // If active file was updated or content edited, schedule re-parse
+                    // Schedule debounced AST re-indexing if file active state changed or file content mutated
                     if let Some(active_file) = batch.active_file {
                         let g = graph.lock();
-                        let needs_parse = batch.is_edit || g.get_connected_files(&active_file, 0).is_empty();
+                        let needs_parse =
+                            batch.is_edit || g.get_connected_files(&active_file, 0).is_empty();
                         if needs_parse {
                             pending_parse = Some(active_file);
                         }
@@ -87,19 +98,31 @@ impl Scg2Engine {
                 }
                 Ok(None) => break,
                 Err(_) => {
+                    // Timeout elapsed: process debounced pending AST parse task
                     if let Some(active_file) = pending_parse.take() {
                         if active_file.exists() && active_file.is_file() {
                             match fs::read_to_string(&active_file) {
                                 Ok(content) => {
-                                    let (symbols, imports) = ast_service.parse_file(&active_file, &content);
+                                    let (symbols, imports) =
+                                        ast_service.parse_file(&active_file, &content);
                                     let imports_count = imports.imported_modules.len();
-                                    graph
-                                        .lock()
-                                        .update_file_symbols(&active_file, symbols, imports.imported_modules);
-                                    debug!("Parsed AST for {} (found {} imports)", active_file.display(), imports_count);
+                                    graph.lock().update_file_symbols(
+                                        &active_file,
+                                        symbols,
+                                        imports.imported_modules,
+                                    );
+                                    debug!(
+                                        "Parsed AST for {} (found {} imports)",
+                                        active_file.display(),
+                                        imports_count
+                                    );
                                 }
                                 Err(err) => {
-                                    debug!("Failed to read file for SCG2 AST parse {}: {}", active_file.display(), err);
+                                    debug!(
+                                        "Failed to read file for SCG2 AST parse {}: {}",
+                                        active_file.display(),
+                                        err
+                                    );
                                 }
                             }
                         }
@@ -109,12 +132,14 @@ impl Scg2Engine {
         }
     }
 
+    /// Submits a non-blocking telemetry event batch into the background worker channel.
     pub fn push_batch(&self, batch: EditorEventBatch) {
         if let Err(e) = self.tx_events.try_send(batch) {
             debug!("SCG2 event queue full or dropped: {}", e);
         }
     }
 
+    /// Evaluates workspace state heuristics and compiles a list of top-scored `ContextSnippet` instances.
     pub fn get_smart_snippets(&self, cwd: &Path, query: Option<&str>) -> Vec<ContextSnippet> {
         let recency_guard = self.recency.lock();
         let graph_guard = self.graph.lock();
@@ -124,6 +149,7 @@ impl Scg2Engine {
             .assemble_context(&recency_guard, &graph_guard, &diag_guard, cwd, query)
     }
 
+    /// Evaluates workspace state heuristics and formats selected code snippets into a markdown system prompt block.
     pub fn get_smart_context(&self, cwd: &Path, query: Option<&str>) -> String {
         let snippets = self.get_smart_snippets(cwd, query);
         self.assembler.format_prompt_section(&snippets)
