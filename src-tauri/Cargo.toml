@@ -39,5 +39,6 @@ editor = { path = "../crates/editor" }
 git = { path = "../crates/git" }
 git2 = "0.19"
 mcp = { path = "../crates/mcp" }
+scg2 = { path = "../crates/scg2" }
 
 

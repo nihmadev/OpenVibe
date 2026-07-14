@@ -11,3 +11,4 @@ pub mod projects;
 pub mod providers;
 pub mod terminals;
 pub mod tools;
+pub mod scg2;

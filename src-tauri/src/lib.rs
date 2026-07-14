@@ -27,6 +27,7 @@ pub struct AppState {
     pub provider_url: Arc<tokio::sync::Mutex<String>>,
     pub warmer_stop_tx: Mutex<Option<watch::Sender<bool>>>,
     pub mcp_manager: Arc<mcp::McpManager>,
+    pub scg2_engine: Arc<scg2::Scg2Engine>,
 }
 
 impl AppState {
@@ -113,6 +114,8 @@ impl AppState {
                 "coverage",
                 ".vite",
                 "target",
+                "__pycache__/",
+                "vendor/"
             ];
 
             // Trailing-edge debounce: emit only after a quiet period (no events for 300ms)
@@ -229,6 +232,13 @@ pub fn run() {
                 mcp_clone.init_and_autostart().await;
             });
 
+            // SCG2 Engine
+            let scg2_engine = Arc::new(scg2::Scg2Engine::new(scg2::Scg2Config::default()));
+            let scg2_clone = scg2_engine.clone();
+            tauri::async_runtime::spawn(async move {
+                scg2_clone.start_background_worker().await;
+            });
+
             // Create state
             let state = AppState {
                 projects: Mutex::new(project_store),
@@ -244,6 +254,7 @@ pub fn run() {
                 provider_url,
                 warmer_stop_tx: Mutex::new(Some(warmer_stop_tx)),
                 mcp_manager,
+                scg2_engine,
             };
 
             // Setup watcher if cwd exists
@@ -368,6 +379,8 @@ pub fn run() {
             commands::mcp::mcp_get_config,
             commands::mcp::mcp_save_config,
             commands::mcp::mcp_list_tools,
+            // SCG2 commands
+            commands::scg2::scg2_push_events,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

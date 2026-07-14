@@ -11,6 +11,7 @@ import { getLanguage } from "../icons/utils.js";
 import { useTheme } from "../../hooks/useTheme.js";
 import { makeMonacoTheme } from "../Themes/monacoThemes.js";
 import { useI18n } from "../../hooks/useI18n.js";
+import { scg2Tracker } from "../../services/scg2Tracker.js";
 
 // Wire up Monaco workers for Vite (one-time, module scope is fine)
 if (typeof self !== "undefined") {
@@ -227,6 +228,7 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
         await loadTypeDefinitions(m, cwd);
         await preloadLocalImports(m, res.content, path);
       }
+      scg2Tracker.updateActivePath(path);
     }
 
     load();
@@ -359,6 +361,8 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
             const uri = m.Uri.file(path);
             const model = m.editor.getModel(uri) ?? m.editor.createModel(content, getLanguage(path), uri);
             MODEL_CACHE.set(path, { model, originalContent: original });
+
+            scg2Tracker.attach(ed, path, m);
 
             ed.onDidChangeModelContent(() => {
               setContent(ed.getValue());
