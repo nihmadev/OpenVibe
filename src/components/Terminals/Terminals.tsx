@@ -83,13 +83,19 @@ export function Terminals({ active }: TerminalsProps): React.ReactElement {
     function onClose() {
       closeActiveTab();
     }
+    function onCloseById(e: Event) {
+      const detail = (e as CustomEvent).detail as { id: string } | undefined;
+      if (detail?.id) closeTabById(detail.id);
+    }
     window.addEventListener("vibe:new-terminal", onNew);
     window.addEventListener("vibe:switch-terminal", onSwitch);
     window.addEventListener("vibe:close-terminal", onClose);
+    window.addEventListener("vibe:close-terminal-by-id", onCloseById);
     return () => {
       window.removeEventListener("vibe:new-terminal", onNew);
       window.removeEventListener("vibe:switch-terminal", onSwitch);
       window.removeEventListener("vibe:close-terminal", onClose);
+      window.removeEventListener("vibe:close-terminal-by-id", onCloseById);
     };
   }, [switchTab, closeActiveTab]);
 
