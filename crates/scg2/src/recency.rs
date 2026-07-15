@@ -204,8 +204,10 @@ mod tests {
 
     #[test]
     fn test_recency_eviction() {
-        let mut config = Scg2Config::default();
-        config.max_recency_entries = 2;
+        let config = Scg2Config {
+            max_recency_entries: 2,
+            ..Default::default()
+        };
         let mut store = RecencyStore::new(config);
 
         store.process_batch(&EditorEventBatch {
