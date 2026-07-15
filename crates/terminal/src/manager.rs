@@ -20,8 +20,8 @@ impl TerminalManager {
     pub fn start<F: Fn(String) + Send + 'static, G: Fn(i32) + Send + 'static>(
         &self,
         id: &str,
-        _cols: u16,
-        _rows: u16,
+        cols: u16,
+        rows: u16,
         on_data: F,
         on_exit: G,
     ) {
@@ -30,7 +30,7 @@ impl TerminalManager {
             return;
         }
         let (shell, shell_args) = shell::pick_shell();
-        let session = TerminalSession::new(&shell, &shell_args, &self.default_cwd);
+        let session = TerminalSession::new(&shell, &shell_args, &self.default_cwd, cols, rows);
         session.start_output_reader(on_data, on_exit);
         sessions.insert(id.to_string(), session);
     }
@@ -41,7 +41,11 @@ impl TerminalManager {
         }
     }
 
-    pub fn resize(&self, _id: &str, _cols: u16, _rows: u16) {}
+    pub fn resize(&self, id: &str, cols: u16, rows: u16) {
+        if let Some(session) = self.sessions.lock().unwrap().get(id) {
+            session.resize(cols, rows);
+        }
+    }
 
     pub fn kill(&self, id: &str) {
         if let Some(session) = self.sessions.lock().unwrap().remove(id) {
