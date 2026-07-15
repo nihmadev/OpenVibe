@@ -132,6 +132,8 @@ body.is-resizing {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  margin: 0 -22px -14px -22px;
+  border-top: 1px solid var(--line);
 }
 
 .sidebar {
