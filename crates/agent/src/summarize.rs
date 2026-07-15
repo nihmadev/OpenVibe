@@ -98,7 +98,7 @@ impl Agent {
                     t.truncate(t.len().saturating_sub(1));
                 }
                 let t = t.trim().to_string();
-                if !t.is_empty() && t.len() <= 60 {
+                if !t.is_empty() && t.chars().count() <= 100 {
                     return t;
                 }
                 Self::fallback_title(&messages)
