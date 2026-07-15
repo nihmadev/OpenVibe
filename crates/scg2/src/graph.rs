@@ -104,32 +104,32 @@ impl ContextGraph {
                 && import.starts_with('.')
             {
                 if let Some(parent) = file_path.parent() {
-                        let mut resolved = parent.to_path_buf();
-                        for part in import.split('/') {
-                            if part == "." {
-                                continue;
-                            } else if part == ".." {
-                                resolved.pop();
-                            } else {
-                                resolved.push(part);
-                            }
+                    let mut resolved = parent.to_path_buf();
+                    for part in import.split('/') {
+                        if part == "." {
+                            continue;
+                        } else if part == ".." {
+                            resolved.pop();
+                        } else {
+                            resolved.push(part);
                         }
-                        let resolved_str = resolved.to_string_lossy().replace("\\", "/");
-                        for (known_file, &known_node) in &self.node_by_file {
-                            let known_str = known_file.to_string_lossy().replace("\\", "/");
-                            if known_str.starts_with(&resolved_str) {
-                                let remainder = &known_str[resolved_str.len()..];
-                                if remainder == ".ts"
-                                    || remainder == ".tsx"
-                                    || remainder == ".js"
-                                    || remainder == "/index.ts"
-                                {
-                                    resolved_node = Some(known_node);
-                                    break;
-                                }
+                    }
+                    let resolved_str = resolved.to_string_lossy().replace("\\", "/");
+                    for (known_file, &known_node) in &self.node_by_file {
+                        let known_str = known_file.to_string_lossy().replace("\\", "/");
+                        if known_str.starts_with(&resolved_str) {
+                            let remainder = &known_str[resolved_str.len()..];
+                            if remainder == ".ts"
+                                || remainder == ".tsx"
+                                || remainder == ".js"
+                                || remainder == "/index.ts"
+                            {
+                                resolved_node = Some(known_node);
+                                break;
                             }
                         }
                     }
+                }
             }
 
             if let Some(target_node) = resolved_node {

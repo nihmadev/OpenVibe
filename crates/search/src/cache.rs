@@ -1,12 +1,12 @@
-use std::num::NonZeroUsize;
-use std::sync::Mutex;
-use std::time::Instant;
-use std::path::Path;
-use lru::LruCache;
-use once_cell::sync::Lazy;
 use crate::config::MAX_FILE_BYTES;
 use crate::types::{ContentMatch, FileGroupEntry};
-use crate::utils::{resolve_path, compile_patterns, matches_any};
+use crate::utils::{compile_patterns, matches_any, resolve_path};
+use lru::LruCache;
+use once_cell::sync::Lazy;
+use std::num::NonZeroUsize;
+use std::path::Path;
+use std::sync::Mutex;
+use std::time::Instant;
 
 struct SearchCacheEntry {
     matches: Vec<ContentMatch>,

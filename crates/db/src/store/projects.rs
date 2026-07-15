@@ -11,9 +11,9 @@ impl ProjectStore {
     pub fn list(&self) -> Result<Vec<Project>> {
         let mut stmt = self.conn
             .prepare("SELECT id, path, name, color, added_at, icon, photo FROM projects ORDER BY added_at ASC")?;
-        
+
         let rows = stmt.query_map([], |row| Project::try_from(row))?;
-        
+
         let mut projects = Vec::new();
         for r in rows {
             projects.push(r?);
@@ -22,11 +22,9 @@ impl ProjectStore {
     }
 
     fn get_by_id(&self, id: &str) -> Result<Option<Project>> {
-        let mut stmt = self
-            .conn
-            .prepare(
-                "SELECT id, path, name, color, added_at, icon, photo FROM projects WHERE id = ?",
-            )?;
+        let mut stmt = self.conn.prepare(
+            "SELECT id, path, name, color, added_at, icon, photo FROM projects WHERE id = ?",
+        )?;
         match stmt.query_row(params![id], |row| Project::try_from(row)) {
             Ok(p) => Ok(Some(p)),
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
@@ -55,18 +53,19 @@ impl ProjectStore {
         let mut stmt = self.conn.prepare(
             "SELECT id, path, name, color, added_at, icon, photo FROM projects WHERE path = ?",
         )?;
-        
+
         match stmt.query_row(params![path], |row| Project::try_from(row)) {
             Ok(p) => return Ok(p),
             Err(rusqlite::Error::QueryReturnedNoRows) => {}
             Err(e) => return Err(e.into()),
         }
-        
+
         let mut stmt = self.conn.prepare("SELECT color FROM projects")?;
-        let used: Vec<String> = stmt.query_map([], |row| row.get(0))?
+        let used: Vec<String> = stmt
+            .query_map([], |row| row.get(0))?
             .filter_map(|r| r.ok())
             .collect();
-            
+
         let id = Uuid::new_v4().to_string();
         let project = Project {
             id: id.clone(),
@@ -77,23 +76,22 @@ impl ProjectStore {
             photo: None,
             added_at: chrono_now(),
         };
-        
+
         self.conn
             .execute(
                 "INSERT INTO projects (id, path, name, color, added_at, icon, photo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
                 params![project.id, project.path, project.name, project.color, project.added_at, project.icon, project.photo],
             )?;
-            
+
         Ok(project)
     }
 
     pub fn add(&mut self, path: &str) -> Result<Project> {
         let project = self.ensure(path)?;
-        self.conn
-            .execute(
-                "INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', ?1)",
-                params![project.id],
-            )?;
+        self.conn.execute(
+            "INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', ?1)",
+            params![project.id],
+        )?;
         Ok(project)
     }
 
@@ -125,19 +123,17 @@ impl ProjectStore {
                 .or_else(|| remaining.first());
             match next {
                 Some(p) => {
-                    self.conn
-                        .execute(
-                            "INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', ?1)",
-                            params![p.id],
-                        )?;
+                    self.conn.execute(
+                        "INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', ?1)",
+                        params![p.id],
+                    )?;
                     Some((*p).clone())
                 }
                 None => {
-                    self.conn
-                        .execute(
-                            "INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', NULL)",
-                            params![],
-                        )?;
+                    self.conn.execute(
+                        "INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', NULL)",
+                        params![],
+                    )?;
                     None
                 }
             }
@@ -148,31 +144,28 @@ impl ProjectStore {
     }
 
     pub fn rename(&self, id: &str, name: &str) -> Result<()> {
-        self.conn
-            .execute(
-                "UPDATE projects SET name = ? WHERE id = ?",
-                params![name, id],
-            )?;
+        self.conn.execute(
+            "UPDATE projects SET name = ? WHERE id = ?",
+            params![name, id],
+        )?;
         Ok(())
     }
 
     pub fn set_color(&self, id: &str, color: &str) -> Result<()> {
-        self.conn
-            .execute(
-                "UPDATE projects SET color = ? WHERE id = ?",
-                params![color, id],
-            )?;
+        self.conn.execute(
+            "UPDATE projects SET color = ? WHERE id = ?",
+            params![color, id],
+        )?;
         Ok(())
     }
 
     pub fn set_icon(&self, id: &str, icon: Option<&str>) -> Result<()> {
         match icon {
             Some(val) => {
-                self.conn
-                    .execute(
-                        "UPDATE projects SET icon = ? WHERE id = ?",
-                        params![val, id],
-                    )?;
+                self.conn.execute(
+                    "UPDATE projects SET icon = ? WHERE id = ?",
+                    params![val, id],
+                )?;
             }
             None => {
                 self.conn
@@ -185,11 +178,10 @@ impl ProjectStore {
     pub fn set_photo(&self, id: &str, photo: Option<&str>) -> Result<()> {
         match photo {
             Some(val) => {
-                self.conn
-                    .execute(
-                        "UPDATE projects SET photo = ? WHERE id = ?",
-                        params![val, id],
-                    )?;
+                self.conn.execute(
+                    "UPDATE projects SET photo = ? WHERE id = ?",
+                    params![val, id],
+                )?;
             }
             None => {
                 self.conn
@@ -204,20 +196,18 @@ impl ProjectStore {
             Some(proj) => proj,
             None => return Ok(None),
         };
-        self.conn
-            .execute(
-                "INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', ?1)",
-                params![id],
-            )?;
+        self.conn.execute(
+            "INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', ?1)",
+            params![id],
+        )?;
         Ok(Some(p))
     }
 
     pub fn clear_active(&self) -> Result<()> {
-        self.conn
-            .execute(
-                "INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', NULL)",
-                params![],
-            )?;
+        self.conn.execute(
+            "INSERT OR REPLACE INTO state (key, value) VALUES ('activeId', NULL)",
+            params![],
+        )?;
         Ok(())
     }
 }

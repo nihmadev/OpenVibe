@@ -203,8 +203,15 @@ impl McpServerProcess {
             "params": {}
         });
 
-        if let Ok(resp) = self.send_request_internal(req_id, &list_msg, Duration::from_secs(5)).await {
-            if let Some(tools) = resp.get("result").and_then(|r| r.get("tools")).and_then(|t| t.as_array()) {
+        if let Ok(resp) = self
+            .send_request_internal(req_id, &list_msg, Duration::from_secs(5))
+            .await
+        {
+            if let Some(tools) = resp
+                .get("result")
+                .and_then(|r| r.get("tools"))
+                .and_then(|t| t.as_array())
+            {
                 if let Ok(mut cache) = self.tools_cache.lock() {
                     *cache = tools.clone();
                 }
