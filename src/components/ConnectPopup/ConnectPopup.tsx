@@ -158,7 +158,7 @@ export function ConnectPopup({
           <h2 className="connect-popup__title">
             {isEditing ? editProvider?.name : custom ? t("customProviderTitle") : template?.name}
           </h2>
-          <p className="connect-popup__subtitle">{isEditing ? t("editProvider") : t("connect")}</p>
+          {isEditing && <p className="connect-popup__subtitle">{t("editProvider")}</p>}
           <button className="connect-popup__close" onClick={onClose}>
             ×
           </button>
@@ -203,64 +203,68 @@ export function ConnectPopup({
             </div>
           </div>
 
-          <div className="connect-popup__section">
-            <label className="connect-popup__label">{t("customIcon")}</label>
-            <div className="connect-popup__icon-row">
-              <input
-                className="connect-popup__input"
-                value={form.customIcon && !form.customIcon.startsWith("data:") ? form.customIcon : ""}
-                onChange={(e) => setForm({ ...form, customIcon: e.target.value })}
-                placeholder="https://example.com/icon.svg"
-              />
-              <button
-                className="connect-popup__icon-btn"
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                title={t("uploadIcon")}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
-              </button>
-              <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleIconFile} />
-            </div>
-          </div>
+          {(custom || isEditing) && (
+            <>
+              <div className="connect-popup__section">
+                <label className="connect-popup__label">{t("customIcon")}</label>
+                <div className="connect-popup__icon-row">
+                  <input
+                    className="connect-popup__input"
+                    value={form.customIcon && !form.customIcon.startsWith("data:") ? form.customIcon : ""}
+                    onChange={(e) => setForm({ ...form, customIcon: e.target.value })}
+                    placeholder="https://example.com/icon.svg"
+                  />
+                  <button
+                    className="connect-popup__icon-btn"
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    title={t("uploadIcon")}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                  </button>
+                  <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleIconFile} />
+                </div>
+              </div>
 
-          <div className="connect-popup__section">
-            <label className="connect-popup__label">{t("modelsUrl")}</label>
-            <input
-              className="connect-popup__input"
-              value={form.modelsUrl}
-              onChange={(e) => setForm({ ...form, modelsUrl: e.target.value })}
-              placeholder="https://api.example.com/v1/models"
-            />
-          </div>
+              <div className="connect-popup__section">
+                <label className="connect-popup__label">{t("modelsUrl")}</label>
+                <input
+                  className="connect-popup__input"
+                  value={form.modelsUrl}
+                  onChange={(e) => setForm({ ...form, modelsUrl: e.target.value })}
+                  placeholder="https://api.example.com/v1/models"
+                />
+              </div>
 
-          <div className="connect-popup__section">
-            <div className="connect-popup__section-header">
-              <label className="connect-popup__label">{t("headers")}</label>
-            </div>
-            <PairEditor
-              pairs={form.headers}
-              keyPlaceholder={t("headerKey")}
-              valuePlaceholder={t("headerValue")}
-              onUpdate={(pairs) => setForm({ ...form, headers: pairs })}
-            />
-          </div>
+              <div className="connect-popup__section">
+                <div className="connect-popup__section-header">
+                  <label className="connect-popup__label">{t("headers")}</label>
+                </div>
+                <PairEditor
+                  pairs={form.headers}
+                  keyPlaceholder={t("headerKey")}
+                  valuePlaceholder={t("headerValue")}
+                  onUpdate={(pairs) => setForm({ ...form, headers: pairs })}
+                />
+              </div>
 
-          <div className="connect-popup__section">
-            <div className="connect-popup__section-header">
-              <label className="connect-popup__label">{t("parameters")}</label>
-            </div>
-            <PairEditor
-              pairs={form.parameters}
-              keyPlaceholder={t("paramKey")}
-              valuePlaceholder={t("paramValue")}
-              onUpdate={(pairs) => setForm({ ...form, parameters: pairs })}
-            />
-          </div>
+              <div className="connect-popup__section">
+                <div className="connect-popup__section-header">
+                  <label className="connect-popup__label">{t("parameters")}</label>
+                </div>
+                <PairEditor
+                  pairs={form.parameters}
+                  keyPlaceholder={t("paramKey")}
+                  valuePlaceholder={t("paramValue")}
+                  onUpdate={(pairs) => setForm({ ...form, parameters: pairs })}
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <div className="connect-popup__footer">
