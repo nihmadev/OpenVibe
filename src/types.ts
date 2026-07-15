@@ -262,7 +262,7 @@ export interface VibeApi {
   };
 }
 
-export type McpStatus = { type: "running" } | { type: "stopped" } | { type: "error"; message: string };
+export type McpStatus = { type: "starting" } | { type: "running" } | { type: "stopped" } | { type: "error"; message: string };
 
 export interface McpServerStatus {
   name: string;

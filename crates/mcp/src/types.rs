@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type", content = "message", rename_all = "camelCase")]
 pub enum McpStatus {
+    Starting,
     Running,
     Stopped,
     Error(String),
