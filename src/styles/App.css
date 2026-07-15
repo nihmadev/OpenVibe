@@ -134,6 +134,24 @@ body.is-resizing {
   overflow: hidden;
   margin: 0 -22px -14px -22px;
   border-top: 1px solid var(--line);
+  transition:
+    height calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+      var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    margin calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+      var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    border-color calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+      var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.terminal-embedded--closed {
+  height: 0;
+  margin-bottom: 0;
+  border-top-color: transparent;
+}
+
+/* Prevent internal resizing during the slide animation to avoid text jumping */
+.terminal-embedded .terminals {
+  min-height: 300px;
 }
 
 .sidebar {

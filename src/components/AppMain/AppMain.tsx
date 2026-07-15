@@ -462,7 +462,7 @@ export function AppMain({
               </>
             )}
 
-            <div className="terminal-embedded" style={{ display: terminalOpen ? "flex" : "none" }}>
+            <div className={`terminal-embedded ${!terminalOpen ? "terminal-embedded--closed" : ""}`}>
               <Terminals active={terminalOpen} />
             </div>
           </div>
