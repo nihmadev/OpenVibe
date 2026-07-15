@@ -1,0 +1,9 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "openvibe",
+      "changelog-path": "CHANGELOG.md"
+    }
+  }
+}
