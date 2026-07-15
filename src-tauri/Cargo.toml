@@ -37,7 +37,7 @@ config = { path = "../crates/config" }
 chats = { path = "../crates/chats" }
 editor = { path = "../crates/editor" }
 git = { path = "../crates/git" }
-git2 = "0.19"
+git2 = "0.21"
 mcp = { path = "../crates/mcp" }
 scg2 = { path = "../crates/scg2" }
 
