@@ -240,7 +240,9 @@
 }
 
 @keyframes mcp-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .titlebar__mcp-dot--starting {

@@ -2440,7 +2440,9 @@
 }
 
 @keyframes mcp-spin-settings {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .mcp-dot--starting {

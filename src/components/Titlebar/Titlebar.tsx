@@ -145,7 +145,7 @@ export function Titlebar({
 
     const runningCount = enabled.filter((s) => s.status.type === "running").length;
     if (runningCount === enabled.length) return "titlebar__mcp-dot--green";
-    
+
     return "titlebar__mcp-dot--yellow";
   };
 

@@ -44,9 +44,10 @@ export function TermPane({ id, visible }: Props): React.ReactElement {
     const el = containerRef.current;
     if (!el) return;
 
-    const bg = getComputedStyle(document.body).getPropertyValue('--bg').trim() || '#161616';
+    const bg = getComputedStyle(document.body).getPropertyValue("--bg").trim() || "#161616";
     const term = new XTerm({
-      fontFamily: '"Symbols Nerd Font", "JetBrainsMono Nerd Font", "Nerd Font", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+      fontFamily:
+        '"Symbols Nerd Font", "JetBrainsMono Nerd Font", "Nerd Font", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
       fontSize: 13,
       cursorBlink: true,
       cursorStyle: "block",
