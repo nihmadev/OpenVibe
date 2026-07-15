@@ -85,13 +85,13 @@ pub async fn agent_send(
 
         if let Some(ref id) = *active {
             cur_id = Some(id.clone());
-            let chat_store = state.chat_store.lock().map_err(|e| e.to_string())?;
-            if let Some(ref store) = *chat_store {
-                if let Some(mut record) = store.get(id) {
+            let mut chat_store = state.chat_store.lock().map_err(|e| e.to_string())?;
+            if let Some(ref mut store) = *chat_store {
+                if let Ok(Some(mut record)) = store.get(id) {
                     is_new = record.title == "New chat" || record.title.trim().is_empty();
                     record.messages = msgs.clone();
                     record.updated_at = ts;
-                    store.save(&record);
+                    let _ = store.save(&record);
                 }
             }
             drop(chat_store);
@@ -116,11 +116,11 @@ pub async fn agent_send(
             tokio::spawn(async move {
                 let title = Agent::summarize_with(agent_cfg, msgs, &http_client).await;
                 if !title.is_empty() && title != "New chat" {
-                    if let Ok(store) = chats::ChatStore::new(&db_path) {
-                        if let Some(mut record) = store.get(&chat_id) {
+                    if let Ok(mut store) = chats::ChatStore::new(&db_path) {
+                        if let Ok(Some(mut record)) = store.get(&chat_id) {
                             if record.title == "New chat" || record.title.trim().is_empty() {
                                 record.title = title;
-                                store.save(&record);
+                                let _ = store.save(&record);
                                 let _ = app_handle_clone.emit("vibe:chats:updated", ());
                             }
                         }

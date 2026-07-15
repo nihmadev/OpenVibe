@@ -7,7 +7,7 @@ use tauri::{Emitter, State};
 pub fn chats_list(state: State<AppState>) -> Result<Vec<ChatSummary>, String> {
     let chat = state.chat_store.lock().map_err(|e| e.to_string())?;
     match chat.as_ref() {
-        Some(store) => Ok(store.list()),
+        Some(store) => store.list().map_err(|e| e.to_string()),
         None => Ok(Vec::new()),
     }
 }
@@ -18,7 +18,7 @@ pub fn chats_list_for_project(state: State<AppState>, project_id: String) -> Res
     let db_path = store.chats_db(&project_id);
     drop(store);
     let chat_store = chats::ChatStore::new(&db_path).map_err(|e| e.to_string())?;
-    let result = chat_store.list();
+    let result = chat_store.list().map_err(|e| e.to_string())?;
     Ok(result)
 }
 
@@ -30,7 +30,7 @@ pub fn chats_new(state: State<AppState>) -> Result<Option<serde_json::Value>, St
     if let Some(ref current_id) = *active {
         let chat = state.chat_store.lock().map_err(|e| e.to_string())?;
         if let Some(ref store) = *chat {
-            if let Some(record) = store.get(current_id) {
+            if let Some(record) = store.get(current_id).map_err(|e| e.to_string())? {
                 let has_content = record.messages.iter().any(|m| m.role != "system");
                 if !has_content {
                     return Ok(Some(serde_json::json!({
@@ -63,9 +63,9 @@ pub fn chats_new(state: State<AppState>) -> Result<Option<serde_json::Value>, St
     };
 
     {
-        let chat = state.chat_store.lock().map_err(|e| e.to_string())?;
-        if let Some(ref store) = *chat {
-            store.save(&record);
+        let mut chat = state.chat_store.lock().map_err(|e| e.to_string())?;
+        if let Some(ref mut store) = *chat {
+            store.save(&record).map_err(|e| e.to_string())?;
         }
     }
 
@@ -99,7 +99,7 @@ pub fn chats_open(state: State<AppState>, id: String) -> Result<Option<ChatRecor
 
     let chat = state.chat_store.lock().map_err(|e| e.to_string())?;
     let record = match chat.as_ref() {
-        Some(store) => store.get(&id),
+        Some(store) => store.get(&id).map_err(|e| e.to_string())?,
         None => return Ok(None),
     };
     *active = Some(id);
@@ -111,7 +111,7 @@ pub fn chats_delete(state: State<AppState>, id: String) -> Result<(), String> {
     {
         let chat = state.chat_store.lock().map_err(|e| e.to_string())?;
         if let Some(ref store) = *chat {
-            store.delete(&id);
+            store.delete(&id).map_err(|e| e.to_string())?;
         }
     }
     let mut active = state.active_chat_id.lock().map_err(|e| e.to_string())?;
@@ -127,12 +127,12 @@ pub fn chats_delete(state: State<AppState>, id: String) -> Result<(), String> {
 
 #[tauri::command]
 pub fn chats_clear(state: State<AppState>, id: String) -> Result<(), String> {
-    let chat = state.chat_store.lock().map_err(|e| e.to_string())?;
-    if let Some(ref store) = *chat {
-        if let Some(mut record) = store.get(&id) {
+    let mut chat = state.chat_store.lock().map_err(|e| e.to_string())?;
+    if let Some(ref mut store) = *chat {
+        if let Some(mut record) = store.get(&id).map_err(|e| e.to_string())? {
             record.messages = vec![];
             record.updated_at = chrono_now();
-            store.save(&record);
+            store.save(&record).map_err(|e| e.to_string())?;
         }
     }
     let app = state.app_handle.lock().map_err(|e| e.to_string())?;
@@ -144,12 +144,12 @@ pub fn chats_clear(state: State<AppState>, id: String) -> Result<(), String> {
 
 #[tauri::command]
 pub fn chats_rename(state: State<AppState>, id: String, title: String) -> Result<(), String> {
-    let chat = state.chat_store.lock().map_err(|e| e.to_string())?;
-    if let Some(ref store) = *chat {
-        if let Some(mut record) = store.get(&id) {
+    let mut chat = state.chat_store.lock().map_err(|e| e.to_string())?;
+    if let Some(ref mut store) = *chat {
+        if let Some(mut record) = store.get(&id).map_err(|e| e.to_string())? {
             record.title = title;
             record.updated_at = chrono_now();
-            store.save(&record);
+            store.save(&record).map_err(|e| e.to_string())?;
         }
     }
     let app = state.app_handle.lock().map_err(|e| e.to_string())?;
@@ -161,22 +161,22 @@ pub fn chats_rename(state: State<AppState>, id: String, title: String) -> Result
 
 #[tauri::command]
 pub fn chats_save(state: State<AppState>, id: String, messages: Vec<ChatMessage>) -> Result<(), String> {
-    let chat = state.chat_store.lock().map_err(|e| e.to_string())?;
-    if let Some(ref store) = *chat {
+    let mut chat = state.chat_store.lock().map_err(|e| e.to_string())?;
+    if let Some(ref mut store) = *chat {
         // Prevent accidental overwrite with empty messages on restart
         // System messages alone don't count as "content" — agent always has one.
         if messages.is_empty() {
-            if let Some(existing) = store.get(&id) {
+            if let Some(existing) = store.get(&id).unwrap_or(None) {
                 let has_content = existing.messages.iter().any(|m| m.role != "system");
                 if has_content {
                     return Ok(());
                 }
             }
         }
-        if let Some(mut record) = store.get(&id) {
+        if let Some(mut record) = store.get(&id).map_err(|e| e.to_string())? {
             record.messages = messages;
             record.updated_at = chrono_now();
-            store.save(&record);
+            store.save(&record).map_err(|e| e.to_string())?;
         }
     }
     drop(chat);
