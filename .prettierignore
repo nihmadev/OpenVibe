@@ -7,4 +7,4 @@ public/monaco-editor/
 vscode/
 packages/
 *.log
-
+CHANGELOG*.md
