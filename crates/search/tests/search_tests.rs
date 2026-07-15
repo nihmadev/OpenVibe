@@ -122,10 +122,7 @@ fn test_matches_any_empty() {
 #[test]
 fn test_matches_any_cyrillic_path() {
     let pats = search::compile_patterns("*файл*");
-    assert!(search::matches_any(
-        "src/мой_файл.rs",
-        &pats
-    ));
+    assert!(search::matches_any("src/мой_файл.rs", &pats));
     assert!(!search::matches_any("src/main.rs", &pats));
 }
 

@@ -10,7 +10,7 @@ interface Props {
 }
 
 const THEME = {
-  background: "#161616",
+  background: "#161616", // Default, will be overridden
   foreground: "#e6e6e6",
   cursor: "#e6e6e6",
   cursorAccent: "#161616",
@@ -44,14 +44,17 @@ export function TermPane({ id, visible }: Props): React.ReactElement {
     const el = containerRef.current;
     if (!el) return;
 
+    const bg = getComputedStyle(document.body).getPropertyValue("--bg").trim() || "#161616";
     const term = new XTerm({
-      fontFamily: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+      fontFamily:
+        '"Symbols Nerd Font", "JetBrainsMono Nerd Font", "Nerd Font", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
       fontSize: 13,
       cursorBlink: true,
       cursorStyle: "block",
       allowProposedApi: true,
+      allowTransparency: true,
       scrollback: 5000,
-      theme: THEME,
+      theme: { ...THEME, background: bg },
     });
     const fit = new FitAddon();
     term.loadAddon(fit);
@@ -72,7 +75,7 @@ export function TermPane({ id, visible }: Props): React.ReactElement {
     });
     const offExit = window.vibe.term.onExit((p) => {
       if (p.id !== id) return;
-      term.writeln(`\r\n\x1b[2m${t("shellExited", { code: String(p.code) })}\x1b[0m`);
+      window.dispatchEvent(new CustomEvent("vibe:close-terminal-by-id", { detail: { id } }));
     });
 
     window.vibe.term.start(id, term.cols, term.rows);

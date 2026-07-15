@@ -1,7 +1,7 @@
-use std::path::Path;
 use crate::config::{MAX_FILE_BYTES, MAX_OUTPUT_CHARS};
-use crate::types::{ContentMatch};
-use crate::utils::{resolve_path, clip, compile_patterns, matches_any};
+use crate::types::ContentMatch;
+use crate::utils::{clip, compile_patterns, matches_any, resolve_path};
+use std::path::Path;
 
 pub async fn search_content(
     cwd: &str,

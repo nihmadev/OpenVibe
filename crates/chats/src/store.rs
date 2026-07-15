@@ -1,6 +1,6 @@
 use crate::migration;
 use crate::types::*;
-use rusqlite::{params, Connection, Result as SqlResult};
+use rusqlite::{params, Connection, OptionalExtension, Result as SqlResult};
 
 pub struct ChatStore {
     conn: Connection,
@@ -8,15 +8,14 @@ pub struct ChatStore {
 
 impl ChatStore {
     pub fn new(db_path: &str) -> SqlResult<Self> {
-        let conn = Connection::open(db_path)?;
+        let mut conn = Connection::open(db_path)?;
         conn.execute_batch("PRAGMA journal_mode=WAL")?;
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS chats (
                 id         TEXT PRIMARY KEY,
                 title      TEXT NOT NULL DEFAULT 'New chat',
                 created_at INTEGER NOT NULL,
-                updated_at INTEGER NOT NULL,
-                messages   TEXT NOT NULL DEFAULT '[]'
+                updated_at INTEGER NOT NULL
             )",
         )?;
         conn.execute_batch(
@@ -33,40 +32,38 @@ impl ChatStore {
             )",
         )?;
         conn.execute_batch("CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id)")?;
-        let store = Self { conn };
-        migration::run(&store.conn);
-        Ok(store)
+
+        migration::run(&mut conn)?;
+
+        Ok(Self { conn })
     }
 
-    pub fn list(&self) -> Vec<ChatSummary> {
-        let mut stmt = self
-            .conn
-            .prepare(
-                "SELECT c.id, c.title, c.created_at, c.updated_at,
-                        COALESCE((SELECT COUNT(*) FROM messages m WHERE m.chat_id = c.id), 0)
-                 FROM chats c ORDER BY c.created_at DESC",
-            )
-            .unwrap();
-        let rows = stmt
-            .query_map([], |row| {
-                Ok(ChatSummary {
-                    id: row.get(0)?,
-                    title: row.get(1)?,
-                    created_at: row.get(2)?,
-                    updated_at: row.get(3)?,
-                    message_count: row.get(4)?,
-                })
+    pub fn list(&self) -> SqlResult<Vec<ChatSummary>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT c.id, c.title, c.created_at, c.updated_at, COUNT(m.id)
+                 FROM chats c
+                 LEFT JOIN messages m ON c.id = m.chat_id
+                 GROUP BY c.id
+                 ORDER BY c.created_at DESC",
+        )?;
+        let rows = stmt.query_map([], |row| {
+            Ok(ChatSummary {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                created_at: row.get(2)?,
+                updated_at: row.get(3)?,
+                message_count: row.get(4)?,
             })
-            .unwrap();
-        rows.filter_map(|r| r.ok()).collect()
+        })?;
+        rows.collect()
     }
 
-    pub fn get(&self, id: &str) -> Option<ChatRecord> {
+    pub fn get(&self, id: &str) -> SqlResult<Option<ChatRecord>> {
         let mut stmt = self
             .conn
-            .prepare("SELECT id, title, created_at, updated_at FROM chats WHERE id = ?")
-            .unwrap();
-        let mut record = stmt
+            .prepare("SELECT id, title, created_at, updated_at FROM chats WHERE id = ?")?;
+
+        let record_opt = stmt
             .query_row(params![id], |row| {
                 Ok(ChatRecord {
                     id: row.get(0)?,
@@ -76,15 +73,18 @@ impl ChatStore {
                     messages: Vec::new(),
                 })
             })
-            .ok()?;
+            .optional()?;
 
-        let mut msg_stmt = self
-            .conn
-            .prepare(
-                "SELECT role, content, name, tool_call_id, tool_calls, reasoning_content
+        let mut record = match record_opt {
+            Some(r) => r,
+            None => return Ok(None),
+        };
+
+        let mut msg_stmt = self.conn.prepare(
+            "SELECT role, content, name, tool_call_id, tool_calls, reasoning_content
                  FROM messages WHERE chat_id = ? ORDER BY id ASC",
-            )
-            .unwrap();
+        )?;
+
         let msgs: Vec<agent::chat::ChatMessage> = msg_stmt
             .query_map(params![id], |row| {
                 Ok((
@@ -95,12 +95,12 @@ impl ChatStore {
                     row.get::<_, Option<String>>(4)?,
                     row.get::<_, Option<String>>(5)?,
                 ))
-            })
-            .unwrap()
+            })?
             .filter_map(|r| r.ok())
             .map(
                 |(role, content_json, name, tool_call_id, tool_calls_json, reasoning)| {
-                    let content = content_json.and_then(|s| serde_json::from_str(&s).ok());
+                    let content = content_json
+                        .map(|s| serde_json::from_str(&s).unwrap_or(serde_json::Value::String(s)));
                     let tool_calls = tool_calls_json.and_then(|s| serde_json::from_str(&s).ok());
                     agent::chat::ChatMessage {
                         role,
@@ -115,60 +115,68 @@ impl ChatStore {
             .collect();
 
         record.messages = msgs;
-        Some(record)
+        Ok(Some(record))
     }
 
-    pub fn save(&self, record: &ChatRecord) {
-        self.conn
-            .execute(
-                "INSERT INTO chats (id, title, created_at, updated_at)
-                 VALUES (?1, ?2, ?3, ?4)
-                 ON CONFLICT(id) DO UPDATE SET
-                   title = excluded.title, updated_at = excluded.updated_at",
-                params![
+    pub fn save(&mut self, record: &ChatRecord) -> SqlResult<()> {
+        let tx = self.conn.transaction()?;
+
+        tx.execute(
+            "INSERT INTO chats (id, title, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4)
+             ON CONFLICT(id) DO UPDATE SET
+               title = excluded.title, updated_at = excluded.updated_at",
+            params![
+                record.id,
+                record.title,
+                record.created_at,
+                record.updated_at
+            ],
+        )?;
+
+        tx.execute("DELETE FROM messages WHERE chat_id = ?", params![record.id])?;
+
+        {
+            let mut stmt = tx.prepare(
+                "INSERT INTO messages (chat_id, role, content, name, tool_call_id, tool_calls, reasoning_content)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)"
+            )?;
+
+            for msg in &record.messages {
+                let content_str = msg.content.as_ref().map(|c| {
+                    if c.is_string() {
+                        c.as_str().unwrap().to_string()
+                    } else {
+                        c.to_string()
+                    }
+                });
+                stmt.execute(params![
                     record.id,
-                    record.title,
-                    record.created_at,
-                    record.updated_at
-                ],
-            )
-            .unwrap();
-
-        self.conn
-            .execute("DELETE FROM messages WHERE chat_id = ?", params![record.id])
-            .unwrap();
-
-        for msg in &record.messages {
-            self.conn
-                .execute(
-                    "INSERT INTO messages (chat_id, role, content, name, tool_call_id, tool_calls, reasoning_content)
-                     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-                    params![
-                        record.id,
-                        msg.role,
-                        msg.content.as_ref().map(|c| c.to_string()),
-                        msg.name,
-                        msg.tool_call_id,
-                        msg.tool_calls
-                            .as_ref()
-                            .map(|tc| serde_json::to_string(tc).unwrap_or_default()),
-                        msg.reasoning_content,
-                    ],
-                )
-                .unwrap();
+                    msg.role,
+                    content_str,
+                    msg.name,
+                    msg.tool_call_id,
+                    msg.tool_calls
+                        .as_ref()
+                        .map(|tc| serde_json::to_string(tc).unwrap_or_default()),
+                    msg.reasoning_content,
+                ])?;
+            }
         }
+
+        tx.commit()?;
+        Ok(())
     }
 
-    pub fn delete(&self, id: &str) {
+    pub fn delete(&self, id: &str) -> SqlResult<()> {
         self.conn
-            .execute("DELETE FROM messages WHERE chat_id = ?", params![id])
-            .unwrap();
+            .execute("DELETE FROM messages WHERE chat_id = ?", params![id])?;
         self.conn
-            .execute("DELETE FROM chats WHERE id = ?", params![id])
-            .unwrap();
+            .execute("DELETE FROM chats WHERE id = ?", params![id])?;
+        Ok(())
     }
 
-    pub fn close(self) {
-        self.conn.close().ok();
+    pub fn close(self) -> SqlResult<()> {
+        self.conn.close().map_err(|(_conn, e)| e)
     }
 }

@@ -211,6 +211,7 @@ mod tests {
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
 
+    #[allow(dead_code)]
     fn test_dir() -> String {
         let ts = SystemTime::now()
             .duration_since(UNIX_EPOCH)

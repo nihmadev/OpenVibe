@@ -6,9 +6,9 @@ impl ProjectStore {
     pub fn list_providers(&self) -> Result<Vec<Provider>> {
         let mut stmt = self.conn
             .prepare("SELECT id, name, description, base_url, api_key, model, added_at, custom_icon, models_url, headers, parameters FROM providers ORDER BY added_at ASC")?;
-        
+
         let rows = stmt.query_map([], |row| Provider::try_from(row))?;
-        
+
         let mut providers = Vec::new();
         for r in rows {
             providers.push(r?);
@@ -51,11 +51,10 @@ impl ProjectStore {
     }
 
     pub fn update_provider_model(&self, id: &str, model: &str) -> Result<()> {
-        self.conn
-            .execute(
-                "UPDATE providers SET model = ? WHERE id = ?",
-                params![model, id],
-            )?;
+        self.conn.execute(
+            "UPDATE providers SET model = ? WHERE id = ?",
+            params![model, id],
+        )?;
         Ok(())
     }
 }

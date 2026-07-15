@@ -17,7 +17,7 @@ impl ProjectStore {
         let db_path = Path::new(base_dir).join("projects.db");
         let mut conn = Connection::open(&db_path)?;
         conn.execute_batch("PRAGMA journal_mode=WAL")?;
-        
+
         Self::run_migrations(&mut conn)?;
 
         Ok(Self {
@@ -65,10 +65,14 @@ impl ProjectStore {
             // We ignore errors here in case columns were already added partially before proper migrations
             let _ = conn.execute_batch("ALTER TABLE projects ADD COLUMN icon TEXT DEFAULT NULL");
             let _ = conn.execute_batch("ALTER TABLE projects ADD COLUMN photo TEXT DEFAULT NULL");
-            let _ = conn.execute_batch("ALTER TABLE providers ADD COLUMN custom_icon TEXT DEFAULT NULL");
-            let _ = conn.execute_batch("ALTER TABLE providers ADD COLUMN models_url TEXT DEFAULT NULL");
-            let _ = conn.execute_batch("ALTER TABLE providers ADD COLUMN headers TEXT DEFAULT NULL");
-            let _ = conn.execute_batch("ALTER TABLE providers ADD COLUMN parameters TEXT DEFAULT NULL");
+            let _ = conn
+                .execute_batch("ALTER TABLE providers ADD COLUMN custom_icon TEXT DEFAULT NULL");
+            let _ =
+                conn.execute_batch("ALTER TABLE providers ADD COLUMN models_url TEXT DEFAULT NULL");
+            let _ =
+                conn.execute_batch("ALTER TABLE providers ADD COLUMN headers TEXT DEFAULT NULL");
+            let _ =
+                conn.execute_batch("ALTER TABLE providers ADD COLUMN parameters TEXT DEFAULT NULL");
             conn.execute_batch("PRAGMA user_version = 2")?;
         }
 
@@ -88,11 +92,10 @@ impl ProjectStore {
     }
 
     pub fn set_state(&self, key: &str, value: &str) -> Result<()> {
-        self.conn
-            .execute(
-                "INSERT OR REPLACE INTO state (key, value) VALUES (?1, ?2)",
-                rusqlite::params![key, value],
-            )?;
+        self.conn.execute(
+            "INSERT OR REPLACE INTO state (key, value) VALUES (?1, ?2)",
+            rusqlite::params![key, value],
+        )?;
         Ok(())
     }
 

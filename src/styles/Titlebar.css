@@ -239,6 +239,20 @@
   box-shadow: 0 0 5px rgba(255, 59, 48, 0.4);
 }
 
+@keyframes mcp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.titlebar__mcp-dot--starting {
+  background-color: transparent;
+  border: 1.5px solid var(--line-strong);
+  border-top-color: var(--fg);
+  box-sizing: border-box;
+  animation: mcp-spin 1s linear infinite;
+}
+
 .titlebar__mcp-dropdown {
   position: absolute;
   top: 36px;

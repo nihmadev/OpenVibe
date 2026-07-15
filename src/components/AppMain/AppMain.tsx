@@ -375,7 +375,7 @@ export function AppMain({
               searchInCodeOpen
                 ? { flex: "1 1 0", minWidth: 200 }
                 : openFiles.length > 0
-                  ? { flex: `0 1 ${chatWidth}px`, minWidth: 200, maxWidth: 600 }
+                  ? { flex: `0 1 ${chatWidth}px`, minWidth: 200, maxWidth: 2400 }
                   : { flex: "1 1 0" }
             }
           >
@@ -462,7 +462,7 @@ export function AppMain({
               </>
             )}
 
-            <div className="terminal-embedded" style={{ display: terminalOpen ? "flex" : "none" }}>
+            <div className={`terminal-embedded ${!terminalOpen ? "terminal-embedded--closed" : ""}`}>
               <Terminals active={terminalOpen} />
             </div>
           </div>
@@ -473,23 +473,23 @@ export function AppMain({
             className={`layout__search-code-wrap ${!searchInCodeOpen ? "layout__search-code-wrap--closed" : ""}`}
             style={
               searchInCodeOpen
-                ? { flex: `0 1 ${searchWidth}px`, minWidth: 200, maxWidth: 800 }
+                ? { flex: `0 1 ${searchWidth}px`, minWidth: 200, maxWidth: 2400 }
                 : { flex: "0 1 0", minWidth: 0, maxWidth: 0 }
             }
           >
-            <ResizeHandle targetRef={searchWrapRef} onCommit={setSearchWidth} minWidth={200} maxWidth={800} />
-            <div className="layout__search-code" style={{ flex: 1, minWidth: 200, maxWidth: 800 }}>
+            <ResizeHandle targetRef={searchWrapRef} onCommit={setSearchWidth} minWidth={200} maxWidth={2400} />
+            <div className="layout__search-code" style={{ flex: 1, minWidth: 200, maxWidth: 2400 }}>
               <SearchInCode cwd={cwd} onOpenFile={handleOpenFile} onClose={onCloseSearchInCode} />
             </div>
             {fileTreeOpen && (
-              <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={500} />
+              <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={2400} />
             )}
           </div>
 
           {/* Editor panel — only when files are open and search is closed */}
           {!searchInCodeOpen && openFiles.length > 0 && (
             <>
-              <ResizeHandle targetRef={chatPanelRef} onCommit={setChatWidth} minWidth={200} maxWidth={600} />
+              <ResizeHandle targetRef={chatPanelRef} onCommit={setChatWidth} minWidth={200} maxWidth={2400} />
               <div className="layout__editor">
                 <EditorArea
                   openFiles={openFiles}
@@ -505,14 +505,14 @@ export function AppMain({
                 />
               </div>
               {fileTreeOpen && (
-                <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={500} />
+                <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={2400} />
               )}
             </>
           )}
 
           {/* When no editor/search, still need the resize handle before file tree */}
           {!searchInCodeOpen && openFiles.length === 0 && fileTreeOpen && (
-            <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={500} />
+            <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={2400} />
           )}
 
           {/* File tree sidebar */}
@@ -521,7 +521,7 @@ export function AppMain({
             className={`sidebar ${!fileTreeOpen ? "sidebar--closed" : ""}`}
             style={
               fileTreeOpen
-                ? { flex: `0 1 ${ftreeWidth}px`, minWidth: 160, maxWidth: 500 }
+                ? { flex: `0 1 ${ftreeWidth}px`, minWidth: 160, maxWidth: 2400 }
                 : { flex: "0 1 0", minWidth: 0, maxWidth: 0 }
             }
           >

@@ -225,13 +225,14 @@ export function McpSettingsPanel(): React.ReactElement {
     reader.readAsText(file);
   };
 
-  const getStatusColor = (name: string) => {
+  const getStatusDotClass = (name: string) => {
     const st = statuses.find((s) => s.name === name);
-    if (!st || !st.enabled) return "var(--fg-dim)";
+    if (!st || !st.enabled) return "mcp-dot--gray";
     const statusType = typeof st.status === "string" ? st.status : st.status.type;
-    if (statusType === "running") return "#4caf50";
-    if (statusType === "stopped") return "#ff9800";
-    return "#f44336";
+    if (statusType === "running") return "mcp-dot--green";
+    if (statusType === "starting") return "mcp-dot--starting";
+    if (statusType === "stopped") return "mcp-dot--yellow";
+    return "mcp-dot--red";
   };
 
   const currentServers = getServers(config);
@@ -305,14 +306,7 @@ enabled = true`}
             {currentServers.map((server) => (
               <div key={server.name} className="settings__provider-row">
                 <div className="settings__provider-info">
-                  <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      backgroundColor: getStatusColor(server.name),
-                    }}
-                  />
+                  <span className={`mcp-dot ${getStatusDotClass(server.name)}`} />
                   <Server size={14} style={{ opacity: 0.8 }} />
                   <div className="settings__provider-name">{server.name}</div>
                 </div>

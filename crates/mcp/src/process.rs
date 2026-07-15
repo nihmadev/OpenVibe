@@ -65,6 +65,8 @@ impl McpServerProcess {
 
         let _ = self.stop().await;
 
+        *self.status.lock().await = McpStatus::Starting;
+
         let mut attempts = 0;
         let max_attempts = 3;
         let mut last_err = String::new();
@@ -108,6 +110,22 @@ impl McpServerProcess {
         cmd.args(&args);
         cmd.envs(&env);
         cmd.env("PATH", build_augmented_path());
+
+        // Fast-path for npx: avoid network checks to massively speed up concurrent starts
+        // This prevents the 5-6s lock contention delay when starting multiple MCP servers
+        let is_npx = cmd_path == "npx"
+            || cmd_path.ends_with("/npx")
+            || cmd_path.ends_with("\\npx")
+            || cmd_path.ends_with("npx.cmd")
+            || cmd_path.ends_with("npx.exe");
+        if is_npx {
+            cmd.env("npm_config_update_notifier", "false");
+            cmd.env("npm_config_fund", "false");
+            cmd.env("npm_config_audit", "false");
+            cmd.env("npm_config_prefer_offline", "true");
+            cmd.env("npm_config_yes", "true");
+        }
+
         cmd.stdin(Stdio::piped());
         cmd.stdout(Stdio::piped());
         cmd.stderr(Stdio::piped());
@@ -203,8 +221,15 @@ impl McpServerProcess {
             "params": {}
         });
 
-        if let Ok(resp) = self.send_request_internal(req_id, &list_msg, Duration::from_secs(5)).await {
-            if let Some(tools) = resp.get("result").and_then(|r| r.get("tools")).and_then(|t| t.as_array()) {
+        if let Ok(resp) = self
+            .send_request_internal(req_id, &list_msg, Duration::from_secs(5))
+            .await
+        {
+            if let Some(tools) = resp
+                .get("result")
+                .and_then(|r| r.get("tools"))
+                .and_then(|t| t.as_array())
+            {
                 if let Ok(mut cache) = self.tools_cache.lock() {
                     *cache = tools.clone();
                 }

@@ -1,4 +1,3 @@
-
 fn lang_from_filename(name: &str) -> &str {
     let ext = name.rsplit('.').next().unwrap_or("");
     match ext {
