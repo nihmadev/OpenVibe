@@ -2,7 +2,7 @@
 name = "config"
 version = "1.2.0"
 description = "Configuration management for openvibe"
-authors = ["mt-studio"]
+authors = ["nihamdev"]
 edition = "2021"
 
 [dependencies]

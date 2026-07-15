@@ -3,7 +3,7 @@
   "version": "1.4.0",
   "description": "Open-source agentic coding environment. Bring your own AI model.",
   "license": "SEE LICENSE IN LICENSE",
-  "author": "mt-studio <lolz@nihmadev.fun>",
+  "author": "nihmadev <lolz@nihmadev.fun>",
   "repository": {
     "type": "git",
     "url": "https://github.com/nihmadev/OpenVibe"

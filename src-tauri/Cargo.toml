@@ -2,7 +2,7 @@
 name = "openvibe"
 version = "1.3.0"
 description = "Open-source agentic coding environment"
-authors = ["mt-studio"]
+authors = ["nihmadev"]
 edition = "2021"
 
 [lib]
