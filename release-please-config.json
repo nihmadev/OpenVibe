@@ -3,7 +3,10 @@
     ".": {
       "release-type": "node",
       "package-name": "openvibe",
-      "changelog-path": "CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        "packages/openvibe-desktop/package.json"
+      ]
     }
   }
 }
