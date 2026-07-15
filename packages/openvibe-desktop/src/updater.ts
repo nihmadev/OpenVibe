@@ -125,7 +125,7 @@ async function checkViaGitHub(platform: string, arch: string): Promise<UpdateInf
   const version = (data.tag_name as string).replace(/^v/, "");
 
   const extMap: Record<string, string> = {
-    linux: ".AppImage",
+    linux: ".tar.gz",
     macos: ".dmg",
     windows: ".exe",
   };
@@ -189,7 +189,10 @@ async function makeExecutableAndLink(filePath: string, binDir: string, info: Upd
   const { platform } = info;
 
   if (platform === "linux") {
-    await exec(`chmod +x "${filePath}"`);
+    const versionDir = join(filePath, "..");
+    await exec(`tar -xzf "${filePath}" -C "${versionDir}"`);
+    const binPath = join(versionDir, "openvibe");
+    await exec(`chmod +x "${binPath}"`);
     const link = join(binDir, "openvibe");
     await writeFile(link.replace(/openvibe$/, ".version"), info.version);
     // Symlink the binary
@@ -198,7 +201,12 @@ async function makeExecutableAndLink(filePath: string, binDir: string, info: Upd
     } catch {
       /* ignore */
     }
-    await exec(`ln -sf "${filePath}" "${link}"`);
+    await exec(`ln -sf "${binPath}" "${link}"`);
+    try {
+      await unlink(filePath);
+    } catch {
+      /* ignore */
+    }
     return link;
   }
 
