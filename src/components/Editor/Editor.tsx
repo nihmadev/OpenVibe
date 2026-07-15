@@ -172,6 +172,7 @@ interface CachedModel {
   originalContent: string;
 }
 const MODEL_CACHE = new Map<string, CachedModel>();
+let monacoProvidersRegistered = false;
 
 export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMatchLength }: Props): React.ReactElement {
   const { t } = useI18n();
@@ -346,6 +347,68 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
         onMount={async (ed, m) => {
           editorRef.current = ed;
           monacoInstanceRef.current = m;
+
+          if (!monacoProvidersRegistered) {
+            monacoProvidersRegistered = true;
+            m.languages.registerHoverProvider("*", {
+              provideHover: (model: monaco.editor.ITextModel, position: monaco.Position) => {
+                const markers = m.editor.getModelMarkers({ resource: model.uri });
+                const markerAtPos = markers.find(
+                  (marker: monaco.editor.IMarker) =>
+                    marker.severity === m.MarkerSeverity.Error &&
+                    position.lineNumber >= marker.startLineNumber &&
+                    position.lineNumber <= marker.endLineNumber &&
+                    position.column >= marker.startColumn &&
+                    position.column <= marker.endColumn
+                );
+
+                if (markerAtPos) {
+                  const text = model.getValueInRange(markerAtPos);
+                  const args = encodeURIComponent(
+                    JSON.stringify([model.uri.path, markerAtPos.message, text, markerAtPos.startLineNumber, markerAtPos.endLineNumber])
+                  );
+                  return {
+                    range: markerAtPos,
+                    contents: [
+                      {
+                        value: `[$(sparkle) Fix it (Agent)](command:agent.fixError?${args})`,
+                        isTrusted: true,
+                        supportThemeIcons: true,
+                      }
+                    ]
+                  };
+                }
+                return null;
+              }
+            });
+          }
+
+          const domNode = ed.getDomNode();
+          if (domNode) {
+            domNode.addEventListener("click", (e) => {
+              let target = e.target as HTMLElement;
+              while (target && target !== domNode) {
+                const href = target.getAttribute("data-href") || target.getAttribute("href");
+                if (href && href.startsWith("command:agent.fixError?")) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  try {
+                    const argsStr = href.substring("command:agent.fixError?".length);
+                    const parsedArgs = JSON.parse(decodeURIComponent(argsStr));
+                    if (parsedArgs.length === 5) {
+                      const [filePath, message, text, startLine, endLine] = parsedArgs;
+                      const prompt = `Please fix the following error in \`${filePath}\` (lines ${startLine}-${endLine}):\n\n**Error:**\n${message}\n\n**Code:**\n\`\`\`typescript\n${text}\n\`\`\`\n`;
+                      window.vibe.send(prompt);
+                    }
+                  } catch (err) {
+                    console.error("Agent quick fix parse error", err);
+                  }
+                  return;
+                }
+                target = target.parentElement as HTMLElement;
+              }
+            }, true); // use capture to intercept before monaco
+          }
 
           try {
             // Ensure type definitions (extraLibs + compiler options) are loaded
