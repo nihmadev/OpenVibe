@@ -306,9 +306,7 @@ enabled = true`}
             {currentServers.map((server) => (
               <div key={server.name} className="settings__provider-row">
                 <div className="settings__provider-info">
-                  <span
-                    className={`mcp-dot ${getStatusDotClass(server.name)}`}
-                  />
+                  <span className={`mcp-dot ${getStatusDotClass(server.name)}`} />
                   <Server size={14} style={{ opacity: 0.8 }} />
                   <div className="settings__provider-name">{server.name}</div>
                 </div>

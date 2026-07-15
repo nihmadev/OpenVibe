@@ -99,12 +99,8 @@ impl ChatStore {
             .filter_map(|r| r.ok())
             .map(
                 |(role, content_json, name, tool_call_id, tool_calls_json, reasoning)| {
-                    let content = content_json.and_then(|s| {
-                        Some(
-                            serde_json::from_str(&s)
-                                .unwrap_or_else(|_| serde_json::Value::String(s)),
-                        )
-                    });
+                    let content = content_json
+                        .map(|s| serde_json::from_str(&s).unwrap_or(serde_json::Value::String(s)));
                     let tool_calls = tool_calls_json.and_then(|s| serde_json::from_str(&s).ok());
                     agent::chat::ChatMessage {
                         role,
