@@ -137,11 +137,16 @@ export function Titlebar({
     const enabled = servers.filter((s) => s.enabled);
     if (enabled.length === 0) return "titlebar__mcp-dot--gray";
 
-    const runningCount = enabled.filter((s) => s.status.type === "running").length;
+    const errorCount = enabled.filter((s) => s.status.type === "error").length;
+    if (errorCount > 0) return "titlebar__mcp-dot--red";
 
+    const startingCount = enabled.filter((s) => s.status.type === "starting").length;
+    if (startingCount > 0) return "titlebar__mcp-dot--starting";
+
+    const runningCount = enabled.filter((s) => s.status.type === "running").length;
     if (runningCount === enabled.length) return "titlebar__mcp-dot--green";
-    if (runningCount > 0) return "titlebar__mcp-dot--yellow";
-    return "titlebar__mcp-dot--red";
+    
+    return "titlebar__mcp-dot--yellow";
   };
 
   useEffect(() => {

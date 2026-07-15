@@ -21,9 +21,11 @@ export function McpStatusDropdown({
 
   const getStatusDotClass = (server: McpServerStatus) => {
     if (!server.enabled) return "titlebar__mcp-dot--gray";
+    if (server.status.type === "error") return "titlebar__mcp-dot--red";
+    if (server.status.type === "starting") return "titlebar__mcp-dot--starting";
     if (server.status.type === "running") return "titlebar__mcp-dot--green";
     if (server.status.type === "stopped") return "titlebar__mcp-dot--yellow";
-    return "titlebar__mcp-dot--red";
+    return "titlebar__mcp-dot--gray";
   };
 
   return (
