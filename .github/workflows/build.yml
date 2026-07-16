@@ -337,12 +337,13 @@ jobs:
           generate_release_notes: true
           files: |
             latest.json
-            release-binaries/*.msi
-            release-binaries/*.exe
-            release-binaries/*.deb
-            release-binaries/*.rpm
-            release-binaries/*.tar.gz
-            release-binaries/*.dmg
+            release-binaries/**/*.msi
+            release-binaries/**/*.exe
+            release-binaries/**/*.deb
+            release-binaries/**/*.rpm
+            release-binaries/**/*.tar.gz
+            release-binaries/**/*.dmg
+            release-binaries/**/*.app
           fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
