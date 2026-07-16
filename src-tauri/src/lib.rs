@@ -352,6 +352,9 @@ pub fn run() {
             commands::git::git_publish_branch,
             commands::git::git_current_branch,
             commands::git::git_commit_details,
+            commands::git::git_commit_files,
+            commands::git::git_checkout_branch,
+            commands::git::git_create_branch,
             // Terminal commands
             commands::terminals::term_start,
             commands::terminals::term_write,

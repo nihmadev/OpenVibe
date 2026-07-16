@@ -132,3 +132,28 @@ pub fn git_commit_details(path: String, oid: String) -> Result<git::commit::Comm
     }
     git::commit::get_commit_details(&path, &oid).map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub fn git_commit_files(path: String, oid: String) -> Result<Vec<git::commit::CommitFile>, String> {
+    if path.is_empty() {
+        return Err("No project open".into());
+    }
+    git::commit::get_commit_files(&path, &oid).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn git_checkout_branch(path: String, name: String) -> Result<(), String> {
+    if path.is_empty() {
+        return Err("No project open".into());
+    }
+    git::branch::checkout_branch(&path, &name).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn git_create_branch(path: String, name: String) -> Result<(), String> {
+    if path.is_empty() {
+        return Err("No project open".into());
+    }
+    git::branch::create_branch(&path, &name).map_err(|e| e.to_string())
+}
+
