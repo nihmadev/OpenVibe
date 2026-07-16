@@ -90,7 +90,9 @@ pub fn get_branch_commits(path: &str, branch: &str, max_count: i32) -> Result<Ve
 
 fn get_avatar_url(email: &str, name: &str) -> Option<String> {
     if email.contains("@users.noreply.github.com") {
-        let username = email.split('+').nth(1)
+        let username = email
+            .split('+')
+            .nth(1)
             .and_then(|s| s.split('@').next())
             .or_else(|| email.split('@').next());
         return username.map(|u| format!("https://github.com/{}.png?size=40", u));
@@ -102,7 +104,10 @@ fn get_avatar_url(email: &str, name: &str) -> Option<String> {
     }
 
     let hash = md5::compute(email.trim().to_lowercase().as_bytes());
-    Some(format!("https://www.gravatar.com/avatar/{:x}?s=40&d=retro", hash))
+    Some(format!(
+        "https://www.gravatar.com/avatar/{:x}?s=40&d=retro",
+        hash
+    ))
 }
 
 fn commit_to_info(repo: &git2::Repository, commit: &git2::Commit) -> Result<CommitInfo> {
@@ -177,11 +182,7 @@ pub fn get_commit_files(path: &str, oid: &str) -> Result<Vec<CommitFile>> {
         None
     };
 
-    let diff = repo.diff_tree_to_tree(
-        parent_tree.as_ref(),
-        Some(&commit_tree),
-        None
-    )?;
+    let diff = repo.diff_tree_to_tree(parent_tree.as_ref(), Some(&commit_tree), None)?;
 
     for (i, delta) in diff.deltas().enumerate() {
         let status = match delta.status() {
@@ -193,14 +194,20 @@ pub fn get_commit_files(path: &str, oid: &str) -> Result<Vec<CommitFile>> {
             _ => "M",
         };
 
-        let path = delta.new_file().path()
+        let path = delta
+            .new_file()
+            .path()
             .or(delta.old_file().path())
             .and_then(|p| p.to_str())
             .unwrap_or("")
             .to_string();
 
         let old_path = if delta.status() == git2::Delta::Renamed {
-            delta.old_file().path().and_then(|p| p.to_str()).map(|s| s.to_string())
+            delta
+                .old_file()
+                .path()
+                .and_then(|p| p.to_str())
+                .map(|s| s.to_string())
         } else {
             None
         };
@@ -296,22 +303,33 @@ pub fn build_graph(path: &str, max_count: i32) -> Result<Vec<CommitGraphNode>> {
         let lane_idx = active_lanes.iter().position(|lane| *lane == Some(oid));
         let column = match lane_idx {
             Some(idx) => {
-                active_lanes[idx] = if !parents.is_empty() { Some(parents[0]) } else { None };
+                active_lanes[idx] = if !parents.is_empty() {
+                    Some(parents[0])
+                } else {
+                    None
+                };
                 idx
             }
             None => {
                 let empty_idx = active_lanes.iter().position(|l| l.is_none());
-                let col = match empty_idx {
+                match empty_idx {
                     Some(idx) => {
-                        active_lanes[idx] = if !parents.is_empty() { Some(parents[0]) } else { None };
+                        active_lanes[idx] = if !parents.is_empty() {
+                            Some(parents[0])
+                        } else {
+                            None
+                        };
                         idx
                     }
                     None => {
-                        active_lanes.push(if !parents.is_empty() { Some(parents[0]) } else { None });
+                        active_lanes.push(if !parents.is_empty() {
+                            Some(parents[0])
+                        } else {
+                            None
+                        });
                         active_lanes.len() - 1
                     }
-                };
-                col
+                }
             }
         };
 
@@ -387,7 +405,7 @@ pub fn build_graph(path: &str, max_count: i32) -> Result<Vec<CommitGraphNode>> {
 
 pub fn commit(path: &str, message: &str) -> Result<String> {
     let repo = open(path)?;
-    
+
     let mut index = repo.index()?;
     let oid = index.write_tree()?;
     let tree = repo.find_tree(oid)?;
@@ -402,7 +420,7 @@ pub fn commit(path: &str, message: &str) -> Result<String> {
     if let Some(ref p) = parent_commit {
         parents.push(p);
     }
-    
+
     let commit_id = repo.commit(
         Some("HEAD"),
         &signature,

@@ -2,19 +2,19 @@ pub mod branch;
 pub mod commit;
 pub mod diff;
 pub mod error;
+pub mod github;
 pub mod history;
 pub mod repository;
 pub mod status;
-pub mod github;
 
 pub use branch::*;
 pub use commit::*;
 pub use diff::*;
 pub use error::{GitError, Result};
+pub use github::*;
 pub use history::*;
 pub use repository::*;
 pub use status::*;
-pub use github::*;
 
 pub fn is_repository(path: &str) -> bool {
     git2::Repository::discover(path).is_ok()

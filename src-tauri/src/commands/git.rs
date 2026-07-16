@@ -156,4 +156,3 @@ pub fn git_create_branch(path: String, name: String) -> Result<(), String> {
     }
     git::branch::create_branch(&path, &name).map_err(|e| e.to_string())
 }
-

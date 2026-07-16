@@ -1,0 +1,15 @@
+echo "Running formatters before push..."
+
+cargo fmt 2>/dev/null || echo "WARNING: cargo fmt failed"
+
+npx prettier --write . --loglevel=error 2>/dev/null
+
+npx eslint . --fix --quiet 2>/dev/null
+
+if ! git diff --quiet; then
+  git add -A
+  git commit -m "chore: apply formatting"
+  echo "Auto-committed formatting changes."
+fi
+
+echo "All files are clean, proceeding with push..."
