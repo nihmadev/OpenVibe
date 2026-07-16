@@ -237,11 +237,38 @@ jobs:
             target/release/bundle/macos/*.app
           if-no-files-found: ignore
 
-  release-assets:
+  auto-release:
     needs: build
-    if: startsWith(github.ref, 'refs/tags/')
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read version from package.json
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Delete existing release if any
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete "${{ steps.version.outputs.tag }}" --yes 2>/dev/null || true
+
+      - name: Force-create tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          TAG="${{ steps.version.outputs.tag }}"
+          git tag -d "$TAG" 2>/dev/null || true
+          git tag "$TAG" -m "Release $TAG"
+          git push --force origin "$TAG"
+
       - name: Download SHA256 summaries
         uses: actions/download-artifact@v4
         with:
@@ -270,7 +297,7 @@ jobs:
 
       - name: Generate latest.json for auto-updater
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ steps.version.outputs.tag }}
         shell: bash
         run: |
           node -e '
@@ -306,6 +333,7 @@ jobs:
       - name: Release all assets to GitHub
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.version.outputs.tag }}
           generate_release_notes: true
           files: |
             latest.json
@@ -319,38 +347,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  npm-publish:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
           registry-url: "https://registry.npmjs.org"
 
       - name: Install root dependencies
         run: npm install
 
-      - name: Build npm package
+      - name: Build and publish npm package
         working-directory: packages/openvibe-desktop
         run: |
           npm install
           npm run build
-
-      - name: Check NPM_TOKEN
-        run: |
-          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
-            echo "::warning::NPM_TOKEN secret is not set. Skipping npm publish."
-            exit 1
+          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+            npm publish
+          else
+            echo "NPM_TOKEN not set. Skipping npm publish."
           fi
-
-      - name: Publish to npm
-        working-directory: packages/openvibe-desktop
-        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+
