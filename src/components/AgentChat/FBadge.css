@@ -1,0 +1,26 @@
+.fbadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--fg-dim);
+  font-family: var(--mono);
+}
+
+.fbadge__icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  user-select: none;
+  opacity: 0.75;
+}
+
+.fbadge__dir {
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.75;
+}
+
+.fbadge__name {
+  font-size: 13px;
+}
