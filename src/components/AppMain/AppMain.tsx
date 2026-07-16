@@ -1,17 +1,18 @@
 import React, { useState, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { ProjectRail } from "../ProjectRail/ProjectRail.js";
-import { SessionList } from "../session-list/SessionList.js";
-import { ChatHistory } from "../chat-history/ChatHistory.js";
+import { SessionList } from "../SessionList/SessionList.js";
+import { AgentChat } from "../AgentChat/AgentChat.js";
 import { SubAgentView } from "../SubAgentView/SubAgentView.js";
-import { PromptInput } from "../prompt-input/PromptInput.js";
+import { PromptInput } from "../PromptInput/PromptInput.js";
 import { Terminals } from "../Terminals/Terminals.js";
 import { EditorArea } from "../Editor/EditorArea.js";
 import { SearchInCode } from "../SearchInCode/SearchInCode.js";
 import { FileTree } from "../FileTree/FileTree.js";
 import { EditProjectPopup } from "../EditProjectPopup/EditProjectPopup.js";
+import { GitPanel } from "../GitPanel/GitPanel.js";
 import type { Project, ChatSummary, VibeConfig, FileSnapshot } from "../../types.js";
-import type { HistoryItem } from "../chat-history/types.js";
+import type { HistoryItem } from "../AgentChat/types.js";
 import { recordToItems, localId } from "../../utils.js";
 
 /** Drag-handle divider — directly manipulates the target element during drag,
@@ -115,6 +116,8 @@ interface AppMainProps {
   terminalOpen: boolean;
   setTerminalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   fileTreeOpen: boolean;
+  gitPanelOpen?: boolean;
+  onToggleGitPanel?: () => void;
   connectedModels: any[];
   openFiles: string[];
   activeFile: string | null;
@@ -126,6 +129,7 @@ interface AppMainProps {
   setProjects?: (projects: Project[]) => void;
   searchInCodeOpen?: boolean;
   onCloseSearchInCode?: () => void;
+  onCloseGitPanel?: () => void;
   gotoLine?: number;
   gotoColumn?: number;
   gotoMatchLength?: number;
@@ -173,10 +177,12 @@ export function AppMain({
   handleActivateFile,
   setItems,
   fileTreeOpen,
+  gitPanelOpen = false,
   revealPath,
   setProjects,
   searchInCodeOpen = false,
   onCloseSearchInCode = () => {},
+  onCloseGitPanel = () => {},
   gotoLine,
   gotoColumn,
   gotoMatchLength,
@@ -188,11 +194,13 @@ export function AppMain({
   // Panel widths (px). Chat is fixed, editor takes the rest, filetree is fixed.
   const [chatWidth, setChatWidth] = useState(320);
   const [searchWidth, setSearchWidth] = useState(400);
+  const [gitWidth, setGitWidth] = useState(300);
   const [ftreeWidth, setFtreeWidth] = useState(280);
 
   // Refs for direct DOM manipulation during resize (avoids React re-renders on every mousemove)
   const chatPanelRef = useRef<HTMLDivElement>(null);
   const searchWrapRef = useRef<HTMLDivElement>(null);
+  const gitPanelRef = useRef<HTMLDivElement>(null);
   const ftreePanelRef = useRef<HTMLDivElement>(null);
 
   // dirty files set — tracked here so EditorArea tabs can show the dot
@@ -383,7 +391,7 @@ export function AppMain({
               <SubAgentView items={drillItems} onBack={handleDrillBack} />
             ) : (
               <>
-                <ChatHistory
+                <AgentChat
                   items={items}
                   streamingId={streamingNow}
                   busy={busy}
@@ -481,6 +489,27 @@ export function AppMain({
             <div className="layout__search-code" style={{ flex: 1, minWidth: 200, maxWidth: 2400 }}>
               <SearchInCode cwd={cwd} onOpenFile={handleOpenFile} onClose={onCloseSearchInCode} />
             </div>
+            {fileTreeOpen && !gitPanelOpen && (
+              <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={2400} />
+            )}
+            {gitPanelOpen && (
+              <ResizeHandle targetRef={gitPanelRef} onCommit={setGitWidth} minWidth={160} maxWidth={2400} />
+            )}
+          </div>
+
+          {/* Git Panel */}
+          <div
+            ref={gitPanelRef}
+            className={`layout__search-code-wrap ${!gitPanelOpen ? "layout__search-code-wrap--closed" : ""}`}
+            style={
+              gitPanelOpen
+                ? { flex: `0 1 ${gitWidth}px`, minWidth: 200, maxWidth: 2400 }
+                : { flex: "0 1 0", minWidth: 0, maxWidth: 0 }
+            }
+          >
+            <div className="layout__search-code" style={{ flex: 1, minWidth: 200, maxWidth: 2400 }}>
+              <GitPanel cwd={cwd} onOpenFile={handleOpenFile} onClose={onCloseGitPanel} />
+            </div>
             {fileTreeOpen && (
               <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={2400} />
             )}
@@ -504,15 +533,21 @@ export function AppMain({
                   gotoMatchLength={gotoMatchLength}
                 />
               </div>
-              {fileTreeOpen && (
+              {fileTreeOpen && !gitPanelOpen && (
                 <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={2400} />
+              )}
+              {gitPanelOpen && !searchInCodeOpen && (
+                <ResizeHandle targetRef={gitPanelRef} onCommit={setGitWidth} minWidth={160} maxWidth={2400} />
               )}
             </>
           )}
 
           {/* When no editor/search, still need the resize handle before file tree */}
-          {!searchInCodeOpen && openFiles.length === 0 && fileTreeOpen && (
+          {!searchInCodeOpen && openFiles.length === 0 && fileTreeOpen && !gitPanelOpen && (
             <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={2400} />
+          )}
+          {!searchInCodeOpen && openFiles.length === 0 && gitPanelOpen && (
+            <ResizeHandle targetRef={gitPanelRef} onCommit={setGitWidth} minWidth={160} maxWidth={2400} />
           )}
 
           {/* File tree sidebar */}

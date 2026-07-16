@@ -56,6 +56,7 @@ export function App(): React.ReactElement {
   const [gotoColumn, setGotoColumn] = useState<number | undefined>(undefined);
   const [gotoMatchLength, setGotoMatchLength] = useState<number | undefined>(undefined);
   const [fileTreeOpen, setFileTreeOpen] = useState(true);
+  const [gitPanelOpen, setGitPanelOpen] = useState(false);
   const [openFiles, setOpenFiles] = useState<string[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
   const [hoveredProject, setHoveredProject] = useState<Project | null>(null);
@@ -302,6 +303,9 @@ export function App(): React.ReactElement {
         case "clear-chat":
           handleShortcutClearChat();
           break;
+        case "toggle-git-panel":
+          setGitPanelOpen((o) => !o);
+          break;
       }
     },
     [
@@ -318,6 +322,10 @@ export function App(): React.ReactElement {
 
   const handleToggleSearchInCode = useCallback(() => {
     setSearchInCodeOpen((o) => !o);
+  }, []);
+
+  const handleToggleGitPanel = useCallback(() => {
+    setGitPanelOpen((o) => !o);
   }, []);
 
   const { shortcuts, updateBinding, resetBinding } = useShortcuts({
@@ -409,6 +417,8 @@ export function App(): React.ReactElement {
                 onToggleSearchInCode={handleToggleSearchInCode}
                 fileTreeOpen={fileTreeOpen}
                 onToggleFileTree={() => setFileTreeOpen(!fileTreeOpen)}
+                gitPanelOpen={gitPanelOpen}
+                onToggleGitPanel={handleToggleGitPanel}
                 folder={folder}
                 onSearchOpen={handleOpenSearch}
                 onOpenSettings={handleOpenSettings}
@@ -483,6 +493,8 @@ export function App(): React.ReactElement {
               onToggleSearchInCode={handleToggleSearchInCode}
               fileTreeOpen={fileTreeOpen}
               onToggleFileTree={() => setFileTreeOpen(!fileTreeOpen)}
+              gitPanelOpen={gitPanelOpen}
+              onToggleGitPanel={handleToggleGitPanel}
               folder={folder}
               onSearchOpen={handleOpenSearch}
               onOpenSettings={handleOpenSettings}
@@ -544,6 +556,7 @@ export function App(): React.ReactElement {
               terminalOpen={terminalOpen}
               setTerminalOpen={setTerminalOpen}
               fileTreeOpen={fileTreeOpen}
+              gitPanelOpen={gitPanelOpen}
               connectedModels={connectedModels}
               openFiles={openFiles}
               activeFile={activeFile}
@@ -554,6 +567,7 @@ export function App(): React.ReactElement {
               setProjects={setProjects}
               searchInCodeOpen={searchInCodeOpen}
               onCloseSearchInCode={handleCloseSearchInCode}
+              onCloseGitPanel={() => setGitPanelOpen(false)}
               gotoLine={gotoLine}
               gotoColumn={gotoColumn}
               gotoMatchLength={gotoMatchLength}

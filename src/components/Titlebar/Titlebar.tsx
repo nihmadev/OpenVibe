@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 
-import "../../styles/Titlebar.css";
+import "./Titlebar.css";
 import { Tooltip } from "../Tooltip/Tooltip.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { ContextMenu, type MenuItem } from "../ContextMenu/ContextMenu.js";
@@ -17,7 +17,8 @@ import {
   MinimizeIcon,
   MaximizeIcon,
   CloseIcon,
-} from "../icons/index.js";
+  GitBranchIcon,
+} from "../Icons/index.js";
 import { Server } from "lucide-react";
 
 import { McpStatusDropdown } from "./McpStatusDropdown.js";
@@ -40,11 +41,14 @@ interface TitlebarProps {
   folder?: string | null;
   onSearchOpen?: () => void;
   onOpenSettings?: (tab?: string) => void;
+  gitPanelOpen?: boolean;
+  onToggleGitPanel?: () => void;
 }
 
 const STORAGE_KEY = "titlebar:hidden";
 
-type BtnId = "sidebar" | "new-session" | "nav-prev" | "nav-next" | "terminal" | "search-in-code" | "file-tree";
+type BtnId =
+  "sidebar" | "new-session" | "nav-prev" | "nav-next" | "terminal" | "search-in-code" | "file-tree" | "git-panel";
 
 function loadHidden(): Set<BtnId> {
   try {
@@ -62,7 +66,7 @@ function folderLabel(folder: string | null | undefined): string {
 }
 
 const LEFT_BTNS: BtnId[] = ["sidebar", "new-session", "nav-prev", "nav-next"];
-const RIGHT_BTNS: BtnId[] = ["terminal", "search-in-code", "file-tree"];
+const RIGHT_BTNS: BtnId[] = ["terminal", "search-in-code", "git-panel", "file-tree"];
 
 export function Titlebar({
   chatSideOpen = false,
@@ -80,6 +84,8 @@ export function Titlebar({
   folder,
   onSearchOpen = () => {},
   onOpenSettings,
+  gitPanelOpen = false,
+  onToggleGitPanel = () => {},
 }: TitlebarProps): React.ReactElement {
   const { t } = useI18n();
   const [hidden, setHidden] = useState<Set<BtnId>>(loadHidden);
@@ -195,6 +201,8 @@ export function Titlebar({
         return t("toggleTerminal");
       case "search-in-code":
         return t("searchInCode");
+      case "git-panel":
+        return gitPanelOpen ? "Hide Source Control" : "Show Source Control";
       case "file-tree":
         return fileTreeOpen ? t("hideFileTree") : t("showFileTree");
     }
@@ -371,6 +379,18 @@ export function Titlebar({
               aria-label={t("searchInCode")}
             >
               <SearchInCodeIcon />
+            </button>
+          </Tooltip>
+        )}
+        {isVisible("git-panel") && (
+          <Tooltip text={gitPanelOpen ? "Hide Source Control" : "Show Source Control"} side="bottom">
+            <button
+              className={btnClasses("git-panel", gitPanelOpen ? "titlebar__action-btn--active" : "")}
+              onClick={onToggleGitPanel}
+              onContextMenu={(e) => onBtnCtx(e, "git-panel")}
+              aria-label="Toggle Source Control"
+            >
+              <GitBranchIcon />
             </button>
           </Tooltip>
         )}
