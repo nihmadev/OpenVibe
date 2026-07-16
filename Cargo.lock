@@ -1778,6 +1778,7 @@ name = "git"
 version = "1.2.0"
 dependencies = [
  "git2",
+ "md5",
  "serde",
  "serde_json",
 ]
@@ -2928,6 +2929,12 @@ dependencies = [
  "toml 0.8.2",
  "tracing",
 ]
+
+[[package]]
+name = "md5"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ebb8d8732c6a6df3d8f032a82911cfc747e00efb95cc46e8d0acd5b5b88570c"
 
 [[package]]
 name = "memchr"

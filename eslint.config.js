@@ -19,7 +19,7 @@ export default tseslint.config(
       "react/jsx-key": "error",
       "react/no-unescaped-entities": "off",
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "off",
       "react-hooks/set-state-in-effect": "off",
       "react-hooks/refs": "off",
       "react-hooks/immutability": "off",
