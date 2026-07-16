@@ -1,11 +1,11 @@
 import { loader } from "@monaco-editor/react";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Tooltip } from "../Tooltip/Tooltip.js";
-import "../../styles/CodeBlock.css";
+import "./CodeBlock.css";
 import { useTheme } from "../../hooks/useTheme.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { makeMonacoTheme } from "../Themes/monacoThemes.js";
-import { CopyIcon, InsertTerminalIcon, RunIcon } from "../icons/icons.js";
+import { CopyIcon, InsertTerminalIcon, RunIcon } from "../Icons/icons.js";
 import { useTerminalActions } from "../../hooks/useTerminalActions.js";
 
 type Monaco = any;

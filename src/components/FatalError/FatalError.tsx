@@ -1,7 +1,7 @@
 import React from "react";
 import { Titlebar } from "../Titlebar/Titlebar.js";
 import { useI18n } from "../../hooks/useI18n.js";
-import "../../styles/FatalError.css";
+import "./FatalError.css";
 
 interface FatalErrorProps {
   error: string;

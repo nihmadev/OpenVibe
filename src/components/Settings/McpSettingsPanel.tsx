@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import type { McpConfig, McpServerConfig, McpServerStatus } from "../../types.js";
 import { mcpGetConfig, mcpSaveConfig, mcpGetServers, mcpStartServer, mcpStopServer } from "../../tauri-bridge.js";
 import { Server, Plus, Edit2, Trash2, Download, Upload, AlertCircle } from "lucide-react";
-import { TrashIcon, PlusIcon } from "../icons/icons.js";
+import { TrashIcon, PlusIcon } from "../Icons/icons.js";
 
 import { useTranslate } from "../../hooks/useI18n.js";
 

@@ -1,8 +1,8 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import type { Project } from "../../types.js";
 import { useI18n } from "../../hooks/useI18n.js";
-import { CloseXIcon, UploadIcon } from "../icons/icons.js";
-import "../../styles/EditProjectPopup.css";
+import { CloseXIcon, UploadIcon } from "../Icons/icons.js";
+import "./EditProjectPopup.css";
 
 const SWATCHES = ["#223883ff", "#0e5340ff", "#7c2d12", "#361868ff", "#155e75"];
 

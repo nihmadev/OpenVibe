@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import "../../styles/RollbackPill.css";
+import "./RollbackPill.css";
 
 interface RollbackPillProps {
   messageText: string;

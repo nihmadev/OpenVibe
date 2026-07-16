@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback } from "react";
-import "../../styles/SearchPopup.css";
-import { SearchIcon, FileIcon, FolderIcon } from "../icons/index.js";
+import "./SearchPopup.css";
+import { SearchIcon, FileIcon, FolderIcon } from "../Icons/index.js";
 import type { FileMatch } from "../../types.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { filterCommands } from "./commands.js";

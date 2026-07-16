@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FileIcon, FolderIcon, ChevronRightIcon } from "../icons/index.js";
+import { FileIcon, FolderIcon, ChevronRightIcon } from "../Icons/index.js";
 import { RenameInput } from "./RenameInput.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { dirnameOf } from "./utils.js";

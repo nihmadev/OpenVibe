@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "../../styles/FileTree.css";
+import "./FileTree.css";
 import type { FsEntry } from "../../types.js";
 import { ContextMenu, type MenuItem } from "../ContextMenu/ContextMenu.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
@@ -12,7 +12,7 @@ import {
   NewFileIcon,
   NewFolderIcon,
   RefreshIcon,
-} from "../icons/index.js";
+} from "../Icons/index.js";
 import { FileNode } from "./FileNode";
 import { RenameInput } from "./RenameInput";
 import { basename, dirnameOf } from "./utils.js";

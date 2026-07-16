@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import { FileIcon, FolderIcon } from "../icons/file-icons.js";
-import { getFileIcon } from "../icons/utils.js";
+import { escapeHtml } from "../../utils/string.js";
+import { FileIcon, FolderIcon } from "../Icons/file-icons.js";
+import { getFileIcon } from "../Icons/utils.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
 import { CodeBlock } from "../CodeBlock/CodeBlock.js";
 
@@ -54,13 +55,8 @@ export interface StreamingMarkdownProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
-function escapeHtml(text: string): string {
-  if (!text) return "";
-  return text.replace(ESCAPE_RE, "&amp;").replace(LT_RE, "&lt;");
-}
-
 function escapeHtmlCode(text: string): string {
-  return text.replace(ESCAPE_RE, "&amp;").replace(LT_RE, "&lt;");
+  return escapeHtml(text);
 }
 
 function renderMath(value: string, displayMode: boolean): string {

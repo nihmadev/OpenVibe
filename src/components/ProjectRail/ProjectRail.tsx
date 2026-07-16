@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import type { Project } from "../../types.js";
 import { ContextMenu, type MenuItem } from "../ContextMenu/ContextMenu.js";
-import { SidebarToggleIcon } from "../icons/index.js";
+import { SidebarToggleIcon } from "../Icons/index.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
 import { useI18n } from "../../hooks/useI18n.js";
-import "../../styles/ProjectRail.css";
+import "./ProjectRail.css";
 
 interface Props {
   projects: Project[];

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
-import "../../styles/Tooltip.css";
+import "./Tooltip.css";
 
 interface Props {
   text: string;

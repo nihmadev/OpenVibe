@@ -1,14 +1,14 @@
 import React from "react";
-import { HistoryItem } from "../chat-history/types.js";
-import { describe, pickFile } from "../chat-history/utils.js";
-import { FailIcon } from "../icons/icons.js";
-import { FileBadge } from "../chat-history/ChatHistorySubComponents.js";
-import { ChevronRightIcon, Loader2Icon } from "../icons/icons.js";
-import { FileIcon, FolderIcon } from "../icons/file-icons.js";
+import { HistoryItem } from "../AgentChat/types.js";
+import { describe, pickFile } from "../AgentChat/utils.js";
+import { FailIcon } from "../Icons/icons.js";
+import { FileBadge } from "../AgentChat/components/FileBadge.js";
+import { ChevronRightIcon, Loader2Icon } from "../Icons/icons.js";
+import { FileIcon, FolderIcon } from "../Icons/file-icons.js";
 import { CodeBlock, resolveMonacoLang } from "../CodeBlock/CodeBlock.js";
 import { DiffEditor } from "../DiffEditor/DiffEditor.js";
 import { Server } from "lucide-react";
-import "../../styles/Tool.css";
+import "./Tool.css";
 
 // ─── Animated counter ─────────────────────────────────────────────────────
 

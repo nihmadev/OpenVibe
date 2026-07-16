@@ -2,14 +2,10 @@ import React, { useCallback, useRef } from "react";
 import { Editor } from "./Editor.js";
 import { ImageViewer, isImageFile } from "../ImageViewer/ImageViewer.js";
 import { VideoViewer, isVideoFile } from "../ImageViewer/VideoViewer.js";
-import { FileIcon, FolderIcon } from "../icons/index.js";
+import { FileIcon, FolderIcon } from "../Icons/index.js";
 import { useI18n } from "../../hooks/useI18n.js";
-import "../../styles/EditorArea.css";
-
-function basename(path: string): string {
-  const m = /[\\/]([^\\/]+)$/.exec(path);
-  return m?.[1] ?? path;
-}
+import { basename } from "../../utils/paths.js";
+import "./EditorArea.css";
 
 interface EditorAreaProps {
   openFiles: string[];

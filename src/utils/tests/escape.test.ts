@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-
-function escapeHtml(text: string): string {
-  if (!text) return "";
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;");
-}
+import { escapeHtml } from "../string.js";
 
 describe("escapeHtml", () => {
   it("returns empty string for falsy input", () => {

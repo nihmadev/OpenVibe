@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useI18n } from "../../hooks/useI18n.js";
-import "../../styles/ImageViewer.css";
+import "./ImageViewer.css";
 
 const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "gif", "bmp", "webp", "ico", "tiff", "tif", "avif"]);
 

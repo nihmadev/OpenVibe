@@ -2,7 +2,7 @@ import React from "react";
 import { ProjectRail } from "../ProjectRail/ProjectRail.js";
 import type { Project } from "../../types.js";
 import { useI18n } from "../../hooks/useI18n.js";
-import "../../styles/Welcome.css";
+import "./Welcome.css";
 
 interface WelcomeProps {
   projects: Project[];

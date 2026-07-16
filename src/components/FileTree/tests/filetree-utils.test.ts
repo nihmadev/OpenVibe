@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { basename, dirnameOf } from "../../components/FileTree/utils";
+import { basename, dirnameOf } from "../utils";
 
 describe("basename", () => {
   it("extracts name from Unix path", () => {

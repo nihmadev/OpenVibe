@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import "../../styles/Settings.css";
+import "./Settings.css";
 import type { Provider } from "../../types.js";
 import { ConnectPopup } from "../ConnectPopup/ConnectPopup.js";
 import { Select } from "./Select";
@@ -8,7 +8,7 @@ import { themes } from "../../themes/themes.js";
 import { PROVIDER_TEMPLATES, getProviderIconPath } from "../../constants.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { FONT_OPTIONS, CODE_FONT_OPTIONS, applyFont } from "../../fonts.js";
-import { ChevronRightIcon } from "../icons/icons.js";
+import { ChevronRightIcon } from "../Icons/icons.js";
 import { languageOptions } from "../../i18n/index.js";
 import type { ShortcutDef, KeyCombo, ShortcutCategory } from "../../hooks/useShortcuts.js";
 import { formatCombo, setRecording } from "../../hooks/useShortcuts.js";

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatCombo, setRecording } from "../../hooks/useShortcuts";
+import { formatCombo, setRecording } from "../useShortcuts";
 
 describe("formatCombo", () => {
   it("formats simple key", () => {

@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import "../../styles/History.css";
-import "../../styles/Tool.css";
-import "../../styles/FBadge.css";
+import "./History.css";
+import "../AgentToolView/Tool.css";
+import "../AgentChat/FBadge.css";
 import { useI18n } from "../../hooks/useI18n.js";
 import {
   ChevronRightIcon,
@@ -16,7 +16,7 @@ import {
   CheckIcon,
   CopyIcon,
   RefreshIcon2,
-} from "../icons/icons.js";
+} from "../Icons/icons.js";
 
 export interface AttachmentView {
   id: string;

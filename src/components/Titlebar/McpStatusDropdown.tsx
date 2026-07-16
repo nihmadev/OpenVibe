@@ -2,7 +2,7 @@ import React from "react";
 import type { McpServerStatus } from "../../types.js";
 import { Server, RefreshCw, Settings as SettingsIcon } from "lucide-react";
 import { useTranslate } from "../../hooks/useI18n.js";
-import "../../styles/Titlebar.css";
+import "./Titlebar.css";
 
 interface McpStatusDropdownProps {
   servers: McpServerStatus[];

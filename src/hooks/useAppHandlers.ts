@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { SendPayload, Attachment } from "../components/prompt-input/PromptInput.js";
+import type { SendPayload, Attachment } from "../components/PromptInput/PromptInput.js";
 import type { ContentPart } from "../types.js";
 import { localId } from "../utils.js";
 

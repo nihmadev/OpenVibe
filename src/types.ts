@@ -102,6 +102,31 @@ export interface KeyValuePair {
   value: string;
 }
 
+export interface GitCommitGraphNode {
+  id: string;
+  shortId: string;
+  message: string;
+  summary: string;
+  author: string;
+  authorEmail: string;
+  time: number;
+  parentIds: string[];
+  branchNames: string[];
+  column: number;
+  refNames: string[];
+  isHead: boolean;
+  isMerge: boolean;
+  lanes: number[];
+}
+
+export interface CommitFile {
+  path: string;
+  status: string;
+  oldPath: string | null;
+  additions?: number;
+  deletions?: number;
+}
+
 export interface Provider {
   id: string;
   name: string;

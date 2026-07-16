@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { TermPane } from "../TermPane/TermPane.js";
 import { useI18n } from "../../hooks/useI18n.js";
-import "../../styles/Terminals.css";
+import "./Terminals.css";
 
 interface Tab {
   id: string;

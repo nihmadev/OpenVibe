@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { VibeEvent } from "../types.js";
 import { localId, playAudio } from "../utils.js";
-import type { HistoryItem } from "../components/chat-history/ChatHistory.js";
+import type { HistoryItem } from "../components/AgentChat/AgentChat.js";
 
 function useRafBatching() {
   const pendingRef = useRef<(() => void)[]>([]);

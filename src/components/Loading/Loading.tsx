@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { Titlebar } from "../Titlebar/Titlebar.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { preloadAll } from "../../utils/preloader.js";
-import "../../styles/Loading.css";
+import "./Loading.css";
 
 export function Loading(): React.ReactElement {
   const { t } = useI18n();

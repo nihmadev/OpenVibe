@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from "react";
-import { UserIcon, EyeIcon, EyeOffIcon, PlusIcon, TrashIcon } from "../icons/icons.js";
+import { UserIcon, EyeIcon, EyeOffIcon, PlusIcon, TrashIcon } from "../Icons/icons.js";
 import type { Provider, KeyValuePair } from "../../types.js";
 import { PROVIDER_TEMPLATES, getProviderIconPath } from "../../constants.js";
 import { useI18n } from "../../hooks/useI18n.js";

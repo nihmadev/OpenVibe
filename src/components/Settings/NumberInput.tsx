@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback } from "react";
-import { MinusIcon, PlusIcon } from "../icons/icons.js";
+import { MinusIcon, PlusIcon } from "../Icons/icons.js";
 
 interface NumberInputProps {
   value: string;

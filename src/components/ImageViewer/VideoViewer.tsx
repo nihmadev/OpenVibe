@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useI18n } from "../../hooks/useI18n.js";
-import { PlayIcon, PauseIcon, VolumeMutedIcon, VolumeLowIcon, VolumeHighIcon, FullscreenIcon } from "../icons/icons.js";
-import "../../styles/VideoViewer.css";
+import { PlayIcon, PauseIcon, VolumeMutedIcon, VolumeLowIcon, VolumeHighIcon, FullscreenIcon } from "../Icons/icons.js";
+import "./VideoViewer.css";
 
 const VIDEO_EXTENSIONS = new Set(["mp4", "webm", "ogg", "mov", "avi", "mkv", "wmv", "flv", "m4v", "3gp", "avi"]);
 

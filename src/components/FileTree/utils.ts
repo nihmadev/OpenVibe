@@ -1,9 +1,3 @@
-export function basename(path: string): string {
-  const m = /[\\/]([^\\/]+)[\\/]?$/.exec(path);
-  return m?.[1] ?? path;
-}
+import { basenameTree as basename, dirnameOf } from "../../utils/paths.js";
 
-export function dirnameOf(path: string): string {
-  const m = /^(.*)[\\/][^\\/]+$/.exec(path);
-  return m?.[1] ?? path;
-}
+export { basename, dirnameOf };

@@ -1,7 +1,7 @@
 import React from "react";
-import type { HistoryItem } from "../chat-history/types.js";
+import type { HistoryItem } from "../AgentChat/types.js";
 import { AgentToolView } from "../AgentToolView/AgentToolView.js";
-import "../../styles/SubAgentView.css";
+import "./SubAgentView.css";
 
 interface Props {
   items: HistoryItem[];
