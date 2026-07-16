@@ -81,23 +81,17 @@ function fetchJSON(url: string): Promise<any> {
   });
 }
 
-function downloadFile(url: string, dest: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const protocol = url.startsWith("https") ? get : httpGet;
-    const req = protocol(url, { headers: { "User-Agent": "openvibe-desktop" } }, async (res) => {
-      if (!res.statusCode || res.statusCode >= 300) {
-        reject(new Error(`download failed: HTTP ${res.statusCode}`));
-        return;
-      }
-      const chunks: Buffer[] = [];
-      for await (const chunk of res) chunks.push(chunk as Buffer);
-      await mkdir(join(dest, ".."), { recursive: true });
-      await writeFile(dest, Buffer.concat(chunks));
-      resolve();
-    });
-    req.on("error", reject);
-    req.end();
+async function downloadFile(url: string, dest: string): Promise<void> {
+  const res = await fetch(url, {
+    headers: { "User-Agent": "openvibe-desktop" },
+    redirect: "follow",
   });
+  if (!res.ok) {
+    throw new Error(`download failed: HTTP ${res.status} ${res.statusText}`);
+  }
+  const arrayBuffer = await res.arrayBuffer();
+  await mkdir(join(dest, ".."), { recursive: true });
+  await writeFile(dest, Buffer.from(arrayBuffer));
 }
 
 export async function checkForUpdate(versionFile: string): Promise<UpdateInfo | null> {
@@ -133,9 +127,24 @@ async function checkViaGitHub(platform: string, arch: string): Promise<UpdateInf
   const ext = extMap[platform];
   if (!ext) return null;
 
-  const asset = (data.assets as any[]).find(
-    (a) => (a.name as string).endsWith(ext) && (a.name as string).includes(platform),
+  const archMap: Record<string, Record<string, string>> = {
+    linux: { x64: "amd64", arm64: "arm64" },
+    macos: { x64: "x64", arm64: "aarch64" },
+    windows: { x64: "x64", x86: "x86" },
+  };
+
+  const fileArch = archMap[platform]?.[arch] || arch;
+
+  let asset = (data.assets as any[]).find(
+    (a) => (a.name as string).endsWith(ext) && (a.name as string).includes(fileArch),
   );
+
+  if (!asset) {
+    const assetsWithExt = (data.assets as any[]).filter(a => (a.name as string).endsWith(ext));
+    if (assetsWithExt.length === 1) {
+      asset = assetsWithExt[0];
+    }
+  }
 
   if (!asset) return null;
 

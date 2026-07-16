@@ -98,18 +98,13 @@ Options:
     const binaryPath = await getOrDownloadBinary();
 
     const child = spawn(binaryPath, args, {
-      stdio: "inherit",
+      detached: true,
+      stdio: "ignore",
       env: { ...process.env },
     });
 
-    child.on("exit", (code) => {
-      process.exit(code ?? 0);
-    });
-
-    child.on("error", (err) => {
-      console.error(`Failed to launch OpenVibe: ${err.message}`);
-      process.exit(1);
-    });
+    child.unref();
+    process.exit(0);
   } catch (err) {
     console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
     process.exit(1);
