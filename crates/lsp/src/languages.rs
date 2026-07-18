@@ -102,8 +102,5 @@ pub fn get_all_servers() -> Vec<LspServerConfig> {
         "go", "ts", "lua", "html", "css", "json", "ruby", "cpp", "java", "csharp", "php", "rust",
         "python",
     ];
-    langs
-        .into_iter()
-        .filter_map(|l| get_language_config(l))
-        .collect()
+    langs.into_iter().filter_map(get_language_config).collect()
 }
