@@ -5,6 +5,124 @@ All notable changes to OpenVibe will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.4](https://github.com/nihmadev/OpenVibe/compare/v1.3.3...v1.3.4) (2026-07-19)
+
+This release is focused on a more complete developer workspace: language-server support, richer Git inspection, a guided first-run experience, more dependable provider connectivity, and a substantial UI and localization refresh.
+
+### Features
+
+* **Language Server Protocol (LSP) foundation** ([e063faf](https://github.com/nihmadev/OpenVibe/commit/e063faf5a52dd923c648778c3e79efe3134e32b1), [96ce348](https://github.com/nihmadev/OpenVibe/commit/96ce348157050b17eb9ef5227133d132a25b6583))
+  * Added a dedicated `crates/lsp` backend with server configuration, process lifecycle management, stdin/stdout/stderr pipes, environment handling, and binary resolution across Windows, macOS, and Linux.
+  * Added language presets for Go, TypeScript/JavaScript, Lua, Rust, Python, HTML, CSS/SCSS/Less, JSON, Ruby, C/C++, Java, C#, and PHP.
+  * Added Tauri commands to enumerate available servers and start a selected server from the UI.
+  * Added a persistent runtime manager with download/extraction support and package installation for Node.js, Go, Lua, Python, Ruby, .NET, Rust Analyzer, Clangd, and JDTLS. Node, Go, Lua, and language-specific tools are provisioned into the app runtime directory when needed.
+  * Added PATH composition and executable lookup so downloaded tools can be launched without requiring a globally configured developer environment.
+  * Connected the agent tool executor to the shared LSP manager for future language-aware tool workflows ([23cfe54](https://github.com/nihmadev/OpenVibe/commit/23cfe545241717ae5b7e1ec0980c8d97d55f319f)).
+
+* **Servers panel and LSP controls** ([9bf5a96](https://github.com/nihmadev/OpenVibe/commit/9bf5a96bed5010393cdd7b8b1036d0586e4a8db3), [c4af727](https://github.com/nihmadev/OpenVibe/commit/c4af727f89223b810b3046d897c65d8eb98d4d43))
+  * Added a titlebar servers popover with separate MCP and LSP tabs.
+  * Added an LSP server list with per-language enable/disable toggles, installing spinners, running/stopped/error indicators, and in-memory state synchronization.
+  * Unified MCP and LSP status into the titlebar status badge; the badge now reflects installing, running, stopped, and error states.
+
+* **Git diff and history workflow** ([49c0e02](https://github.com/nihmadev/OpenVibe/commit/49c0e02bf181d8171a0ab0caabdeb9773092284e), [a88fcff](https://github.com/nihmadev/OpenVibe/commit/a88fcffacd62e65df17a527a63ceba7785c4fea4), [829160a](https://github.com/nihmadev/OpenVibe/commit/829160a8d0847ee31dcc2b9511ba0712dbb25802))
+  * Added a virtual `git-diff:` editor document backed by Monaco's side-by-side diff editor.
+  * Git files can now be opened as diffs for working-tree changes (`HEAD` vs working tree), staged changes (`HEAD` vs index), and any commit (parent vs commit).
+  * Added historical file-content loading from Git refs, including correct handling of new and deleted files and absolute paths.
+  * Extended the Git panel with cleaner staged/unstaged sections, list/tree view switching, filtering, refresh and bulk stage/unstage actions, inline file diff opening, branch creation/checkout, and commit actions.
+  * Refined the commit graph with swimlanes, branch/remote labels, expandable changed-file trees, richer commit selection details, and hover tooltips that remain inside the viewport.
+
+* **Onboarding and loading experience** ([f6db1e2](https://github.com/nihmadev/OpenVibe/commit/f6db1e26c20a56d49108cbd578f9934d3f50895a), [f0cea27](https://github.com/nihmadev/OpenVibe/commit/f0cea27068dafbdd1dd547958b380aa4dba534de))
+  * Replaced the minimal first-run screen with a multi-step welcome flow that introduces the workspace and lets users configure their name, language, theme, color scheme, animation style/speed, model behavior, terminal shell, file-tree rendering, sound, editor ligatures/font size, and interface font.
+  * Reads the operating-system user name when available, persists onboarding/settings choices, and applies the interface font immediately.
+  * Added reusable shimmer skeleton loaders for startup/file-tree and other loading states.
+  * Added an error boundary so a broken welcome-screen preference or translation cannot prevent the application from opening.
+
+* **Application shell, navigation, and shared UI** ([c4af727](https://github.com/nihmadev/OpenVibe/commit/c4af727f89223b810b3046d897c65d8eb98d4d43), [9d7af0c](https://github.com/nihmadev/OpenVibe/commit/9d7af0c83a0453b7f6c57d182dc81644f15badba), [bebc010](https://github.com/nihmadev/OpenVibe/commit/bebc0109f66f8b4c2cc9fc32136fb4fdf82f53c8), [716deff](https://github.com/nihmadev/OpenVibe/commit/716deff3638bca24bdf261dc1290b4084b8765ad))
+  * Reworked the app layout and titlebar controls, including clearer active states, resizable chat/search/Git/terminal regions, and context menus for hiding or restoring titlebar actions.
+  * Improved file-tree loading, active-file indicators, search popup spacing, terminal tab behavior, and shared select/settings controls.
+  * Expanded the icon component set and refined Gruvbox theme palettes and Monaco diff colors.
+  * Added utility coverage for path and UI helper behavior and tightened global scrollbar/style rules.
+
+* **Agent reliability and chat persistence** ([829160a](https://github.com/nihmadev/OpenVibe/commit/829160a8d0847ee31dcc2b9511ba0712dbb25802))
+  * User messages are persisted before generation starts, so a newly sent prompt is not lost if generation fails or the app is interrupted.
+  * Tool failures are tagged as diagnostic hints for the model while the UI can suppress raw error noise; malformed tool-call JSON follows the same path.
+  * Agent instructions now proactively use focused Markdown `tree` blocks for project/file structures and provide a consistent tree example.
+  * Added Git-backed file snapshots at `WORKING`, `INDEX`, and commit refs for reliable historical content access.
+
+* **Provider proxy and connectivity hardening** ([c80592c](https://github.com/nihmadev/OpenVibe/commit/c80592c99a880fe3015cff1aee987321c49b2928))
+  * Added an allowlist for upstream provider hosts (including Azure OpenAI and AWS endpoints) before proxying custom base URLs.
+  * Corrected Anthropic authentication/version headers and Google header handling for chat and model-list requests.
+  * Increased reusable connection pool capacity, made warm-provider tracking read/write safe, and pooled SSE buffers to reduce allocation overhead.
+  * Added a setting-aware direct/proxy path so users can disable the regional proxy for agent and model requests.
+
+* **Localization and project maintenance** ([3d1428d](https://github.com/nihmadev/OpenVibe/commit/3d1428db505360639cf731bc672f6351ff508816), [8a70e0a](https://github.com/nihmadev/OpenVibe/commit/8a70e0ac20753e5c9bff401ae034fe4fea2a728b), [16549c3](https://github.com/nihmadev/OpenVibe/commit/16549c3321ee8b269296a800256bec2cc04fa160))
+  * Updated onboarding, LSP, servers, Git, loading, and shared-control strings across the supported locale set, including refreshed Chinese (Simplified/Traditional) and Vietnamese resources.
+  * Added missing locale resources/keys and normalized translation files so new UI surfaces remain translatable.
+  * Excluded translation virtualenv artifacts from linting and removed obsolete translation helper scripts.
+
+### Fixed
+
+* Welcome-screen failures are now isolated by an error boundary; Python virtual environments are ignored by the relevant lint/file workflows.
+* Proxy routing no longer forwards arbitrary hosts and handles provider-specific authentication consistently.
+* New/deleted files in Git diffs no longer fail merely because one side of the comparison has no blob.
+* Tool execution errors and invalid JSON arguments are reported consistently to both the agent and the UI.
+
+### Changed
+
+* Bumped the application, desktop package, Tauri manifest, and release metadata to `1.3.4` ([2421541](https://github.com/nihmadev/OpenVibe/commit/242154129731fd4dbe4dda44f084794937201b5d)).
+
+## [1.3.3](https://github.com/nihmadev/OpenVibe/compare/v1.3.2...v1.3.3) (2026-07-17)
+
+This release introduced the new Git source-control experience and reorganized the frontend around reusable components and a typed Tauri bridge.
+
+### Added
+
+* **Git source control panel** ([ea99068](https://github.com/nihmadev/OpenVibe/commit/ea9906821631071137cfdd9f3260365d768e2c56), [84cca57](https://github.com/nihmadev/OpenVibe/commit/84cca57bad350bc30027e3dd08bea274fbabb72c), [9da4b86](https://github.com/nihmadev/OpenVibe/commit/9da4b86f887e0a0f819d88304e38d00f01b56e82), [b56375c](https://github.com/nihmadev/OpenVibe/commit/b56375cdc54aec322d07a897b25c0742c2b0987a))
+  * Added a Git panel with staged/unstaged file views, commit actions, branch management, GitHub/Gravatar avatars, and an interactive commit graph with lane rendering.
+
+* **Frontend bridge and shared utilities** ([8f22fbc](https://github.com/nihmadev/OpenVibe/commit/8f22fbc9243d08233ac6b2bfffd63d902bb50f28), [a88759a](https://github.com/nihmadev/OpenVibe/commit/a88759adefd569e3f11d182dd9b98a296f8211f0))
+  * Added typed bridge modules for Tauri APIs and shared path, string, language, and syntax utilities.
+
+### Changed
+
+* Split Search in Code into focused hooks, components, and utilities ([b0eb3e5](https://github.com/nihmadev/OpenVibe/commit/b0eb3e51118a087b63a545b5894d9af004bf9ed1)).
+* Reorganized AgentChat, PromptInput, SessionList, and Icons into modular component directories and removed deprecated directories ([fc73a47](https://github.com/nihmadev/OpenVibe/commit/fc73a470f9cc076e7539ae31c65c035e0d061f1e), [692b8f2](https://github.com/nihmadev/OpenVibe/commit/692b8f21e76f26cdfb7600df8e10aad889cbc623)).
+* Improved agent system instructions with thought tags and a zero-text tool-call protocol ([f3f57f0](https://github.com/nihmadev/OpenVibe/commit/f3f57f022272fe7ecf590bfbbc322dcb46ac30cb)).
+* Detached CLI child processes so the launcher can exit immediately ([d61384d](https://github.com/nihmadev/OpenVibe/commit/d61384def8c808088495b7a841f39595c854edbc)).
+* Refreshed build/CI configuration, dependencies, and repository hooks ([1805efc](https://github.com/nihmadev/OpenVibe/commit/1805efc1b593a0d33ba03d628968aae5648a01f5), [e527e80](https://github.com/nihmadev/OpenVibe/commit/e527e802370b4ecabbe1590950f46c5e5ce8664a)).
+
+### Fixed
+
+* Updated the desktop updater to use native `fetch` and improved architecture matching for downloads.
+
+## [1.3.2](https://github.com/nihmadev/OpenVibe/compare/v1.3.1...v1.3.2) (2026-07-16)
+
+### Changed
+
+* Replaced Linux AppImage artifacts with `tar.gz` and RPM packages to avoid WebKitGTK/EGL issues ([b620d5e](https://github.com/nihmadev/OpenVibe/commit/b620d5e134f4a21048325aa848e2607f5efd8616)).
+* Updated package and Cargo metadata to use the `nihmadev` author identity instead of `mt-studio` ([08d8846](https://github.com/nihmadev/OpenVibe/commit/08d8846fad2decaee12c69979e76ce14618d584c)).
+
+## [1.3.1](https://github.com/nihmadev/OpenVibe/compare/v1.3.0...v1.3.1) (2026-07-15)
+
+This maintenance release improved startup performance, terminal reliability, editor assistance, provider configuration, and release infrastructure.
+
+### Added
+
+* **AI Fix-it in the editor** — added an action to apply agent-generated fixes from Monaco hover diagnostics ([3d22cb6](https://github.com/nihmadev/OpenVibe/commit/3d22cb6f75a471944aea7bb30f02d7e194697e71)).
+* Added portable PTY session handling for the terminal ([f5f81b0](https://github.com/nihmadev/OpenVibe/commit/f5f81b0406b938171dd2972687f20d3a43f856c9)).
+
+### Changed
+
+* Optimized application startup with parallel preloading, background warm-up, and agent pre-initialization when credentials are available ([ef5bef6](https://github.com/nihmadev/OpenVibe/commit/ef5bef6900434c28221f810074d4a236d828c3fe), [fb0663b](https://github.com/nihmadev/OpenVibe/commit/fb0663b36b925766d0347316c3a51c842e408da5)).
+* Improved MCP `npx` startup with an explicit starting state and optimized initialization ([2cb945b](https://github.com/nihmadev/OpenVibe/commit/2cb945bc7eab292844986a42dc29c4e565aa7c39)).
+* Connected the provider popup to custom provider settings and disabled the Godot MCP server by default ([8200e6e](https://github.com/nihmadev/OpenVibe/commit/8200e6e836e0fa7fb902df5ffcb4b6ab07c5d908)).
+* Improved chat database error handling and transaction management ([f1f024e](https://github.com/nihmadev/OpenVibe/commit/f1f024e789dfaad8f52dd75b0b7a5a30cc38030e)).
+
+### Fixed
+
+* Fixed Linux WebKitGTK 4.1/EGL packaging issues and editor panel resizing constraints ([be4a8bc](https://github.com/nihmadev/OpenVibe/commit/be4a8bc1f6fafc778cd508e6eed34b3c39a61a2d), [50133fb](https://github.com/nihmadev/OpenVibe/commit/50133fb783bfe9218b8eaec063809d6c5a398913)).
+* Refined release workflows, tag matching, artifact handling, Unicode truncation, and CI validation ([8972acc](https://github.com/nihmadev/OpenVibe/commit/8972acce5afd146a58ee35bebf574213bb35bd35), [62c6744](https://github.com/nihmadev/OpenVibe/commit/62c6744e1a62f84b47bbac4a444d16275b7473f5)).
+
 ## [1.4.0](https://github.com/nihmadev/OpenVibe/compare/openvibe-v1.3.0...openvibe-v1.4.0) (2026-07-15)
 
 ### Features
