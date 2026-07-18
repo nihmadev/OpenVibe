@@ -5,18 +5,9 @@
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background-color: var(--vscode-sideBar-background, transparent);
-  color: var(--vscode-sideBar-foreground, inherit);
-  font-family: var(
-    --vscode-font-family,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif
-  );
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--mono, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
   font-size: 13px;
   user-select: none;
   overflow: hidden;
@@ -32,8 +23,8 @@
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  color: var(--vscode-sideBarTitle-foreground, #bbbbbb);
-  border-bottom: 1px solid var(--vscode-sideBar-border, rgba(255, 255, 255, 0.08));
+  color: var(--fg-dim);
+  border-bottom: 1px solid var(--line);
 }
 
 .monaco-list-row {
@@ -54,12 +45,12 @@
 }
 
 .monaco-list-row:hover {
-  background-color: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.04));
+  background-color: var(--bg-2);
 }
 
 .monaco-list-row.selected {
-  background-color: var(--vscode-list-activeSelectionBackground, #04395e);
-  color: var(--vscode-list-activeSelectionForeground, #ffffff);
+  background-color: var(--bg-3);
+  color: var(--fg);
 }
 
 .monaco-icon-label {
@@ -83,8 +74,8 @@
 }
 
 .monaco-count-badge {
-  background-color: var(--vscode-badge-background, #4d4d4d);
-  color: var(--vscode-badge-foreground, #ffffff);
+  background-color: var(--fg);
+  color: var(--bg);
   font-size: 11px;
   font-weight: 600;
   padding: 2px 6px;
@@ -108,15 +99,15 @@
   justify-content: center;
   border-radius: 3px;
   cursor: pointer;
-  color: var(--vscode-icon-foreground, #c5c5c5);
+  color: var(--fg-dim);
   background: transparent;
   border: none;
   padding: 0;
 }
 
 .action-label:hover {
-  background-color: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
-  color: var(--vscode-icon-hoverForeground, #ffffff);
+  background-color: var(--bg-3);
+  color: var(--fg);
 }
 
 .scm-provider > .body {
@@ -136,13 +127,13 @@
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  color: var(--vscode-sideBarSectionHeader-foreground, #cccccc);
-  background-color: var(--vscode-sideBarSectionHeader-background, transparent);
+  color: var(--fg-dim);
+  background-color: transparent;
   min-height: 24px;
 }
 
 .scm-section-header:hover {
-  color: var(--vscode-sideBarTitle-foreground, #ffffff);
+  color: var(--fg);
 }
 
 .scm-editor-container {
@@ -160,10 +151,10 @@
   width: 100%;
   min-height: 60px;
   padding: 8px;
-  background-color: var(--vscode-input-background, #252526);
+  background-color: var(--bg-2);
   border: 1px solid transparent;
   border-radius: 4px;
-  color: var(--vscode-input-foreground, #cccccc);
+  color: var(--fg);
   font-family: inherit;
   font-size: 13px;
   resize: vertical;
@@ -172,11 +163,11 @@
 }
 
 .scm-textarea:focus {
-  border-color: var(--vscode-focusBorder, #007fd4);
+  border-color: var(--fg-dim);
 }
 
 .scm-textarea::placeholder {
-  color: var(--vscode-input-placeholderForeground, #858585);
+  color: var(--fg-muted);
   opacity: 0.6;
 }
 
@@ -205,8 +196,8 @@
 .scm-modal-card {
   width: 90%;
   max-width: 380px;
-  background-color: var(--vscode-quickInput-background, #252526);
-  border: 1px solid var(--vscode-quickInput-border, #454545);
+  background-color: var(--bg-2);
+  border: 1px solid var(--line-strong);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   border-radius: 4px;
   overflow: hidden;
@@ -221,10 +212,10 @@
   justify-content: center;
   gap: 6px;
   padding: 6px 12px;
-  background-color: var(--vscode-button-background, #0e639c);
+  background-color: var(--primary);
   border: none;
   border-radius: 4px;
-  color: var(--vscode-button-foreground, #ffffff);
+  color: var(--bg);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -234,11 +225,11 @@
   box-sizing: border-box;
 }
 .scm-action-button:hover {
-  background-color: var(--vscode-button-hoverBackground, #1177bb);
+  background-color: var(--fg-dim);
 }
 .scm-action-button.disabled {
-  background-color: var(--vscode-button-secondaryBackground, #3a3d41);
-  color: var(--vscode-button-secondaryForeground, #ffffff);
+  background-color: var(--bg-3);
+  color: var(--fg-dim);
   cursor: not-allowed;
   opacity: 0.5;
 }
@@ -252,8 +243,8 @@
   right: 16px;
   top: 40px;
   min-width: 200px;
-  background-color: var(--vscode-menu-background, #252526);
-  border: 1px solid var(--vscode-menu-border, #454545);
+  background-color: var(--bg-2);
+  border: 1px solid var(--line-strong);
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   overflow: hidden;
@@ -267,19 +258,19 @@
   width: 100%;
   padding: 8px 12px;
   background: transparent;
-  color: var(--vscode-menu-foreground, #cccccc);
+  color: var(--fg);
   font-size: 13px;
   cursor: pointer;
 }
 
 .scm-menu-item:hover {
-  background-color: var(--vscode-menu-selectionBackground, #04395e);
-  color: var(--vscode-menu-selectionForeground, #ffffff);
+  background-color: var(--bg-3);
+  color: var(--fg);
 }
 
 .scm-menu-divider {
   height: 1px;
-  background-color: var(--vscode-menu-separatorBackground, #454545);
+  background-color: var(--line-strong);
   margin: 4px 0;
 }
 
@@ -308,15 +299,15 @@
 
 /* ── Commit Tooltip (Exact VSCode .monaco-hover.workbench-hover style) ── */
 .scm-commit-tooltip {
-  background-color: var(--vscode-editorHoverWidget-background, #252526);
-  border: 1px solid var(--vscode-editorHoverWidget-border, #454545);
+  background-color: var(--bg-2);
+  border: 1px solid var(--line-strong);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
   border-radius: 5px;
   width: auto;
   min-width: 320px;
   max-width: min(540px, calc(100vw - 24px));
   max-height: min(580px, calc(100vh - 24px));
-  color: var(--vscode-editorHoverWidget-foreground, #cccccc);
+  color: var(--fg);
   font-size: 13px;
   line-height: 1.45;
   display: flex;
@@ -358,7 +349,7 @@
 
 .scm-commit-tooltip-author-name {
   font-weight: 600;
-  color: var(--vscode-editorHoverWidget-foreground, #cccccc);
+  color: var(--fg);
   text-decoration: none !important;
 }
 
@@ -375,7 +366,7 @@
 
 .scm-commit-tooltip-divider {
   border: none;
-  border-top: 1px solid var(--vscode-editorHoverWidget-border, rgba(255, 255, 255, 0.18));
+  border-top: 1px solid var(--line);
   margin: 12px 0;
   width: 100%;
   flex-shrink: 0;
@@ -384,7 +375,7 @@
 .scm-commit-tooltip-stats {
   font-size: 13px;
   line-height: 1.4;
-  color: var(--vscode-editorHoverWidget-foreground, #cccccc);
+  color: var(--fg);
 }
 
 .scm-commit-tooltip-commands {
@@ -399,14 +390,14 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--vscode-textLink-foreground, #3794ff);
+  color: var(--cyan);
   text-decoration: none !important;
   cursor: pointer;
 }
 
 .scm-commit-tooltip-cmd:hover {
   text-decoration: none !important;
-  color: var(--vscode-textLink-activeForeground, #3794ff);
+  color: var(--accent);
 }
 
 .scm-commit-tooltip-cmd:hover > span {
@@ -456,7 +447,7 @@
 .commit-tooltip-markdown .markdown-body h5,
 .commit-tooltip-markdown .markdown-body h6 {
   margin: 6px 0 2px 0;
-  color: var(--vscode-editorHoverWidget-foreground, #ffffff);
+  color: var(--fg);
   font-weight: 600;
   line-height: 1.3;
 }
@@ -488,7 +479,7 @@
 .commit-tooltip-markdown .markdown-body blockquote {
   margin: 4px 0;
   padding: 6px 12px;
-  border-left: 3px solid var(--vscode-button-background, #0e639c);
+  border-left: 3px solid var(--primary);
   background-color: rgba(255, 255, 255, 0.03);
   border-radius: 0 4px 4px 0;
   opacity: 0.9;
@@ -509,7 +500,7 @@
 
 .commit-tooltip-markdown .markdown-body .code-block {
   margin: 6px 0;
-  border: 1px solid var(--vscode-editorHoverWidget-border, #454545);
+  border: 1px solid var(--line-strong);
   border-radius: 4px;
   background-color: var(--bg-3, #1e1e1e);
 }
@@ -524,7 +515,7 @@
 .commit-tooltip-markdown .markdown-body th,
 .commit-tooltip-markdown .markdown-body td {
   padding: 5px 8px;
-  border: 1px solid var(--vscode-editorHoverWidget-border, #454545);
+  border: 1px solid var(--line-strong);
   text-align: left;
 }
 
@@ -535,12 +526,12 @@
 
 .commit-tooltip-markdown .markdown-body hr {
   border: none;
-  border-top: 1px solid var(--vscode-editorHoverWidget-border, #3c3c3c);
+  border-top: 1px solid var(--line);
   margin: 8px 0;
 }
 
 .commit-tooltip-markdown .markdown-body a {
-  color: var(--vscode-textLink-foreground, #3794ff);
+  color: var(--cyan);
   text-decoration: underline;
   cursor: pointer;
 }

@@ -134,9 +134,9 @@ export function GitCommitTooltip({
                   padding: "2px 8px",
                   fontSize: 11,
                   borderRadius: 10,
-                  backgroundColor: "var(--vscode-badge-background, #4d4d4d)",
-                  color: "var(--vscode-badge-foreground, #ffffff)",
-                  border: "1px solid var(--vscode-editorHoverWidget-border, rgba(255,255,255,0.2))",
+                  backgroundColor: "var(--fg)",
+                  color: "var(--bg)",
+                  border: "1px solid var(--line-strong)",
                   wordBreak: "break-all",
                 }}
               >
@@ -190,17 +190,13 @@ export function GitCommitTooltip({
                   {insertions > 0 && (
                     <span>
                       ,&nbsp;
-                      <span style={{ color: "var(--vscode-scmGraph-historyItemHoverAdditionsForeground, #81B88B)" }}>
-                        {t("commitInsertion", { count: insertions })}
-                      </span>
+                      <span style={{ color: "var(--green)" }}>{t("commitInsertion", { count: insertions })}</span>
                     </span>
                   )}
                   {deletions > 0 && (
                     <span>
                       ,&nbsp;
-                      <span style={{ color: "var(--vscode-scmGraph-historyItemHoverDeletionsForeground, #C74E39)" }}>
-                        {t("commitDeletion", { count: deletions })}
-                      </span>
+                      <span style={{ color: "var(--red)" }}>{t("commitDeletion", { count: deletions })}</span>
                     </span>
                   )}
                 </div>

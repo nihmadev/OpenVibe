@@ -5,13 +5,70 @@ import "@vscode/codicons/dist/codicon.css";
 import "./scm.css";
 import "./GitPanel.css";
 import type { GitPanelProps, FileStatus, BranchInfo, CommitGraphNode, CommitInfo, CommitFile } from "./types.js";
-import { computeSwimlanes, GraphRow, buildTree, buildCommitTree } from "./utils/commitGraphUtils.js";
+import {
+  computeSwimlanes,
+  GraphRow,
+  buildTree,
+  buildCommitTree,
+  SWIMLANE_WIDTH,
+  GRAPH_LEFT_PADDING,
+} from "./utils/commitGraphUtils.js";
 import { FileRow, TreeFolder, CommitFileRow, CommitTreeFolder } from "./components/GitFileList.js";
 import { GitCommitTooltip } from "./components/GitCommitTooltip.js";
 import { GitBranchModal } from "./components/GitBranchModal.js";
 
 export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
   const { t } = useI18n();
+
+  const handleOpenFile = useCallback(
+    (path: string) => {
+      if (!onOpenFile) return;
+      if (path.startsWith("git-diff:")) {
+        onOpenFile(path);
+        return;
+      }
+      if (path.startsWith(cwd)) {
+        onOpenFile(path);
+      } else {
+        const isWin = cwd.includes("\\");
+        const sep = cwd.endsWith("/") || cwd.endsWith("\\") ? "" : isWin ? "\\" : "/";
+        onOpenFile(cwd + sep + path);
+      }
+    },
+    [cwd, onOpenFile],
+  );
+
+  const getAbsPath = useCallback(
+    (relPath: string) => {
+      if (relPath.startsWith(cwd)) return relPath;
+      const isWin = cwd.includes("\\");
+      const sep = cwd.endsWith("/") || cwd.endsWith("\\") ? "" : isWin ? "\\" : "/";
+      return cwd + sep + relPath;
+    },
+    [cwd],
+  );
+
+  const openStagedFile = useCallback(
+    (path: string) => {
+      handleOpenFile(`git-diff:?type=staged&path=${encodeURIComponent(getAbsPath(path))}`);
+    },
+    [handleOpenFile, getAbsPath],
+  );
+
+  const openWorkingFile = useCallback(
+    (path: string) => {
+      handleOpenFile(`git-diff:?type=working&path=${encodeURIComponent(getAbsPath(path))}`);
+    },
+    [handleOpenFile, getAbsPath],
+  );
+
+  const openCommitFile = useCallback(
+    (hash: string, path: string) => {
+      handleOpenFile(`git-diff:?type=commit&hash=${hash}&path=${encodeURIComponent(getAbsPath(path))}`);
+    },
+    [handleOpenFile, getAbsPath],
+  );
+
   const [files, setFiles] = useState<FileStatus[]>([]);
   const [branches, setBranches] = useState<BranchInfo[]>([]);
   const [currentBranch, setCurrentBranch] = useState<string>("main");
@@ -190,7 +247,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
         vibe.git.status(cwd),
         vibe.git.branches(cwd),
         vibe.git.currentBranch(cwd),
-        vibe.git.graph(cwd, 80),
+        vibe.git.graph(cwd, 9999999),
       ]);
 
       if (statusRes.ok && Array.isArray(statusRes.data)) {
@@ -293,8 +350,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
             title={viewMode === "list" ? t("viewAsTree") : t("viewAsFlatList")}
             onClick={() => setViewMode(viewMode === "list" ? "tree" : "list")}
             style={{
-              backgroundColor:
-                viewMode === "tree" ? "var(--vscode-toolbar-activeBackground, rgba(90, 93, 94, 0.4))" : "transparent",
+              backgroundColor: viewMode === "tree" ? "var(--bg-3)" : "transparent",
             }}
           >
             <i className={viewMode === "list" ? "codicon codicon-list-tree" : "codicon codicon-list-flat"}></i>
@@ -402,8 +458,8 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                 <div
                   className="sc-input-wrap"
                   style={{
-                    backgroundColor: "var(--vscode-input-background, #252526)",
-                    border: "1px solid var(--vscode-input-border, #3c3c3c)",
+                    backgroundColor: "var(--bg-2)",
+                    border: "1px solid var(--line)",
                     borderRadius: "4px",
                     padding: "4px 8px",
                   }}
@@ -424,7 +480,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                       border: "none",
                       background: "transparent",
                       outline: "none",
-                      color: "var(--vscode-input-foreground, #cccccc)",
+                      color: "var(--fg)",
                       fontSize: "13px",
                       resize: "vertical",
                       padding: 0,
@@ -450,8 +506,8 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                   <div
                     className="sc-input-wrap"
                     style={{
-                      backgroundColor: "var(--vscode-input-background, #252526)",
-                      border: "1px solid var(--vscode-input-border, #3c3c3c)",
+                      backgroundColor: "var(--bg-2)",
+                      border: "1px solid var(--line)",
                       borderRadius: "4px",
                       padding: "2px 8px",
                     }}
@@ -460,7 +516,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                       className="codicon codicon-filter"
                       style={{
                         fontSize: 12,
-                        color: "var(--vscode-input-placeholderForeground, #858585)",
+                        color: "var(--fg-muted)",
                         opacity: 0.7,
                         marginRight: 6,
                         flexShrink: 0,
@@ -478,7 +534,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                         border: "none",
                         background: "transparent",
                         outline: "none",
-                        color: "var(--vscode-input-foreground, #cccccc)",
+                        color: "var(--fg)",
                         fontSize: "13px",
                         padding: 0,
                       }}
@@ -490,7 +546,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                         onClick={() => setSearchQuery("")}
                         style={{
                           fontSize: 12,
-                          color: "var(--vscode-icon-foreground, #c5c5c5)",
+                          color: "var(--fg-dim)",
                           cursor: "pointer",
                           marginLeft: 6,
                           flexShrink: 0,
@@ -549,7 +605,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                                 key={"staged-" + file.path}
                                 file={file}
                                 isStaged={true}
-                                onOpenFile={onOpenFile}
+                                onOpenFile={openStagedFile}
                                 onStageFile={handleStageFile}
                                 onUnstageFile={handleUnstageFile}
                                 onRevertFile={handleRevertFile}
@@ -566,7 +622,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                                   depth={1}
                                   expandedFolders={expandedFolders}
                                   onToggleFolder={toggleFolder}
-                                  onOpenFile={onOpenFile}
+                                  onOpenFile={openStagedFile}
                                   onStageFile={handleStageFile}
                                   onUnstageFile={handleUnstageFile}
                                   onRevertFile={handleRevertFile}
@@ -577,7 +633,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                                   key={"staged-tree-" + file.path}
                                   file={file}
                                   isStaged={true}
-                                  onOpenFile={onOpenFile}
+                                  onOpenFile={openStagedFile}
                                   onStageFile={handleStageFile}
                                   onUnstageFile={handleUnstageFile}
                                   onRevertFile={handleRevertFile}
@@ -632,7 +688,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                                 key={"changed-" + file.path}
                                 file={file}
                                 isStaged={false}
-                                onOpenFile={onOpenFile}
+                                onOpenFile={openWorkingFile}
                                 onStageFile={handleStageFile}
                                 onUnstageFile={handleUnstageFile}
                                 onRevertFile={handleRevertFile}
@@ -649,7 +705,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                                   depth={1}
                                   expandedFolders={expandedFolders}
                                   onToggleFolder={toggleFolder}
-                                  onOpenFile={onOpenFile}
+                                  onOpenFile={openWorkingFile}
                                   onStageFile={handleStageFile}
                                   onUnstageFile={handleUnstageFile}
                                   onRevertFile={handleRevertFile}
@@ -660,7 +716,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                                   key={"changed-tree-" + file.path}
                                   file={file}
                                   isStaged={false}
-                                  onOpenFile={onOpenFile}
+                                  onOpenFile={openWorkingFile}
                                   onStageFile={handleStageFile}
                                   onUnstageFile={handleUnstageFile}
                                   onRevertFile={handleRevertFile}
@@ -822,40 +878,75 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                           style={{
                             backgroundColor: "transparent",
                             fontSize: "12px",
-                            borderBottom: "1px solid var(--vscode-sideBar-border, rgba(255,255,255,0.08))",
+                            borderBottom: "1px solid var(--line)",
+                            display: "flex",
+                            paddingLeft: 4,
+                            paddingRight: 4,
                           }}
                         >
-                          {loadingCommitFiles[node.id] ? (
-                            <div style={{ padding: "8px 32px", opacity: 0.6 }}>Loading files...</div>
-                          ) : commitFilesMap[node.id] && commitFilesMap[node.id].length > 0 ? (
-                            <div className="scm-group-children" style={{ overflow: "hidden" }}>
-                              {(() => {
-                                const tree = buildCommitTree(commitFilesMap[node.id]);
+                          <div
+                            style={{
+                              width: `${GRAPH_LEFT_PADDING + Math.max(vm.inputSwimlanes.length, vm.outputSwimlanes.length, 1) * SWIMLANE_WIDTH + 8}px`,
+                              flexShrink: 0,
+                              position: "relative",
+                            }}
+                          >
+                            <svg
+                              style={{
+                                position: "absolute",
+                                top: 0,
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                width: "100%",
+                                height: "100%",
+                                overflow: "visible",
+                              }}
+                            >
+                              {vm.outputSwimlanes.map((lane, idx) => {
+                                const x = GRAPH_LEFT_PADDING + idx * SWIMLANE_WIDTH + SWIMLANE_WIDTH / 2;
                                 return (
-                                  <>
-                                    {Object.keys(tree.folders).map((fName) => (
-                                      <CommitTreeFolder
-                                        key={"commit-folder-" + tree.folders[fName].path}
-                                        folderName={fName}
-                                        folderData={tree.folders[fName]}
-                                        depth={1}
-                                        expandedCommitFolders={expandedCommitFolders}
-                                        onToggleCommitFolder={toggleCommitFolder}
-                                        onOpenFile={onOpenFile}
-                                      />
-                                    ))}
-                                    {tree.files.map((file) => (
-                                      <div key={"commit-tree-file-" + file.path} style={{ paddingLeft: `14px` }}>
-                                        <CommitFileRow file={file} onOpenFile={onOpenFile} />
-                                      </div>
-                                    ))}
-                                  </>
+                                  <line key={idx} x1={x} y1="0" x2={x} y2="100%" stroke={lane.color} strokeWidth="2" />
                                 );
-                              })()}
-                            </div>
-                          ) : commitFilesMap[node.id] ? (
-                            <div style={{ padding: "8px 32px", opacity: 0.6 }}>{t("noFilesChanged")}</div>
-                          ) : null}
+                              })}
+                            </svg>
+                          </div>
+                          <div style={{ flex: 1, overflow: "hidden", paddingBottom: 8 }}>
+                            {loadingCommitFiles[node.id] ? (
+                              <div style={{ padding: "8px 12px", opacity: 0.6 }}>Loading files...</div>
+                            ) : commitFilesMap[node.id] && commitFilesMap[node.id].length > 0 ? (
+                              <div className="scm-group-children" style={{ overflow: "hidden" }}>
+                                {(() => {
+                                  const tree = buildCommitTree(commitFilesMap[node.id]);
+                                  return (
+                                    <>
+                                      {Object.keys(tree.folders).map((fName) => (
+                                        <CommitTreeFolder
+                                          key={"commit-folder-" + tree.folders[fName].path}
+                                          folderName={fName}
+                                          folderData={tree.folders[fName]}
+                                          depth={0}
+                                          expandedCommitFolders={expandedCommitFolders}
+                                          onToggleCommitFolder={toggleCommitFolder}
+                                          onOpenFile={(path) => openCommitFile(node.id, path)}
+                                        />
+                                      ))}
+                                      {tree.files.map((file) => (
+                                        <div key={"commit-tree-file-" + file.path}>
+                                          <CommitFileRow
+                                            file={file}
+                                            onOpenFile={(path) => openCommitFile(node.id, path)}
+                                          />
+                                        </div>
+                                      ))}
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                            ) : commitFilesMap[node.id] ? (
+                              <div style={{ padding: "8px 12px", opacity: 0.6 }}>{t("noFilesChanged")}</div>
+                            ) : null}
+                          </div>
                         </div>
                       )}
                     </div>

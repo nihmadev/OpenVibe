@@ -57,7 +57,14 @@ export function FileRow({ file, isStaged, onOpenFile, onStageFile, onUnstageFile
           <span
             className={`scm-status-tag ${statusChar}`}
             style={{
-              color: `var(--vscode-gitDecoration-${statusChar === "M" ? "modified" : statusChar === "A" ? "added" : statusChar === "D" ? "deleted" : "untracked"}ResourceForeground)`,
+              color:
+                statusChar === "M"
+                  ? "var(--yellow)"
+                  : statusChar === "A"
+                    ? "var(--green)"
+                    : statusChar === "D"
+                      ? "var(--red)"
+                      : "var(--fg-dim)",
             }}
           >
             {statusChar}
@@ -188,7 +195,14 @@ export function CommitFileRow({ file, onOpenFile }: CommitFileRowProps) {
           <span
             className={`scm-status-tag ${statusChar}`}
             style={{
-              color: `var(--vscode-gitDecoration-${statusChar === "M" ? "modified" : statusChar === "A" ? "added" : statusChar === "D" ? "deleted" : "untracked"}ResourceForeground)`,
+              color:
+                statusChar === "M"
+                  ? "var(--yellow)"
+                  : statusChar === "A"
+                    ? "var(--green)"
+                    : statusChar === "D"
+                      ? "var(--red)"
+                      : "var(--fg-dim)",
             }}
           >
             {statusChar}

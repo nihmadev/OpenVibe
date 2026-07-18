@@ -38,7 +38,7 @@
   height: 100%;
   align-items: center;
   flex-flow: nowrap;
-  box-shadow: var(--vscode-shadow-sm);
+  box-shadow: 0 1px 3px var(--fg-muted);
 }
 
 .scm-view.hide-provider-counts .scm-provider > .count,
@@ -178,7 +178,7 @@
 }
 
 .scm-view .scm-provider > .status > .monaco-action-bar > .actions-container {
-  border-color: var(--vscode-sideBar-border);
+  border-color: var(--line);
 }
 
 .scm-view .monaco-list-row {
@@ -225,17 +225,17 @@
 .scm-view .monaco-list-row .history-item > .graph-container.current > .graph > circle:last-child,
 .scm-view .monaco-list-row .history-item > .graph-container.incoming-changes > .graph > circle:last-child,
 .scm-view .monaco-list-row .history-item > .graph-container.outgoing-changes > .graph > circle:last-child {
-  fill: var(--vscode-sideBar-background);
+  fill: var(--bg);
 }
 
 .scm-view .monaco-list-row:hover .history-item > .graph-container.current > .graph > circle:last-child,
 .scm-view .monaco-list-row:hover .history-item > .graph-container.incoming-changes > .graph > circle:last-child,
 .scm-view .monaco-list-row:hover .history-item > .graph-container.outgoing-changes > .graph > circle:last-child {
-  fill: var(--vscode-list-hoverBackground);
+  fill: var(--bg-2);
 }
 
 .scm-view .monaco-list-row .history-item > .graph-container > .graph > circle {
-  stroke: var(--vscode-sideBar-background);
+  stroke: var(--bg);
 }
 
 .scm-view .monaco-list-row:hover .history-item > .graph-container > .graph > circle:first-of-type {
@@ -243,7 +243,7 @@
 }
 
 .scm-view .monaco-list-row:hover .history-item > .graph-container > .graph > circle:nth-of-type(2) {
-  stroke: var(--vscode-list-hoverBackground);
+  stroke: var(--bg-2);
 }
 
 .scm-view .monaco-list-row.focused.selected .history-item > .graph-container > .graph > circle:first-of-type {
@@ -257,7 +257,7 @@
   > .graph-container
   > .graph
   > circle:nth-of-type(2) {
-  stroke: var(--vscode-list-activeSelectionBackground);
+  stroke: var(--bg-3);
 }
 
 .scm-view.scm-history-view
@@ -274,7 +274,7 @@
   > .graph-container.outgoing-changes
   > .graph
   > circle:last-child {
-  fill: var(--vscode-list-activeSelectionBackground);
+  fill: var(--bg-3);
 }
 
 .scm-view.scm-history-view
@@ -284,7 +284,7 @@
   > .graph-container
   > .graph
   > circle:nth-of-type(2) {
-  stroke: var(--vscode-list-inactiveSelectionBackground);
+  stroke: var(--line-strong);
 }
 
 .scm-view.scm-history-view
@@ -301,7 +301,7 @@
   > .graph-container.outgoing-changes
   > .graph
   > circle:last-child {
-  fill: var(--vscode-list-inactiveSelectionBackground);
+  fill: var(--line-strong);
 }
 
 .scm-view .monaco-list-row .history-item > .label-container {
@@ -472,11 +472,11 @@
 }
 
 .scm-view .scm-input .scm-editor .scm-editor-toolbar.scroll-decoration {
-  box-shadow: var(--vscode-scrollbar-shadow) 0 6px 6px -6px inset;
+  box-shadow: var(--line) 0 6px 6px -6px inset;
 }
 
 .scm-view .scm-input .scm-editor .scm-editor-toolbar .action-label.codicon.codicon-debug-stop {
-  color: var(--vscode-icon-foreground) !important;
+  color: var(--fg-dim) !important;
 }
 
 .scm-view .scm-editor-container .monaco-editor {
@@ -493,8 +493,8 @@
   display: flex;
   align-items: flex-start;
   box-sizing: border-box;
-  border: 1px solid var(--vscode-input-border, transparent);
-  background-color: var(--vscode-input-background);
+  border: 1px solid var(--line);
+  background-color: var(--bg-2);
   border-radius: 4px;
 }
 
@@ -542,27 +542,27 @@
 }
 
 .monaco-workbench .part.panel .scm-view .scm-editor-container {
-  outline: 1px solid var(--vscode-panelInput-border);
+  outline: 1px solid var(--line);
 }
 
 .scm-view .scm-editor.synthetic-focus,
 .monaco-workbench .part.panel .scm-view .scm-editor.synthetic-focus {
-  outline: 1px solid var(--vscode-focusBorder);
+  outline: 1px solid var(--accent);
   outline-offset: -1px;
 }
 
 .scm-view .scm-editor.validation-info {
-  outline: 1px solid var(--vscode-inputValidation-infoBorder) !important;
+  outline: 1px solid var(--cyan) !important;
   outline-offset: -1px;
 }
 
 .scm-view .scm-editor.validation-warning {
-  outline: 1px solid var(--vscode-inputValidation-warningBorder) !important;
+  outline: 1px solid var(--yellow) !important;
   outline-offset: -1px;
 }
 
 .scm-view .scm-editor.validation-error {
-  outline: 1px solid var(--vscode-inputValidation-errorBorder) !important;
+  outline: 1px solid var(--red) !important;
   outline-offset: -1px;
 }
 
@@ -578,21 +578,21 @@
 }
 
 .scm-editor-validation-container.validation-info {
-  background-color: var(--vscode-inputValidation-infoBackground);
-  border-color: var(--vscode-inputValidation-infoBorder);
-  color: var(--vscode-inputValidation-infoForeground);
+  background-color: color-mix(in srgb, var(--cyan) 15%, var(--bg));
+  border-color: var(--cyan);
+  color: var(--cyan);
 }
 
 .scm-editor-validation-container.validation-warning {
-  background-color: var(--vscode-inputValidation-warningBackground);
-  border-color: var(--vscode-inputValidation-warningBorder);
-  color: var(--vscode-inputValidation-warningForeground);
+  background-color: color-mix(in srgb, var(--yellow) 15%, var(--bg));
+  border-color: var(--yellow);
+  color: var(--yellow);
 }
 
 .scm-editor-validation-container.validation-error {
-  background-color: var(--vscode-inputValidation-errorBackground);
-  border-color: var(--vscode-inputValidation-errorBorder);
-  color: var(--vscode-inputValidation-errorForeground);
+  background-color: color-mix(in srgb, var(--red) 15%, var(--bg));
+  border-color: var(--red);
+  color: var(--red);
 }
 
 .scm-editor-validation {
@@ -610,14 +610,14 @@
 }
 
 .scm-editor-validation a {
-  color: var(--vscode-textLink-foreground);
+  color: var(--cyan);
   -webkit-user-select: none;
   user-select: none;
 }
 
 .scm-editor-validation a:active,
 .scm-editor-validation a:hover {
-  color: var(--vscode-textLink-activeForeground);
+  color: var(--accent);
 }
 
 .scm-editor-validation-actions {
@@ -632,15 +632,15 @@
 .monaco-workbench .part.basepanel > .content .scm-view .scm-editor-container .monaco-editor .margin,
 .monaco-workbench .part.basepanel > .content .scm-view .scm-editor-container .monaco-editor .monaco-editor-background {
   color: inherit;
-  background-color: var(--vscode-input-background);
+  background-color: var(--bg-2);
 }
 
 .scm-view .scm-editor-container .mtk1 {
-  color: var(--vscode-input-foreground);
+  color: var(--fg);
 }
 
 .scm-view .scm-editor-container .placeholder-text.mtk1 {
-  color: var(--vscode-input-placeholderForeground);
+  color: var(--fg-muted);
 }
 
 /* Repositories */
@@ -775,9 +775,9 @@
 }
 
 .pane-header .scm-graph-view-badge-container > .scm-graph-view-badge.monaco-count-badge.long {
-  background-color: var(--vscode-badge-background);
-  color: var(--vscode-badge-foreground);
-  border: 1px solid var(--vscode-contrastBorder);
+  background-color: var(--fg);
+  color: var(--bg);
+  border: 1px solid var(--line-strong);
   margin: 0 6px;
   padding: 2px 4px;
 }
@@ -793,7 +793,7 @@
 
 .monaco-toolbar .action-item > .action-label.scm-graph-repository-picker,
 .monaco-toolbar .action-item > .action-label.scm-graph-history-item-picker {
-  color: var(--vscode-icon-foreground);
+  color: var(--fg-dim);
   align-items: center;
   font-weight: normal;
   line-height: 16px;
@@ -801,7 +801,7 @@
 
 .monaco-toolbar .action-item.disabled > .action-label.scm-graph-repository-picker,
 .monaco-toolbar .action-item.disabled > .action-label.scm-graph-history-item-picker {
-  color: var(--vscode-disabledForeground);
+  color: var(--fg-muted);
 }
 
 .monaco-toolbar .action-label.scm-graph-repository-picker .codicon,
@@ -833,8 +833,8 @@
   display: flex;
   font-size: 0.8em;
   margin: 0 10px;
-  color: var(--vscode-debugView-stateLabelForeground);
-  background: var(--vscode-debugView-stateLabelBackground);
+  color: var(--fg-dim);
+  background: var(--bg-3);
   border-radius: 2px;
 }
 
@@ -880,12 +880,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--vscode-textLink-foreground);
+  color: var(--cyan);
 }
 
 .scm-history-view .history-item-load-more .history-item-placeholder .monaco-highlighted-label .codicon {
   font-size: 12px;
-  color: var(--vscode-textLink-foreground);
+  color: var(--cyan);
 }
 
 .scm-history-view .history-item-load-more .history-item-placeholder.shimmer {
@@ -894,7 +894,7 @@
 
 .scm-history-view .history-item-load-more .history-item-placeholder.shimmer .monaco-icon-label-container {
   height: 18px;
-  background: var(--vscode-scmGraph-historyItemHoverDefaultLabelBackground);
+  background: var(--bg-3);
   border-radius: 2px;
   opacity: 0.5;
 }

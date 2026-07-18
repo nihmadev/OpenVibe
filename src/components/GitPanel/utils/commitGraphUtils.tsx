@@ -35,13 +35,23 @@ export function formatRelativeTime(timestampSeconds: number): string {
   return years === 1 ? "1 year ago" : `${years} years ago`;
 }
 
-// Lane colors palette matching VS Code Git Graph
-export const LANE_COLORS = ["#3794ff", "#e06c75", "#98c379", "#d19a66", "#c678dd", "#56b6c2", "#e5c07b", "#61afef"];
+// Lane colors palette matching VS Code Git Graph - friendly pastel colors
+export const LANE_COLORS = [
+  "#519bc8", // Soft Blue
+  "#c87d46", // Soft Orange
+  "#6fb96f", // Soft Green
+  "#c06060", // Soft Red
+  "#9b6fbd", // Soft Purple
+  "#4db2b2", // Soft Cyan
+  "#c2b04f", // Soft Yellow
+  "#8e9ca8", // Soft Slate
+];
 
 export const SWIMLANE_WIDTH = 14;
 export const SWIMLANE_HEIGHT = 22;
-export const CIRCLE_RADIUS = 3;
-export const CIRCLE_STROKE_WIDTH = 1.5;
+export const CIRCLE_RADIUS = 3.5;
+export const CIRCLE_STROKE_WIDTH = 2;
+export const GRAPH_LEFT_PADDING = 8;
 
 export function computeSwimlanes(nodes: CommitGraphNode[]): CommitViewModel[] {
   let colorIndex = -1;
@@ -51,38 +61,63 @@ export function computeSwimlanes(nodes: CommitGraphNode[]): CommitViewModel[] {
     const node = nodes[index];
     const outputSwimlanesFromPreviousItem = viewModels.at(-1)?.outputSwimlanes ?? [];
     const inputSwimlanes = outputSwimlanesFromPreviousItem.map((i) => ({ ...i }));
-    const outputSwimlanes: SwimlaneNode[] = [];
 
-    let firstParentAdded = false;
+    const outputBuffer: (SwimlaneNode | null)[] = new Array(inputSwimlanes.length).fill(null);
 
-    if (node.parentIds.length > 0) {
-      for (const swimlane of inputSwimlanes) {
-        if (swimlane.id === node.id) {
-          if (!firstParentAdded) {
-            outputSwimlanes.push({
-              id: node.parentIds[0],
-              color: swimlane.color,
-            });
-            firstParentAdded = true;
+    let nodeFound = false;
+    let mainColor = LANE_COLORS[0];
+    const extraParents: SwimlaneNode[] = [];
+
+    for (let i = 0; i < inputSwimlanes.length; i++) {
+      const lane = inputSwimlanes[i];
+      if (lane.id === node.id) {
+        if (!nodeFound) {
+          nodeFound = true;
+          mainColor = lane.color;
+          if (node.parentIds.length > 0) {
+            outputBuffer[i] = { id: node.parentIds[0], color: mainColor };
+            for (let j = 1; j < node.parentIds.length; j++) {
+              colorIndex = (colorIndex + 1) % LANE_COLORS.length;
+              extraParents.push({ id: node.parentIds[j], color: LANE_COLORS[colorIndex] });
+            }
+          } else {
+            outputBuffer[i] = null;
           }
-          continue;
+        } else {
+          outputBuffer[i] = null;
         }
-        outputSwimlanes.push({ ...swimlane });
+      } else {
+        outputBuffer[i] = lane;
       }
-    } else {
-      for (const swimlane of inputSwimlanes) {
-        if (swimlane.id !== node.id) {
-          outputSwimlanes.push({ ...swimlane });
+    }
+
+    if (!nodeFound) {
+      if (node.parentIds.length > 0) {
+        colorIndex = (colorIndex + 1) % LANE_COLORS.length;
+        mainColor = LANE_COLORS[colorIndex];
+        extraParents.push({ id: node.parentIds[0], color: mainColor });
+        for (let j = 1; j < node.parentIds.length; j++) {
+          colorIndex = (colorIndex + 1) % LANE_COLORS.length;
+          extraParents.push({ id: node.parentIds[j], color: LANE_COLORS[colorIndex] });
         }
       }
     }
 
-    for (let i = firstParentAdded ? 1 : 0; i < node.parentIds.length; i++) {
-      colorIndex = (colorIndex + 1) % LANE_COLORS.length;
-      outputSwimlanes.push({
-        id: node.parentIds[i],
-        color: LANE_COLORS[colorIndex],
-      });
+    for (let i = 0; i < outputBuffer.length; i++) {
+      if (outputBuffer[i] === null && extraParents.length > 0) {
+        outputBuffer[i] = extraParents.shift()!;
+      }
+    }
+
+    const outputSwimlanes: SwimlaneNode[] = [];
+    for (const lane of outputBuffer) {
+      if (lane !== null) {
+        outputSwimlanes.push(lane);
+      }
+    }
+
+    for (const lane of extraParents) {
+      outputSwimlanes.push(lane);
     }
 
     viewModels.push({ node, inputSwimlanes, outputSwimlanes });
@@ -91,157 +126,173 @@ export function computeSwimlanes(nodes: CommitGraphNode[]): CommitViewModel[] {
   return viewModels;
 }
 
+function getShiftPath(x1: number, y1: number, x2: number, y2: number, shiftY: number): string {
+  if (x1 === x2) return `M ${x1} ${y1} V ${y2}`;
+
+  const dirX = x2 > x1 ? 1 : -1;
+  const dirY1 = shiftY >= y1 ? 1 : -1;
+  const dirY2 = y2 >= shiftY ? 1 : -1;
+
+  const absDeltaX = Math.abs(x2 - x1);
+  const radius = Math.min(6, absDeltaX / 2, Math.abs(shiftY - y1), Math.abs(y2 - shiftY));
+
+  const yStartArc1 = shiftY - radius * dirY1;
+  const xEndArc1 = x1 + radius * dirX;
+
+  const xStartArc2 = x2 - radius * dirX;
+  const yEndArc2 = shiftY + radius * dirY2;
+
+  return (
+    `M ${x1} ${y1} ` +
+    `V ${yStartArc1} ` +
+    `Q ${x1} ${shiftY}, ${xEndArc1} ${shiftY} ` +
+    `H ${xStartArc2} ` +
+    `Q ${x2} ${shiftY}, ${x2} ${yEndArc2} ` +
+    `V ${y2}`
+  );
+}
+
 export function GraphRow({ viewModel }: { viewModel: CommitViewModel }) {
   const { node, inputSwimlanes, outputSwimlanes } = viewModel;
 
   const inputIndex = inputSwimlanes.findIndex((n) => n.id === node.id);
   const circleIndex = inputIndex !== -1 ? inputIndex : inputSwimlanes.length;
 
-  const circleColor =
-    circleIndex < outputSwimlanes.length
-      ? outputSwimlanes[circleIndex].color
-      : circleIndex < inputSwimlanes.length
-        ? inputSwimlanes[circleIndex].color
-        : LANE_COLORS[0];
-
-  const getX = (idx: number) => idx * SWIMLANE_WIDTH + SWIMLANE_WIDTH / 2;
+  const getX = (idx: number) => GRAPH_LEFT_PADDING + idx * SWIMLANE_WIDTH + SWIMLANE_WIDTH / 2;
   const cy = SWIMLANE_HEIGHT / 2;
+  const h = SWIMLANE_HEIGHT;
 
   const paths: React.ReactNode[] = [];
 
-  let outputSwimlaneIndex = 0;
-  for (let index = 0; index < inputSwimlanes.length; index++) {
-    const color = inputSwimlanes[index].color;
+  const passThroughMap = new Map<number, number>();
+  const parentOutputMap = new Map<number, number>();
 
-    if (inputSwimlanes[index].id === node.id) {
-      if (index !== circleIndex) {
-        const d = `M ${getX(index)} 0 C ${getX(index)} ${cy * 0.6}, ${getX(circleIndex)} ${cy * 0.4}, ${getX(circleIndex)} ${cy}`;
-        paths.push(
-          <path key={`merge-${index}`} d={d} fill="none" stroke={color} strokeWidth="1" strokeLinecap="round" />,
-        );
-      } else {
-        outputSwimlaneIndex++;
+  let nf = false;
+  let pIdx = 0;
+  const extraParents: number[] = [];
+
+  const buffer: (string | null)[] = new Array(inputSwimlanes.length).fill(null);
+
+  for (let i = 0; i < inputSwimlanes.length; i++) {
+    if (inputSwimlanes[i].id === node.id) {
+      if (!nf) {
+        nf = true;
+        if (node.parentIds.length > 0) {
+          buffer[i] = `p0`;
+          for (pIdx = 1; pIdx < node.parentIds.length; pIdx++) {
+            extraParents.push(pIdx);
+          }
+        }
       }
     } else {
-      if (
-        outputSwimlaneIndex < outputSwimlanes.length &&
-        inputSwimlanes[index].id === outputSwimlanes[outputSwimlaneIndex].id
-      ) {
-        if (index === outputSwimlaneIndex) {
-          paths.push(
-            <path
-              key={`pass-${index}`}
-              d={`M ${getX(index)} 0 V ${SWIMLANE_HEIGHT}`}
-              fill="none"
-              stroke={color}
-              strokeWidth="1"
-              strokeLinecap="round"
-            />,
-          );
-        } else {
-          const d = `M ${getX(index)} 0 C ${getX(index)} ${cy}, ${getX(outputSwimlaneIndex)} ${cy}, ${getX(outputSwimlaneIndex)} ${SWIMLANE_HEIGHT}`;
-          paths.push(
-            <path key={`shift-${index}`} d={d} fill="none" stroke={color} strokeWidth="1" strokeLinecap="round" />,
-          );
-        }
-        outputSwimlaneIndex++;
+      buffer[i] = `in${i}`;
+    }
+  }
+
+  if (!nf) {
+    for (let p = 0; p < node.parentIds.length; p++) {
+      extraParents.push(p);
+    }
+  }
+
+  for (let i = 0; i < buffer.length; i++) {
+    if (buffer[i] === null && extraParents.length > 0) {
+      buffer[i] = `p${extraParents.shift()}`;
+    }
+  }
+
+  const finalLayout: string[] = [];
+  for (const val of buffer) {
+    if (val !== null) finalLayout.push(val);
+  }
+  for (const val of extraParents) {
+    finalLayout.push(`p${val}`);
+  }
+
+  for (let out = 0; out < finalLayout.length; out++) {
+    const val = finalLayout[out];
+    if (val.startsWith("p")) {
+      parentOutputMap.set(parseInt(val.substring(1)), out);
+    } else if (val.startsWith("in")) {
+      passThroughMap.set(parseInt(val.substring(2)), out);
+    }
+  }
+
+  let nodeFoundInGraph = false;
+
+  for (let i = 0; i < inputSwimlanes.length; i++) {
+    const color = inputSwimlanes[i].color;
+    if (inputSwimlanes[i].id === node.id) {
+      if (i === circleIndex) {
+        paths.push(<path key={`in-${i}`} d={`M ${getX(i)} 0 V ${cy}`} fill="none" stroke={color} strokeWidth="2" />);
+      } else {
+        const d = getShiftPath(getX(i), 0, getX(circleIndex), cy, cy * 0.5);
+        paths.push(<path key={`in-merge-${i}`} d={d} fill="none" stroke={color} strokeWidth="2" />);
+      }
+      if (!nodeFoundInGraph) nodeFoundInGraph = true;
+    } else {
+      const targetOutIdx = passThroughMap.get(i);
+      if (targetOutIdx !== undefined) {
+        const d = getShiftPath(getX(i), 0, getX(targetOutIdx), h, cy);
+        paths.push(<path key={`pass-shift-${i}`} d={d} fill="none" stroke={color} strokeWidth="2" />);
       }
     }
   }
 
-  for (let i = 1; i < node.parentIds.length; i++) {
-    let parentOutputIndex = -1;
-    for (let j = outputSwimlanes.length - 1; j >= 0; j--) {
-      if (outputSwimlanes[j].id === node.parentIds[i]) {
-        parentOutputIndex = j;
-        break;
-      }
+  for (let p = 0; p < node.parentIds.length; p++) {
+    const pOutIdx = parentOutputMap.get(p);
+    if (pOutIdx !== undefined) {
+      const color = outputSwimlanes[pOutIdx].color;
+      const d = getShiftPath(getX(circleIndex), cy, getX(pOutIdx), h, cy + cy * 0.5);
+      paths.push(<path key={`out-branch-${p}`} d={d} fill="none" stroke={color} strokeWidth="2" />);
     }
-    if (parentOutputIndex === -1) continue;
-    const color = outputSwimlanes[parentOutputIndex].color;
-    const d = `M ${getX(circleIndex)} ${cy} C ${getX(circleIndex)} ${cy + (SWIMLANE_HEIGHT - cy) * 0.6}, ${getX(parentOutputIndex)} ${cy + (SWIMLANE_HEIGHT - cy) * 0.4}, ${getX(parentOutputIndex)} ${SWIMLANE_HEIGHT}`;
-    paths.push(<path key={`parent-${i}`} d={d} fill="none" stroke={color} strokeWidth="1" strokeLinecap="round" />);
   }
 
-  if (inputIndex !== -1) {
-    paths.push(
-      <path
-        key="to-star"
-        d={`M ${getX(circleIndex)} 0 V ${cy}`}
-        fill="none"
-        stroke={inputSwimlanes[inputIndex].color}
-        strokeWidth="1"
-        strokeLinecap="round"
-      />,
-    );
-  }
-
-  if (node.parentIds.length > 0) {
-    paths.push(
-      <path
-        key="from-star"
-        d={`M ${getX(circleIndex)} ${cy} V ${SWIMLANE_HEIGHT}`}
-        fill="none"
-        stroke={circleColor}
-        strokeWidth="1"
-        strokeLinecap="round"
-      />,
-    );
+  let circleColor = LANE_COLORS[0];
+  if (nodeFoundInGraph) {
+    circleColor = inputSwimlanes[circleIndex].color;
+  } else if (node.parentIds.length > 0) {
+    circleColor = outputSwimlanes[parentOutputMap.get(0)!].color;
   }
 
   const cx = getX(circleIndex);
+  const bgFill = "var(--bg)";
 
   if (node.isHead) {
-    // HEAD: large hollow ring — visually prominent
-    paths.push(<circle key="head-bg" cx={cx} cy={cy} r={CIRCLE_RADIUS + 4} fill="var(--vscode-sideBar-background)" />);
+    paths.push(<circle key="head-bg" cx={cx} cy={cy} r={CIRCLE_RADIUS + 2} fill={bgFill} />);
     paths.push(
       <circle
         key="head"
         cx={cx}
         cy={cy}
-        r={CIRCLE_RADIUS + 3}
+        r={CIRCLE_RADIUS + 1}
         fill="transparent"
         stroke={circleColor}
         strokeWidth={2}
       />,
     );
+    paths.push(<circle key="head-inner" cx={cx} cy={cy} r={CIRCLE_RADIUS - 1.5} fill={circleColor} />);
   } else if (node.parentIds.length > 1) {
-    // Merge commit: medium hollow ring with inner dot
-    paths.push(<circle key="node-bg" cx={cx} cy={cy} r={CIRCLE_RADIUS + 1} fill="var(--vscode-sideBar-background)" />);
+    paths.push(<circle key="node-bg" cx={cx} cy={cy} r={CIRCLE_RADIUS + 1} fill={bgFill} />);
     paths.push(
       <circle
         key="node-outer"
         cx={cx}
         cy={cy}
-        r={CIRCLE_RADIUS + 1}
+        r={CIRCLE_RADIUS}
         fill="transparent"
         stroke={circleColor}
-        strokeWidth={CIRCLE_STROKE_WIDTH}
+        strokeWidth={2}
       />,
     );
-    paths.push(
-      <circle key="node-inner" cx={cx} cy={cy} r={CIRCLE_RADIUS - 2} fill={circleColor} stroke="transparent" />,
-    );
+    paths.push(<circle key="node-inner" cx={cx} cy={cy} r={CIRCLE_RADIUS - 2} fill={circleColor} />);
   } else {
-    // Regular commit: small solid dot
-    paths.push(
-      <circle key="node-bg" cx={cx} cy={cy} r={CIRCLE_RADIUS + 1.0} fill="var(--vscode-sideBar-background)" />,
-    );
-    paths.push(
-      <circle
-        key="node"
-        cx={cx}
-        cy={cy}
-        r={CIRCLE_RADIUS + 1.3}
-        fill={circleColor}
-        stroke={circleColor}
-        strokeWidth={CIRCLE_STROKE_WIDTH}
-      />,
-    );
+    paths.push(<circle key="node-bg" cx={cx} cy={cy} r={CIRCLE_RADIUS + 1} fill={bgFill} />);
+    paths.push(<circle key="node" cx={cx} cy={cy} r={CIRCLE_RADIUS} fill={circleColor} />);
   }
 
   const rowLanes = Math.max(inputSwimlanes.length, outputSwimlanes.length, circleIndex + 1, 1);
-  const width = rowLanes * SWIMLANE_WIDTH;
+  const width = GRAPH_LEFT_PADDING + rowLanes * SWIMLANE_WIDTH + 8;
 
   return (
     <div className="graph-container" style={{ width: `${width}px`, flexShrink: 0, height: 22, display: "flex" }}>
