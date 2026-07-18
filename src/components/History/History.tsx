@@ -357,6 +357,7 @@ function MessageFooter({
   onRegenerate?: (id: string) => void;
 }): React.ReactElement {
   const [copied, setCopied] = React.useState(false);
+  const { t } = useI18n();
   const hasDiff = React.useMemo(() => {
     // Find index of this item
     const idx = items.findIndex((it) => it.id === item.id);
@@ -401,14 +402,14 @@ function MessageFooter({
         <div className="msg__footer-left">
           <div className="msg__footer-item msg__footer-item--green">
             <CheckIcon />
-            <span>Completed</span>
+            <span>{t("completed")}</span>
           </div>
           <span className="msg__footer-sep">|</span>
           {hasDiff && (
             <>
               <div className="msg__footer-item">
                 <DiffIcon />
-                <span>Diff</span>
+                <span>{t("diff")}</span>
               </div>
               <span className="msg__footer-sep">|</span>
             </>
@@ -421,7 +422,7 @@ function MessageFooter({
           </div>
         </div>
         <div className="msg__footer-right">
-          <button className="msg__footer-btn" onClick={onCopy} title="Copy">
+          <button className="msg__footer-btn" onClick={onCopy} title={t("copyMessage")}>
             {copied ? (
               <span style={{ color: "var(--green)" }}>
                 <CheckIcon />
@@ -430,7 +431,7 @@ function MessageFooter({
               <CopyIcon />
             )}
           </button>
-          <button className="msg__footer-btn" onClick={() => onRegenerate?.(item.id)} title="Regenerate">
+          <button className="msg__footer-btn" onClick={() => onRegenerate?.(item.id)} title={t("regenerateMessage")}>
             <RefreshIcon2 />
           </button>
         </div>

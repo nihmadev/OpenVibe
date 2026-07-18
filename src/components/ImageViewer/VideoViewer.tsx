@@ -93,7 +93,7 @@ export function VideoViewer({ path }: Props): React.ReactElement {
         const mime = getVideoMimeType(ext);
         setDataUrl(`data:${mime};base64,${res.data}`);
       } catch (e: any) {
-        if (!cancelled) setError(e.message || "Failed to read file");
+        if (!cancelled) setError(e.message || t("failedReadFile"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -238,7 +238,7 @@ export function VideoViewer({ path }: Props): React.ReactElement {
             <button
               className="video-viewer__btn"
               onClick={togglePlay}
-              title={playing ? "Pause (Space)" : "Play (Space)"}
+              title={playing ? t("videoPause") : t("videoPlay")}
             >
               {playing ? <PauseIcon /> : <PlayIcon />}
             </button>
@@ -252,7 +252,11 @@ export function VideoViewer({ path }: Props): React.ReactElement {
             <div className="video-viewer__spacer" />
 
             {/* Mute */}
-            <button className="video-viewer__btn" onClick={toggleMute} title={muted ? "Unmute (M)" : "Mute (M)"}>
+            <button
+              className="video-viewer__btn"
+              onClick={toggleMute}
+              title={muted ? t("videoUnmute") : t("videoMute")}
+            >
               {muted || volume === 0 ? <VolumeMutedIcon /> : volume < 0.5 ? <VolumeLowIcon /> : <VolumeHighIcon />}
             </button>
 
@@ -266,7 +270,7 @@ export function VideoViewer({ path }: Props): React.ReactElement {
                 step={0.05}
                 value={muted ? 0 : volume}
                 onChange={handleVolumeChange}
-                title="Volume"
+                title={t("videoVolume")}
               />
             </div>
 
@@ -275,7 +279,7 @@ export function VideoViewer({ path }: Props): React.ReactElement {
               <button
                 className="video-viewer__btn video-viewer__speed-btn"
                 onClick={() => setShowSpeedMenu(!showSpeedMenu)}
-                title="Playback speed"
+                title={t("videoPlaybackSpeed")}
               >
                 {playbackRate}x
               </button>
@@ -297,7 +301,7 @@ export function VideoViewer({ path }: Props): React.ReactElement {
             </div>
 
             {/* Fullscreen */}
-            <button className="video-viewer__btn" onClick={toggleFullscreen} title="Fullscreen (F)">
+            <button className="video-viewer__btn" onClick={toggleFullscreen} title={t("videoFullscreen")}>
               <FullscreenIcon />
             </button>
           </div>

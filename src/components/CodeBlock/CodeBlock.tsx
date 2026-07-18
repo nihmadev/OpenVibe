@@ -314,13 +314,42 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
 
   useEffect(() => {
     const ed = editorRef.current;
+    const m = monacoRef.current;
     if (!ed) return;
     const model = ed.getModel();
     if (!model || model.isDisposed?.()) return;
     const latestCode = codeRef.current;
-    if (model.getValue() !== latestCode) {
-      model.setValue(latestCode);
+    const currentValue = model.getValue();
+    if (currentValue !== latestCode) {
+      const prevScrollTop = ed.getScrollTop();
+      const prevScrollLeft = ed.getScrollLeft();
+      const prevSelection = ed.getSelection();
+
+      if (m && latestCode.startsWith(currentValue)) {
+        const appendedText = latestCode.slice(currentValue.length);
+        const lineCount = model.getLineCount();
+        const lastLineMaxColumn = model.getLineMaxColumn(lineCount);
+        model.pushEditOperations(
+          [],
+          [
+            {
+              range: new m.Range(lineCount, lastLineMaxColumn, lineCount, lastLineMaxColumn),
+              text: appendedText,
+            },
+          ],
+          () => null,
+        );
+      } else {
+        model.setValue(latestCode);
+      }
+
       try {
+        if (prevSelection && !prevSelection.isEmpty()) {
+          ed.setSelection(prevSelection);
+        }
+        ed.setScrollTop(prevScrollTop);
+        ed.setScrollLeft(prevScrollLeft);
+
         const lines = latestCode.split("\n").length;
         const h = Math.max(Math.min(lines * 18 + 12, 600), 26);
         if (containerRef.current) {

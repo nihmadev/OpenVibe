@@ -76,7 +76,7 @@ export function ImageViewer({ path }: Props): React.ReactElement {
         const url = `data:${mime};base64,${res.data}`;
         setDataUrl(url);
       } catch (e: any) {
-        if (!cancelled) setError(e.message || "Failed to read file");
+        if (!cancelled) setError(e.message || t("failedReadFile"));
       } finally {
         if (!cancelled) setLoading(false);
       }

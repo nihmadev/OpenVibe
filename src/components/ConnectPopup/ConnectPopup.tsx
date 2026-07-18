@@ -4,6 +4,7 @@ import type { Provider, KeyValuePair } from "../../types.js";
 import { PROVIDER_TEMPLATES, getProviderIconPath } from "../../constants.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { useTheme } from "../../hooks/useTheme.js";
+import { Input } from "../ui/index.js";
 
 interface Template {
   id: string;
@@ -55,14 +56,14 @@ function PairEditor({
     <div className="connect-popup__pairs">
       {pairs.map((p, i) => (
         <div key={i} className="connect-popup__pair-row">
-          <input
-            className="connect-popup__input connect-popup__pair-key"
+          <Input
+            containerClassName="connect-popup__input connect-popup__pair-key"
             value={p.key}
             onChange={(e) => change(i, "key", e.target.value)}
             placeholder={keyPlaceholder}
           />
-          <input
-            className="connect-popup__input connect-popup__pair-value"
+          <Input
+            containerClassName="connect-popup__input connect-popup__pair-value"
             value={p.value}
             onChange={(e) => change(i, "value", e.target.value)}
             placeholder={valuePlaceholder}
@@ -167,40 +168,47 @@ export function ConnectPopup({
         <div className="connect-popup__body">
           {(custom || isEditing) && (
             <div className="connect-popup__section">
-              <input
-                className="connect-popup__input"
+              <Input
+                containerClassName="connect-popup__input"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder={t("name")}
               />
-              <input
-                className="connect-popup__input"
+              <Input
+                containerClassName="connect-popup__input"
                 value={form.baseUrl}
                 onChange={(e) => setForm({ ...form, baseUrl: e.target.value })}
-                placeholder="https://api.example.com/v1"
+                placeholder={t("baseUrlPlaceholder")}
               />
             </div>
           )}
 
           <div className="connect-popup__section">
-            <div className="connect-popup__input-wrap">
-              <input
-                className="connect-popup__input connect-popup__input--key"
-                type={showKey ? "text" : "password"}
-                value={form.apiKey}
-                onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
-                placeholder={t("apiKeyPlaceholder")}
-              />
-              <button
-                className="connect-popup__eye"
-                onClick={() => setShowKey((v) => !v)}
-                tabIndex={-1}
-                type="button"
-                aria-label={showKey ? t("hideKey") : t("showKey")}
-              >
-                {showKey ? <EyeOffIcon /> : <EyeIcon />}
-              </button>
-            </div>
+            <Input
+              containerClassName="connect-popup__input"
+              type={showKey ? "text" : "password"}
+              value={form.apiKey}
+              onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
+              placeholder={t("apiKeyPlaceholder")}
+              rightElement={
+                <button
+                  className="connect-popup__eye"
+                  onClick={() => setShowKey((v) => !v)}
+                  tabIndex={-1}
+                  type="button"
+                  aria-label={showKey ? t("hideKey") : t("showKey")}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    display: "flex",
+                    color: "var(--vscode-input-placeholderForeground)",
+                  }}
+                >
+                  {showKey ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              }
+            />
           </div>
 
           {(custom || isEditing) && (
@@ -208,11 +216,11 @@ export function ConnectPopup({
               <div className="connect-popup__section">
                 <label className="connect-popup__label">{t("customIcon")}</label>
                 <div className="connect-popup__icon-row">
-                  <input
-                    className="connect-popup__input"
+                  <Input
+                    containerClassName="connect-popup__input"
                     value={form.customIcon && !form.customIcon.startsWith("data:") ? form.customIcon : ""}
                     onChange={(e) => setForm({ ...form, customIcon: e.target.value })}
-                    placeholder="https://example.com/icon.svg"
+                    placeholder={t("iconUrlPlaceholder")}
                   />
                   <button
                     className="connect-popup__icon-btn"
@@ -232,11 +240,11 @@ export function ConnectPopup({
 
               <div className="connect-popup__section">
                 <label className="connect-popup__label">{t("modelsUrl")}</label>
-                <input
-                  className="connect-popup__input"
+                <Input
+                  containerClassName="connect-popup__input"
                   value={form.modelsUrl}
                   onChange={(e) => setForm({ ...form, modelsUrl: e.target.value })}
-                  placeholder="https://api.example.com/v1/models"
+                  placeholder={t("modelsUrlPlaceholder")}
                 />
               </div>
 

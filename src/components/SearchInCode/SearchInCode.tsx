@@ -130,17 +130,7 @@ export function SearchInCode({ cwd, onOpenFile, onClose }: SearchInCodeProps): R
       {query.trim() && !searching && (
         <div className="sc-summary">
           <span className="sc-summary-text">
-            {resultCount === 0
-              ? t("noResultsFound")
-              : (() => {
-                  const mod10 = resultCount % 10;
-                  const mod100 = resultCount % 100;
-                  let key: string;
-                  if (mod10 === 1 && mod100 !== 11) key = "searchInCodeResults_one";
-                  else if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) key = "searchInCodeResults_few";
-                  else key = "searchInCodeResults";
-                  return t(key, { count: String(resultCount), fileCount: String(fileCount) });
-                })()}
+            {resultCount === 0 ? t("noResultsFound") : t("searchInCodeResults", { count: resultCount, fileCount })}
           </span>
         </div>
       )}

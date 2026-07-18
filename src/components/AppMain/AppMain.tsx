@@ -492,9 +492,6 @@ export function AppMain({
             {fileTreeOpen && !gitPanelOpen && (
               <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={2400} />
             )}
-            {gitPanelOpen && (
-              <ResizeHandle targetRef={gitPanelRef} onCommit={setGitWidth} minWidth={160} maxWidth={2400} />
-            )}
           </div>
 
           {/* Git Panel */}
@@ -507,9 +504,11 @@ export function AppMain({
                 : { flex: "0 1 0", minWidth: 0, maxWidth: 0 }
             }
           >
+            <ResizeHandle targetRef={gitPanelRef} onCommit={setGitWidth} minWidth={200} maxWidth={2400} />
             <div className="layout__search-code" style={{ flex: 1, minWidth: 200, maxWidth: 2400 }}>
               <GitPanel cwd={cwd} onOpenFile={handleOpenFile} onClose={onCloseGitPanel} />
             </div>
+            <ResizeHandle targetRef={gitPanelRef} onCommit={setGitWidth} minWidth={200} maxWidth={2400} />
             {fileTreeOpen && (
               <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={2400} />
             )}
@@ -536,18 +535,11 @@ export function AppMain({
               {fileTreeOpen && !gitPanelOpen && (
                 <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={2400} />
               )}
-              {gitPanelOpen && !searchInCodeOpen && (
-                <ResizeHandle targetRef={gitPanelRef} onCommit={setGitWidth} minWidth={160} maxWidth={2400} />
-              )}
             </>
           )}
 
-          {/* When no editor/search, still need the resize handle before file tree */}
           {!searchInCodeOpen && openFiles.length === 0 && fileTreeOpen && !gitPanelOpen && (
             <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={2400} />
-          )}
-          {!searchInCodeOpen && openFiles.length === 0 && gitPanelOpen && (
-            <ResizeHandle targetRef={gitPanelRef} onCommit={setGitWidth} minWidth={160} maxWidth={2400} />
           )}
 
           {/* File tree sidebar */}

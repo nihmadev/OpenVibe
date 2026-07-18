@@ -32,7 +32,7 @@
 .code-block__action-btn,
 .code-block__copy {
   border: 0;
-  background: var(--bg-2);
+  background: transparent;
   color: var(--fg-muted);
   width: 26px;
   height: 26px;
