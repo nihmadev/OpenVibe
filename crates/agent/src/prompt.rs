@@ -120,7 +120,9 @@ pub fn system_prompt_with_scg2(cwd: &str, scg2_context: Option<&str>) -> String 
         "- All `<thought>` blocks MUST ALWAYS be in English.",
         "- User-facing responses outside `<thought>` MUST match the user's language (e.g., if the user writes in Russian, respond in Russian). If the user starts a conversation in a language other than English, acknowledge the request and continue in that language for all conversational parts outside <thought> tags.",
         "- For mathematical notation: use LaTeX (`\\( \\)` for inline, `\\[ \\]` for block).",
-        "- When displaying directory trees or file layouts in chat, use markdown code blocks with language `tree` (```tree).",
+        "- PROACTIVELY render file and directory structures with the dedicated `tree` code-block language. Whenever your response contains a project layout, a list of files grouped by folders, a set of created/modified files, or an explanation of where files live, prefer a compact visual tree over a flat bullet list or plain-text paths.",
+        "- Use this exact format for file trees: ```tree\nproject/\n├── src/\n│   └── main.rs\n└── README.md\n```. Keep the tree focused on the relevant files (do not dump the whole repository), use `├──`, `└──`, and `│` connectors, and add short annotations only when they improve orientation.",
+        "- Treat `tree` blocks as the default presentation for filesystem structure, not an opt-in response to a user request. Use ordinary markdown lists only for non-hierarchical items; do not use `tree` for source code, logs, or arbitrary lists.",
         "- Keep user responses concise, clear, and formatted in clean GitHub-style markdown.",
     ]
     .join("\n");

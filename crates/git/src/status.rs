@@ -196,3 +196,46 @@ pub fn get_file_diff(path: &str, file_path: &str) -> Result<String> {
     })?;
     Ok(diff_text)
 }
+
+pub fn get_file_content_at_ref(path: &str, file_path: &str, ref_name: &str) -> Result<String> {
+    let repo = open(path)?;
+
+    // git2 tree/index APIs require paths relative to the repo root.
+    // Strip the repo prefix if an absolute path was supplied.
+    let repo_root = std::path::Path::new(path)
+        .canonicalize()
+        .unwrap_or_else(|_| std::path::PathBuf::from(path));
+    let abs_file = std::path::Path::new(file_path);
+    let relative: std::path::PathBuf = if abs_file.is_absolute() {
+        abs_file
+            .strip_prefix(&repo_root)
+            .unwrap_or(abs_file)
+            .to_path_buf()
+    } else {
+        abs_file.to_path_buf()
+    };
+    let relative = relative.as_path();
+
+    if ref_name == "WORKING" {
+        let full_path = repo_root.join(relative);
+        return std::fs::read_to_string(&full_path)
+            .map_err(|e| crate::error::GitError::Other(e.to_string()));
+    }
+
+    if ref_name == "INDEX" {
+        let index = repo.index()?;
+        if let Some(entry) = index.get_path(relative, 0) {
+            let blob = repo.find_blob(entry.id)?;
+            return Ok(String::from_utf8_lossy(blob.content()).into_owned());
+        }
+        return Err(crate::error::GitError::Other("Not found in index".into()));
+    }
+
+    // Try as a commit/ref
+    let obj = repo.revparse_single(ref_name)?;
+    let commit = obj.peel_to_commit()?;
+    let tree = commit.tree()?;
+    let entry = tree.get_path(relative)?;
+    let blob = repo.find_blob(entry.id())?;
+    Ok(String::from_utf8_lossy(blob.content()).into_owned())
+}

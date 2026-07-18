@@ -9,6 +9,12 @@ use crate::request::stream_chat;
 
 const MAX_TURNS: usize = 25;
 
+/// Keep tool failures useful to the model as a diagnostic hint. The UI filters
+/// messages carrying this marker instead of rendering raw error output.
+fn tool_error_hint(error: String) -> String {
+    format!("[tool-error] Tool execution failed. Hint: {error}")
+}
+
 struct SharedBuffer {
     buf: String,
     last_emit: std::time::Instant,
@@ -75,12 +81,10 @@ fn take_file_snapshot(path: &str) -> Option<crate::snapshot::FileSnapshot> {
 }
 
 impl Agent {
-    pub async fn send(
+    pub fn add_user_message(
         &mut self,
         input: String,
         content_parts: Option<Vec<serde_json::Value>>,
-        executor: &dyn ToolExecutor,
-        client: &reqwest::Client,
         emit: &(dyn for<'a> Fn(&'a str, serde_json::Value) + Send + Sync),
     ) {
         let content: serde_json::Value;
@@ -138,7 +142,14 @@ impl Agent {
             serde_json::json!({"text": display, "index": user_index}),
         );
         emit("vibe:agent:busy", serde_json::json!({"busy": true}));
+    }
 
+    pub async fn send(
+        &mut self,
+        executor: &dyn ToolExecutor,
+        client: &reqwest::Client,
+        emit: &(dyn for<'a> Fn(&'a str, serde_json::Value) + Send + Sync),
+    ) {
         let tool_defs = executor.definitions();
         let cwd = self.config().cwd.clone();
         let llm_config = self.config().llm_config();
@@ -357,7 +368,8 @@ impl Agent {
                         match serde_json::from_str(args_str) {
                             Ok(v) => v,
                             Err(e) => {
-                                let err_msg = format!("Invalid JSON arguments: {e}");
+                                let err_msg =
+                                    tool_error_hint(format!("Invalid JSON arguments: {e}"));
                                 emit(
                                     "vibe:agent:tool-result",
                                     serde_json::json!({
@@ -396,7 +408,7 @@ impl Agent {
 
                 for ((call, _, _), result) in prepared_calls.into_iter().zip(results) {
                     let is_ok = result.is_ok();
-                    let result_text = result.unwrap_or_else(|e| e);
+                    let result_text = result.map_or_else(tool_error_hint, |text| text);
 
                     emit(
                         "vibe:agent:tool-result",
@@ -430,7 +442,8 @@ impl Agent {
                         match serde_json::from_str(args_str) {
                             Ok(v) => v,
                             Err(e) => {
-                                let err_msg = format!("Invalid JSON arguments: {e}");
+                                let err_msg =
+                                    tool_error_hint(format!("Invalid JSON arguments: {e}"));
                                 emit(
                                     "vibe:agent:tool-result",
                                     serde_json::json!({
@@ -478,7 +491,7 @@ impl Agent {
                         .execute(tool_name, &parsed_args, &cwd, &self.cancel, emit)
                         .await;
                     let is_ok = result.is_ok();
-                    let result_text = result.unwrap_or_else(|e| e);
+                    let result_text = result.map_or_else(tool_error_hint, |text| text);
 
                     // Store snapshot if file was modified
                     if let Some(snap) = snapshot {
