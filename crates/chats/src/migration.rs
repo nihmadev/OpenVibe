@@ -27,8 +27,8 @@ pub fn run(conn: &mut Connection) -> rusqlite::Result<()> {
         let msgs: Vec<serde_json::Value> = serde_json::from_str(json).unwrap_or_default();
         for msg in &msgs {
             tx.execute(
-                "INSERT INTO messages (chat_id, role, content, name, tool_call_id, tool_calls, reasoning_content)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                "INSERT INTO messages (chat_id, role, content, name, tool_call_id, tool_calls, reasoning_content, reasoning_name)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
                 params![
                     chat_id,
                     msg.get("role").and_then(|v| v.as_str()).unwrap_or("user"),
@@ -37,6 +37,7 @@ pub fn run(conn: &mut Connection) -> rusqlite::Result<()> {
                     msg.get("tool_call_id").and_then(|v| v.as_str()),
                     msg.get("tool_calls").map(|v| v.to_string()),
                     msg.get("reasoning_content").and_then(|v| v.as_str()),
+                    msg.get("reasoning_name").and_then(|v| v.as_str()),
                 ],
             )?;
         }

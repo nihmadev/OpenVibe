@@ -13,6 +13,7 @@ pub struct FileStatus {
     pub staged: bool,
     pub index_status: String,
     pub worktree_status: String,
+    pub is_dir: bool,
 }
 
 pub fn get_status(path: &str) -> Result<Vec<FileStatus>> {
@@ -28,14 +29,14 @@ pub fn get_status(path: &str) -> Result<Vec<FileStatus>> {
     let mut files = Vec::new();
 
     for entry in statuses.iter() {
-        let file = entry_to_file_status(&entry)?;
+        let file = entry_to_file_status(&entry, path)?;
         files.push(file);
     }
 
     Ok(files)
 }
 
-fn entry_to_file_status(entry: &StatusEntry) -> Result<FileStatus> {
+fn entry_to_file_status(entry: &StatusEntry, repo_path: &str) -> Result<FileStatus> {
     let path = entry.path().map(|s| s.to_string()).unwrap_or_default();
     let status = entry.status();
 
@@ -59,6 +60,14 @@ fn entry_to_file_status(entry: &StatusEntry) -> Result<FileStatus> {
         worktree_status.clone()
     };
 
+    // Determine if this entry is a directory (e.g. submodule or untracked dir)
+    let is_dir = path.ends_with('/') || path.ends_with('\\') || {
+        let full_path = std::path::Path::new(repo_path).join(&path);
+        std::fs::metadata(&full_path)
+            .map(|m| m.is_dir())
+            .unwrap_or(false)
+    };
+
     Ok(FileStatus {
         path,
         original_path,
@@ -66,6 +75,7 @@ fn entry_to_file_status(entry: &StatusEntry) -> Result<FileStatus> {
         staged,
         index_status,
         worktree_status,
+        is_dir,
     })
 }
 

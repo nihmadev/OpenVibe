@@ -28,10 +28,12 @@ impl ChatStore {
                 tool_call_id      TEXT,
                 tool_calls        TEXT,
                 reasoning_content TEXT,
+                reasoning_name    TEXT,
                 created_at        INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
             )",
         )?;
         conn.execute_batch("CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id)")?;
+        let _ = conn.execute_batch("ALTER TABLE messages ADD COLUMN reasoning_name TEXT");
 
         migration::run(&mut conn)?;
 
@@ -81,7 +83,7 @@ impl ChatStore {
         };
 
         let mut msg_stmt = self.conn.prepare(
-            "SELECT role, content, name, tool_call_id, tool_calls, reasoning_content
+            "SELECT role, content, name, tool_call_id, tool_calls, reasoning_content, reasoning_name
                  FROM messages WHERE chat_id = ? ORDER BY id ASC",
         )?;
 
@@ -94,11 +96,20 @@ impl ChatStore {
                     row.get::<_, Option<String>>(3)?,
                     row.get::<_, Option<String>>(4)?,
                     row.get::<_, Option<String>>(5)?,
+                    row.get::<_, Option<String>>(6)?,
                 ))
             })?
             .filter_map(|r| r.ok())
             .map(
-                |(role, content_json, name, tool_call_id, tool_calls_json, reasoning)| {
+                |(
+                    role,
+                    content_json,
+                    name,
+                    tool_call_id,
+                    tool_calls_json,
+                    reasoning,
+                    reasoning_name,
+                )| {
                     let content = content_json
                         .map(|s| serde_json::from_str(&s).unwrap_or(serde_json::Value::String(s)));
                     let tool_calls = tool_calls_json.and_then(|s| serde_json::from_str(&s).ok());
@@ -109,6 +120,7 @@ impl ChatStore {
                         tool_call_id,
                         tool_calls,
                         reasoning_content: reasoning,
+                        reasoning_name,
                     }
                 },
             )
@@ -138,8 +150,8 @@ impl ChatStore {
 
         {
             let mut stmt = tx.prepare(
-                "INSERT INTO messages (chat_id, role, content, name, tool_call_id, tool_calls, reasoning_content)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)"
+                "INSERT INTO messages (chat_id, role, content, name, tool_call_id, tool_calls, reasoning_content, reasoning_name)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)"
             )?;
 
             for msg in &record.messages {
@@ -160,6 +172,7 @@ impl ChatStore {
                         .as_ref()
                         .map(|tc| serde_json::to_string(tc).unwrap_or_default()),
                     msg.reasoning_content,
+                    msg.reasoning_name,
                 ])?;
             }
         }
