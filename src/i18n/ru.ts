@@ -18,6 +18,9 @@ export const ru = {
   showThinkingDesc: "Отображать процесс размышления модели",
   renderFileTree: "Красивая структура папок",
   renderFileTreeDesc: "Отображать деревья файлов как красивый визуальный компонент, а не сырой текст",
+  useRegionalProxy: "Использовать региональный прокси (Европа)",
+  useRegionalProxyDesc:
+    "Маршрутизировать API-запросы через быстрый прокси-сервер в Европе для обхода региональных ограничений",
 
   // Appearance
   appearance: "Внешний вид",
@@ -519,6 +522,8 @@ export const ru = {
 
   // GitPanel
   sourceControl: "Система контроля версий",
+  hideSourceControl: "Скрыть контроль версий",
+  showSourceControl: "Показать контроль версий",
   viewAsFlatList: "Вид плоским списком",
   viewsAndMoreActions: "Виды и дополнительные действия...",
   stageAllChanges: "Индексировать все изменения",
@@ -574,6 +579,28 @@ export const ru = {
   borderStyleDesc: "Включить или выключить рамки панелей",
   borderStyleBordered: "С рамками",
   borderStyleBorderless: "Без рамок",
+
+  // Onboarding / WelcomeScreen
+  welcomeGreeting: "Привет, {name}",
+  welcomeThanks: "Спасибо за установку OpenVibe! Давайте подстроим всё для вашей комфортной работы.",
+  letsVibeBtn: "Let's vibe!",
+  onboardingStepThemeTitle: "Выберите стиль интерьера",
+  onboardingStepThemeDesc: "Выберите одну из популярных тем. Она применится в реальном времени.",
+  continueBtn: "Продолжить",
+  backBtn: "Назад",
+  onboardingStepSettingsTitle: "Настройка рабочей среды",
+  onboardingStepSettingsDesc: "Персонализируйте ключевые параметры приложения. Их всегда можно изменить позже.",
+  onboardingStepAnimationTitle: "Настройка анимаций",
+  onboardingStepAnimationDesc: "Выберите стиль переходов для разных элементов интерфейса и их плавность.",
+  startVibingBtn: "Начать работать",
+  rerunOnboarding: "Перезапустить мастер настройки",
+  rerunOnboardingDesc: "Заново пройти приветственный экран и быструю настройку",
+  animationSpeed: "Скорость анимаций",
+  animationSpeedDesc: "Плавность интерфейсных переходов и эффектов",
+  animSmooth: "Плавные (1x)",
+  animSnappy: "Быстрые (0.5x)",
+  animUltraSmooth: "Ультра плавные (2x)",
+  animDisabled: "Отключены (0x)",
 };
 
 export type Translations = typeof ru;
