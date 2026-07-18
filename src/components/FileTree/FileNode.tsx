@@ -170,8 +170,22 @@ export function FileNode(props: NodeProps): React.ReactElement {
               style={{ left: 8 + depth * 12 + 6 }}
             />
             {nodeState?.loading && (
-              <div className="ftree__loading" style={{ paddingLeft: 8 + (depth + 1) * 12 }}>
-                {t("loading")}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                  padding: "4px 8px 4px " + (8 + (depth + 1) * 12) + "px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div className="skeleton-item skeleton-circle skeleton-shimmer" style={{ width: 12, height: 12 }} />
+                  <div className="skeleton-item skeleton-line skeleton-shimmer" style={{ width: "65%", height: 12 }} />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div className="skeleton-item skeleton-circle skeleton-shimmer" style={{ width: 12, height: 12 }} />
+                  <div className="skeleton-item skeleton-line skeleton-shimmer" style={{ width: "50%", height: 12 }} />
+                </div>
               </div>
             )}
             {nodeState?.children?.map((child, idx, arr) => (

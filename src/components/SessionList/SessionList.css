@@ -40,7 +40,6 @@
   animation-name: var(--anim-sidebar-slide-keyframes, slide-up-in);
   animation-duration: calc(var(--anim-sidebar-slide-duration, 0.2s) * var(--anim-sidebar-slide-enabled, 1));
   animation-timing-function: var(--anim-sidebar-slide-easing, cubic-bezier(0.2, 0, 0.2, 1));
-  animation-fill-mode: both;
 }
 
 .session-list__resize-handle {

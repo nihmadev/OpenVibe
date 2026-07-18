@@ -77,7 +77,6 @@ export function SearchTreeView({
               style={{ paddingLeft: 8 + (depth + 1) * 10 + 14 }}
               onClick={() => {
                 onOpenFile(m.path, m.line, m.column, query.length);
-                onClose();
               }}
             >
               {guidePositions.map((pos, i) => (

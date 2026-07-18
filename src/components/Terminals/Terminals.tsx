@@ -107,6 +107,9 @@ export function Terminals({ active }: TerminalsProps): React.ReactElement {
             key={tab.id}
             className={"termtabs__tab" + (tab.id === activeId ? " termtabs__tab--active" : "")}
             onClick={() => setActiveId(tab.id)}
+            onMouseUp={(e) => {
+              if (e.button === 1) closeTab(tab.id, e);
+            }}
           >
             <span className="termtabs__title">{tab.title}</span>
             <button

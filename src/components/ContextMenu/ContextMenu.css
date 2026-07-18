@@ -12,7 +12,7 @@
   animation-name: var(--anim-context-menu-keyframes, ctxmenu-in);
   animation-duration: calc(var(--anim-context-menu-duration, 0.1s) * var(--anim-context-menu-enabled, 1));
   animation-timing-function: var(--anim-context-menu-easing, cubic-bezier(0.2, 0, 0, 1));
-  animation-fill-mode: both;
+
   transform-origin: top left;
 }
 

@@ -6,8 +6,8 @@
   justify-content: center;
   z-index: 300;
   background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(var(--blur-overlay));
-  -webkit-backdrop-filter: blur(var(--blur-overlay));
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
 }
 
 .search-popup {

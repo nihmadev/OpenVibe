@@ -30,7 +30,6 @@ export function SearchMatchRow({
       className={`sc-match-row${isLastMatch ? " sc-match-row--last" : ""}${isSelected ? " sc-match-row--selected" : ""}`}
       onClick={() => {
         onOpenFile(match.path, match.line, match.column, query.length);
-        onClose();
       }}
       onMouseEnter={onMouseEnter}
     >

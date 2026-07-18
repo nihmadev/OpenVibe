@@ -86,10 +86,17 @@ export function FileTree({ cwd, onOpenFile, activeFile, revealPath }: RootProps)
   }, [cwd]);
 
   // Auto-refresh when agent creates/edits/deletes files
+  const refreshAllRef = React.useRef(refreshAll);
+  const refreshDirRef = React.useRef(refreshDir);
+  React.useEffect(() => {
+    refreshAllRef.current = refreshAll;
+    refreshDirRef.current = refreshDir;
+  });
+
   useEffect(() => {
     const off = window.vibe.onFsChanged((paths?: string[]) => {
       if (!paths || paths.length === 0) {
-        refreshAll();
+        refreshAllRef.current();
         return;
       }
       // Get unique parent directories
@@ -99,11 +106,11 @@ export function FileTree({ cwd, onOpenFile, activeFile, revealPath }: RootProps)
         parents.add(dir);
       }
       for (const p of parents) {
-        refreshDir(p);
+        refreshDirRef.current(p);
       }
     });
     return off;
-  });
+  }, []);
 
   // Reveal a path in the tree by expanding all parent directories
   useEffect(() => {
@@ -299,7 +306,26 @@ export function FileTree({ cwd, onOpenFile, activeFile, revealPath }: RootProps)
         }}
       >
         {error ? <div className="ftree__error">{error}</div> : null}
-        {root === null && !error ? <div className="ftree__loading">{t("loading")}</div> : null}
+        {root === null && !error ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "8px 10px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div className="skeleton-item skeleton-circle skeleton-shimmer" style={{ width: 12, height: 12 }} />
+              <div className="skeleton-item skeleton-line skeleton-shimmer" style={{ width: "60%", height: 12 }} />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, paddingLeft: 12 }}>
+              <div className="skeleton-item skeleton-circle skeleton-shimmer" style={{ width: 12, height: 12 }} />
+              <div className="skeleton-item skeleton-line skeleton-shimmer" style={{ width: "70%", height: 12 }} />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, paddingLeft: 12 }}>
+              <div className="skeleton-item skeleton-circle skeleton-shimmer" style={{ width: 12, height: 12 }} />
+              <div className="skeleton-item skeleton-line skeleton-shimmer" style={{ width: "50%", height: 12 }} />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div className="skeleton-item skeleton-circle skeleton-shimmer" style={{ width: 12, height: 12 }} />
+              <div className="skeleton-item skeleton-line skeleton-shimmer" style={{ width: "55%", height: 12 }} />
+            </div>
+          </div>
+        ) : null}
         {creating && creating.dir === cwd ? (
           <div className="ftree__row" style={{ paddingLeft: 8 }}>
             <span className="ftree__chev">{creating.kind === "dir" ? <ChevronRightIcon open={false} /> : null}</span>
