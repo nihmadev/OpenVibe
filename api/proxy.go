@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -16,14 +17,14 @@ type Proxy struct {
 	shortClient   *http.Client
 	timeout       time.Duration
 	warmTargets   map[string]struct{}
-	warmMu        sync.Mutex
+	warmMu        sync.RWMutex
 	warmTransport *http.Transport
 }
 
 func NewProxy(timeout time.Duration) *Proxy {
 	streamTransport := &http.Transport{
-		MaxIdleConns:        100,
-		MaxIdleConnsPerHost: 20,
+		MaxIdleConns:        500,
+		MaxIdleConnsPerHost: 200,
 		IdleConnTimeout:     90 * time.Second,
 		DisableCompression:  true,
 		ForceAttemptHTTP2:   true,
@@ -32,8 +33,8 @@ func NewProxy(timeout time.Duration) *Proxy {
 	}
 
 	shortTransport := &http.Transport{
-		MaxIdleConns:        100,
-		MaxIdleConnsPerHost: 20,
+		MaxIdleConns:        500,
+		MaxIdleConnsPerHost: 200,
 		IdleConnTimeout:     90 * time.Second,
 		DisableCompression:  true,
 		ForceAttemptHTTP2:   true,
@@ -42,8 +43,8 @@ func NewProxy(timeout time.Duration) *Proxy {
 	}
 
 	warmTransport := &http.Transport{
-		MaxIdleConns:        100,
-		MaxIdleConnsPerHost: 20,
+		MaxIdleConns:        500,
+		MaxIdleConnsPerHost: 200,
 		IdleConnTimeout:     90 * time.Second,
 		DisableCompression:  true,
 		ForceAttemptHTTP2:   true,
@@ -79,11 +80,15 @@ func (p *Proxy) WarmProvider(baseURL string) {
 	if baseURL == "" {
 		return
 	}
-	p.warmMu.Lock()
-	if _, ok := p.warmTargets[baseURL]; !ok {
+	p.warmMu.RLock()
+	_, ok := p.warmTargets[baseURL]
+	p.warmMu.RUnlock()
+
+	if !ok {
+		p.warmMu.Lock()
 		p.warmTargets[baseURL] = struct{}{}
+		p.warmMu.Unlock()
 	}
-	p.warmMu.Unlock()
 }
 
 func (p *Proxy) warmLoop() {
@@ -96,12 +101,12 @@ func (p *Proxy) warmLoop() {
 	}
 
 	for range ticker.C {
-		p.warmMu.Lock()
+		p.warmMu.RLock()
 		targets := make([]string, 0, len(p.warmTargets))
 		for u := range p.warmTargets {
 			targets = append(targets, u)
 		}
-		p.warmMu.Unlock()
+		p.warmMu.RUnlock()
 
 		for _, base := range targets {
 			modelsURL := strings.TrimRight(base, "/") + "/models"
@@ -151,12 +156,64 @@ func (p *Proxy) Route(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+var allowedHosts = map[string]bool{
+	"api.anthropic.com":                 true,
+	"api.openai.com":                    true,
+	"generativelanguage.googleapis.com": true,
+	"api.deepseek.com":                  true,
+	"api.groq.com":                      true,
+	"openrouter.ai":                     true,
+	"api.cerebras.ai":                   true,
+	"api.moonshot.cn":                   true,
+	"api.z.ai":                          true,
+	"opencode.ai":                       true,
+	"models.github.ai":                  true,
+	"api.together.ai":                   true,
+	"api.fireworks.ai":                  true,
+	"api.mistral.ai":                    true,
+	"api.x.ai":                          true,
+	"api.cohere.ai":                     true,
+	"dashscope.aliyuncs.com":            true,
+	"router.huggingface.co":             true,
+	"api.replicate.com":                 true,
+	"api.deepinfra.com":                 true,
+	"api.perplexity.ai":                 true,
+	"api.endpoints.anyscale.com":        true,
+	"gateway.vercel.ai":                 true,
+	"api.fal.ai":                        true,
+	"app.baseten.co":                    true,
+	"api.hyperbolic.xyz":                true,
+	"api.minimax.chat":                  true,
+	"integrate.api.nvidia.com":          true,
+	"api.sambanova.ai":                  true,
+	"api.siliconflow.cn":                true,
+}
+
+func isAllowedHost(host string) bool {
+	h := strings.ToLower(host)
+	if allowedHosts[h] {
+		return true
+	}
+	if strings.HasSuffix(h, ".openai.azure.com") {
+		return true
+	}
+	if strings.HasSuffix(h, ".amazonaws.com") {
+		return true
+	}
+	return false
+}
+
 func (p *Proxy) buildUpstreamURL(r *http.Request, providerID, suffix string) (string, bool) {
 	baseURL := r.Header.Get("x-provider-base-url")
 	if baseURL == "" {
 		return "", false
 	}
 	baseURL = strings.TrimRight(baseURL, "/")
+
+	parsedURL, err := url.Parse(baseURL)
+	if err != nil || !isAllowedHost(parsedURL.Hostname()) {
+		return "", false
+	}
 
 	apiKey := r.Header.Get("x-api-key")
 
@@ -198,9 +255,16 @@ func (p *Proxy) handleChatCompletions(w http.ResponseWriter, r *http.Request, pr
 
 	upReq.Header = r.Header.Clone()
 	upReq.Header.Del("x-provider-base-url")
+	apiKey := r.Header.Get("x-api-key")
 	upReq.Header.Del("x-api-key")
 	upReq.Header.Set("Accept-Encoding", "identity")
-	if isGoogle {
+
+	if providerID == "anthropic" {
+		if apiKey != "" {
+			upReq.Header.Set("x-api-key", apiKey)
+			upReq.Header.Set("anthropic-version", "2023-06-01")
+		}
+	} else if isGoogle {
 		upReq.Header.Del("Authorization")
 	}
 
@@ -240,7 +304,10 @@ func (p *Proxy) handleChatCompletions(w http.ResponseWriter, r *http.Request, pr
 		return
 	}
 
-	buf := make([]byte, 32768)
+	bufPtr := bufPool.Get().(*[]byte)
+	buf := *bufPtr
+	defer bufPool.Put(bufPtr)
+
 	for {
 		n, readErr := upRes.Body.Read(buf)
 		if n > 0 {
@@ -253,6 +320,13 @@ func (p *Proxy) handleChatCompletions(w http.ResponseWriter, r *http.Request, pr
 			break
 		}
 	}
+}
+
+var bufPool = sync.Pool{
+	New: func() interface{} {
+		b := make([]byte, 32768)
+		return &b
+	},
 }
 
 func (p *Proxy) handleModels(w http.ResponseWriter, r *http.Request, providerID string) {
@@ -269,12 +343,19 @@ func (p *Proxy) handleModels(w http.ResponseWriter, r *http.Request, providerID 
 	}
 
 	upReq.Header.Set("Content-Type", "application/json")
-	if !isGoogle {
-		apiKey := r.Header.Get("x-api-key")
+	apiKey := r.Header.Get("x-api-key")
+
+	if providerID == "anthropic" {
+		if apiKey != "" {
+			upReq.Header.Set("x-api-key", apiKey)
+			upReq.Header.Set("anthropic-version", "2023-06-01")
+		}
+	} else if !isGoogle {
 		if apiKey != "" {
 			upReq.Header.Set("Authorization", "Bearer "+apiKey)
 		}
 	}
+
 	if strings.Contains(upstreamURL, "models.github.ai") {
 		upReq.Header.Set("Accept", "application/vnd.github+json")
 		upReq.Header.Set("X-GitHub-Api-Version", "2026-03-10")
