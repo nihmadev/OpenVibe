@@ -92,13 +92,31 @@ export function useVibeEvents(onActivity: () => void) {
           });
           break;
         }
+        case "reasoning-start": {
+          if (!sid) break;
+          schedule(() => {
+            setItems((prev) => {
+              if (!prev) return prev;
+              return prev.map((it) =>
+                it.id === sid && it.kind === "assistant" ? { ...it, reasoningName: e.name ?? it.reasoningName } : it,
+              );
+            });
+          });
+          break;
+        }
         case "reasoning-chunk": {
           if (!sid) break;
           schedule(() => {
             setItems((prev) => {
               if (!prev) return prev;
               return prev.map((it) =>
-                it.id === sid && it.kind === "assistant" ? { ...it, reasoning: (it.reasoning ?? "") + e.text } : it,
+                it.id === sid && it.kind === "assistant"
+                  ? {
+                      ...it,
+                      reasoning: (it.reasoning ?? "") + e.text,
+                      reasoningName: e.name ?? it.reasoningName,
+                    }
+                  : it,
               );
             });
           });
@@ -125,7 +143,9 @@ export function useVibeEvents(onActivity: () => void) {
               .map((it) => {
                 if (it.id === sid && it.kind === "assistant") {
                   const trimmed = it.text.trim();
-                  if (textNoiseRe.test(trimmed)) return { ...it, text: "" };
+                  const next = { ...it, reasoningDone: it.reasoning ? true : it.reasoningDone };
+                  if (textNoiseRe.test(trimmed)) return { ...next, text: "" };
+                  return next;
                 }
                 return it;
               })
@@ -188,7 +208,15 @@ export function useVibeEvents(onActivity: () => void) {
           setStreamingNow(null);
           streamingId.current = null;
           playAudio("stoped.mp3");
-          setItems((prev) => [...(prev ?? []), { id: localId(), kind: "stopped", text: "" }]);
+          setItems((prev) => {
+            if (!prev) return prev;
+            return [
+              ...prev.map((it) =>
+                it.id === sid && it.kind === "assistant" && it.reasoning ? { ...it, reasoningDone: true } : it,
+              ),
+              { id: localId(), kind: "stopped", text: "" },
+            ];
+          });
           break;
         }
         case "done":
@@ -199,7 +227,15 @@ export function useVibeEvents(onActivity: () => void) {
           flush();
           setStreamingNow(null);
           streamingId.current = null;
-          setItems((prev) => [...(prev ?? []), { id: localId(), kind: "error", text: e.text }]);
+          setItems((prev) => {
+            if (!prev) return prev;
+            return [
+              ...prev.map((it) =>
+                it.id === sid && it.kind === "assistant" && it.reasoning ? { ...it, reasoningDone: true } : it,
+              ),
+              { id: localId(), kind: "error", text: e.text },
+            ];
+          });
           break;
       }
 

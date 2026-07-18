@@ -63,7 +63,7 @@
   right: 10px;
   z-index: 10;
   font-size: 10px;
-  color: var(--accent);
+  color: var(--fg);
   pointer-events: none;
   user-select: none;
 }
@@ -84,7 +84,342 @@
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
+}
+
+/* Inline Vibe Diff Styles */
+.inline-diff-added {
+  background-color: color-mix(in srgb, var(--green) 18%, transparent) !important;
+}
+
+.inline-diff-added-gutter {
+  border-left: 3px solid var(--green) !important;
+}
+
+.inline-diff-removed {
+  background-color: color-mix(in srgb, var(--red) 18%, transparent) !important;
+  text-decoration: line-through !important;
+  opacity: 0.7;
+}
+
+.inline-diff-removed-gutter {
+  border-left: 3px solid var(--red) !important;
+}
+
+/* Zone Widget styling for the inline prompt */
+.monaco-editor .view-zones .view-zone,
+.monaco-editor .view-zones .view-zone:focus,
+.monaco-editor .view-zones .view-zone:focus-visible,
+.monaco-editor .view-zones .view-zone:focus-within {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.inline-vibe-zone-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: transparent !important;
+  border: none !important;
+  padding: 8px 16px;
+  margin: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  z-index: 100;
+  box-sizing: border-box;
+  outline: none !important;
+  width: 100%;
+  overflow: hidden;
+}
+
+.inline-vibe-zone-container:focus,
+.inline-vibe-zone-container:focus-visible,
+.inline-vibe-zone-container:focus-within {
+  outline: none !important;
+}
+
+.inline-vibe-portal-root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  animation-name: var(--anim-panel-appear-keyframes, anim-fade-slide);
+  animation-duration: calc(var(--anim-panel-appear-duration, 0.22s) * var(--anim-panel-appear-enabled, 1));
+  animation-timing-function: var(--anim-panel-appear-easing, cubic-bezier(0.2, 0, 0.2, 1));
+  animation-fill-mode: both;
+}
+
+.inline-vibe-zone-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.inline-vibe-input-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 4px 8px;
+  width: 100%;
+  max-width: 800px;
+  transition:
+    border-color calc(var(--anim-buttons-duration, 0.18s) * var(--anim-buttons-enabled, 1))
+      var(--anim-buttons-easing, ease),
+    box-shadow calc(var(--anim-buttons-duration, 0.18s) * var(--anim-buttons-enabled, 1))
+      var(--anim-buttons-easing, ease);
+  outline: none !important;
+  box-shadow: none !important;
+  box-sizing: border-box;
+}
+
+.inline-vibe-input-wrapper:focus,
+.inline-vibe-input-wrapper:focus-visible,
+.inline-vibe-input-wrapper:focus-within {
+  border-color: var(--line-strong);
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.inline-vibe-textarea {
+  flex: 1;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 13px;
+  resize: none;
+  height: 26px;
+  min-height: 26px;
+  line-height: 26px;
+  max-height: 180px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.inline-vibe-textarea::-webkit-scrollbar,
+.inline-vibe-textarea::-webkit-scrollbar-thumb,
+.inline-vibe-textarea::-webkit-scrollbar-track,
+.inline-vibe-zone-container::-webkit-scrollbar,
+.inline-vibe-zone-container::-webkit-scrollbar-thumb,
+.inline-vibe-zone-container::-webkit-scrollbar-track,
+.inline-vibe-portal-root::-webkit-scrollbar,
+.inline-vibe-portal-root::-webkit-scrollbar-thumb,
+.inline-vibe-portal-root::-webkit-scrollbar-track,
+.inline-vibe-zone-content::-webkit-scrollbar,
+.inline-vibe-zone-content::-webkit-scrollbar-thumb,
+.inline-vibe-zone-content::-webkit-scrollbar-track,
+.inline-vibe-input-wrapper::-webkit-scrollbar,
+.inline-vibe-input-wrapper::-webkit-scrollbar-thumb,
+.inline-vibe-input-wrapper::-webkit-scrollbar-track {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+.inline-vibe-textarea:focus,
+.inline-vibe-textarea:focus-visible,
+.inline-vibe-textarea:active {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.inline-vibe-textarea::placeholder {
+  color: var(--fg-muted);
+}
+
+.inline-vibe-send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: var(--fg);
+  color: var(--bg);
+  transition:
+    opacity calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1)) var(--anim-buttons-easing, ease),
+    transform calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1))
+      var(--anim-buttons-easing, ease),
+    background calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1))
+      var(--anim-buttons-easing, ease);
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+
+.inline-vibe-send-btn:hover:not(:disabled) {
+  opacity: 0.85;
+  transform: scale(1.04);
+}
+
+.inline-vibe-send-btn:active:not(:disabled) {
+  transform: scale(0.93);
+}
+
+.inline-vibe-send-btn:disabled {
+  opacity: 0.3;
+  background: var(--line-strong);
+  color: var(--fg-muted);
+  cursor: not-allowed;
+}
+
+.inline-vibe-send-btn.inline-vibe-send-btn--loading,
+.inline-vibe-send-btn.inline-vibe-send-btn--loading:disabled {
+  opacity: 1;
+  background: var(--fg);
+  color: var(--bg);
+  cursor: default;
+}
+
+.inline-vibe-send-btn--loading svg,
+.tool__spinner {
+  animation: inline-vibe-spin 1s linear infinite;
+}
+
+@keyframes inline-vibe-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Embedded Action Pill inside ViewZone */
+.inline-vibe-action-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none !important;
+  font-family: var(--sans);
+  font-size: 12px;
+  flex-wrap: wrap;
+  animation-name: var(--anim-panel-appear-keyframes, anim-fade-slide);
+  animation-duration: calc(var(--anim-panel-appear-duration, 0.22s) * var(--anim-panel-appear-enabled, 1));
+  animation-timing-function: var(--anim-panel-appear-easing, cubic-bezier(0.2, 0, 0.2, 1));
+  animation-fill-mode: both;
+}
+
+.inline-vibe-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    background calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1))
+      var(--anim-buttons-easing, ease),
+    border-color calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1))
+      var(--anim-buttons-easing, ease),
+    color calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1)) var(--anim-buttons-easing, ease),
+    transform calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1))
+      var(--anim-buttons-easing, ease);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.inline-vibe-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--bg-4);
+  border-color: var(--line-strong);
+}
+
+.inline-vibe-btn:active:not(:disabled) {
+  transform: scale(0.96) translateY(0);
+}
+
+.inline-vibe-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--line);
+  margin: 0 4px;
+}
+
+.inline-vibe-btn--nav {
+  color: var(--fg-dim);
+  padding: 4px 8px;
+}
+
+.inline-vibe-btn--nav:hover {
+  background: var(--bg-3);
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+/* Ghost Text shown right after cursor on empty lines */
+.inline-vibe-ghost-text {
+  color: var(--fg-muted) !important;
+  opacity: 0.55 !important;
+  font-family: var(--sans) !important;
+  font-size: 12px !important;
+  font-style: italic !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* ===== Inline Vibe Connector SVG Overlay ===== */
+.inline-vibe-connector-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  overflow: visible;
+}
+
+.inline-vibe-connector-path {
+  fill: none;
+  stroke: var(--fg-muted);
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.65;
+  transition:
+    opacity calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1)) ease,
+    stroke calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1)) ease;
+}
+
+.inline-vibe-connector-path--loading {
+  stroke: var(--fg-dim);
+  stroke-dasharray: 4 4;
+  animation: inline-vibe-connector-dash 1s linear infinite;
+  opacity: 0.8;
+}
+
+@keyframes inline-vibe-connector-dash {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+
+.inline-vibe-connector-dot {
+  fill: var(--fg-muted);
+  opacity: 0.75;
+  transition:
+    fill calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1)) ease,
+    opacity calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1)) ease;
 }

@@ -6,6 +6,9 @@ import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
 import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
 import type * as monaco from "monaco-editor";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import ReactDOM from "react-dom";
+import { invoke } from "@tauri-apps/api/core";
+import { InlinePromptPanel, InlineActionPill } from "./InlineVibePanel.js";
 import "./Editor.css";
 import { getLanguage } from "../Icons/utils.js";
 import { useTheme } from "../../hooks/useTheme.js";
@@ -174,6 +177,47 @@ interface CachedModel {
 const MODEL_CACHE = new Map<string, CachedModel>();
 let monacoProvidersRegistered = false;
 
+interface DiffLine {
+  type: "added" | "removed" | "normal";
+  text: string;
+}
+
+function diffLines(oldLines: string[], newLines: string[]): DiffLine[] {
+  const dp: number[][] = Array(oldLines.length + 1)
+    .fill(null)
+    .map(() => Array(newLines.length + 1).fill(0));
+
+  for (let i = 1; i <= oldLines.length; i++) {
+    for (let j = 1; j <= newLines.length; j++) {
+      if (oldLines[i - 1] === newLines[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+
+  const result: DiffLine[] = [];
+  let i = oldLines.length;
+  let j = newLines.length;
+
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
+      result.unshift({ type: "normal", text: oldLines[i - 1] });
+      i--;
+      j--;
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      result.unshift({ type: "added", text: newLines[j - 1] });
+      j--;
+    } else {
+      result.unshift({ type: "removed", text: oldLines[i - 1] });
+      i--;
+    }
+  }
+
+  return result;
+}
+
 export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMatchLength }: Props): React.ReactElement {
   const { t } = useI18n();
   const [content, setContent] = useState<string | null>(null);
@@ -182,6 +226,636 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
   const [saving, setSaving] = useState(false);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoInstanceRef = useRef<typeof monaco | null>(null);
+
+  const [editorOptions, setEditorOptions] = useState<any>({
+    fontSize: 13,
+    lineHeight: 19.5,
+    fontLigatures: false,
+    cursorStyle: "line",
+    cursorBlinking: "blink",
+  });
+
+  useEffect(() => {
+    Promise.all([
+      window.vibe.state.get("settings:editorFontSize"),
+      window.vibe.state.get("settings:editorLineHeight"),
+      window.vibe.state.get("settings:editorLigatures"),
+      window.vibe.state.get("settings:editorCursorStyle"),
+      window.vibe.state.get("settings:editorCursorBlink"),
+    ]).then(([size, lh, lig, cs, cb]) => {
+      setEditorOptions((prev: any) => {
+        const fontSize = size ? parseInt(size, 10) : 13;
+        const lineHeightMult = lh ? parseFloat(lh) : 1.5;
+        return {
+          ...prev,
+          fontSize,
+          lineHeight: fontSize * lineHeightMult,
+          fontLigatures: lig === "true",
+          cursorStyle: cs || "line",
+          cursorBlinking: cb || "blink",
+        };
+      });
+    });
+
+    const onSettingsChanged = (e: any) => {
+      const { key, value } = e.detail;
+      setEditorOptions((prev: any) => {
+        const next = { ...prev };
+        if (key === "editorFontSize") {
+          next.fontSize = parseInt(value, 10);
+          next.lineHeight = next.fontSize * (prev.lineHeight / prev.fontSize || 1.5);
+        }
+        if (key === "editorLineHeight") {
+          next.lineHeight = parseFloat(value) * (next.fontSize || 13);
+        }
+        if (key === "editorLigatures") next.fontLigatures = value;
+        if (key === "editorCursorStyle") next.cursorStyle = value;
+        if (key === "editorCursorBlink") next.cursorBlinking = value;
+        return next;
+      });
+    };
+
+    window.addEventListener("settings-changed", onSettingsChanged);
+    return () => window.removeEventListener("settings-changed", onSettingsChanged);
+  }, []);
+
+  // --- Inline Vibe states & refs ---
+  const inlineZoneIdRef = useRef<string | null>(null);
+  const inlineZoneDescriptorRef = useRef<monaco.editor.IViewZone | null>(null);
+  const inlineDecorationsRef = useRef<string[]>([]);
+  const ghostDecorationsRef = useRef<string[]>([]);
+  const lastGhostStateRef = useRef<{ lineNumber: number; column: number; text: string } | null>(null);
+  const lastTriggerTimeRef = useRef<number>(0);
+  const inlineLoadingRef = useRef<boolean>(false);
+
+  const [inlineZoneNode, setInlineZoneNode] = useState<HTMLDivElement | null>(null);
+  const [inlineLoading, setInlineLoading] = useState(false);
+  const [hasInlineDiff, setHasInlineDiff] = useState(false);
+
+  const inlineSessionRef = useRef<{
+    startLine: number;
+    endLine: number;
+    originalText: string;
+    selection: monaco.Selection;
+    combinedDiffResult?: DiffLine[];
+    combinedLineCount?: number;
+  } | null>(null);
+
+  const updateGhostText = useCallback(() => {
+    const ed = editorRef.current;
+    const m = monacoInstanceRef.current;
+    if (!ed || !m) return;
+
+    if (inlineZoneNode !== null || inlineSessionRef.current !== null) {
+      if (ghostDecorationsRef.current.length > 0) {
+        ghostDecorationsRef.current = ed.deltaDecorations(ghostDecorationsRef.current, []);
+        lastGhostStateRef.current = null;
+      }
+      return;
+    }
+
+    const pos = ed.getPosition();
+    const model = ed.getModel();
+    if (!pos || !model) {
+      if (ghostDecorationsRef.current.length > 0) {
+        ghostDecorationsRef.current = ed.deltaDecorations(ghostDecorationsRef.current, []);
+        lastGhostStateRef.current = null;
+      }
+      return;
+    }
+
+    const lineContent = model.getLineContent(pos.lineNumber);
+    if (lineContent.trim() === "") {
+      if (
+        ghostDecorationsRef.current.length > 0 &&
+        lastGhostStateRef.current?.lineNumber === pos.lineNumber &&
+        lastGhostStateRef.current?.column === pos.column &&
+        lastGhostStateRef.current?.text === lineContent
+      ) {
+        return;
+      }
+
+      const isMac = typeof navigator !== "undefined" && navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+      const shortcutText = isMac ? "⌘K" : "Ctrl+K";
+      ghostDecorationsRef.current = ed.deltaDecorations(ghostDecorationsRef.current, [
+        {
+          range: new m.Range(pos.lineNumber, pos.column, pos.lineNumber, pos.column),
+          options: {
+            after: {
+              content: `  ${shortcutText} to generate or edit with Inline Vibe`,
+              inlineClassName: "inline-vibe-ghost-text",
+            },
+          },
+        },
+      ]);
+      lastGhostStateRef.current = { lineNumber: pos.lineNumber, column: pos.column, text: lineContent };
+    } else {
+      if (ghostDecorationsRef.current.length > 0) {
+        ghostDecorationsRef.current = ed.deltaDecorations(ghostDecorationsRef.current, []);
+        lastGhostStateRef.current = null;
+      }
+    }
+  }, [inlineZoneNode]);
+
+  const updateGhostTextRef = useRef(updateGhostText);
+  useEffect(() => {
+    updateGhostTextRef.current = updateGhostText;
+  }, [updateGhostText]);
+
+  useEffect(() => {
+    updateGhostText();
+  }, [updateGhostText]);
+
+  const cleanupInlineSession = useCallback(() => {
+    const ed = editorRef.current;
+    if (!ed) return;
+
+    if (inlineZoneIdRef.current !== null) {
+      ed.changeViewZones((changeAccessor) => {
+        changeAccessor.removeZone(inlineZoneIdRef.current!);
+      });
+      inlineZoneIdRef.current = null;
+    }
+    inlineZoneDescriptorRef.current = null;
+    setInlineZoneNode(null);
+
+    if (inlineDecorationsRef.current.length > 0) {
+      ed.deltaDecorations(inlineDecorationsRef.current, []);
+      inlineDecorationsRef.current = [];
+    }
+
+    inlineLoadingRef.current = false;
+    inlineSessionRef.current = null;
+    setHasInlineDiff(false);
+    setInlineLoading(false);
+    if (ed) setContent(ed.getValue());
+
+    setTimeout(() => {
+      updateGhostTextRef.current();
+    }, 10);
+  }, []);
+
+  const handleAcceptInlineChanges = useCallback(() => {
+    const ed = editorRef.current;
+    const m = monacoInstanceRef.current;
+    const session = inlineSessionRef.current;
+    if (!ed || !m || !session || !session.combinedDiffResult) {
+      cleanupInlineSession();
+      return;
+    }
+
+    const acceptedLines = session.combinedDiffResult.filter((line) => line.type !== "removed").map((line) => line.text);
+
+    const acceptedText = acceptedLines.join("\n");
+
+    const replaceRange = new m.Range(
+      session.startLine,
+      1,
+      session.endLine,
+      ed.getModel()!.getLineMaxColumn(session.endLine),
+    );
+
+    ed.executeEdits("inline-vibe-accept", [
+      {
+        range: replaceRange,
+        text: acceptedText,
+        forceMoveMarkers: true,
+      },
+    ]);
+
+    cleanupInlineSession();
+  }, [cleanupInlineSession]);
+
+  const handleRejectInlineChanges = useCallback(() => {
+    const ed = editorRef.current;
+    const m = monacoInstanceRef.current;
+    const session = inlineSessionRef.current;
+    if (!ed || !m || !session) {
+      cleanupInlineSession();
+      return;
+    }
+
+    const replaceRange = new m.Range(
+      session.startLine,
+      1,
+      session.endLine,
+      ed.getModel()!.getLineMaxColumn(session.endLine),
+    );
+
+    ed.executeEdits("inline-vibe-reject", [
+      {
+        range: replaceRange,
+        text: session.originalText,
+        forceMoveMarkers: true,
+      },
+    ]);
+
+    cleanupInlineSession();
+  }, [cleanupInlineSession]);
+
+  const handleNavDiff = useCallback((direction: "next" | "prev") => {
+    const ed = editorRef.current;
+    const session = inlineSessionRef.current;
+    if (!ed || !session || !session.combinedDiffResult) return;
+
+    const currentPos = ed.getPosition();
+    if (!currentPos) return;
+
+    const diffLinesIndices: number[] = [];
+    session.combinedDiffResult.forEach((line, index) => {
+      if (line.type === "added" || line.type === "removed") {
+        diffLinesIndices.push(session.startLine + index);
+      }
+    });
+
+    if (diffLinesIndices.length === 0) return;
+
+    let targetLine = diffLinesIndices[0];
+    if (direction === "next") {
+      const next = diffLinesIndices.find((line) => line > currentPos.lineNumber);
+      if (next !== undefined) targetLine = next;
+    } else {
+      const prevs = diffLinesIndices.filter((line) => line < currentPos.lineNumber);
+      if (prevs.length > 0) targetLine = prevs[prevs.length - 1];
+    }
+
+    ed.revealLineInCenter(targetLine);
+    ed.setPosition({ lineNumber: targetLine, column: 1 });
+    ed.focus();
+  }, []);
+
+  const handleInlineStreamUpdate = useCallback(
+    (generatedText: string) => {
+      const ed = editorRef.current;
+      const m = monacoInstanceRef.current;
+      const session = inlineSessionRef.current;
+      if (!ed || !m || !session) return;
+
+      const originalLines = session.originalText.split("\n");
+      let cleanedText = generatedText.trim();
+      if (cleanedText.startsWith("```")) {
+        const lines = cleanedText.split("\n");
+        if (lines[0].startsWith("```")) lines.shift();
+        if (lines.length > 0 && lines[lines.length - 1].startsWith("```")) lines.pop();
+        cleanedText = lines.join("\n");
+      }
+      const generatedLines = cleanedText.split("\n");
+
+      const diffResult = diffLines(originalLines, generatedLines);
+      session.combinedDiffResult = diffResult;
+
+      const combinedLines = diffResult.map((line) => line.text);
+      const combinedText = combinedLines.join("\n");
+      session.combinedLineCount = combinedLines.length;
+
+      const replaceRange = new m.Range(
+        session.startLine,
+        1,
+        session.endLine,
+        ed.getModel()!.getLineMaxColumn(session.endLine),
+      );
+
+      ed.executeEdits("inline-vibe", [
+        {
+          range: replaceRange,
+          text: combinedText,
+          forceMoveMarkers: true,
+        },
+      ]);
+
+      const newEndLine = session.startLine + combinedLines.length - 1;
+      session.endLine = newEndLine;
+
+      const newDecorations: monaco.editor.IModelDeltaDecoration[] = [];
+      let currentLine = session.startLine;
+
+      diffResult.forEach((line) => {
+        if (line.type === "added") {
+          newDecorations.push({
+            range: new m.Range(currentLine, 1, currentLine, 1),
+            options: {
+              isWholeLine: true,
+              className: "inline-diff-added",
+              linesDecorationsClassName: "inline-diff-added-gutter",
+            },
+          });
+        } else if (line.type === "removed") {
+          newDecorations.push({
+            range: new m.Range(currentLine, 1, currentLine, 1),
+            options: {
+              isWholeLine: true,
+              className: "inline-diff-removed",
+              linesDecorationsClassName: "inline-diff-removed-gutter",
+            },
+          });
+        }
+        currentLine++;
+      });
+
+      inlineDecorationsRef.current = ed.deltaDecorations(inlineDecorationsRef.current, newDecorations);
+
+      // Reposition the ViewZone right below newEndLine only if line count changed or zone isn't created yet
+      const zoneDiv = inlineZoneNode || document.createElement("div");
+      if (!inlineZoneNode) {
+        zoneDiv.className = "inline-vibe-zone-container";
+        setInlineZoneNode(zoneDiv);
+      }
+      if (!hasInlineDiff) {
+        setHasInlineDiff(true);
+      }
+
+      const currentDescriptor = inlineZoneDescriptorRef.current;
+      if (inlineZoneIdRef.current === null || !currentDescriptor || currentDescriptor.afterLineNumber !== newEndLine) {
+        const currentHeight =
+          currentDescriptor?.heightInPx ||
+          Math.max(40, (zoneDiv.querySelector(".inline-vibe-portal-root") as HTMLElement)?.scrollHeight + 16 || 76);
+        const descriptor: monaco.editor.IViewZone = {
+          afterLineNumber: newEndLine,
+          heightInPx: currentHeight,
+          domNode: zoneDiv,
+        };
+
+        ed.changeViewZones((changeAccessor) => {
+          if (inlineZoneIdRef.current !== null) {
+            changeAccessor.removeZone(inlineZoneIdRef.current);
+          }
+          const zoneId = changeAccessor.addZone(descriptor);
+          inlineZoneIdRef.current = zoneId;
+        });
+
+        inlineZoneDescriptorRef.current = descriptor;
+        ed.revealLineInCenterIfOutsideViewport(newEndLine);
+      }
+    },
+    [inlineZoneNode, hasInlineDiff],
+  );
+
+  const handleSendPrompt = useCallback(
+    async (promptText: string) => {
+      const ed = editorRef.current;
+      const m = monacoInstanceRef.current;
+      const session = inlineSessionRef.current;
+      if (!ed || !m || !session) return;
+
+      if (session.combinedDiffResult) {
+        const currentAcceptedText = session.combinedDiffResult
+          .filter((line) => line.type !== "removed")
+          .map((line) => line.text)
+          .join("\n");
+        const acceptedLinesCount = currentAcceptedText.split("\n").length;
+        const replaceRange = new m.Range(
+          session.startLine,
+          1,
+          session.endLine,
+          ed.getModel()!.getLineMaxColumn(session.endLine),
+        );
+        ed.executeEdits("inline-vibe-refine", [
+          {
+            range: replaceRange,
+            text: currentAcceptedText,
+            forceMoveMarkers: true,
+          },
+        ]);
+        session.originalText = currentAcceptedText;
+        session.endLine = session.startLine + acceptedLinesCount - 1;
+        session.combinedDiffResult = undefined;
+        if (inlineDecorationsRef.current.length > 0) {
+          ed.deltaDecorations(inlineDecorationsRef.current, []);
+          inlineDecorationsRef.current = [];
+        }
+        setHasInlineDiff(false);
+
+        if (inlineZoneIdRef.current !== null && inlineZoneDescriptorRef.current && inlineZoneNode) {
+          inlineZoneDescriptorRef.current.afterLineNumber = session.endLine;
+          const descriptor = inlineZoneDescriptorRef.current;
+          ed.changeViewZones((changeAccessor) => {
+            if (inlineZoneIdRef.current !== null) {
+              changeAccessor.removeZone(inlineZoneIdRef.current);
+              inlineZoneIdRef.current = changeAccessor.addZone(descriptor);
+            }
+          });
+        }
+      }
+
+      inlineLoadingRef.current = true;
+      setInlineLoading(true);
+
+      const sessionId = `inline-vibe-${Date.now()}`;
+      let accumulatedText = "";
+
+      const { listen } = await import("@tauri-apps/api/event");
+      let rafId: number | null = null;
+      const unlistenDelta = await listen<any>("vibe:llm:delta", (e) => {
+        if (e.payload.sessionId === sessionId) {
+          accumulatedText += e.payload.content;
+          if (rafId === null) {
+            rafId = requestAnimationFrame(() => {
+              handleInlineStreamUpdate(accumulatedText);
+              rafId = null;
+            });
+          }
+        }
+      });
+
+      const unlistenDone = await listen<any>("vibe:llm:done", (e) => {
+        if (e.payload.sessionId === sessionId) {
+          if (rafId !== null) cancelAnimationFrame(rafId);
+          unlistenDelta();
+          unlistenDone();
+          unlistenError();
+          inlineLoadingRef.current = false;
+          setInlineLoading(false);
+          handleInlineStreamUpdate(accumulatedText);
+          if (editorRef.current) {
+            setContent(editorRef.current.getValue());
+          }
+        }
+      });
+
+      const unlistenError = await listen<any>("vibe:llm:error", (e) => {
+        if (e.payload.sessionId === sessionId) {
+          if (rafId !== null) cancelAnimationFrame(rafId);
+          unlistenDelta();
+          unlistenDone();
+          unlistenError();
+          inlineLoadingRef.current = false;
+          setInlineLoading(false);
+          if (editorRef.current) {
+            setContent(editorRef.current.getValue());
+          }
+          alert("Error generating inline edits: " + e.payload.error);
+          cleanupInlineSession();
+        }
+      });
+
+      try {
+        const rawConfig = await invoke<any>("read_config");
+        if (!rawConfig) {
+          throw new Error("No configuration found. Please set up your API key and model.");
+        }
+        const systemPrompt = `You are an expert programmer. The user has selected a block of code in a file and requested an inline modification.
+Your task is to rewrite/modify the selected code block according to the user's instructions.
+Return ONLY the modified code that should replace the selected code.
+Do NOT wrap the code in markdown formatting (like \`\`\`typescript ... \`\`\`), and do NOT add any conversational explanation.
+Only output the raw code replacements. Ensure the indentation is correct for the selected block context.`;
+
+        const userPrompt = `File Path: ${path}
+File Language: ${getLanguage(path)}
+
+--- SELECT CONTEXT ---
+${session.originalText}
+----------------------
+
+User Instruction: ${promptText}`;
+
+        const messages = [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ];
+
+        await invoke("llm_stream", {
+          sessionId,
+          config: {
+            apiKey: rawConfig.apiKey,
+            baseUrl: rawConfig.baseUrl,
+            model: rawConfig.model,
+            apiUrl: rawConfig.apiUrl || null,
+            providerId: rawConfig.providerId || null,
+          },
+          messages,
+          tools: [],
+        });
+      } catch (err: any) {
+        unlistenDelta();
+        unlistenDone();
+        unlistenError();
+        inlineLoadingRef.current = false;
+        setInlineLoading(false);
+        alert("Failed to start stream: " + err.message);
+        cleanupInlineSession();
+      }
+    },
+    [path, handleInlineStreamUpdate, cleanupInlineSession, inlineZoneNode],
+  );
+
+  const handleTriggerInlineVibe = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTriggerTimeRef.current < 300) return;
+    lastTriggerTimeRef.current = now;
+
+    const ed = editorRef.current;
+    const m = monacoInstanceRef.current;
+    if (!ed || !m) return;
+
+    if (inlineZoneIdRef.current !== null || inlineZoneNode !== null) {
+      const existingTextarea =
+        inlineZoneNode?.querySelector("textarea") || ed.getDomNode()?.querySelector(".inline-vibe-textarea");
+      if (existingTextarea && document.activeElement !== existingTextarea) {
+        (existingTextarea as HTMLElement).focus();
+      } else {
+        cleanupInlineSession();
+      }
+      return;
+    }
+
+    cleanupInlineSession();
+
+    let selection = ed.getSelection();
+    if (!selection || selection.isEmpty()) {
+      const position = ed.getPosition();
+      if (position) {
+        selection = new m.Selection(
+          position.lineNumber,
+          1,
+          position.lineNumber,
+          ed.getModel()!.getLineMaxColumn(position.lineNumber),
+        );
+        ed.setSelection(selection);
+      }
+    }
+
+    if (!selection) return;
+
+    const originalText = ed.getModel()!.getValueInRange(selection);
+    inlineSessionRef.current = {
+      startLine: selection.startLineNumber,
+      endLine: selection.endLineNumber,
+      originalText,
+      selection: new m.Selection(
+        selection.startLineNumber,
+        selection.startColumn,
+        selection.endLineNumber,
+        selection.endColumn,
+      ),
+    };
+
+    const zoneDiv = document.createElement("div");
+    zoneDiv.className = "inline-vibe-zone-container";
+
+    const descriptor: monaco.editor.IViewZone = {
+      afterLineNumber: selection.endLineNumber,
+      heightInPx: 42,
+      domNode: zoneDiv,
+    };
+
+    ed.changeViewZones((changeAccessor) => {
+      const zoneId = changeAccessor.addZone(descriptor);
+      inlineZoneIdRef.current = zoneId;
+    });
+
+    inlineZoneDescriptorRef.current = descriptor;
+    setInlineZoneNode(zoneDiv);
+    setHasInlineDiff(false);
+
+    if (ghostDecorationsRef.current.length > 0) {
+      ed.deltaDecorations(ghostDecorationsRef.current, []);
+      ghostDecorationsRef.current = [];
+      lastGhostStateRef.current = null;
+    }
+
+    ed.revealLine(selection.endLineNumber);
+  }, [cleanupInlineSession, inlineZoneNode]);
+
+  useEffect(() => {
+    if (!inlineZoneNode || inlineZoneIdRef.current === null) return;
+    const ed = editorRef.current;
+    if (!ed) return;
+
+    const observer = new ResizeObserver(() => {
+      const portalRoot = inlineZoneNode.querySelector(".inline-vibe-portal-root") as HTMLElement;
+      if (!portalRoot) return;
+      const contentHeight = portalRoot.scrollHeight;
+      const targetHeightInPx = Math.max(40, contentHeight + 16);
+
+      const descriptor = inlineZoneDescriptorRef.current;
+      if (descriptor && descriptor.heightInPx !== targetHeightInPx) {
+        descriptor.heightInPx = targetHeightInPx;
+        ed.changeViewZones((accessor) => {
+          if (inlineZoneIdRef.current !== null) {
+            accessor.layoutZone(inlineZoneIdRef.current);
+          }
+        });
+      }
+    });
+
+    const portalRoot = inlineZoneNode.querySelector(".inline-vibe-portal-root");
+    if (portalRoot) observer.observe(portalRoot);
+    observer.observe(inlineZoneNode);
+
+    return () => observer.disconnect();
+  }, [inlineZoneNode, inlineLoading, hasInlineDiff]);
+
+  const triggerRef = useRef(handleTriggerInlineVibe);
+  triggerRef.current = handleTriggerInlineVibe;
+
+  const handleAcceptRef = useRef(handleAcceptInlineChanges);
+  handleAcceptRef.current = handleAcceptInlineChanges;
+
+  const handleRejectRef = useRef(handleRejectInlineChanges);
+  handleRejectRef.current = handleRejectInlineChanges;
+
+  const handleNavDiffRef = useRef(handleNavDiff);
+  handleNavDiffRef.current = handleNavDiff;
 
   const { currentTheme, previewTheme, colorScheme } = useTheme();
   const activeTheme = previewTheme ?? currentTheme;
@@ -335,7 +1009,7 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
         theme={monacoThemeName}
         path={"file://" + path.replace(/\\/g, "/")}
         language={getLanguage(path)}
-        value={content}
+        value={inlineLoading ? undefined : content}
         loading={<div className="editor editor--loading">{t("loading")}</div>}
         beforeMount={(m) => {
           monacoInstanceRef.current = m;
@@ -347,6 +1021,83 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
         onMount={async (ed, m) => {
           editorRef.current = ed;
           monacoInstanceRef.current = m;
+
+          // Inline Vibe keyboard shortcuts — two-layer approach:
+          //
+          // Layer 1: ed.addCommand() overrides Monaco's built-in Ctrl+K binding (which would
+          //   otherwise delete a line). Since addCommand() registers globally (monaco-editor#3345),
+          //   we only use it to BLOCK the default Monaco action and do nothing else here.
+          //   The actual trigger comes from Layer 2.
+          ed.addCommand(m.KeyMod.CtrlCmd | m.KeyCode.KeyK, () => {
+            // intentionally empty — just overrides Monaco's default Ctrl+K action.
+            // Layer 2 (DOM capture listener) handles the actual trigger.
+          });
+          ed.addCommand(m.KeyMod.CtrlCmd | m.KeyCode.Enter, () => {
+            if (inlineSessionRef.current) handleAcceptRef.current();
+          });
+          ed.addCommand(m.KeyMod.CtrlCmd | m.KeyCode.Backspace, () => {
+            if (inlineSessionRef.current) handleRejectRef.current();
+          });
+          ed.addCommand(m.KeyCode.Escape, () => {
+            if (inlineSessionRef.current) handleRejectRef.current();
+          });
+          ed.addCommand(m.KeyMod.Alt | m.KeyCode.KeyK, () => {
+            if (inlineSessionRef.current) handleNavDiffRef.current("next");
+          });
+          ed.addCommand(m.KeyMod.Alt | m.KeyCode.KeyJ, () => {
+            if (inlineSessionRef.current) handleNavDiffRef.current("prev");
+          });
+
+          // Layer 2: DOM capture-phase listener on the editor's own DOM node fires the actual
+          //   trigger. be.code is layout-independent so this works on Russian/German/etc. keyboards.
+          //   stopImmediatePropagation prevents any other listener on this node from also firing.
+          const handleInlineVibeKeyDown = (be: KeyboardEvent) => {
+            const ctrl = be.ctrlKey || be.metaKey;
+
+            // Ctrl+K — open / focus Inline Vibe
+            if (ctrl && be.code === "KeyK") {
+              be.preventDefault();
+              be.stopPropagation();
+              be.stopImmediatePropagation();
+              triggerRef.current();
+              return;
+            }
+
+            // Session-only shortcuts
+            if (!inlineSessionRef.current) return;
+
+            if (ctrl && be.code === "Enter") {
+              be.preventDefault();
+              be.stopPropagation();
+              be.stopImmediatePropagation();
+              handleAcceptRef.current();
+            } else if (ctrl && be.code === "Backspace") {
+              be.preventDefault();
+              be.stopPropagation();
+              be.stopImmediatePropagation();
+              handleRejectRef.current();
+            } else if (be.code === "Escape") {
+              be.preventDefault();
+              be.stopPropagation();
+              be.stopImmediatePropagation();
+              handleRejectRef.current();
+            } else if (be.altKey && be.code === "KeyK") {
+              be.preventDefault();
+              be.stopPropagation();
+              be.stopImmediatePropagation();
+              handleNavDiffRef.current("next");
+            } else if (be.altKey && be.code === "KeyJ") {
+              be.preventDefault();
+              be.stopPropagation();
+              be.stopImmediatePropagation();
+              handleNavDiffRef.current("prev");
+            }
+          };
+
+          const editorDomNode = ed.getDomNode();
+          if (editorDomNode) {
+            editorDomNode.addEventListener("keydown", handleInlineVibeKeyDown, true);
+          }
 
           if (!monacoProvidersRegistered) {
             monacoProvidersRegistered = true;
@@ -438,7 +1189,14 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
             scg2Tracker.attach(ed, path, m);
 
             ed.onDidChangeModelContent(() => {
-              setContent(ed.getValue());
+              if (!inlineLoadingRef.current) {
+                setContent(ed.getValue());
+              }
+              updateGhostTextRef.current();
+            });
+
+            ed.onDidChangeCursorPosition(() => {
+              updateGhostTextRef.current();
             });
 
             // Navigate to line when opening from search results
@@ -451,19 +1209,25 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
               }
               ed.focus();
             }
+
+            setTimeout(() => {
+              updateGhostTextRef.current();
+            }, 50);
           } catch (e) {
             console.error("Error mounting editor:", e);
           }
         }}
         options={{
           fontFamily: '"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace',
-          fontSize: 13,
-          fontLigatures: true,
+          fontSize: editorOptions.fontSize,
+          lineHeight: editorOptions.lineHeight,
+          fontLigatures: editorOptions.fontLigatures,
+          cursorStyle: editorOptions.cursorStyle,
+          cursorBlinking: editorOptions.cursorBlinking,
           minimap: { enabled: false },
           scrollBeyondLastLine: false,
           renderLineHighlight: "line",
           smoothScrolling: true,
-          cursorBlinking: "smooth",
           automaticLayout: true,
           tabSize: 2,
           wordWrap: "on",
@@ -482,6 +1246,220 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
           },
         }}
       />
+      {inlineZoneNode &&
+        ReactDOM.createPortal(
+          <div className="inline-vibe-portal-root">
+            {hasInlineDiff && inlineSessionRef.current?.combinedDiffResult && (
+              <InlineActionPill
+                onAccept={handleAcceptInlineChanges}
+                onReject={handleRejectInlineChanges}
+                onNextDiff={() => handleNavDiff("next")}
+                onPrevDiff={() => handleNavDiff("prev")}
+              />
+            )}
+            <InlinePromptPanel
+              onSend={handleSendPrompt}
+              onClose={cleanupInlineSession}
+              loading={inlineLoading}
+              placeholder={hasInlineDiff ? t("inlineRefineCode") : t("inlineEditCode")}
+            />
+          </div>,
+          inlineZoneNode,
+        )}
+      {inlineZoneNode && inlineSessionRef.current && (
+        <InlineVibeConnector
+          editor={editorRef.current}
+          monacoInstance={monacoInstanceRef.current}
+          session={inlineSessionRef.current}
+          zoneNode={inlineZoneNode}
+          hasDiff={hasInlineDiff}
+          loading={inlineLoading}
+        />
+      )}
     </div>
+  );
+}
+
+interface InlineVibeConnectorProps {
+  editor: monaco.editor.IStandaloneCodeEditor | null;
+  monacoInstance: typeof monaco | null;
+  session: { startLine: number; endLine: number } | null;
+  zoneNode: HTMLDivElement | null;
+  hasDiff: boolean;
+  loading: boolean;
+}
+
+function InlineVibeConnector({
+  editor,
+  monacoInstance,
+  session,
+  zoneNode,
+  hasDiff,
+  loading,
+}: InlineVibeConnectorProps) {
+  const [coords, setCoords] = useState<{
+    startX: number;
+    startY: number;
+    boxX: number;
+    boxY: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!editor || !monacoInstance || !session || !zoneNode) {
+      setCoords(null);
+      return;
+    }
+
+    let animFrameId: number | null = null;
+
+    const update = () => {
+      if (!editor || !zoneNode || !session) {
+        setCoords(null);
+        return;
+      }
+
+      const editorDomNode = editor.getDomNode();
+      if (!editorDomNode) {
+        setCoords(null);
+        return;
+      }
+
+      const editorRect = editorDomNode.getBoundingClientRect();
+      const layoutInfo = editor.getLayoutInfo();
+
+      const targetEl =
+        (zoneNode.querySelector(".inline-vibe-action-pill") as HTMLElement) ||
+        (zoneNode.querySelector(".inline-vibe-input-wrapper") as HTMLElement);
+
+      if (!targetEl) {
+        setCoords(null);
+        return;
+      }
+
+      const targetRect = targetEl.getBoundingClientRect();
+      if (targetRect.width === 0 || targetRect.height === 0) {
+        setCoords(null);
+        return;
+      }
+
+      const boxX = targetRect.left - editorRect.left;
+      const boxY = targetRect.top - editorRect.top + Math.min(17, targetRect.height / 2);
+
+      const lineNumStr = String(session.endLine);
+      const digitEl = Array.from(editorDomNode.querySelectorAll(".line-numbers")).find(
+        (el) => el.textContent?.trim() === lineNumStr,
+      );
+
+      const lineHeight = editor.getOption(monacoInstance.editor.EditorOption.lineHeight);
+      const getLineBottomY = (lineNum: number): number => {
+        const pos = editor.getScrolledVisiblePosition({ lineNumber: lineNum, column: 1 });
+        if (pos) {
+          return pos.top + pos.height;
+        }
+        const top = editor.getTopForLineNumber(lineNum) - editor.getScrollTop();
+        return top + lineHeight;
+      };
+
+      let startX: number;
+      let startY: number;
+
+      if (digitEl) {
+        const digitRect = digitEl.getBoundingClientRect();
+        let exactCenter = digitRect.left - editorRect.left + digitRect.width / 2;
+
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(digitEl);
+          const textRect = range.getBoundingClientRect();
+          if (textRect && textRect.width > 0 && textRect.width < digitRect.width * 0.9) {
+            exactCenter = textRect.left - editorRect.left + textRect.width / 2;
+          } else {
+            const numDigits = lineNumStr.length;
+            const charWidth = 8;
+            const rightPadding = 5;
+            exactCenter = digitRect.right - editorRect.left - rightPadding - (numDigits * charWidth) / 2;
+          }
+        } catch (_e) {
+          const numDigits = lineNumStr.length;
+          const charWidth = 8;
+          const rightPadding = 5;
+          exactCenter = digitRect.right - editorRect.left - rightPadding - (numDigits * charWidth) / 2;
+        }
+
+        startX = exactCenter;
+        startY = digitRect.bottom - editorRect.top;
+      } else {
+        const numDigits = lineNumStr.length;
+        const rightEdge = layoutInfo.lineNumbersLeft + layoutInfo.lineNumbersWidth - 5;
+        const charWidth = 8;
+        startX = rightEdge - (numDigits * charWidth) / 2;
+        startY = getLineBottomY(session.endLine);
+      }
+
+      setCoords((prev) => {
+        if (
+          prev &&
+          Math.abs(prev.startX - startX) < 0.5 &&
+          Math.abs(prev.startY - startY) < 0.5 &&
+          Math.abs(prev.boxX - boxX) < 0.5 &&
+          Math.abs(prev.boxY - boxY) < 0.5
+        ) {
+          return prev;
+        }
+        return { startX, startY, boxX, boxY };
+      });
+    };
+
+    update();
+
+    const scrollDisposable = editor.onDidScrollChange(() => update());
+    const layoutDisposable = editor.onDidLayoutChange(() => update());
+    const contentDisposable = editor.onDidChangeModelContent(() => update());
+
+    const resizeObserver = new ResizeObserver(() => {
+      update();
+    });
+    resizeObserver.observe(zoneNode);
+    const portalRoot = zoneNode.querySelector(".inline-vibe-portal-root");
+    if (portalRoot) resizeObserver.observe(portalRoot);
+    const textarea = zoneNode.querySelector("textarea");
+    if (textarea) resizeObserver.observe(textarea);
+
+    let frameCount = 0;
+    const loop = () => {
+      update();
+      if (frameCount < 30) {
+        frameCount++;
+        animFrameId = requestAnimationFrame(loop);
+      }
+    };
+    animFrameId = requestAnimationFrame(loop);
+
+    return () => {
+      scrollDisposable.dispose();
+      layoutDisposable.dispose();
+      contentDisposable.dispose();
+      resizeObserver.disconnect();
+      if (animFrameId !== null) cancelAnimationFrame(animFrameId);
+    };
+  }, [editor, monacoInstance, session, zoneNode, hasDiff, loading]);
+
+  if (!coords) return null;
+
+  const { startX, startY, boxX, boxY } = coords;
+  const dropDistance = Math.max(10, boxY - startY);
+  const cp1Y = startY + dropDistance * 0.82;
+  const turnRadius = Math.min(24, Math.max(12, (boxX - startX) * 0.35));
+  const cp2X = boxX - turnRadius;
+
+  const pathD = `M ${startX} ${startY} C ${startX} ${cp1Y}, ${cp2X} ${boxY}, ${boxX} ${boxY}`;
+
+  return (
+    <svg className="inline-vibe-connector-svg">
+      <path
+        d={pathD}
+        className={`inline-vibe-connector-path ${loading ? "inline-vibe-connector-path--loading" : ""}`}
+      />
+    </svg>
   );
 }
