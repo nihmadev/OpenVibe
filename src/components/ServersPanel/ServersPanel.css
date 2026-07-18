@@ -1,0 +1,81 @@
+.servers-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.servers-panel__tabs {
+  margin-bottom: 8px;
+}
+
+.servers-panel__content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.servers-panel,
+.servers-panel__tabs,
+.servers-panel__content,
+.servers-panel__lsp,
+.titlebar__mcp-server-list {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.servers-panel::-webkit-scrollbar,
+.servers-panel__tabs::-webkit-scrollbar,
+.servers-panel__content::-webkit-scrollbar,
+.servers-panel__lsp::-webkit-scrollbar,
+.titlebar__mcp-server-list::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.servers-panel__mcp,
+.servers-panel__lsp {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.titlebar__mcp-header.installing {
+  position: relative;
+  overflow: hidden;
+}
+
+.titlebar__mcp-header.installing::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 30%;
+  background: var(--fg);
+  animation: lsp-loader 1.5s infinite ease-in-out;
+}
+
+@keyframes lsp-loader {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+.lsp-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-muted);
+  animation: lsp-spin 1s linear infinite;
+  width: 32px; /* roughly the size of the toggle */
+}
+
+@keyframes lsp-spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
