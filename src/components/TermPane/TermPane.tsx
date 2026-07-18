@@ -2,7 +2,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import { Terminal as XTerm } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 import React, { useEffect, useRef } from "react";
-import { useI18n } from "../../hooks/useI18n.js";
+import { useTheme } from "../../hooks/useTheme.js";
 
 interface Props {
   id: string;
@@ -34,17 +34,25 @@ const THEME = {
 };
 
 export function TermPane({ id, visible }: Props): React.ReactElement {
-  const { t } = useI18n();
+  const { currentTheme, resolvedScheme, previewTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const termRef = useRef<XTerm | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
+
+  const activeTheme = previewTheme ?? currentTheme;
+  const activeVars = resolvedScheme === "dark" ? activeTheme.darkVars : activeTheme.lightVars;
+  const bg = activeVars["--bg"] || "#161616";
+  const fg = activeVars["--fg"] || "#e6e6e6";
+  const bgRef = useRef(bg);
+  const fgRef = useRef(fg);
+  bgRef.current = bg;
+  fgRef.current = fg;
 
   // Mount xterm + start PTY once per pane
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    const bg = getComputedStyle(document.body).getPropertyValue("--bg").trim() || "#161616";
     const term = new XTerm({
       fontFamily:
         '"Symbols Nerd Font", "JetBrainsMono Nerd Font", "Nerd Font", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
@@ -52,9 +60,8 @@ export function TermPane({ id, visible }: Props): React.ReactElement {
       cursorBlink: true,
       cursorStyle: "block",
       allowProposedApi: true,
-      allowTransparency: true,
       scrollback: 5000,
-      theme: { ...THEME, background: bg },
+      theme: { ...THEME, background: bgRef.current, foreground: fgRef.current, cursor: fgRef.current },
     });
     const fit = new FitAddon();
     term.loadAddon(fit);
@@ -105,6 +112,13 @@ export function TermPane({ id, visible }: Props): React.ReactElement {
       fitRef.current = null;
     };
   }, [id]);
+
+  // Update terminal theme whenever app theme colors change
+  useEffect(() => {
+    if (termRef.current) {
+      termRef.current.options.theme = { ...THEME, background: bg, foreground: fg, cursor: fg };
+    }
+  }, [bg, fg]);
 
   // Refit and focus when becoming visible
   useEffect(() => {
