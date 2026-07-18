@@ -9,6 +9,7 @@ use crate::execute::execute_tool;
 pub struct AgentToolExecutor {
     llm_config: Mutex<Option<LlmConfig>>,
     mcp_manager: Option<Arc<mcp::McpManager>>,
+    lsp_manager: Option<Arc<lsp::LspManager>>,
 }
 
 impl Default for AgentToolExecutor {
@@ -22,6 +23,7 @@ impl AgentToolExecutor {
         Self {
             llm_config: Mutex::new(None),
             mcp_manager: None,
+            lsp_manager: None,
         }
     }
 
@@ -29,7 +31,13 @@ impl AgentToolExecutor {
         Self {
             llm_config: Mutex::new(None),
             mcp_manager: Some(mcp_manager),
+            lsp_manager: None,
         }
+    }
+
+    pub fn with_lsp(mut self, lsp_manager: Arc<lsp::LspManager>) -> Self {
+        self.lsp_manager = Some(lsp_manager);
+        self
     }
 
     pub fn set_llm_config(&self, config: LlmConfig) {
