@@ -30,6 +30,9 @@ export function recordToItems(record: ChatRecord): any[] {
           item.reasoning = msg.reasoningContent;
           item.reasoningDone = true;
         }
+        if (msg.reasoningName) {
+          item.reasoningName = msg.reasoningName;
+        }
         out.push(item);
       }
       for (const tc of msg.toolCalls ?? []) {

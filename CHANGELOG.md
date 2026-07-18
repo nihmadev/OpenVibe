@@ -7,7 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [1.4.0](https://github.com/nihmadev/OpenVibe/compare/openvibe-v1.3.0...openvibe-v1.4.0) (2026-07-15)
 
-
 ### Features
 
 * add command palette to search popup ([96b374f](https://github.com/nihmadev/OpenVibe/commit/96b374f3721d03b5ecd466429271cdd806fa9319))

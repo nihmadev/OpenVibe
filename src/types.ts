@@ -22,7 +22,8 @@ export type VibeEvent =
   | { kind: "tool-chunk"; id: string; args: string }
   | { kind: "tool-result"; id: string; ok: boolean; text: string }
   | { kind: "tool-denied"; id: string; name: string }
-  | { kind: "reasoning-chunk"; text: string }
+  | { kind: "reasoning-start"; name?: string }
+  | { kind: "reasoning-chunk"; text: string; name?: string }
   | { kind: "reasoning-end" }
   | { kind: "info"; text: string }
   | { kind: "stopped" }
@@ -61,6 +62,7 @@ export interface ChatRecord {
       function: { name: string; arguments: string };
     }>;
     reasoningContent?: string;
+    reasoningName?: string;
   }>;
 }
 

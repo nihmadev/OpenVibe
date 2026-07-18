@@ -118,6 +118,32 @@ describe("recordToItems", () => {
     });
   });
 
+  it("converts assistant message with reasoningContent and reasoningName", () => {
+    const record: ChatRecord = {
+      id: "1",
+      title: "test",
+      createdAt: 0,
+      updatedAt: 0,
+      messages: [
+        {
+          role: "assistant",
+          content: "answer",
+          reasoningContent: "thinking...",
+          reasoningName: "Investigate build error...",
+        },
+      ],
+    };
+    const items = recordToItems(record);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      kind: "assistant",
+      text: "answer",
+      reasoning: "thinking...",
+      reasoningDone: true,
+      reasoningName: "Investigate build error...",
+    });
+  });
+
   it("skips assistant message with empty text", () => {
     const record: ChatRecord = {
       id: "1",

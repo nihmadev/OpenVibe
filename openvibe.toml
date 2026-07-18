@@ -1,10 +1,2 @@
-[[mcp.servers]]
-name = "godot"
-command = "npx"
-args = [
-    "-y",
-    "@coding-solo/godot-mcp",
-]
-enabled = true
-
-[mcp.servers.env]
+[mcp]
+servers = []
