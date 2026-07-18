@@ -236,6 +236,30 @@ describe("recordToItems", () => {
     expect(items[0]).toMatchObject({ id: "tc3", text: "done", ok: true });
   });
 
+  it("hides failed tool results while restoring history", () => {
+    const record: ChatRecord = {
+      id: "1",
+      title: "test",
+      createdAt: 0,
+      updatedAt: 0,
+      messages: [
+        {
+          role: "assistant",
+          content: "",
+          toolCalls: [
+            {
+              id: "tc-failed",
+              type: "function",
+              function: { name: "read_file", arguments: '{"path":"missing"}' },
+            },
+          ],
+        },
+        { role: "tool", content: "[tool-error] Tool execution failed. Hint: missing", toolCallId: "tc-failed" },
+      ],
+    };
+    expect(recordToItems(record)).toEqual([]);
+  });
+
   it("ignores tool result with no matching tool call", () => {
     const record: ChatRecord = {
       id: "1",

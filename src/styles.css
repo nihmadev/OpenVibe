@@ -26,12 +26,24 @@
   --radius-2xl: calc(var(--radius) + 10px);
 
   /* Backdrop blur — controlled via settings */
-  --blur-overlay: 0px;
+  --blur-amount: 0px;
 }
 
 html.theme-borderless {
-  --line: transparent !important;
-  --line-strong: rgba(0, 0, 0, 0.1) !important;
+  --line: rgba(255, 255, 255, 0) !important;
+  --line-strong: rgba(255, 255, 255, 0.02) !important;
+}
+
+html.theme-borderless .project-rail,
+html.theme-borderless .sidebar-group,
+html.theme-borderless .layout__chat,
+html.theme-borderless .layout__editor,
+html.theme-borderless .layout__search-code-wrap,
+html.theme-borderless .terminal-embedded,
+html.theme-borderless .app-sidebar {
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.4) !important;
 }
 
 * {
@@ -50,7 +62,36 @@ body,
   font-size: 13px;
   line-height: 1.55;
   overflow: hidden;
+  /* The application is primarily a control surface rather than a document.
+     Disable accidental selection on layout chrome, buttons, list rows and
+     decorative/overlay elements. Text-heavy controls opt back in below. */
+  -webkit-user-select: none;
+  user-select: none;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Keep selection available where it is an intentional part of the interaction.
+   These rules are deliberately explicit so newly added UI components inherit
+   the safe default without making editors or message content frustrating to
+   copy and edit. */
+input,
+textarea,
+[contenteditable="true"],
+[contenteditable="plaintext-only"],
+.monaco-editor,
+.monaco-editor * {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.markdown-body,
+.markdown-body *,
+.code-block,
+.code-block *,
+.terminal-embedded .xterm,
+.terminal-embedded .xterm * {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 button {
@@ -158,7 +199,6 @@ code {
   animation-name: var(--anim-project-switch-keyframes, project-switch-in);
   animation-duration: calc(var(--anim-project-switch-duration, 0.22s) * var(--anim-project-switch-enabled, 1));
   animation-timing-function: var(--anim-project-switch-easing, cubic-bezier(0.2, 0, 0.2, 1));
-  animation-fill-mode: both;
 }
 
 /* Generic fade-in for any newly mounted panel */
@@ -166,7 +206,6 @@ code {
   animation-name: var(--anim-panel-appear-keyframes, fade-in);
   animation-duration: calc(var(--anim-panel-appear-duration, 0.18s) * var(--anim-panel-appear-enabled, 1));
   animation-timing-function: var(--anim-panel-appear-easing, ease);
-  animation-fill-mode: both;
 }
 
 /* Slide up — used for session list items, chat rows, etc */
@@ -174,5 +213,38 @@ code {
   animation-name: var(--anim-sidebar-slide-keyframes, slide-up-in);
   animation-duration: calc(var(--anim-sidebar-slide-duration, 0.18s) * var(--anim-sidebar-slide-enabled, 1));
   animation-timing-function: var(--anim-sidebar-slide-easing, cubic-bezier(0.2, 0, 0.2, 1));
-  animation-fill-mode: both;
+}
+
+/* Skeleton Loader Utilities */
+.skeleton-item {
+  background-color: var(--bg-3);
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-circle {
+  border-radius: 50%;
+}
+
+.skeleton-line {
+  border-radius: var(--radius-xs, 3px);
+}
+
+.skeleton-block {
+  border-radius: var(--radius-md, 6px);
+}
+
+@keyframes skeleton-shimmer-anim {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, var(--bg-3) 25%, var(--line) 37%, var(--bg-3) 63%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer-anim 1.5s infinite linear;
 }

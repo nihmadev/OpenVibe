@@ -1,6 +1,6 @@
-/* Полное переопределение скроллбара для Electron/Chromium */
+/* None scrollbar for Electron/Chromium */
 
-/* Глобальные стили для всех элементов */
+/* Global styles for all elements */
 ::-webkit-scrollbar {
   width: 6px !important;
   height: 6px !important;
@@ -33,7 +33,7 @@
   display: none !important;
 }
 
-/* Полностью убираем кнопки со стрелками */
+/* Full hide scrollbar buttons */
 ::-webkit-scrollbar-button {
   display: none !important;
   width: 0 !important;
@@ -54,7 +54,7 @@
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
 }
 
-/* Применяем ко всем возможным элементам */
+/* Apply to all possible elements */
 html::-webkit-scrollbar,
 body::-webkit-scrollbar,
 div::-webkit-scrollbar,
@@ -103,7 +103,7 @@ code::-webkit-scrollbar-button {
   display: none !important;
 }
 
-/* ── Элементы без скроллбара ── */
+/* Elements without scrollbar */
 .editor-area__tabs,
 .editor-area__breadcrumb,
 .search-popup__body,
