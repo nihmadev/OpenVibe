@@ -93,12 +93,16 @@
 
 /* Disable CSS transitions on resizable panels while drag is active */
 body.is-resizing .sidebar,
-body.is-resizing .layout__search-code-wrap {
+body.is-resizing .layout__search-code-wrap,
+body.is-resizing .terminal-embedded {
   transition: none !important;
 }
 body.is-resizing {
   user-select: none !important;
   cursor: col-resize;
+}
+body.is-resizing-vertical {
+  cursor: row-resize !important;
 }
 
 /* ── Resize handles ── */
@@ -127,7 +131,8 @@ body.is-resizing {
 }
 
 .terminal-embedded {
-  height: 300px;
+  position: relative;
+  height: var(--terminal-height, 300px);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -151,7 +156,16 @@ body.is-resizing {
 
 /* Prevent internal resizing during the slide animation to avoid text jumping */
 .terminal-embedded .terminals {
-  min-height: 300px;
+  min-height: var(--terminal-height, 300px);
+}
+
+.terminal-embedded .resize-handle--vertical {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  z-index: 10;
 }
 
 .sidebar {

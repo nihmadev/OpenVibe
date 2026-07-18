@@ -6,6 +6,7 @@ import { FatalError } from "../FatalError/FatalError.js";
 import { Titlebar } from "../Titlebar/Titlebar.js";
 import { SearchPopup } from "../SearchPopup/SearchPopup.js";
 import { Loading } from "../Loading/Loading.js";
+import { WelcomeScreen } from "../WelcomeScreen/WelcomeScreen.js";
 import { useProjects } from "../../hooks/useProjects.js";
 import { useChats } from "../../hooks/useChats.js";
 import { useModels } from "../../hooks/useModels.js";
@@ -22,11 +23,17 @@ export function App(): React.ReactElement {
   const [state, setState] = useState<{ kind: "ok" } | { kind: "fatal"; error: string } | null>(null);
   const [config, setConfig] = useState<VibeConfig | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [lang, setLang] = useState<string>("Russian");
+  // Use clear, internationally understandable English for the first-run flow.
+  // The user's saved language is loaded immediately below and still takes precedence.
+  const [lang, setLang] = useState<string>("English");
+  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
 
   useEffect(() => {
     window.vibe.state.get("settings:language").then((v) => {
       if (v) setLang(v);
+    });
+    window.vibe.state.get("onboarding:completed").then((v) => {
+      setOnboardingCompleted(v === "true");
     });
   }, []);
 
@@ -218,6 +225,14 @@ export function App(): React.ReactElement {
     [openFiles, activeFile, handleActivateFile],
   );
 
+  useEffect(() => {
+    const handler = () => {
+      setOnboardingCompleted(false);
+    };
+    window.addEventListener("vibe:open-welcome-screen", handler);
+    return () => window.removeEventListener("vibe:open-welcome-screen", handler);
+  }, []);
+
   const handleCloseActiveFile = useCallback(() => {
     if (activeFile) handleCloseFile(activeFile);
   }, [activeFile, handleCloseFile]);
@@ -394,6 +409,19 @@ export function App(): React.ReactElement {
   if (!state) return <Loading />;
   if (state.kind === "fatal") return <FatalError error={state.error} />;
   if (!config) return <Loading />;
+  if (onboardingCompleted === null) return <Loading />;
+
+  if (!onboardingCompleted) {
+    return (
+      <ThemeProvider>
+        <I18nProvider lang={lang as any}>
+          <AnimationProvider>
+            <WelcomeScreen onComplete={() => setOnboardingCompleted(true)} onLanguageChange={setLang} />
+          </AnimationProvider>
+        </I18nProvider>
+      </ThemeProvider>
+    );
+  }
 
   if (!activeProject) {
     return (
@@ -459,7 +487,8 @@ export function App(): React.ReactElement {
                 open={settingsOpen}
                 onClose={() => setSettingsOpen(false)}
                 onProviderChanged={(model, baseUrl) => setConfig((c) => (c ? { ...c, model, baseUrl } : c))}
-                initialTab={settingsTab as any}
+                activeTab={settingsTab as any}
+                onTabChange={setSettingsTab}
                 onLanguageChange={setLang}
                 shortcuts={shortcuts}
                 onUpdateBinding={updateBinding}
@@ -576,7 +605,8 @@ export function App(): React.ReactElement {
               open={settingsOpen}
               onClose={() => setSettingsOpen(false)}
               onProviderChanged={(model, baseUrl) => setConfig((c) => (c ? { ...c, model, baseUrl } : c))}
-              initialTab={settingsTab as any}
+              activeTab={settingsTab as any}
+              onTabChange={setSettingsTab}
               onLanguageChange={setLang}
               shortcuts={shortcuts}
               onUpdateBinding={updateBinding}

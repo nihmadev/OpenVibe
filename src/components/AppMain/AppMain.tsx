@@ -23,12 +23,17 @@ function ResizeHandle({
   minWidth = 0,
   maxWidth = Infinity,
   direction = "horizontal",
+  forceHandleSide,
 }: {
   targetRef: React.RefObject<HTMLDivElement | null>;
-  onCommit: (width: number) => void;
+  onCommit: (size: number) => void;
   minWidth?: number;
   maxWidth?: number;
   direction?: "horizontal" | "vertical";
+  /** Override auto-detection of which side the handle is on.
+   *  "right" → drag right/down grows target, drag left/up shrinks it (default behavior).
+   *  "left"  → drag right/down shrinks target, drag left/up grows it. */
+  forceHandleSide?: "left" | "right";
 }): React.ReactElement {
   const dragging = useRef(false);
   const last = useRef(0);
@@ -42,15 +47,27 @@ function ResizeHandle({
       dragging.current = true;
       last.current = direction === "horizontal" ? e.clientX : e.clientY;
       document.body.classList.add("is-resizing");
+      if (direction === "vertical") {
+        document.body.classList.add("is-resizing-vertical");
+      }
 
-      // Determine whether the handle sits at the left or right edge of the target
+      // Determine whether the handle sits at the left/top or right/bottom edge of the target
       // Uses center-position comparison to work for both sibling handles (outside target)
-      // and child handles (inside target, like search-panel handle)
+      // and child handles (inside target)
       const handleRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
       const targetRect = el.getBoundingClientRect();
       const handleCx = (handleRect.left + handleRect.right) / 2;
       const targetCx = (targetRect.left + targetRect.right) / 2;
-      const handleIsLeft = handleCx < targetCx;
+      const handleCy = (handleRect.top + handleRect.bottom) / 2;
+      const targetCy = (targetRect.top + targetRect.bottom) / 2;
+      const handleIsLeftOrTop =
+        direction === "horizontal"
+          ? forceHandleSide
+            ? forceHandleSide === "left"
+            : handleCx < targetCx
+          : forceHandleSide
+            ? forceHandleSide === "left"
+            : handleCy < targetCy;
 
       function onMove(ev: MouseEvent) {
         if (!dragging.current) return;
@@ -59,15 +76,24 @@ function ResizeHandle({
         last.current = cur;
 
         const rect = el!.getBoundingClientRect();
-        const newWidth = handleIsLeft ? rect.width - delta : rect.width + delta;
-        const clamped = Math.max(minWidth, Math.min(maxWidth, newWidth));
-        el!.style.flex = `0 1 ${clamped}px`;
+        if (direction === "horizontal") {
+          const newWidth = handleIsLeftOrTop ? rect.width - delta : rect.width + delta;
+          const clamped = Math.max(minWidth, Math.min(maxWidth, newWidth));
+          el!.style.flex = `0 1 ${clamped}px`;
+        } else {
+          const newHeight = handleIsLeftOrTop ? rect.height - delta : rect.height + delta;
+          const clamped = Math.max(minWidth, Math.min(maxWidth, newHeight));
+          el!.style.height = `${clamped}px`;
+        }
       }
       function onUp() {
         dragging.current = false;
         document.body.classList.remove("is-resizing");
+        document.body.classList.remove("is-resizing-vertical");
         if (el) {
-          onCommit(Math.round(el.getBoundingClientRect().width));
+          const finalSize =
+            direction === "horizontal" ? el.getBoundingClientRect().width : el.getBoundingClientRect().height;
+          onCommit(Math.round(finalSize));
         }
         window.removeEventListener("mousemove", onMove);
         window.removeEventListener("mouseup", onUp);
@@ -75,7 +101,7 @@ function ResizeHandle({
       window.addEventListener("mousemove", onMove);
       window.addEventListener("mouseup", onUp);
     },
-    [targetRef, onCommit, minWidth, maxWidth, direction],
+    [targetRef, onCommit, minWidth, maxWidth, direction, forceHandleSide],
   );
 
   return <div className={"resize-handle resize-handle--" + direction} onMouseDown={onMouseDown} aria-hidden="true" />;
@@ -196,12 +222,14 @@ export function AppMain({
   const [searchWidth, setSearchWidth] = useState(400);
   const [gitWidth, setGitWidth] = useState(300);
   const [ftreeWidth, setFtreeWidth] = useState(280);
+  const [terminalHeight, setTerminalHeight] = useState(300);
 
   // Refs for direct DOM manipulation during resize (avoids React re-renders on every mousemove)
   const chatPanelRef = useRef<HTMLDivElement>(null);
   const searchWrapRef = useRef<HTMLDivElement>(null);
   const gitPanelRef = useRef<HTMLDivElement>(null);
   const ftreePanelRef = useRef<HTMLDivElement>(null);
+  const terminalPanelRef = useRef<HTMLDivElement>(null);
 
   // dirty files set — tracked here so EditorArea tabs can show the dot
   const [dirtyFiles, setDirtyFiles] = useState<Set<string>>(new Set());
@@ -380,10 +408,10 @@ export function AppMain({
             ref={chatPanelRef}
             className="layout__chat"
             style={
-              searchInCodeOpen
-                ? { flex: "1 1 0", minWidth: 200 }
-                : openFiles.length > 0
-                  ? { flex: `0 1 ${chatWidth}px`, minWidth: 200, maxWidth: 2400 }
+              openFiles.length > 0
+                ? { flex: `0 1 ${chatWidth}px`, minWidth: 200, maxWidth: 2400 }
+                : searchInCodeOpen || gitPanelOpen
+                  ? { flex: "1 1 0", minWidth: 200 }
                   : { flex: "1 1 0" }
             }
           >
@@ -470,7 +498,25 @@ export function AppMain({
               </>
             )}
 
-            <div className={`terminal-embedded ${!terminalOpen ? "terminal-embedded--closed" : ""}`}>
+            <div
+              ref={terminalPanelRef}
+              className={`terminal-embedded ${!terminalOpen ? "terminal-embedded--closed" : ""}`}
+              style={
+                {
+                  height: terminalOpen ? `${terminalHeight}px` : undefined,
+                  "--terminal-height": `${terminalHeight}px`,
+                } as React.CSSProperties
+              }
+            >
+              {terminalOpen && (
+                <ResizeHandle
+                  targetRef={terminalPanelRef}
+                  onCommit={setTerminalHeight}
+                  minWidth={100}
+                  maxWidth={800}
+                  direction="vertical"
+                />
+              )}
               <Terminals active={terminalOpen} />
             </div>
           </div>
@@ -485,11 +531,21 @@ export function AppMain({
                 : { flex: "0 1 0", minWidth: 0, maxWidth: 0 }
             }
           >
-            <ResizeHandle targetRef={searchWrapRef} onCommit={setSearchWidth} minWidth={200} maxWidth={2400} />
+            {openFiles.length > 0 ? (
+              <ResizeHandle targetRef={chatPanelRef} onCommit={setChatWidth} minWidth={200} maxWidth={2400} />
+            ) : (
+              <ResizeHandle
+                targetRef={searchWrapRef}
+                onCommit={setSearchWidth}
+                minWidth={200}
+                maxWidth={2400}
+                forceHandleSide="left"
+              />
+            )}
             <div className="layout__search-code" style={{ flex: 1, minWidth: 200, maxWidth: 2400 }}>
               <SearchInCode cwd={cwd} onOpenFile={handleOpenFile} onClose={onCloseSearchInCode} />
             </div>
-            {fileTreeOpen && !gitPanelOpen && (
+            {fileTreeOpen && !gitPanelOpen && openFiles.length === 0 && (
               <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={2400} />
             )}
           </div>
@@ -504,20 +560,38 @@ export function AppMain({
                 : { flex: "0 1 0", minWidth: 0, maxWidth: 0 }
             }
           >
-            <ResizeHandle targetRef={gitPanelRef} onCommit={setGitWidth} minWidth={200} maxWidth={2400} />
+            {openFiles.length > 0 ? (
+              <ResizeHandle
+                targetRef={searchInCodeOpen ? searchWrapRef : chatPanelRef}
+                onCommit={searchInCodeOpen ? setSearchWidth : setChatWidth}
+                minWidth={200}
+                maxWidth={2400}
+              />
+            ) : (
+              <ResizeHandle
+                targetRef={gitPanelRef}
+                onCommit={setGitWidth}
+                minWidth={200}
+                maxWidth={2400}
+                forceHandleSide="left"
+              />
+            )}
             <div className="layout__search-code" style={{ flex: 1, minWidth: 200, maxWidth: 2400 }}>
               <GitPanel cwd={cwd} onOpenFile={handleOpenFile} onClose={onCloseGitPanel} />
             </div>
-            <ResizeHandle targetRef={gitPanelRef} onCommit={setGitWidth} minWidth={200} maxWidth={2400} />
-            {fileTreeOpen && (
+            {fileTreeOpen && openFiles.length === 0 && (
               <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={2400} />
             )}
           </div>
 
-          {/* Editor panel — only when files are open and search is closed */}
-          {!searchInCodeOpen && openFiles.length > 0 && (
+          {openFiles.length > 0 && (
             <>
-              <ResizeHandle targetRef={chatPanelRef} onCommit={setChatWidth} minWidth={200} maxWidth={2400} />
+              <ResizeHandle
+                targetRef={gitPanelOpen ? gitPanelRef : searchInCodeOpen ? searchWrapRef : chatPanelRef}
+                onCommit={gitPanelOpen ? setGitWidth : searchInCodeOpen ? setSearchWidth : setChatWidth}
+                minWidth={200}
+                maxWidth={2400}
+              />
               <div className="layout__editor">
                 <EditorArea
                   openFiles={openFiles}
@@ -532,7 +606,7 @@ export function AppMain({
                   gotoMatchLength={gotoMatchLength}
                 />
               </div>
-              {fileTreeOpen && !gitPanelOpen && (
+              {fileTreeOpen && (
                 <ResizeHandle targetRef={ftreePanelRef} onCommit={setFtreeWidth} minWidth={160} maxWidth={2400} />
               )}
             </>

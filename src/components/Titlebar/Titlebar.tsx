@@ -21,9 +21,10 @@ import {
 } from "../Icons/index.js";
 import { Server } from "lucide-react";
 
-import { McpStatusDropdown } from "./McpStatusDropdown.js";
+import { ServersPanel } from "../ServersPanel/ServersPanel.js";
 import { mcpGetServers, mcpStartServer, mcpStopServer } from "../../tauri-bridge.js";
 import type { McpServerStatus } from "../../types.js";
+import { lspStore, type LspServerItem } from "../ServersPanel/lspStore.js";
 
 interface TitlebarProps {
   chatSideOpen?: boolean;
@@ -94,7 +95,12 @@ export function Titlebar({
   const [ctx, setCtx] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null);
 
   const [mcpServers, setMcpServers] = useState<McpServerStatus[]>([]);
+  const [lspServers, setLspServers] = useState<LspServerItem[]>(lspStore.getServers());
   const [mcpDropdownOpen, setMcpDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    return lspStore.subscribe(setLspServers);
+  }, []);
 
   const fetchMcpServers = useCallback(async () => {
     try {
@@ -138,9 +144,12 @@ export function Titlebar({
     }
   };
 
-  const getMcpGlobalDotClass = (servers: McpServerStatus[]) => {
-    if (servers.length === 0) return "titlebar__mcp-dot--gray";
-    const enabled = servers.filter((s) => s.enabled);
+  const getGlobalDotClass = (mcpList: McpServerStatus[], lspList: LspServerItem[]) => {
+    const isLspInstalling = lspList.some((s) => s.status === "installing");
+    if (isLspInstalling) return "titlebar__mcp-dot--starting";
+
+    if (mcpList.length === 0) return "titlebar__mcp-dot--gray";
+    const enabled = mcpList.filter((s) => s.enabled);
     if (enabled.length === 0) return "titlebar__mcp-dot--gray";
 
     const errorCount = enabled.filter((s) => s.status.type === "error").length;
@@ -275,7 +284,7 @@ export function Titlebar({
               className={btnClasses("sidebar", chatSideOpen ? "titlebar__action-btn--active" : "")}
               onClick={onToggleChatSide}
               onContextMenu={(e) => onBtnCtx(e, "sidebar")}
-              aria-label="Toggle sessions"
+              aria-label={t("toggleSessions")}
             >
               <SidebarToggleIcon />
             </button>
@@ -332,30 +341,32 @@ export function Titlebar({
 
       <div className="titlebar__right" onContextMenu={(e) => onSectionCtx(e, RIGHT_BTNS)}>
         <div className="titlebar__mcp-container" ref={mcpContainerRef}>
-          <Tooltip text={t("mcpServers")} side="bottom">
+          <Tooltip text="Servers" side="bottom">
             <button
               className={`titlebar__action-btn titlebar__mcp-btn ${mcpDropdownOpen ? "titlebar__action-btn--active" : ""}`}
               onClick={() => {
                 fetchMcpServers();
                 setMcpDropdownOpen(!mcpDropdownOpen);
               }}
-              aria-label={t("mcpServers")}
+              aria-label="Servers"
             >
               <Server size={15} />
 
-              <span className={`titlebar__mcp-badge ${getMcpGlobalDotClass(mcpServers)}`} />
+              <span className={`titlebar__mcp-badge ${getGlobalDotClass(mcpServers, lspServers)}`} />
             </button>
           </Tooltip>
           {mcpDropdownOpen && (
-            <McpStatusDropdown
-              servers={mcpServers}
-              onToggleServer={handleToggleMcpServer}
-              onOpenSettings={() => {
-                setMcpDropdownOpen(false);
-                if (onOpenSettings) onOpenSettings("mcp");
-              }}
-              onRefresh={fetchMcpServers}
-            />
+            <div className="titlebar__mcp-dropdown">
+              <ServersPanel
+                mcpServers={mcpServers}
+                onToggleMcpServer={handleToggleMcpServer}
+                onOpenSettings={() => {
+                  setMcpDropdownOpen(false);
+                  if (onOpenSettings) onOpenSettings("mcp");
+                }}
+                onRefreshMcp={fetchMcpServers}
+              />
+            </div>
           )}
         </div>
         {isVisible("terminal") && (
@@ -383,12 +394,12 @@ export function Titlebar({
           </Tooltip>
         )}
         {isVisible("git-panel") && (
-          <Tooltip text={gitPanelOpen ? "Hide Source Control" : "Show Source Control"} side="bottom">
+          <Tooltip text={gitPanelOpen ? t("hideSourceControl") : t("showSourceControl")} side="bottom">
             <button
               className={btnClasses("git-panel", gitPanelOpen ? "titlebar__action-btn--active" : "")}
               onClick={onToggleGitPanel}
               onContextMenu={(e) => onBtnCtx(e, "git-panel")}
-              aria-label="Toggle Source Control"
+              aria-label={t("sourceControl")}
             >
               <GitBranchIcon />
             </button>
