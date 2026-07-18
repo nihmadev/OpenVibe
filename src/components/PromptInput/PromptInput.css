@@ -16,7 +16,7 @@
 }
 
 .prompt-input--drag {
-  border-color: var(--accent);
+  border-color: var(--fg);
   border-style: dashed;
 }
 
@@ -75,7 +75,7 @@
 
 .prompt-input__context-chip--active {
   background: var(--bg-1);
-  border-color: var(--accent);
+  border-color: var(--fg);
 }
 
 .prompt-input__context-chip-header {
@@ -243,7 +243,7 @@
 
 /* File pills inside editor */
 .prompt-input__editor [data-type="file"] {
-  color: var(--accent);
+  color: var(--fg);
 }
 
 .prompt-input__editor [data-type="agent"] {
@@ -623,9 +623,25 @@
   padding: 4px 8px;
   border-radius: var(--radius-md);
   background: var(--bg-1);
+  border: 1px solid transparent !important;
 }
 
-.model-selector__search-input {
+.model-selector__search:focus-within,
+.model-selector__search .ui-input-wrap:focus-within,
+.model-selector__search.ui-input-wrap:focus-within {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.model-selector__search .ui-input-wrap {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  width: 100%;
+}
+
+.model-selector__search-input,
+.model-selector__search .ui-input {
   flex: 1;
   border: 0;
   background: transparent;
@@ -633,9 +649,11 @@
   font-size: 13px;
   outline: none;
   min-width: 0;
+  width: 100%;
 }
 
-.model-selector__search-input::placeholder {
+.model-selector__search-input::placeholder,
+.model-selector__search .ui-input::placeholder {
   color: var(--fg-muted);
 }
 
@@ -772,7 +790,7 @@
 }
 
 .model-selector__item--active {
-  color: var(--accent);
+  color: var(--fg);
   background: var(--bg-3);
 }
 

@@ -3,14 +3,8 @@ import type { Provider } from "../../../types.js";
 import { PROVIDER_TEMPLATES, getProviderIconPath } from "../../../constants.js";
 import { useI18n } from "../../../hooks/useI18n.js";
 import { useTheme } from "../../../hooks/useTheme.js";
-import {
-  ChevronRightIcon,
-  ChevronDownIcon,
-  SearchMiniIcon,
-  AttachPlusIcon,
-  FilterIcon,
-  CheckIcon,
-} from "../../Icons/icons.js";
+import { ChevronDownIcon, SearchMiniIcon, AttachPlusIcon, FilterIcon, CheckIcon } from "../../Icons/icons.js";
+import { Input, List, ListGroup, ListItem } from "../../ui/index.js";
 
 interface ModelGroup {
   providerId: string;
@@ -198,12 +192,11 @@ export function ModelSelector({ currentModel, onPickModel, onOpenSettings }: Mod
       {open && (
         <div className="model-selector__popup" style={{ width: 260 }}>
           <div className="model-selector__header">
-            <div className="model-selector__search">
-              <SearchMiniIcon />
-              <input
+            <div className="model-selector__search" style={{ flex: 1, marginRight: 8 }}>
+              <Input
                 ref={inputRef}
                 type="text"
-                className="model-selector__search-input"
+                icon={<SearchMiniIcon />}
                 placeholder={t("searchModelPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -239,50 +232,43 @@ export function ModelSelector({ currentModel, onPickModel, onOpenSettings }: Mod
             ) : filtered.length === 0 ? (
               <div className="model-selector__empty">{search ? t("noModelsFound") : t("noModelsEnabled")}</div>
             ) : (
-              filtered.map((group, i) => {
-                const isCollapsed = !!collapsedGroups[group.providerId];
-                return (
-                  <div
-                    key={group.providerId}
-                    className="model-selector__group"
-                    style={{ "--delay": i } as React.CSSProperties}
-                  >
-                    <div className="model-selector__group-name" onClick={() => toggleGroupCollapse(group.providerId)}>
-                      {(() => {
-                        const tmpl = PROVIDER_TEMPLATES.find((t) => t.id === group.providerId);
-                        return tmpl ? (
-                          <img
-                            src={getProviderIconPath(tmpl.icon, resolvedScheme === "light")}
-                            className="model-selector__group-icon"
-                            alt=""
-                          />
-                        ) : null;
-                      })()}
-                      <span>{group.providerName}</span>
-                      <ChevronRightIcon open={!isCollapsed} />
-                    </div>
-                    <div className={`model-selector__models ${isCollapsed ? "model-selector__models--collapsed" : ""}`}>
+              <List>
+                {filtered.map((group, i) => {
+                  const isCollapsed = !!collapsedGroups[group.providerId];
+                  const tmpl = PROVIDER_TEMPLATES.find((t) => t.id === group.providerId);
+                  const groupIcon = tmpl ? (
+                    <img
+                      src={getProviderIconPath(tmpl.icon, resolvedScheme === "light")}
+                      style={{ width: 14, height: 14 }}
+                      alt=""
+                    />
+                  ) : undefined;
+
+                  return (
+                    <ListGroup
+                      key={group.providerId}
+                      title={group.providerName}
+                      icon={groupIcon}
+                      expanded={!isCollapsed}
+                      onToggle={() => toggleGroupCollapse(group.providerId)}
+                    >
                       {group.models.map((m) => (
-                        <button
+                        <ListItem
                           key={m.id}
-                          type="button"
-                          className={`model-selector__item ${m.id === currentModel ? "model-selector__item--active" : ""}`}
-                          style={{ padding: "6px 16px" }}
+                          active={m.id === currentModel}
                           onClick={() => {
                             onPickModel(m.id);
                             setOpen(false);
                           }}
+                          rightIcon={m.id === currentModel ? <CheckIcon /> : undefined}
                         >
-                          <span className="model-selector__item-name" style={{ textAlign: "left" }}>
-                            {m.name}
-                          </span>
-                          {m.id === currentModel && <CheckIcon />}
-                        </button>
+                          {m.name}
+                        </ListItem>
                       ))}
-                    </div>
-                  </div>
-                );
-              })
+                    </ListGroup>
+                  );
+                })}
+              </List>
             )}
           </div>
         </div>
