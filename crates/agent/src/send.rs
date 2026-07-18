@@ -408,7 +408,7 @@ impl Agent {
 
                 for ((call, _, _), result) in prepared_calls.into_iter().zip(results) {
                     let is_ok = result.is_ok();
-                    let result_text = result.map_or_else(tool_error_hint, |text| text);
+                    let result_text = result.unwrap_or_else(tool_error_hint);
 
                     emit(
                         "vibe:agent:tool-result",
@@ -491,7 +491,7 @@ impl Agent {
                         .execute(tool_name, &parsed_args, &cwd, &self.cancel, emit)
                         .await;
                     let is_ok = result.is_ok();
-                    let result_text = result.map_or_else(tool_error_hint, |text| text);
+                    let result_text = result.unwrap_or_else(tool_error_hint);
 
                     // Store snapshot if file was modified
                     if let Some(snap) = snapshot {

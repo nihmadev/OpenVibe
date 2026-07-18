@@ -95,7 +95,7 @@ pub async fn download_and_extract_gz(url: &str, dest_file: &Path) -> anyhow::Res
     let dest_file = dest_file.to_path_buf();
 
     tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
-        use std::io::{Read, Seek, SeekFrom, Write};
+        use std::io::{Seek, SeekFrom};
         std_file.seek(SeekFrom::Start(0))?;
         let mut gz = flate2::read::GzDecoder::new(std_file);
 
