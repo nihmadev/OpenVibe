@@ -52,7 +52,7 @@ export const DiffEditor = React.memo(function DiffEditor({ original, modified, l
       const modifiedModel = m.editor.createModel(modifiedRef.current, language);
 
       const diffEditor = m.editor.createDiffEditor(container, {
-        renderSideBySide: false,
+        renderSideBySide: true,
         readOnly: true,
         fontSize: 12,
         fontFamily: "var(--mono)",
@@ -60,31 +60,23 @@ export const DiffEditor = React.memo(function DiffEditor({ original, modified, l
         scrollBeyondLastLine: false,
         automaticLayout: true,
         lineNumbers: "on",
-        folding: false,
+        folding: true,
         glyphMargin: false,
         lineNumbersMinChars: 3,
         padding: { top: 10, bottom: 10 },
         overviewRulerLanes: 0,
         hideCursorInOverviewRuler: true,
-        renderLineHighlight: "none",
-        scrollbar: { vertical: "auto", horizontal: "hidden", handleMouseWheel: false },
+        renderLineHighlight: "line",
+        scrollbar: { vertical: "auto", horizontal: "auto" },
         renderMarginRevertIcon: false,
-        enableSplitViewResizing: false,
-        renderIndicators: false,
+        enableSplitViewResizing: true,
+        renderIndicators: true,
       });
 
       diffEditor.setModel({ original: originalModel, modified: modifiedModel });
 
-      const modifiedEditor = diffEditor.getModifiedEditor();
-      const updateHeight = () => {
-        if (!container || !modifiedEditor) return;
-        const h = modifiedEditor.getContentHeight();
-        const clampedH = Math.max(Math.min(h, 600), 20);
-        container.style.height = `${clampedH}px`;
-        diffEditor.layout();
-      };
-      updateHeight();
-      const disposable = modifiedEditor.onDidContentSizeChange(updateHeight);
+      // The container fills its CSS flex parent — no dynamic height needed.
+      diffEditor.layout();
 
       const onWheel = (e: WheelEvent) => {
         const ed = editorRef.current?.getModifiedEditor();
@@ -107,7 +99,7 @@ export const DiffEditor = React.memo(function DiffEditor({ original, modified, l
       cleanupRef.current = () => {
         container.removeEventListener("wheel", onWheel);
         try {
-          disposable.dispose();
+          diffEditor.dispose();
         } catch {
           /* ok */
         }
@@ -118,11 +110,6 @@ export const DiffEditor = React.memo(function DiffEditor({ original, modified, l
         }
         try {
           modifiedModel.dispose();
-        } catch {
-          /* ok */
-        }
-        try {
-          diffEditor.dispose();
         } catch {
           /* ok */
         }
@@ -167,8 +154,11 @@ export const DiffEditor = React.memo(function DiffEditor({ original, modified, l
   }, [original, modified]);
 
   return (
-    <div className="diff-editor">
-      <div ref={containerRef} className="diff-editor__container" />
+    <div
+      className="diff-editor"
+      style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, height: "100%" }}
+    >
+      <div ref={containerRef} className="diff-editor__container" style={{ flex: 1, minHeight: 0, height: "100%" }} />
     </div>
   );
 });

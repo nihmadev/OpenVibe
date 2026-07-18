@@ -177,47 +177,6 @@ interface CachedModel {
 const MODEL_CACHE = new Map<string, CachedModel>();
 let monacoProvidersRegistered = false;
 
-interface DiffLine {
-  type: "added" | "removed" | "normal";
-  text: string;
-}
-
-function diffLines(oldLines: string[], newLines: string[]): DiffLine[] {
-  const dp: number[][] = Array(oldLines.length + 1)
-    .fill(null)
-    .map(() => Array(newLines.length + 1).fill(0));
-
-  for (let i = 1; i <= oldLines.length; i++) {
-    for (let j = 1; j <= newLines.length; j++) {
-      if (oldLines[i - 1] === newLines[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1] + 1;
-      } else {
-        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-      }
-    }
-  }
-
-  const result: DiffLine[] = [];
-  let i = oldLines.length;
-  let j = newLines.length;
-
-  while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
-      result.unshift({ type: "normal", text: oldLines[i - 1] });
-      i--;
-      j--;
-    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-      result.unshift({ type: "added", text: newLines[j - 1] });
-      j--;
-    } else {
-      result.unshift({ type: "removed", text: oldLines[i - 1] });
-      i--;
-    }
-  }
-
-  return result;
-}
-
 export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMatchLength }: Props): React.ReactElement {
   const { t } = useI18n();
   const [content, setContent] = useState<string | null>(null);
@@ -297,8 +256,6 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
     endLine: number;
     originalText: string;
     selection: monaco.Selection;
-    combinedDiffResult?: DiffLine[];
-    combinedLineCount?: number;
   } | null>(null);
 
   const updateGhostText = useCallback(() => {
@@ -396,33 +353,6 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
   }, []);
 
   const handleAcceptInlineChanges = useCallback(() => {
-    const ed = editorRef.current;
-    const m = monacoInstanceRef.current;
-    const session = inlineSessionRef.current;
-    if (!ed || !m || !session || !session.combinedDiffResult) {
-      cleanupInlineSession();
-      return;
-    }
-
-    const acceptedLines = session.combinedDiffResult.filter((line) => line.type !== "removed").map((line) => line.text);
-
-    const acceptedText = acceptedLines.join("\n");
-
-    const replaceRange = new m.Range(
-      session.startLine,
-      1,
-      session.endLine,
-      ed.getModel()!.getLineMaxColumn(session.endLine),
-    );
-
-    ed.executeEdits("inline-vibe-accept", [
-      {
-        range: replaceRange,
-        text: acceptedText,
-        forceMoveMarkers: true,
-      },
-    ]);
-
     cleanupInlineSession();
   }, [cleanupInlineSession]);
 
@@ -456,31 +386,16 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
   const handleNavDiff = useCallback((direction: "next" | "prev") => {
     const ed = editorRef.current;
     const session = inlineSessionRef.current;
-    if (!ed || !session || !session.combinedDiffResult) return;
+    if (!ed || !session) return;
 
-    const currentPos = ed.getPosition();
-    if (!currentPos) return;
-
-    const diffLinesIndices: number[] = [];
-    session.combinedDiffResult.forEach((line, index) => {
-      if (line.type === "added" || line.type === "removed") {
-        diffLinesIndices.push(session.startLine + index);
-      }
-    });
-
-    if (diffLinesIndices.length === 0) return;
-
-    let targetLine = diffLinesIndices[0];
+    // With direct replacement, we can just jump to the start or end of the modified block
     if (direction === "next") {
-      const next = diffLinesIndices.find((line) => line > currentPos.lineNumber);
-      if (next !== undefined) targetLine = next;
+      ed.revealLineInCenter(session.endLine);
+      ed.setPosition({ lineNumber: session.endLine, column: 1 });
     } else {
-      const prevs = diffLinesIndices.filter((line) => line < currentPos.lineNumber);
-      if (prevs.length > 0) targetLine = prevs[prevs.length - 1];
+      ed.revealLineInCenter(session.startLine);
+      ed.setPosition({ lineNumber: session.startLine, column: 1 });
     }
-
-    ed.revealLineInCenter(targetLine);
-    ed.setPosition({ lineNumber: targetLine, column: 1 });
     ed.focus();
   }, []);
 
@@ -491,7 +406,6 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
       const session = inlineSessionRef.current;
       if (!ed || !m || !session) return;
 
-      const originalLines = session.originalText.split("\n");
       let cleanedText = generatedText.trim();
       if (cleanedText.startsWith("```")) {
         const lines = cleanedText.split("\n");
@@ -499,14 +413,9 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
         if (lines.length > 0 && lines[lines.length - 1].startsWith("```")) lines.pop();
         cleanedText = lines.join("\n");
       }
-      const generatedLines = cleanedText.split("\n");
 
-      const diffResult = diffLines(originalLines, generatedLines);
-      session.combinedDiffResult = diffResult;
-
-      const combinedLines = diffResult.map((line) => line.text);
-      const combinedText = combinedLines.join("\n");
-      session.combinedLineCount = combinedLines.length;
+      const generatedLinesCount = cleanedText.split("\n").length;
+      const newEndLine = session.startLine + generatedLinesCount - 1;
 
       const replaceRange = new m.Range(
         session.startLine,
@@ -518,39 +427,24 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
       ed.executeEdits("inline-vibe", [
         {
           range: replaceRange,
-          text: combinedText,
+          text: cleanedText,
           forceMoveMarkers: true,
         },
       ]);
 
-      const newEndLine = session.startLine + combinedLines.length - 1;
       session.endLine = newEndLine;
 
       const newDecorations: monaco.editor.IModelDeltaDecoration[] = [];
-      let currentLine = session.startLine;
-
-      diffResult.forEach((line) => {
-        if (line.type === "added") {
-          newDecorations.push({
-            range: new m.Range(currentLine, 1, currentLine, 1),
-            options: {
-              isWholeLine: true,
-              className: "inline-diff-added",
-              linesDecorationsClassName: "inline-diff-added-gutter",
-            },
-          });
-        } else if (line.type === "removed") {
-          newDecorations.push({
-            range: new m.Range(currentLine, 1, currentLine, 1),
-            options: {
-              isWholeLine: true,
-              className: "inline-diff-removed",
-              linesDecorationsClassName: "inline-diff-removed-gutter",
-            },
-          });
-        }
-        currentLine++;
-      });
+      for (let i = session.startLine; i <= session.endLine; i++) {
+        newDecorations.push({
+          range: new m.Range(i, 1, i, 1),
+          options: {
+            isWholeLine: true,
+            className: "inline-diff-added",
+            linesDecorationsClassName: "inline-diff-added-gutter",
+          },
+        });
+      }
 
       inlineDecorationsRef.current = ed.deltaDecorations(inlineDecorationsRef.current, newDecorations);
 
@@ -597,28 +491,16 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
       const session = inlineSessionRef.current;
       if (!ed || !m || !session) return;
 
-      if (session.combinedDiffResult) {
-        const currentAcceptedText = session.combinedDiffResult
-          .filter((line) => line.type !== "removed")
-          .map((line) => line.text)
-          .join("\n");
-        const acceptedLinesCount = currentAcceptedText.split("\n").length;
+      if (hasInlineDiff) {
         const replaceRange = new m.Range(
           session.startLine,
           1,
           session.endLine,
           ed.getModel()!.getLineMaxColumn(session.endLine),
         );
-        ed.executeEdits("inline-vibe-refine", [
-          {
-            range: replaceRange,
-            text: currentAcceptedText,
-            forceMoveMarkers: true,
-          },
-        ]);
-        session.originalText = currentAcceptedText;
-        session.endLine = session.startLine + acceptedLinesCount - 1;
-        session.combinedDiffResult = undefined;
+        const currentText = ed.getModel()!.getValueInRange(replaceRange);
+        session.originalText = currentText;
+
         if (inlineDecorationsRef.current.length > 0) {
           ed.deltaDecorations(inlineDecorationsRef.current, []);
           inlineDecorationsRef.current = [];
@@ -813,7 +695,13 @@ User Instruction: ${promptText}`;
       lastGhostStateRef.current = null;
     }
 
-    ed.revealLine(selection.endLineNumber);
+    // Improve auto-scroll so the inline vibe zone is clearly visible
+    ed.revealLineInCenterIfOutsideViewport(selection.endLineNumber);
+    // Force a small scroll down to ensure the prompt is not cut off by the bottom edge
+    setTimeout(() => {
+      const top = ed.getScrollTop();
+      ed.setScrollTop(top + 80);
+    }, 50);
   }, [cleanupInlineSession, inlineZoneNode]);
 
   useEffect(() => {
@@ -970,7 +858,7 @@ User Instruction: ${promptText}`;
   // Ctrl/Cmd+S
   useEffect(() => {
     function onKey(e: KeyboardEvent): void {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "s" || e.code === "KeyS")) {
         e.preventDefault();
         save();
       }
@@ -1249,7 +1137,7 @@ User Instruction: ${promptText}`;
       {inlineZoneNode &&
         ReactDOM.createPortal(
           <div className="inline-vibe-portal-root">
-            {hasInlineDiff && inlineSessionRef.current?.combinedDiffResult && (
+            {hasInlineDiff && (
               <InlineActionPill
                 onAccept={handleAcceptInlineChanges}
                 onReject={handleRejectInlineChanges}

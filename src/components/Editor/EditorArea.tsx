@@ -5,6 +5,7 @@ import { VideoViewer, isVideoFile } from "../ImageViewer/VideoViewer.js";
 import { FileIcon, FolderIcon } from "../Icons/index.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { basename } from "../../utils/paths.js";
+import { GitDiffViewer } from "./GitDiffViewer.js";
 import "./EditorArea.css";
 
 interface EditorAreaProps {
@@ -60,8 +61,16 @@ export function EditorArea({
   // Build relative breadcrumb segments for the active file
   const breadcrumb = React.useMemo(() => {
     if (!activeFile) return [];
+    let fileNorm = activeFile;
+    if (fileNorm.startsWith("git-diff:")) {
+      try {
+        fileNorm = new URL(fileNorm).searchParams.get("path") || fileNorm;
+      } catch {
+        /* ignore */
+      }
+    }
     const cwdNorm = cwd.replace(/\\/g, "/");
-    const fileNorm = activeFile.replace(/\\/g, "/");
+    fileNorm = fileNorm.replace(/\\/g, "/");
     const rel = fileNorm.startsWith(cwdNorm + "/") ? fileNorm.slice(cwdNorm.length + 1) : fileNorm;
     return rel.split("/").filter(Boolean);
   }, [activeFile, cwd]);
@@ -81,6 +90,16 @@ export function EditorArea({
         {openFiles.map((path) => {
           const active = path === activeFile;
           const dirty = dirtyFiles.has(path);
+          const isDiff = path.startsWith("git-diff:");
+          let displayPath = path;
+          if (isDiff) {
+            try {
+              displayPath = new URL(path).searchParams.get("path") || path;
+            } catch {
+              /* ignore */
+            }
+          }
+          const displayBaseName = basename(displayPath) + (isDiff ? " (Diff)" : "");
           return (
             <div
               key={path}
@@ -89,11 +108,14 @@ export function EditorArea({
               aria-selected={active}
               title={path}
               onClick={() => onActivate(path)}
+              onMouseUp={(e) => {
+                if (e.button === 1) handleClose(e, path);
+              }}
             >
               <span className="editor-area__tab-icon">
-                <FileIcon name={basename(path)} />
+                <FileIcon name={basename(displayPath)} />
               </span>
-              <span className="editor-area__tab-name">{basename(path)}</span>
+              <span className="editor-area__tab-name">{displayBaseName}</span>
               {/* dirty dot — replaces close button when dirty */}
               {dirty ? (
                 <span
@@ -104,7 +126,7 @@ export function EditorArea({
               ) : (
                 <button
                   className="editor-area__tab-close"
-                  aria-label={t("closeFile", { name: basename(path) })}
+                  aria-label={t("closeFile", { name: displayBaseName })}
                   onClick={(e) => handleClose(e, path)}
                 >
                   ×
@@ -158,7 +180,9 @@ export function EditorArea({
       {/* ── Editor / Viewer body ── */}
       <div className="editor-area__body">
         {activeFile ? (
-          isImageFile(activeFile) ? (
+          activeFile.startsWith("git-diff:") ? (
+            <GitDiffViewer key={activeFile} path={activeFile} cwd={cwd} />
+          ) : isImageFile(activeFile) ? (
             <ImageViewer key={activeFile} path={activeFile} />
           ) : isVideoFile(activeFile) ? (
             <VideoViewer key={activeFile} path={activeFile} />
