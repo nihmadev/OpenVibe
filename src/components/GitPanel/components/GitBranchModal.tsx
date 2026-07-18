@@ -1,5 +1,6 @@
 import React from "react";
 import type { BranchInfo } from "../types.js";
+import { useI18n } from "../../../hooks/useI18n.js";
 
 export interface GitBranchModalProps {
   branches: BranchInfo[];
@@ -18,11 +19,12 @@ export function GitBranchModal({
   onCheckoutBranch,
   onClose,
 }: GitBranchModalProps) {
+  const { t } = useI18n();
   return (
     <div className="scm-modal-overlay" onClick={onClose}>
       <div className="scm-modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="scm-section-header" style={{ padding: "8px 12px" }}>
-          <span>Checkout / Create Branch</span>
+          <span>{t("checkoutCreateBranch")}</span>
           <div className="action-label" onClick={onClose}>
             <i className="codicon codicon-remove"></i>
           </div>
@@ -43,7 +45,7 @@ export function GitBranchModal({
               <input
                 type="text"
                 className="sc-input"
-                placeholder="New branch name..."
+                placeholder={t("newBranchName")}
                 value={newBranchName}
                 onChange={(e) => onNewBranchNameChange(e.target.value)}
                 onKeyDown={(e) => {
@@ -75,7 +77,7 @@ export function GitBranchModal({
               onClick={onCreateBranch}
               disabled={!newBranchName.trim()}
             >
-              Create
+              {t("createBranchBtn")}
             </button>
           </div>
 
@@ -95,7 +97,7 @@ export function GitBranchModal({
                   <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {b.name}
                   </span>
-                  {b.isHead && <span style={{ fontSize: "10px", opacity: 0.7 }}>(current)</span>}
+                  {b.isHead && <span style={{ fontSize: "10px", opacity: 0.7 }}>{t("currentBranch")}</span>}
                 </div>
               </div>
             ))}

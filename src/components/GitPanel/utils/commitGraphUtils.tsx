@@ -40,8 +40,8 @@ export const LANE_COLORS = ["#3794ff", "#e06c75", "#98c379", "#d19a66", "#c678dd
 
 export const SWIMLANE_WIDTH = 14;
 export const SWIMLANE_HEIGHT = 22;
-export const CIRCLE_RADIUS = 4;
-export const CIRCLE_STROKE_WIDTH = 2;
+export const CIRCLE_RADIUS = 3;
+export const CIRCLE_STROKE_WIDTH = 1.5;
 
 export function computeSwimlanes(nodes: CommitGraphNode[]): CommitViewModel[] {
   let colorIndex = -1;
@@ -192,42 +192,47 @@ export function GraphRow({ viewModel }: { viewModel: CommitViewModel }) {
   const cx = getX(circleIndex);
 
   if (node.isHead) {
-    paths.push(<circle key="head-bg" cx={cx} cy={cy} r={CIRCLE_RADIUS + 3} fill="var(--vscode-sideBar-background)" />);
+    // HEAD: large hollow ring — visually prominent
+    paths.push(<circle key="head-bg" cx={cx} cy={cy} r={CIRCLE_RADIUS + 4} fill="var(--vscode-sideBar-background)" />);
     paths.push(
       <circle
         key="head"
         cx={cx}
         cy={cy}
-        r={CIRCLE_RADIUS + 1}
+        r={CIRCLE_RADIUS + 3}
         fill="transparent"
         stroke={circleColor}
-        strokeWidth={CIRCLE_STROKE_WIDTH}
+        strokeWidth={2}
       />,
     );
   } else if (node.parentIds.length > 1) {
-    paths.push(<circle key="node-bg" cx={cx} cy={cy} r={CIRCLE_RADIUS + 2} fill="var(--vscode-sideBar-background)" />);
+    // Merge commit: medium hollow ring with inner dot
+    paths.push(<circle key="node-bg" cx={cx} cy={cy} r={CIRCLE_RADIUS + 1} fill="var(--vscode-sideBar-background)" />);
     paths.push(
       <circle
         key="node-outer"
         cx={cx}
         cy={cy}
-        r={CIRCLE_RADIUS + 2}
+        r={CIRCLE_RADIUS + 1}
         fill="transparent"
         stroke={circleColor}
         strokeWidth={CIRCLE_STROKE_WIDTH}
       />,
     );
     paths.push(
-      <circle key="node-inner" cx={cx} cy={cy} r={CIRCLE_RADIUS - 1} fill={circleColor} stroke="transparent" />,
+      <circle key="node-inner" cx={cx} cy={cy} r={CIRCLE_RADIUS - 2} fill={circleColor} stroke="transparent" />,
     );
   } else {
-    paths.push(<circle key="node-bg" cx={cx} cy={cy} r={CIRCLE_RADIUS + 1} fill="var(--vscode-sideBar-background)" />);
+    // Regular commit: small solid dot
+    paths.push(
+      <circle key="node-bg" cx={cx} cy={cy} r={CIRCLE_RADIUS + 1.0} fill="var(--vscode-sideBar-background)" />,
+    );
     paths.push(
       <circle
         key="node"
         cx={cx}
         cy={cy}
-        r={CIRCLE_RADIUS + 1}
+        r={CIRCLE_RADIUS + 1.3}
         fill={circleColor}
         stroke={circleColor}
         strokeWidth={CIRCLE_STROKE_WIDTH}

@@ -11,6 +11,7 @@ export interface FileStatus {
   staged: boolean;
   indexStatus: string;
   worktreeStatus: string;
+  isDir: boolean;
 }
 
 export interface BranchInfo {

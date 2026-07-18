@@ -2,6 +2,7 @@ import React from "react";
 import { FileIcon, FolderIcon } from "../../Icons/index.js";
 import { getStatusLetter } from "../utils/commitGraphUtils.js";
 import type { FileStatus, CommitFile } from "../types.js";
+import { useI18n } from "../../../hooks/useI18n.js";
 
 export interface FileRowProps {
   file: FileStatus;
@@ -13,12 +14,16 @@ export interface FileRowProps {
 }
 
 export function FileRow({ file, isStaged, onOpenFile, onStageFile, onUnstageFile, onRevertFile }: FileRowProps) {
-  const fileName = file.path.split(/[\\/]/).pop() || file.path;
+  // Use the backend-provided isDir flag; fall back to path-suffix heuristic
+  const isDirectory = file.isDir || file.path.endsWith("/") || file.path.endsWith("\\");
+  const normalizedPath = isDirectory ? file.path.replace(/[\\/]+$/, "") : file.path;
+  const fileName = normalizedPath.split(/[\\/]/).pop() || normalizedPath;
   const dirPath =
-    file.path.includes("/") || file.path.includes("\\")
-      ? file.path.substring(0, file.path.length - fileName.length - 1)
+    normalizedPath.includes("/") || normalizedPath.includes("\\")
+      ? normalizedPath.substring(0, normalizedPath.length - fileName.length - 1)
       : "";
   const statusChar = getStatusLetter(file);
+  const { t } = useI18n();
 
   return (
     <div className="monaco-list-row" onClick={() => onOpenFile?.(file.path)}>
@@ -26,21 +31,21 @@ export function FileRow({ file, isStaged, onOpenFile, onStageFile, onUnstageFile
         <div className="name" style={{ display: "flex", alignItems: "center", flex: 1, overflow: "hidden" }}>
           <div className="monaco-icon-label">
             <span style={{ display: "flex", alignItems: "center", marginRight: 6 }}>
-              <FileIcon name={fileName} />
+              {isDirectory ? <FolderIcon open={false} name={fileName} /> : <FileIcon name={fileName} />}
             </span>
             <div className="monaco-icon-name-container">{fileName}</div>
             {dirPath && <div className="monaco-icon-description-container">{dirPath}</div>}
             <div className="actions" style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
               {isStaged ? (
-                <div className="action-label" title="Unstage Changes" onClick={(e) => onUnstageFile(file.path, e)}>
+                <div className="action-label" title={t("unstageChanges")} onClick={(e) => onUnstageFile(file.path, e)}>
                   <i className="codicon codicon-remove"></i>
                 </div>
               ) : (
                 <>
-                  <div className="action-label" title="Discard Changes" onClick={(e) => onRevertFile(file.path, e)}>
+                  <div className="action-label" title={t("discardChanges")} onClick={(e) => onRevertFile(file.path, e)}>
                     <i className="codicon codicon-discard"></i>
                   </div>
-                  <div className="action-label" title="Stage Changes" onClick={(e) => onStageFile(file.path, e)}>
+                  <div className="action-label" title={t("stageChanges")} onClick={(e) => onStageFile(file.path, e)}>
                     <i className="codicon codicon-add"></i>
                   </div>
                 </>
@@ -158,10 +163,13 @@ export interface CommitFileRowProps {
 }
 
 export function CommitFileRow({ file, onOpenFile }: CommitFileRowProps) {
-  const fileName = file.path.split(/[\\/]/).pop() || file.path;
+  // Paths ending with '/' are directory entries (e.g. submodules)
+  const isDirectory = file.path.endsWith("/") || file.path.endsWith("\\");
+  const normalizedPath = isDirectory ? file.path.slice(0, -1) : file.path;
+  const fileName = normalizedPath.split(/[\\/]/).pop() || normalizedPath;
   const dirPath =
-    file.path.includes("/") || file.path.includes("\\")
-      ? file.path.substring(0, file.path.length - fileName.length - 1)
+    normalizedPath.includes("/") || normalizedPath.includes("\\")
+      ? normalizedPath.substring(0, normalizedPath.length - fileName.length - 1)
       : "";
   const statusChar = file.status;
   return (
@@ -170,7 +178,7 @@ export function CommitFileRow({ file, onOpenFile }: CommitFileRowProps) {
         <div className="name" style={{ display: "flex", alignItems: "center", flex: 1, overflow: "hidden" }}>
           <div className="monaco-icon-label">
             <span style={{ display: "flex", alignItems: "center", marginRight: 6 }}>
-              <FileIcon name={fileName} />
+              {isDirectory ? <FolderIcon open={false} name={fileName} /> : <FileIcon name={fileName} />}
             </span>
             <div className="monaco-icon-name-container">{fileName}</div>
             {dirPath && <div className="monaco-icon-description-container">{dirPath}</div>}

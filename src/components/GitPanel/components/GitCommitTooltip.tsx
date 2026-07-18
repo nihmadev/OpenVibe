@@ -2,6 +2,7 @@ import React from "react";
 import { Markdown } from "../../Markdown/Markdown.js";
 import { formatRelativeTime } from "../utils/commitGraphUtils.js";
 import type { CommitGraphNode, CommitFile } from "../types.js";
+import { useI18n } from "../../../hooks/useI18n.js";
 
 export interface GitCommitTooltipProps {
   hoveredCommit: CommitGraphNode;
@@ -30,6 +31,7 @@ export function GitCommitTooltip({
   onTooltipLeave,
   onSelectCommit,
 }: GitCommitTooltipProps) {
+  const { t } = useI18n();
   return (
     <div
       ref={tooltipRef}
@@ -184,12 +186,12 @@ export function GitCommitTooltip({
                   className="scm-commit-tooltip-stats"
                   style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}
                 >
-                  <span>{filesCount === 1 ? "1 file changed" : `${filesCount} files changed`}</span>
+                  <span>{t("commitFileChanged", { count: filesCount })}</span>
                   {insertions > 0 && (
                     <span>
                       ,&nbsp;
                       <span style={{ color: "var(--vscode-scmGraph-historyItemHoverAdditionsForeground, #81B88B)" }}>
-                        {insertions === 1 ? "1 insertion(+)" : `${insertions} insertions(+)`}
+                        {t("commitInsertion", { count: insertions })}
                       </span>
                     </span>
                   )}
@@ -197,7 +199,7 @@ export function GitCommitTooltip({
                     <span>
                       ,&nbsp;
                       <span style={{ color: "var(--vscode-scmGraph-historyItemHoverDeletionsForeground, #C74E39)" }}>
-                        {deletions === 1 ? "1 deletion(-)" : `${deletions} deletions(-)`}
+                        {t("commitDeletion", { count: deletions })}
                       </span>
                     </span>
                   )}
@@ -211,7 +213,7 @@ export function GitCommitTooltip({
         <div className="scm-commit-tooltip-commands">
           <a
             className="scm-commit-tooltip-cmd"
-            title="Open Commit"
+            title={t("openCommit")}
             onClick={(e) => {
               e.stopPropagation();
               onSelectCommit(hoveredCommit);
@@ -223,7 +225,7 @@ export function GitCommitTooltip({
           <span className="scm-commit-tooltip-cmd-space">&nbsp;</span>
           <a
             className="scm-commit-tooltip-cmd"
-            title="Copy Commit Hash"
+            title={t("copyCommitHash")}
             onClick={(e) => {
               e.stopPropagation();
               navigator.clipboard.writeText(hoveredCommit.id);
@@ -234,14 +236,14 @@ export function GitCommitTooltip({
           <span className="scm-commit-tooltip-cmd-sep">&nbsp;&nbsp;|&nbsp;&nbsp;</span>
           <a
             className="scm-commit-tooltip-cmd"
-            title="Open on GitHub"
+            title={t("openOnGitHub")}
             onClick={(e) => {
               e.stopPropagation();
               window.open(`https://github.com/search?q=${hoveredCommit.id}&type=commits`, "_blank");
             }}
           >
             <i className="codicon codicon-github"></i>
-            <span>Open on GitHub</span>
+            <span>{t("openOnGitHub")}</span>
           </a>
         </div>
       </div>

@@ -286,11 +286,11 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
     <div className="scm-view scm-container">
       {/* ── HEADER ── */}
       <div className="scm-header">
-        <span>Source Control</span>
+        <span>{t("sourceControl")}</span>
         <div className="actions">
           <button
             className="action-label"
-            title={viewMode === "list" ? "View as Tree" : "View as Flat List"}
+            title={viewMode === "list" ? t("viewAsTree") : t("viewAsFlatList")}
             onClick={() => setViewMode(viewMode === "list" ? "tree" : "list")}
             style={{
               backgroundColor:
@@ -299,12 +299,12 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
           >
             <i className={viewMode === "list" ? "codicon codicon-list-tree" : "codicon codicon-list-flat"}></i>
           </button>
-          <button className="action-label" title="Refresh" onClick={fetchAllData}>
+          <button className="action-label" title={t("refreshTooltip")} onClick={fetchAllData}>
             <i className="codicon codicon-refresh"></i>
           </button>
           <button
             className="action-label"
-            title="Views and More Actions..."
+            title={t("viewsAndMoreActions")}
             onClick={() => setShowMoreMenu(!showMoreMenu)}
           >
             <i className="codicon codicon-ellipsis"></i>
@@ -322,7 +322,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
               handleStageAll();
             }}
           >
-            <i className="codicon codicon-add" style={{ marginRight: 8 }}></i> Stage All Changes
+            <i className="codicon codicon-add" style={{ marginRight: 8 }}></i> {t("stageAllChanges")}
           </div>
           <div
             className="scm-menu-item"
@@ -331,7 +331,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
               setShowBranchModal(true);
             }}
           >
-            <i className="codicon codicon-git-branch" style={{ marginRight: 8 }}></i> Checkout / Create Branch...
+            <i className="codicon codicon-git-branch" style={{ marginRight: 8 }}></i> {t("checkoutCreateBranch")}
           </div>
           <div className="scm-menu-divider" />
           <div
@@ -341,7 +341,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
               fetchAllData();
             }}
           >
-            <i className="codicon codicon-refresh" style={{ marginRight: 8 }}></i> Refresh Status
+            <i className="codicon codicon-refresh" style={{ marginRight: 8 }}></i> {t("refreshStatus")}
           </div>
         </div>
       )}
@@ -353,7 +353,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
           <div className="scm-section-header" onClick={() => toggleSection("repos")}>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <i className={`codicon codicon-chevron-${expanded.repos ? "down" : "right"}`}></i>
-              <span>Repositories</span>
+              <span>{t("repositories")}</span>
             </div>
           </div>
 
@@ -390,7 +390,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
           <div className="scm-section-header" onClick={() => toggleSection("scm")}>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <i className={`codicon codicon-chevron-${expanded.scm ? "down" : "right"}`}></i>
-              <span>Source Control</span>
+              <span>{t("sourceControl")}</span>
             </div>
             {files.length > 0 && <span className="monaco-count-badge">{files.length}</span>}
           </div>
@@ -412,7 +412,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                     className="sc-input"
                     value={commitMessage}
                     onChange={(e) => setCommitMessage(e.target.value)}
-                    placeholder={`Message (Ctrl+Enter to commit on '${currentBranch}')`}
+                    placeholder={t("commitMessagePlaceholder", { branch: currentBranch })}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                         handleCommit();
@@ -441,7 +441,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                 }}
                 disabled={!commitMessage.trim()}
               >
-                <i className="codicon codicon-check"></i> Commit
+                <i className="codicon codicon-check"></i> {t("commitBtn")}
               </button>
 
               {/* Quick Filter Input */}
@@ -471,7 +471,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                       className="sc-input"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Filter changes (e.g. *.ts, src/)"
+                      placeholder={t("filterChangesPlaceholder")}
                       style={{
                         width: "100%",
                         height: "24px",
@@ -486,7 +486,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                     {searchQuery && (
                       <i
                         className="codicon codicon-close"
-                        title="Clear filter"
+                        title={t("clearFilter")}
                         onClick={() => setSearchQuery("")}
                         style={{
                           fontSize: 12,
@@ -503,7 +503,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
 
               {files.length === 0 ? (
                 <div style={{ padding: "16px 12px", textAlign: "center", opacity: 0.6, fontSize: "12px" }}>
-                  No changes detected in repository.
+                  {t("noChangesDetected")}
                 </div>
               ) : (
                 <div className="monaco-list">
@@ -523,12 +523,12 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                         >
                           <div className="name" style={{ display: "flex", alignItems: "center", gap: 4 }}>
                             <i className={`codicon codicon-chevron-${expanded.staged ? "down" : "right"}`}></i>
-                            <span style={{ fontWeight: 600 }}>Staged Changes</span>
+                            <span style={{ fontWeight: 600 }}>{t("stagedChanges")}</span>
                           </div>
                           <div className="actions">
                             <div
                               className="action-label"
-                              title="Unstage All"
+                              title={t("unstageAll")}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 stagedFiles.forEach((f) => handleUnstageFile(f.path));
@@ -606,12 +606,12 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                         >
                           <div className="name" style={{ display: "flex", alignItems: "center", gap: 4 }}>
                             <i className={`codicon codicon-chevron-${expanded.changes ? "down" : "right"}`}></i>
-                            <span style={{ fontWeight: 600 }}>Changes</span>
+                            <span style={{ fontWeight: 600 }}>{t("changes")}</span>
                           </div>
                           <div className="actions">
                             <div
                               className="action-label"
-                              title="Stage All"
+                              title={t("stageAllChanges")}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleStageAll();
@@ -683,7 +683,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
           <div className="scm-section-header" onClick={() => toggleSection("graph")}>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <i className={`codicon codicon-chevron-${expanded.graph ? "down" : "right"}`}></i>
-              <span>Graph</span>
+              <span>{t("graph")}</span>
             </div>
             {graphNodes.length > 0 && <span className="monaco-count-badge">{graphNodes.length}</span>}
           </div>
@@ -692,7 +692,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
             <div className="monaco-list">
               {viewModels.length === 0 ? (
                 <div style={{ padding: "16px 12px", textAlign: "center", opacity: 0.6, fontSize: "12px" }}>
-                  No commits in graph history.
+                  {t("noCommitsInGraph")}
                 </div>
               ) : (
                 viewModels.map((vm) => {
@@ -716,7 +716,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                             }
                           }
                         }}
-                        style={{ padding: 0 }}
+                        style={{ paddingLeft: 4, paddingRight: 4 }}
                       >
                         <div className="history-item" style={{ display: "flex", width: "100%", alignItems: "center" }}>
                           <GraphRow viewModel={vm} />
@@ -854,7 +854,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                               })()}
                             </div>
                           ) : commitFilesMap[node.id] ? (
-                            <div style={{ padding: "8px 32px", opacity: 0.6 }}>No files changed</div>
+                            <div style={{ padding: "8px 32px", opacity: 0.6 }}>{t("noFilesChanged")}</div>
                           ) : null}
                         </div>
                       )}
