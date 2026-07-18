@@ -127,14 +127,6 @@ function FileChangeRow({ change, cwd }: { change: FileChangeInfo; cwd?: string }
   );
 }
 
-function pluralFilesChanged(n: number, t: (key: string) => string): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return `1 ${t("filesChanged_one")}`;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return `${n} ${t("filesChanged_few")}`;
-  return `${n} ${t("filesChanged")}`;
-}
-
 function FileChangesSummary({ items, currentId, cwd }: { items: HistoryItem[]; currentId: string; cwd?: string }) {
   const { t } = useI18n();
   const changes = useMemo(() => getFileChanges(items, currentId), [items, currentId]);
@@ -147,7 +139,7 @@ function FileChangesSummary({ items, currentId, cwd }: { items: HistoryItem[]; c
   return (
     <div className="changes-summary">
       <div className="changes-summary__header">
-        <span>{pluralFilesChanged(changes.length, t)}</span>
+        <span>{t("filesChanged", { count: changes.length })}</span>
         <span className="changes-summary__total">
           <span className="tool__diff-add">+{totalAdded}</span>
           <span className="tool__diff-remove">−{totalRemoved}</span>

@@ -51,6 +51,10 @@ pub async fn llm_stream(
             let _ = app_for_emit
                 .emit("vibe:llm:reasoning", serde_json::json!({ "sessionId": &session_id_clone, "content": chunk }));
         },
+        &|name| {
+            let _ = app_for_emit
+                .emit("vibe:llm:reasoning_start", serde_json::json!({ "sessionId": &session_id_clone, "name": name }));
+        },
         &|| {
             let _ = app_for_emit.emit("vibe:llm:reasoning_end", serde_json::json!({ "sessionId": &session_id_clone }));
         },

@@ -7,6 +7,7 @@ interface MarkdownProps {
   isAssistant?: boolean;
   simplifiedCodeBlocks?: boolean;
   noFileIcons?: boolean;
+  isStreaming?: boolean;
 }
 
 export const Markdown = React.memo(function Markdown({
@@ -15,6 +16,7 @@ export const Markdown = React.memo(function Markdown({
   isAssistant,
   simplifiedCodeBlocks,
   noFileIcons,
+  isStreaming,
 }: MarkdownProps) {
   return (
     <div className={"markdown-body " + (className || "")}>
@@ -23,6 +25,7 @@ export const Markdown = React.memo(function Markdown({
         isAssistant={isAssistant}
         noFileIcons={noFileIcons}
         simplifiedCodeBlocks={simplifiedCodeBlocks}
+        isStreaming={isStreaming}
       />
     </div>
   );

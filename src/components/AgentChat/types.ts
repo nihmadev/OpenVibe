@@ -19,6 +19,7 @@ export interface HistoryItem {
   currentModel?: string;
   reasoning?: string;
   reasoningDone?: boolean;
+  reasoningName?: string;
   msgIndex?: number;
   subItems?: HistoryItem[];
 }

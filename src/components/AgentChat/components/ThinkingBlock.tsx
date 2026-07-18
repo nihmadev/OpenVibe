@@ -20,9 +20,11 @@ function useDebouncedValue<T>(value: T, delay: number): T {
 export function ThinkingBlock({
   reasoning,
   reasoningDone,
+  reasoningName,
 }: {
   reasoning: string;
   reasoningDone?: boolean;
+  reasoningName?: string;
 }): React.ReactElement {
   const displayReasoning = useDebouncedValue(reasoning, reasoningDone ? 0 : 50);
   const [open, setOpen] = useState(!reasoningDone);
@@ -98,10 +100,16 @@ export function ThinkingBlock({
       >
         <span className="thinking-header__text">
           {!reasoningDone
-            ? `Thinking...${liveDuration > 0 ? ` ${liveDuration}s` : ""}`
-            : durationStr
-              ? `Thought for ${durationStr}`
-              : "Thought"}
+            ? reasoningName
+              ? `${reasoningName}${liveDuration > 0 ? ` (${liveDuration}s)` : ""}`
+              : `Thinking${liveDuration > 0 ? ` for ${liveDuration}s` : ""}`
+            : reasoningName
+              ? durationStr
+                ? `${reasoningName} (thought for ${durationStr})`
+                : reasoningName
+              : durationStr
+                ? `Thought for ${durationStr}`
+                : "Thought"}
         </span>
         <span className="thinking-header__icon">
           <ChevronRightIcon open={open} />
@@ -111,7 +119,7 @@ export function ThinkingBlock({
       {open && (
         <div className={`thinking-content-wrapper ${maskClass}`}>
           <div className="thinking-content" ref={contentRef} onScroll={updateScroll}>
-            <Markdown content={displayReasoning} isAssistant={true} simplifiedCodeBlocks={true} noFileIcons={true} />
+            <Markdown content={displayReasoning} isAssistant={true} noFileIcons={true} isStreaming={!reasoningDone} />
           </div>
         </div>
       )}

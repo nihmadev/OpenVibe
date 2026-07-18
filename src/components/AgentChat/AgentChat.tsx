@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import "./AgentChat.css";
 import "./FBadge.css";
 
@@ -136,13 +136,13 @@ const MessageItem = React.memo(
     return (
       <div className={cls}>
         {showThinking && item.reasoning && (
-          <ThinkingBlock reasoning={item.reasoning} reasoningDone={item.reasoningDone} />
+          <ThinkingBlock
+            reasoning={item.reasoning}
+            reasoningDone={item.reasoningDone}
+            reasoningName={item.reasoningName}
+          />
         )}
-        <Markdown
-          content={item.text}
-          isAssistant={item.kind === "assistant"}
-          simplifiedCodeBlocks={isStreaming && item.kind === "assistant"}
-        />
+        <Markdown content={item.text} isAssistant={item.kind === "assistant"} isStreaming={isStreaming} />
         {isStreaming && item.text.length === 0 && !item.reasoning && <VibingLoader />}
         {showFooter && <MessageFooter item={item} items={items} onRegenerate={onRegenerate} cwd={cwd} />}
       </div>
@@ -201,48 +201,161 @@ export function AgentChat({
   cwd,
 }: Props): React.ReactElement {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [showThinking, setShowThinking] = React.useState(true);
+  const [showThinking, setShowThinking] = useState(true);
+  const [showScrollDown, setShowScrollDown] = useState(false);
+  const [isJumping, setIsJumping] = useState(false);
+  const [jumpMetrics, setJumpMetrics] = useState({ duration: 800, dist: 10 });
+  const scrollRafRef = useRef<number | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     window.vibe.state.get("settings:showThinking").then((val) => {
       if (val !== null) setShowThinking(val === "true");
     });
+    return () => {
+      if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
+    };
   }, []);
 
   const processedItems = React.useMemo(() => processItems(items ?? []), [items]);
 
-  React.useEffect(() => {
+  const handleScroll = useCallback(() => {
     const el = ref.current;
     if (!el) return;
-    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+    const isFarFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight > 150;
+    setShowScrollDown(isFarFromBottom);
+  }, []);
+
+  const handleManualInterrupt = useCallback(() => {
+    if (scrollRafRef.current) {
+      cancelAnimationFrame(scrollRafRef.current);
+      scrollRafRef.current = null;
+      setIsJumping(false);
+    }
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
+
+    const startScrollTop = el.scrollTop;
+    const targetScrollTop = el.scrollHeight - el.clientHeight;
+    const distance = Math.max(0, targetScrollTop - startScrollTop);
+
+    if (distance <= 5) {
+      el.scrollTop = targetScrollTop;
+      handleScroll();
+      return;
+    }
+
+    const duration = Math.min(Math.max(450, Math.round(distance * 0.35 + 250)), 1100);
+    const dist = Math.min(Math.max(7, Math.round(distance / 250 + 6)), 14);
+
+    setJumpMetrics({ duration, dist });
+    setIsJumping(true);
+
+    const startTime = performance.now();
+    const animateScroll = (currentTime: number) => {
+      const currentEl = ref.current;
+      if (!currentEl) return;
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      const ease = progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+      const currentTarget = currentEl.scrollHeight - currentEl.clientHeight;
+      currentEl.scrollTop = startScrollTop + (currentTarget - startScrollTop) * ease;
+
+      if (progress < 1) {
+        scrollRafRef.current = requestAnimationFrame(animateScroll);
+      } else {
+        currentEl.scrollTop = currentTarget;
+        scrollRafRef.current = null;
+        setIsJumping(false);
+        handleScroll();
+      }
+    };
+
+    scrollRafRef.current = requestAnimationFrame(animateScroll);
+  }, [handleScroll]);
+
+  const handleAnimationEnd = useCallback((e: React.AnimationEvent<HTMLButtonElement>) => {
+    if (e.target === e.currentTarget && !scrollRafRef.current) {
+      setIsJumping(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 150;
     if (nearBottom) el.scrollTop = el.scrollHeight;
-  }, [items, busy]);
+    handleScroll();
+  }, [items, busy, handleScroll]);
 
   return (
-    <div className="chathistory-container" ref={ref}>
-      {processedItems.map((entry) => {
-        if (entry.kind === "group") {
-          return <ToolGroup key={entry.items[0]!.id} items={entry.items} cwd={cwd} />;
-        }
-        return (
-          <MessageItem
-            key={entry.item.id}
-            item={entry.item}
-            onPickModel={onPickModel}
-            onRegenerate={onRegenerate}
-            onRevert={onRevert}
-            isStreaming={entry.item.id === streamingId}
-            items={items}
-            busy={!!busy}
-            cwd={cwd}
-            showThinking={showThinking}
-            onDrillDown={onDrillDown}
-          />
-        );
-      })}
+    <div className="chathistory-wrapper">
+      <div
+        className="chathistory-container"
+        ref={ref}
+        onScroll={handleScroll}
+        onWheel={handleManualInterrupt}
+        onPointerDown={handleManualInterrupt}
+      >
+        {processedItems.map((entry) => {
+          if (entry.kind === "group") {
+            return <ToolGroup key={entry.items[0]!.id} items={entry.items} cwd={cwd} />;
+          }
+          return (
+            <MessageItem
+              key={entry.item.id}
+              item={entry.item}
+              onPickModel={onPickModel}
+              onRegenerate={onRegenerate}
+              onRevert={onRevert}
+              isStreaming={entry.item.id === streamingId}
+              items={items}
+              busy={!!busy}
+              cwd={cwd}
+              showThinking={showThinking}
+              onDrillDown={onDrillDown}
+            />
+          );
+        })}
 
-      {busy && !streamingId && !(items ?? []).some((it) => it.kind === "tool" && it.ok === undefined) && (
-        <VibingLoader />
+        {busy && !streamingId && !(items ?? []).some((it) => it.kind === "tool" && it.ok === undefined) && (
+          <VibingLoader />
+        )}
+      </div>
+      {(showScrollDown || isJumping) && (
+        <button
+          className={`scroll-down-btn ${isJumping ? "scroll-down-btn--jumping" : ""}`}
+          style={
+            isJumping
+              ? ({
+                  "--jump-duration": `${jumpMetrics.duration}ms`,
+                  "--jump-dist": `${jumpMetrics.dist}px`,
+                } as React.CSSProperties)
+              : undefined
+          }
+          onClick={scrollToBottom}
+          onAnimationEnd={handleAnimationEnd}
+          aria-label="Scroll to bottom"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="scroll-arrow-svg"
+          >
+            <path d="M12 5v14M19 12l-7 7-7-7" />
+          </svg>
+        </button>
       )}
     </div>
   );

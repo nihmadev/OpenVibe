@@ -6,6 +6,8 @@ import { FileIcon, FolderIcon } from "../Icons/file-icons.js";
 import { getFileIcon } from "../Icons/utils.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
 import { CodeBlock } from "../CodeBlock/CodeBlock.js";
+import { FileTreeViewer } from "./FileTreeViewer.js";
+import { sanitizeMarkdown } from "./sanitizeMarkdown.js";
 
 // ─── Pre-compiled regexes (module-level, not re-created on each render) ──
 
@@ -13,8 +15,8 @@ const MATH_PAREN_RE = /\\\((.*?)\\\)/g;
 const MATH_BRACKET_RE = /\\\[([\s\S]*?)\\\]/g;
 const MATH_BRACKET_FALLBACK_RE = /(^|\n)\[\s*([\s\S]*?\\frac[\s\S]*?)\s*\](\n|$)/g;
 
-const FENCED_CODE_RE = /```(\w*)\n?([\s\S]*?)```/g;
-const BLOCK_MATH_RE = /\$\$([\s\S]*?)\$\$/g;
+const FENCED_CODE_RE = /(?:^|\n)([ \t]*)```([^\s\n]*)[ \t]*\n?([\s\S]*?)(?:\n[ \t]*```|$)/g;
+const BLOCK_MATH_RE = /\$\$([\s\S]*?)(?:\$\$|$)/g;
 const HEADING_RE = /^(#{1,6})\s+(.*)$/m;
 const BLOCKQUOTE_RE = /^>\s?(.*)$/m;
 const HR_RE = /^(?:[-*_]){3,}\s*$/m;
@@ -51,6 +53,7 @@ export interface StreamingMarkdownProps {
   isAssistant?: boolean;
   noFileIcons?: boolean;
   simplifiedCodeBlocks?: boolean;
+  isStreaming?: boolean;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -76,8 +79,8 @@ function inlineToHtml(text: string): string {
   let result = text.replace(
     INLINE_RE,
     (match, _b1, bold, _i1, italic, _c1, code, _m1, math, _l1, linkText, linkHref, _f1, file, _d1, folder) => {
-      if (bold) return `<strong>${escapeHtml(bold)}</strong>`;
-      if (italic) return `<em>${escapeHtml(italic)}</em>`;
+      if (bold) return `<strong>${inlineToHtml(bold)}</strong>`;
+      if (italic) return `<em>${inlineToHtml(italic)}</em>`;
       if (code) return `<code>${escapeHtml(code)}</code>`;
       if (math) return `<span class="math-inline">${renderMath(math, false)}</span>`;
       if (linkText && linkHref === "#file") return `<file>${escapeHtml(linkText)}</file>`;
@@ -263,15 +266,17 @@ function renderMathBlock(latex: string, blockKey?: string): React.ReactElement {
 
 // ─── Pre-process: math and file refs ───────────────────────────────────────
 
-function preprocessContent(text: string, isAssistant: boolean): string {
+function preprocessContent(text: string, isAssistant: boolean, isStreaming?: boolean): string {
   if (!text) return "";
 
-  const t = text
+  const sanitized = sanitizeMarkdown(text, !!isStreaming);
+
+  const t = sanitized
     .replace(MATH_PAREN_RE, "$$ $1 $$")
     .replace(MATH_BRACKET_RE, "$$ $1 $$")
     .replace(MATH_BRACKET_FALLBACK_RE, "$1$$$$ $2 $$$$$3");
 
-  const codeParts = t.split(/(```[\s\S]*?```|`[^`\n]*`)/g);
+  const codeParts = t.split(/((?:^|\n)[ \t]*```[\s\S]*?(?:\n[ \t]*```|$)|`[^`\n]*`)/g);
 
   return codeParts
     .map((part, i) => {
@@ -300,11 +305,28 @@ export const StreamingMarkdown = React.memo(function StreamingMarkdown({
   isAssistant,
   noFileIcons,
   simplifiedCodeBlocks,
+  isStreaming,
 }: StreamingMarkdownProps) {
+  const [renderFileTree, setRenderFileTree] = React.useState(false);
+
+  React.useEffect(() => {
+    window.vibe.state.get("settings:renderFileTree").then((val) => {
+      if (val === "true") setRenderFileTree(true);
+    });
+
+    const onSettingsChanged = (e: any) => {
+      if (e.detail.key === "renderFileTree") {
+        setRenderFileTree(e.detail.value);
+      }
+    };
+    window.addEventListener("settings-changed", onSettingsChanged);
+    return () => window.removeEventListener("settings-changed", onSettingsChanged);
+  }, []);
+
   const elements = React.useMemo(() => {
     if (!content) return null;
 
-    const processed = preprocessContent(content, !!isAssistant);
+    const processed = preprocessContent(content, !!isAssistant, !!isStreaming);
 
     // Collect block-level boundaries: code, math, then text
     type BlockSpan =
@@ -320,8 +342,8 @@ export const StreamingMarkdown = React.memo(function StreamingMarkdown({
         start: m.index,
         end: m.index + m[0].length,
         type: "code",
-        lang: m[1],
-        code: m[2].replace(/\n$/, ""),
+        lang: m[2],
+        code: m[3].replace(/\n$/, ""),
       });
     }
 
@@ -347,7 +369,11 @@ export const StreamingMarkdown = React.memo(function StreamingMarkdown({
       }
 
       if (b.type === "code") {
-        nodes.push(renderCodeBlock(b.lang, b.code, simplifiedCodeBlocks, `cb-${codeBlockIdx++}`));
+        if (b.lang === "tree" && renderFileTree) {
+          nodes.push(<FileTreeViewer key={`cb-${codeBlockIdx++}`} content={b.code} />);
+        } else {
+          nodes.push(renderCodeBlock(b.lang, b.code, simplifiedCodeBlocks, `cb-${codeBlockIdx++}`));
+        }
       } else if (b.type === "math") {
         nodes.push(renderMathBlock(b.latex, `m-${mathBlockIdx++}`));
       }
@@ -363,7 +389,7 @@ export const StreamingMarkdown = React.memo(function StreamingMarkdown({
     }
 
     return nodes.length > 0 ? nodes : null;
-  }, [content, isAssistant, noFileIcons]);
+  }, [content, isAssistant, noFileIcons, renderFileTree, simplifiedCodeBlocks]);
 
   return <div className="markdown-body">{elements}</div>;
 });

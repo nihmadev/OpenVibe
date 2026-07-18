@@ -66,8 +66,13 @@ export async function initVibeBridge() {
     }),
   );
   addTauriUnlistenFn(
+    await listen<any>("vibe:agent:reasoning-start", (e) => {
+      emitEvent({ kind: "reasoning-start", name: e.payload?.name });
+    }),
+  );
+  addTauriUnlistenFn(
     await listen<any>("vibe:agent:reasoning-chunk", (e) => {
-      emitEvent({ kind: "reasoning-chunk", text: e.payload.text ?? "" });
+      emitEvent({ kind: "reasoning-chunk", text: e.payload?.text ?? "", name: e.payload?.name });
     }),
   );
   addTauriUnlistenFn(
