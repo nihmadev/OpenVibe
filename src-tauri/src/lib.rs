@@ -28,6 +28,8 @@ pub struct AppState {
     pub warmer_stop_tx: Mutex<Option<watch::Sender<bool>>>,
     pub mcp_manager: Arc<mcp::McpManager>,
     pub scg2_engine: Arc<scg2::Scg2Engine>,
+    pub lsp_manager: Arc<lsp::LspManager>,
+    pub runtime_manager: Arc<lsp::runtime::RuntimeManager>,
 }
 
 impl AppState {
@@ -246,6 +248,11 @@ pub fn run() {
                 None
             };
 
+            // LSP Manager and Runtime Manager
+            let runtimes_dir = std::path::PathBuf::from(&data_dir_str).join("runtimes");
+            let lsp_manager = Arc::new(lsp::LspManager::new(runtimes_dir.clone()));
+            let runtime_manager = Arc::new(lsp::runtime::RuntimeManager::new(runtimes_dir));
+
             // Create state
             let state = AppState {
                 projects: Mutex::new(project_store),
@@ -262,6 +269,8 @@ pub fn run() {
                 warmer_stop_tx: Mutex::new(Some(warmer_stop_tx)),
                 mcp_manager,
                 scg2_engine,
+                lsp_manager,
+                runtime_manager,
             };
 
             // Setup watcher if cwd exists
@@ -355,6 +364,7 @@ pub fn run() {
             commands::git::git_commit_files,
             commands::git::git_checkout_branch,
             commands::git::git_create_branch,
+            commands::git::git_file_content,
             // Terminal commands
             commands::terminals::term_start,
             commands::terminals::term_write,
@@ -373,6 +383,7 @@ pub fn run() {
             commands::misc::window_zoom,
             commands::misc::state_get,
             commands::misc::state_set,
+            commands::misc::get_system_user,
             // LLM commands
             commands::llm::llm_stream,
             commands::llm::llm_abort,
@@ -391,6 +402,9 @@ pub fn run() {
             commands::mcp::mcp_list_tools,
             // SCG2 commands
             commands::scg2::scg2_push_events,
+            // LSP commands
+            commands::lsp::get_lsp_servers,
+            commands::lsp::lsp_start_server,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

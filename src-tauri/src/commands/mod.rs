@@ -4,6 +4,7 @@ pub mod editor;
 pub mod fs;
 pub mod git;
 pub mod llm;
+pub mod lsp;
 pub mod mcp;
 pub mod misc;
 pub mod models;

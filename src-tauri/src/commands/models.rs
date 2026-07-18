@@ -69,9 +69,19 @@ pub async fn models_fetch(
     models_url: Option<String>,
     custom_headers: Option<Vec<(String, String)>>,
 ) -> Result<serde_json::Value, String> {
-    let api_url: Option<String> = {
+    let use_proxy = state
+        .projects
+        .lock()
+        .map_err(|e| e.to_string())
+        .and_then(|p| p.get_state("settings:useRegionalProxy").map_err(|e| e.to_string()))
+        .unwrap_or(Some("true".to_string()))
+        .unwrap_or_else(|| "true".to_string());
+
+    let api_url: Option<String> = if use_proxy == "true" {
         let config = state.config.lock().map_err(|e| e.to_string())?;
         config.as_ref().and_then(|c| c.api_url.clone())
+    } else {
+        None
     };
 
     let is_github = base_url.contains("models.github.ai");

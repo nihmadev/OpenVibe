@@ -5,7 +5,7 @@
   "identifier": "com.openvibe.app",
   "build": {
     "frontendDist": "../dist/src",
-    "devUrl": "http://127.0.0.1:3000",
+    "devUrl": "http://localhost:3000",
     "beforeDevCommand": "npm run dev:src",
     "beforeBuildCommand": ""
   },

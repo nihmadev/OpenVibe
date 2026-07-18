@@ -11,7 +11,7 @@ use config::Config;
 
 #[tauri::command]
 pub async fn agent_new(state: State<'_, AppState>, cwd: String) -> Result<(), String> {
-    let cfg = {
+    let mut cfg = {
         let config_lock = state.config.lock().map_err(|e| e.to_string())?;
         config_lock.as_ref().cloned().unwrap_or_else(|| Config {
             api_key: String::new(),
@@ -23,6 +23,18 @@ pub async fn agent_new(state: State<'_, AppState>, cwd: String) -> Result<(), St
             api_url: Some("https://api.nihmadev.fun".to_string()),
         })
     };
+
+    let use_proxy = state
+        .projects
+        .lock()
+        .map_err(|e| e.to_string())
+        .and_then(|p| p.get_state("settings:useRegionalProxy").map_err(|e| e.to_string()))
+        .unwrap_or(Some("true".to_string()))
+        .unwrap_or_else(|| "true".to_string());
+
+    if use_proxy != "true" {
+        cfg.api_url = None;
+    }
 
     let agent_cfg = cfg.to_agent_config();
     let agent = Agent::new(agent_cfg);
@@ -67,7 +79,30 @@ pub async fn agent_send(
         agent.update_system_prompt(Some(&scg2_context));
     }
 
-    agent.send(input, content_parts, &executor, &state.http_client, &emit).await;
+    agent.add_user_message(input, content_parts, &emit);
+
+    // Save chat state before starting generation
+    {
+        let msgs = agent.messages.clone();
+        let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as i64;
+        let active = state.active_chat_id.lock().map_err(|e| e.to_string())?;
+        if let Some(ref id) = *active {
+            let mut chat_store = state.chat_store.lock().map_err(|e| e.to_string())?;
+            if let Some(ref mut store) = *chat_store {
+                if let Ok(Some(mut record)) = store.get(id) {
+                    record.messages = msgs.clone();
+                    record.updated_at = ts;
+                    let _ = store.save(&record);
+                }
+            }
+        }
+        let app = state.app_handle.lock().map_err(|e| e.to_string())?;
+        if let Some(ref handle) = *app {
+            let _ = handle.emit("vibe:chats:updated", ());
+        }
+    }
+
+    agent.send(&executor, &state.http_client, &emit).await;
 
     // Clean up cancel token now that send is done
     {

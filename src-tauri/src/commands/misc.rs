@@ -158,3 +158,12 @@ pub fn state_set(state: State<AppState>, key: String, value: String) -> Result<(
     store.set_state(&key, &value).map_err(|e| e.to_string())?;
     Ok(())
 }
+
+#[tauri::command]
+pub fn get_system_user() -> Result<String, String> {
+    let user = std::env::var("USER")
+        .or_else(|_| std::env::var("USERNAME"))
+        .or_else(|_| std::env::var("LOGNAME"))
+        .unwrap_or_else(|_| "Developer".to_string());
+    Ok(user)
+}

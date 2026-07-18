@@ -156,3 +156,11 @@ pub fn git_create_branch(path: String, name: String) -> Result<(), String> {
     }
     git::branch::create_branch(&path, &name).map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub fn git_file_content(path: String, file_path: String, ref_name: String) -> Result<String, String> {
+    if path.is_empty() {
+        return Err("No project open".into());
+    }
+    git::status::get_file_content_at_ref(&path, &file_path, &ref_name).map_err(|e| e.to_string())
+}
