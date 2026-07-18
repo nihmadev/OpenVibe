@@ -1,0 +1,61 @@
+/* Skeleton Loader CSS */
+
+.skeleton-loader-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  overflow: hidden;
+}
+
+
+/* Fade Out Transition */
+.fade-out-shimmer {
+  animation: fade-out-anim 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Fade In Transition */
+.fade-in-shimmer {
+  animation: fade-in-anim 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fade-out-anim {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.995);
+  }
+}
+
+@keyframes fade-in-anim {
+  from {
+    opacity: 0;
+    transform: scale(1.005);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Overlay configuration */
+.app-real-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.app-skeleton-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 999;
+}
