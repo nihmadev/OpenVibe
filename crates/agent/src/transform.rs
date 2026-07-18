@@ -78,6 +78,7 @@ pub fn trim_messages(messages: Vec<ChatMessage>, keep: usize) -> Vec<ChatMessage
         tool_call_id: None,
         tool_calls: None,
         reasoning_content: None,
+        reasoning_name: None,
     });
 
     for msg in tail {

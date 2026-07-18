@@ -15,12 +15,16 @@ pub async fn parse_sse_stream(
     cancel: &AtomicBool,
     on_delta: &(dyn Fn(&str) + Send + Sync),
     on_reasoning: &(dyn Fn(&str) + Send + Sync),
+    on_reasoning_name: &(dyn Fn(&str) + Send + Sync),
     on_reasoning_end: &(dyn Fn() + Send + Sync),
     on_tool_args: &(dyn Fn(&str, &str) + Send + Sync),
 ) -> Result<AssistantTurn, String> {
     let mut content = String::new();
     let mut reasoning_content: Option<String> = None;
+    let mut reasoning_name: Option<String> = None;
     let mut has_seen_reasoning = false;
+    let mut in_thought_tag = false;
+    let mut thought_buf = String::new();
     let mut tool_acc: HashMap<usize, ToolCallAcc> = HashMap::new();
     let mut buffer = String::with_capacity(4096);
     let mut buf_idx = 0usize;
@@ -46,10 +50,14 @@ pub async fn parse_sse_stream(
                         line,
                         &mut content,
                         &mut reasoning_content,
+                        &mut reasoning_name,
                         &mut has_seen_reasoning,
+                        &mut in_thought_tag,
+                        &mut thought_buf,
                         &mut tool_acc,
                         on_delta,
                         on_reasoning,
+                        on_reasoning_name,
                         on_reasoning_end,
                         on_tool_args,
                     );
@@ -62,10 +70,14 @@ pub async fn parse_sse_stream(
                         remaining,
                         &mut content,
                         &mut reasoning_content,
+                        &mut reasoning_name,
                         &mut has_seen_reasoning,
+                        &mut in_thought_tag,
+                        &mut thought_buf,
                         &mut tool_acc,
                         on_delta,
                         on_reasoning,
+                        on_reasoning_name,
                         on_reasoning_end,
                         on_tool_args,
                     );
@@ -77,7 +89,20 @@ pub async fn parse_sse_stream(
         }
     }
 
-    if has_seen_reasoning {
+    if !thought_buf.is_empty() {
+        if in_thought_tag || has_seen_reasoning {
+            reasoning_content
+                .get_or_insert_with(String::new)
+                .push_str(&thought_buf);
+            on_reasoning(&thought_buf);
+        } else {
+            content.push_str(&thought_buf);
+            on_delta(&thought_buf);
+        }
+        thought_buf.clear();
+    }
+
+    if has_seen_reasoning || in_thought_tag {
         on_reasoning_end();
     }
 
@@ -99,7 +124,168 @@ pub async fn parse_sse_stream(
         content,
         tool_calls,
         reasoning_content,
+        reasoning_name,
     })
+}
+
+fn extract_thought_name(tag: &str) -> Option<String> {
+    let lower = tag.to_lowercase();
+    let idx = lower.find("name")?;
+    let after_name = &tag[idx + 4..];
+    let eq_idx = after_name.find('=')?;
+    let after_eq = after_name[eq_idx + 1..].trim_start();
+    if let Some(first_char) = after_eq.chars().next() {
+        if first_char == '"' || first_char == '\'' {
+            let quote = first_char;
+            let rest = &after_eq[1..];
+            if let Some(end_idx) = rest.find(quote) {
+                let name = rest[..end_idx].trim();
+                if !name.is_empty() {
+                    return Some(name.to_string());
+                }
+            }
+        } else {
+            let end_idx = after_eq
+                .find(|c: char| c.is_whitespace() || c == '>')
+                .unwrap_or(after_eq.len());
+            let name = after_eq[..end_idx].trim();
+            if !name.is_empty() && name != ">" {
+                return Some(name.to_string());
+            }
+        }
+    }
+    None
+}
+
+fn process_text_chunk(
+    text: &str,
+    is_api_reasoning: bool,
+    content: &mut String,
+    reasoning_content: &mut Option<String>,
+    reasoning_name: &mut Option<String>,
+    has_seen_reasoning: &mut bool,
+    in_thought_tag: &mut bool,
+    thought_buf: &mut String,
+    on_delta: &(dyn Fn(&str) + Send + Sync),
+    on_reasoning: &(dyn Fn(&str) + Send + Sync),
+    on_reasoning_name: &(dyn Fn(&str) + Send + Sync),
+    on_reasoning_end: &(dyn Fn() + Send + Sync),
+) {
+    if !is_api_reasoning && *has_seen_reasoning && !*in_thought_tag {
+        *has_seen_reasoning = false;
+        on_reasoning_end();
+    }
+
+    if is_api_reasoning {
+        *has_seen_reasoning = true;
+    }
+
+    let mut s = format!("{}{}", thought_buf, text);
+    thought_buf.clear();
+
+    while !s.is_empty() {
+        if !*in_thought_tag && !is_api_reasoning {
+            let lower = s.to_lowercase();
+            if let Some(pos) = lower.find("<thought") {
+                if pos > 0 {
+                    let before = &s[..pos];
+                    content.push_str(before);
+                    on_delta(before);
+                }
+                let remainder = &s[pos..];
+                if let Some(gt_idx) = remainder.find('>') {
+                    let tag = &remainder[..=gt_idx];
+                    if let Some(name) = extract_thought_name(tag) {
+                        *reasoning_name = Some(name.clone());
+                        on_reasoning_name(&name);
+                    }
+                    *in_thought_tag = true;
+                    *has_seen_reasoning = true;
+                    s = remainder[gt_idx + 1..].to_string();
+                } else {
+                    thought_buf.push_str(remainder);
+                    break;
+                }
+            } else {
+                if let Some(lt_idx) = s.rfind('<') {
+                    let tail_lower = s[lt_idx..].to_lowercase();
+                    if "<thought".starts_with(&tail_lower)
+                        || (tail_lower.starts_with("<thought") && !tail_lower.contains('>'))
+                    {
+                        let before = &s[..lt_idx];
+                        if !before.is_empty() {
+                            content.push_str(before);
+                            on_delta(before);
+                        }
+                        thought_buf.push_str(&s[lt_idx..]);
+                        break;
+                    }
+                }
+                content.push_str(&s);
+                on_delta(&s);
+                break;
+            }
+        } else {
+            let lower = s.to_lowercase();
+            if !*in_thought_tag && is_api_reasoning {
+                if let Some(pos) = lower.find("<thought") {
+                    let remainder = &s[pos..];
+                    if let Some(gt_idx) = remainder.find('>') {
+                        let tag = &remainder[..=gt_idx];
+                        if let Some(name) = extract_thought_name(tag) {
+                            *reasoning_name = Some(name.clone());
+                            on_reasoning_name(&name);
+                        }
+                        *in_thought_tag = true;
+                        let before = &s[..pos];
+                        if !before.is_empty() {
+                            reasoning_content
+                                .get_or_insert_with(String::new)
+                                .push_str(before);
+                            on_reasoning(before);
+                        }
+                        s = remainder[gt_idx + 1..].to_string();
+                        continue;
+                    }
+                }
+            }
+
+            let lower = s.to_lowercase();
+            if let Some(end_pos) = lower.find("</thought>") {
+                let before = &s[..end_pos];
+                if !before.is_empty() {
+                    reasoning_content
+                        .get_or_insert_with(String::new)
+                        .push_str(before);
+                    on_reasoning(before);
+                }
+                *in_thought_tag = false;
+                *has_seen_reasoning = false;
+                on_reasoning_end();
+                s = s[end_pos + 10..].to_string();
+            } else {
+                if let Some(lt_idx) = s.rfind('<') {
+                    let tail_lower = s[lt_idx..].to_lowercase();
+                    if "</thought>".starts_with(&tail_lower) {
+                        let before = &s[..lt_idx];
+                        if !before.is_empty() {
+                            reasoning_content
+                                .get_or_insert_with(String::new)
+                                .push_str(before);
+                            on_reasoning(before);
+                        }
+                        thought_buf.push_str(&s[lt_idx..]);
+                        break;
+                    }
+                }
+                reasoning_content
+                    .get_or_insert_with(String::new)
+                    .push_str(&s);
+                on_reasoning(&s);
+                break;
+            }
+        }
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -107,10 +293,14 @@ fn process_sse_line(
     line: &str,
     content: &mut String,
     reasoning_content: &mut Option<String>,
+    reasoning_name: &mut Option<String>,
     has_seen_reasoning: &mut bool,
+    in_thought_tag: &mut bool,
+    thought_buf: &mut String,
     tool_acc: &mut HashMap<usize, ToolCallAcc>,
     on_delta: &(dyn Fn(&str) + Send + Sync),
     on_reasoning: &(dyn Fn(&str) + Send + Sync),
+    on_reasoning_name: &(dyn Fn(&str) + Send + Sync),
     on_reasoning_end: &(dyn Fn() + Send + Sync),
     on_tool_args: &(dyn Fn(&str, &str) + Send + Sync),
 ) {
@@ -151,22 +341,39 @@ fn process_sse_line(
 
     if let Some(rc) = delta.get("reasoning_content").and_then(|v| v.as_str()) {
         if !rc.is_empty() {
-            *has_seen_reasoning = true;
-            reasoning_content
-                .get_or_insert_with(String::new)
-                .push_str(rc);
-            on_reasoning(rc);
+            process_text_chunk(
+                rc,
+                true,
+                content,
+                reasoning_content,
+                reasoning_name,
+                has_seen_reasoning,
+                in_thought_tag,
+                thought_buf,
+                on_delta,
+                on_reasoning,
+                on_reasoning_name,
+                on_reasoning_end,
+            );
         }
     }
 
     if let Some(dc) = delta.get("content").and_then(|v| v.as_str()) {
         if !dc.is_empty() {
-            if *has_seen_reasoning {
-                *has_seen_reasoning = false;
-                on_reasoning_end();
-            }
-            content.push_str(dc);
-            on_delta(dc);
+            process_text_chunk(
+                dc,
+                false,
+                content,
+                reasoning_content,
+                reasoning_name,
+                has_seen_reasoning,
+                in_thought_tag,
+                thought_buf,
+                on_delta,
+                on_reasoning,
+                on_reasoning_name,
+                on_reasoning_end,
+            );
         }
     }
 

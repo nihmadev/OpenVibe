@@ -58,6 +58,7 @@ pub async fn execute(
             tool_call_id: None,
             tool_calls: None,
             reasoning_content: None,
+            reasoning_name: None,
         },
         ChatMessage {
             role: "user".to_string(),
@@ -66,6 +67,7 @@ pub async fn execute(
             tool_call_id: None,
             tool_calls: None,
             reasoning_content: None,
+            reasoning_name: None,
         },
     ];
 
@@ -82,6 +84,7 @@ pub async fn execute(
             read_only_tools.clone(),
             &cancel_sub,
             client,
+            &|_| {},
             &|_| {},
             &|_| {},
             &|| {},
@@ -146,6 +149,7 @@ pub async fn execute(
                             tool_call_id: Some(call.id.clone()),
                             tool_calls: None,
                             reasoning_content: None,
+                            reasoning_name: None,
                         });
                         continue;
                     }
@@ -204,6 +208,7 @@ pub async fn execute(
                 tool_call_id: Some(call.id.clone()),
                 tool_calls: None,
                 reasoning_content: None,
+                reasoning_name: None,
             });
         }
     }

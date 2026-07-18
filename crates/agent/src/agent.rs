@@ -27,6 +27,7 @@ impl Agent {
                 tool_call_id: None,
                 tool_calls: None,
                 reasoning_content: None,
+                reasoning_name: None,
             }],
             config,
             always_allow: HashSet::new(),
@@ -50,6 +51,7 @@ impl Agent {
                     tool_call_id: None,
                     tool_calls: None,
                     reasoning_content: None,
+                    reasoning_name: None,
                 },
             );
         }
@@ -64,6 +66,7 @@ impl Agent {
             tool_call_id: None,
             tool_calls: None,
             reasoning_content: None,
+            reasoning_name: None,
         }];
         self.always_allow.clear();
         self.cancel.store(false, Ordering::Relaxed);
@@ -81,6 +84,7 @@ impl Agent {
             tool_call_id: None,
             tool_calls: None,
             reasoning_content: None,
+            reasoning_name: None,
         }];
         self.always_allow.clear();
         self.cancel.store(false, Ordering::Relaxed);
@@ -102,6 +106,7 @@ impl Agent {
             tool_call_id: None,
             tool_calls: None,
             reasoning_content: None,
+            reasoning_name: None,
         }];
         new_msgs.extend_from_slice(rest);
         self.messages = new_msgs;

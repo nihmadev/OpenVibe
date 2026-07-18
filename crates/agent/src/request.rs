@@ -18,6 +18,7 @@ pub async fn stream_chat(
     client: &reqwest::Client,
     on_delta: &(dyn Fn(&str) + Send + Sync),
     on_reasoning: &(dyn Fn(&str) + Send + Sync),
+    on_reasoning_name: &(dyn Fn(&str) + Send + Sync),
     on_reasoning_end: &(dyn Fn() + Send + Sync),
     on_tool_args: &(dyn Fn(&str, &str) + Send + Sync),
 ) -> Result<AssistantTurn, String> {
@@ -106,6 +107,7 @@ pub async fn stream_chat(
                     cancel,
                     on_delta,
                     on_reasoning,
+                    on_reasoning_name,
                     on_reasoning_end,
                     on_tool_args,
                 )

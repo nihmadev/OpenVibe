@@ -38,6 +38,7 @@ impl Agent {
             tool_call_id: None,
             tool_calls: None,
             reasoning_content: None,
+            reasoning_name: None,
         });
 
         let cancel = Arc::new(AtomicBool::new(false));
@@ -63,6 +64,7 @@ impl Agent {
                     t.push_str(chunk);
                 }
             },
+            &|_| {},
             &|_| {},
             &|| {},
             &|_, _| {},

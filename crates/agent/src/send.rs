@@ -129,6 +129,7 @@ impl Agent {
             tool_call_id: None,
             tool_calls: None,
             reasoning_content: None,
+            reasoning_name: None,
         });
 
         let user_index = self.messages.len() - 1;
@@ -157,6 +158,7 @@ impl Agent {
                 buf: String::new(),
                 last_emit: std::time::Instant::now(),
             }));
+            let reason_name = Arc::new(Mutex::new(None::<String>));
             let debounce = Duration::from_millis(100);
 
             let cb_chunk = {
@@ -178,8 +180,22 @@ impl Agent {
                 }
             };
 
+            let cb_reasoning_name = {
+                let reason_name = reason_name.clone();
+                move |name: &str| {
+                    if let Ok(mut state) = reason_name.lock() {
+                        *state = Some(name.to_string());
+                    }
+                    emit(
+                        "vibe:agent:reasoning-start",
+                        serde_json::json!({"name": name}),
+                    );
+                }
+            };
+
             let cb_reasoning = {
                 let reason_buf = reason_buf.clone();
+                let reason_name = reason_name.clone();
                 move |chunk: &str| {
                     if let Ok(mut sb) = reason_buf.lock() {
                         sb.buf.push_str(chunk);
@@ -188,10 +204,12 @@ impl Agent {
                             let text = std::mem::take(&mut sb.buf);
                             sb.last_emit = now;
                             drop(sb);
-                            emit(
-                                "vibe:agent:reasoning-chunk",
-                                serde_json::json!({"text": text}),
-                            );
+                            let current_name = reason_name.lock().ok().and_then(|g| g.clone());
+                            let mut payload = serde_json::json!({"text": text});
+                            if let Some(ref n) = current_name {
+                                payload["name"] = serde_json::Value::String(n.clone());
+                            }
+                            emit("vibe:agent:reasoning-chunk", payload);
                         }
                     }
                 }
@@ -199,15 +217,18 @@ impl Agent {
 
             let cb_reasoning_end = {
                 let reason_buf = reason_buf.clone();
+                let reason_name = reason_name.clone();
                 move || {
                     if let Ok(mut sb) = reason_buf.lock() {
                         if !sb.buf.is_empty() {
                             let text = std::mem::take(&mut sb.buf);
                             drop(sb);
-                            emit(
-                                "vibe:agent:reasoning-chunk",
-                                serde_json::json!({"text": text}),
-                            );
+                            let current_name = reason_name.lock().ok().and_then(|g| g.clone());
+                            let mut payload = serde_json::json!({"text": text});
+                            if let Some(ref n) = current_name {
+                                payload["name"] = serde_json::Value::String(n.clone());
+                            }
+                            emit("vibe:agent:reasoning-chunk", payload);
                         }
                     }
                     emit("vibe:agent:reasoning-end", serde_json::Value::Null);
@@ -222,6 +243,7 @@ impl Agent {
                 client,
                 &cb_chunk,
                 &cb_reasoning,
+                &cb_reasoning_name,
                 &cb_reasoning_end,
                 &|tool_id: &str, args: &str| {
                     emit(
@@ -240,6 +262,18 @@ impl Agent {
                         "vibe:agent:assistant-chunk",
                         serde_json::json!({"text": text}),
                     );
+                }
+            }
+            if let Ok(mut sb) = reason_buf.lock() {
+                if !sb.buf.is_empty() {
+                    let text = std::mem::take(&mut sb.buf);
+                    drop(sb);
+                    let current_name = reason_name.lock().ok().and_then(|g| g.clone());
+                    let mut payload = serde_json::json!({"text": text});
+                    if let Some(ref n) = current_name {
+                        payload["name"] = serde_json::Value::String(n.clone());
+                    }
+                    emit("vibe:agent:reasoning-chunk", payload);
                 }
             }
 
@@ -286,6 +320,7 @@ impl Agent {
                     Some(cleaned_tool_calls.clone())
                 },
                 reasoning_content: turn_result.reasoning_content.clone(),
+                reasoning_name: turn_result.reasoning_name.clone(),
             });
 
             if cleaned_tool_calls.is_empty() {
@@ -336,6 +371,7 @@ impl Agent {
                                     tool_call_id: Some(call.id.clone()),
                                     tool_calls: None,
                                     reasoning_content: None,
+                                    reasoning_name: None,
                                 });
                                 continue;
                             }
@@ -376,6 +412,7 @@ impl Agent {
                         tool_call_id: Some(call.id.clone()),
                         tool_calls: None,
                         reasoning_content: None,
+                        reasoning_name: None,
                     });
                 }
             } else {
@@ -407,6 +444,7 @@ impl Agent {
                                     tool_call_id: Some(call.id.clone()),
                                     tool_calls: None,
                                     reasoning_content: None,
+                                    reasoning_name: None,
                                 });
                                 continue;
                             }
@@ -465,6 +503,7 @@ impl Agent {
                         tool_call_id: Some(call.id.clone()),
                         tool_calls: None,
                         reasoning_content: None,
+                        reasoning_name: None,
                     });
                 }
             }
