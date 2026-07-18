@@ -51,6 +51,26 @@ export function ChevronRightIcon({ open, className }: { open?: boolean; classNam
   );
 }
 
+/** Indicates that additional items can be loaded into a list. */
+export function ShowMoreIcon(): React.ReactElement {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 3.5h7M3 6.5h7M3 9.5h4" />
+      <path d="m10 9 2 2 2-2M12 11V6.5" />
+    </svg>
+  );
+}
+
 export function ArrowLeftIcon(): React.ReactElement {
   return (
     <svg

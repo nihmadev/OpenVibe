@@ -5,7 +5,7 @@
     "palette": {
       "neutral": "#f2e5bc",
       "ink": "#3c3836",
-      "primary": "#076678",
+      "primary": "#3c3836",
       "accent": "#af3a03",
       "success": "#79740e",
       "warning": "#b57614",
@@ -47,7 +47,7 @@
     "palette": {
       "neutral": "#32302f",
       "ink": "#fbf1c7",
-      "primary": "#83a598",
+      "primary": "#fbf1c7",
       "accent": "#fe8019",
       "success": "#b8bb26",
       "warning": "#fabd2f",
