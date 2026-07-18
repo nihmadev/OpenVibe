@@ -81,7 +81,8 @@ const CSS_VARS = {
 
 export function applyAnimVars(settings: AnimationSettings): void {
   const root = document.documentElement;
-  const mult = parseFloat(settings.animMultiplier) || 1;
+  const parsedMultiplier = parseFloat(settings.animMultiplier);
+  const mult = Number.isFinite(parsedMultiplier) ? parsedMultiplier : 1;
   for (const key of ANIM_STYLE_KEYS) {
     if (!(key in CSS_VARS)) continue;
     const cssVar = CSS_VARS[key as keyof typeof CSS_VARS];

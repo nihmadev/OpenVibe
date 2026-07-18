@@ -170,6 +170,7 @@ export interface VibeApi {
   state: {
     get: (key: string) => Promise<string | null>;
     set: (key: string, value: string) => Promise<void>;
+    getSystemUser?: () => Promise<string>;
   };
 
   editor: {

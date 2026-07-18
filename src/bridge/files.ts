@@ -22,6 +22,7 @@ export const filesBridge = {
   state: {
     get: (key: string) => invoke("state_get", { key }),
     set: (key: string, value: string) => invoke("state_set", { key, value }),
+    getSystemUser: () => invoke<string>("get_system_user"),
   },
 
   editor: {

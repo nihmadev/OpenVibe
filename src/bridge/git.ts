@@ -51,5 +51,10 @@ export const gitBridge = {
       ),
     checkoutBranch: (cwd: string, name: string) => wrap(() => invoke("git_checkout_branch", { path: cwd, name })),
     createBranch: (cwd: string, name: string) => wrap(() => invoke("git_create_branch", { path: cwd, name })),
+    fileContent: (cwd: string, filePath: string, refName: string) =>
+      wrap(
+        () => invoke("git_file_content", { path: cwd, filePath, refName }),
+        (r) => ({ data: r }),
+      ),
   },
 };

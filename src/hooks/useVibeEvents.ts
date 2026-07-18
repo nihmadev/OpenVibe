@@ -187,14 +187,18 @@ export function useVibeEvents(onActivity: () => void) {
           flush();
           setItems((prev) => {
             if (!prev) return prev;
-            return prev.map((it) => (it.id === e.id ? { ...it, text: e.text, ok: e.ok } : it));
+            // Failed read/search/list calls are still sent to the model as a
+            // tool message (with a diagnostic hint), but are not useful chat
+            // content for the user. Remove the pending visualization entirely.
+            if (!e.ok) return prev.filter((it) => it.id !== e.id);
+            return prev.map((it) => (it.id === e.id ? { ...it, text: e.text, ok: true } : it));
           });
           break;
         case "tool-denied":
           flush();
           setItems((prev) => {
             if (!prev) return prev;
-            return prev.map((it) => (it.id === e.id ? { ...it, text: "denied", ok: false } : it));
+            return prev.filter((it) => it.id !== e.id);
           });
           break;
         case "info": {

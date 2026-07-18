@@ -60,6 +60,13 @@ export function recordToItems(record: ChatRecord): any[] {
             : Array.isArray(msg.content)
               ? msg.content.map((p) => (p.type === "text" ? p.text : "")).join("")
               : "";
+        // Backend keeps failed tool results in the conversation as a hint for
+        // the model, marked with [tool-error]. Do not resurrect those calls in
+        // the user-facing history when loading a saved chat.
+        if (text.startsWith("[tool-error]")) {
+          out.splice(idx, 1);
+          continue;
+        }
         out[idx] = { ...out[idx]!, text, ok: true, msgIndex: i };
       }
     }
