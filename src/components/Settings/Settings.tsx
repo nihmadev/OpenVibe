@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { Select, NumberInput, ControlRow, Toggle } from "../ui/index.js";
 import "./Settings.css";
 import type { Provider } from "../../types.js";
 import { ConnectPopup } from "../ConnectPopup/ConnectPopup.js";
-import { Select } from "./Select";
 import { useTheme } from "../../hooks/useTheme.js";
-import { themes } from "../../themes/themes.js";
+import { themes, parseVSCodeTheme, addCustomTheme } from "../../themes/themes.js";
 import { PROVIDER_TEMPLATES, getProviderIconPath } from "../../constants.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { FONT_OPTIONS, CODE_FONT_OPTIONS, applyFont } from "../../fonts.js";
@@ -15,7 +15,6 @@ import { formatCombo, setRecording } from "../../hooks/useShortcuts.js";
 import { useAnimations } from "../../hooks/useAnimations.js";
 import type { AnimKey, AnimStyle } from "../../hooks/useAnimations.js";
 import { InlineAnimPreview } from "./AnimationPreviewModal.js";
-import { NumberInput } from "./NumberInput.js";
 import { setZoomStep as setZoomStepGlobal, setZoomDefault as setZoomDefaultGlobal } from "../../zoomConfig.js";
 
 interface DiscoveredModel {
@@ -26,11 +25,11 @@ interface DiscoveredModel {
   providerIcon: string;
 }
 
-import { Server } from "lucide-react";
+import { Server, Code, Upload, Download } from "lucide-react";
 
 import { McpSettingsPanel } from "./McpSettingsPanel.js";
 
-type Tab = "general" | "design" | "providers" | "models" | "hotkeys" | "mcp";
+type Tab = "general" | "design" | "code" | "providers" | "models" | "hotkeys" | "mcp";
 
 interface Props {
   open: boolean;
@@ -140,7 +139,14 @@ export function Settings({
     zoomDefault: "1.2",
     radius: "6",
     blur: "none",
-  } as const;
+    editorFontSize: "13",
+    editorLineHeight: "1.5",
+    editorLigatures: false,
+    editorCursorStyle: "line",
+    editorCursorBlink: "blink",
+    borderStyle: "bordered" as string,
+    renderFileTree: false,
+  };
   type GeneralSettings = typeof defaultGeneral;
   const [general, setGeneral] = useState<GeneralSettings>({ ...defaultGeneral });
   const [generalLoaded, setGeneralLoaded] = useState(false);
@@ -174,6 +180,12 @@ export function Settings({
     document.documentElement.style.setProperty("--radius", r + "px");
     const blurMap: Record<string, string> = { none: "0px", subtle: "8px", strong: "20px" };
     document.documentElement.style.setProperty("--blur-overlay", blurMap[general.blur] ?? "0px");
+
+    if (general.borderStyle === "borderless") {
+      document.documentElement.classList.add("theme-borderless");
+    } else {
+      document.documentElement.classList.remove("theme-borderless");
+    }
   }, [generalLoaded]);
 
   // Models state
@@ -278,6 +290,10 @@ export function Settings({
       return next;
     });
     window.vibe.state.set(SETTINGS_PREFIX + key, String(value));
+
+    // Dispatch event so other components can react dynamically
+    window.dispatchEvent(new CustomEvent("settings-changed", { detail: { key, value } }));
+
     if (key === "language" && onLanguageChange) {
       onLanguageChange(value as string);
     }
@@ -290,6 +306,13 @@ export function Settings({
     if (key === "blur") {
       const m: Record<string, string> = { none: "0px", subtle: "8px", strong: "20px" };
       document.documentElement.style.setProperty("--blur-overlay", m[value as string] ?? "0px");
+    }
+    if (key === "borderStyle") {
+      if (value === "borderless") {
+        document.documentElement.classList.add("theme-borderless");
+      } else {
+        document.documentElement.classList.remove("theme-borderless");
+      }
     }
   }
 
@@ -370,6 +393,7 @@ export function Settings({
                 <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
               </svg>,
             )}
+            {renderSidebarItem("code", t("codeTab"), <Code size={14} />)}
             {renderSidebarItem(
               "hotkeys",
               t("hotkeys"),
@@ -440,8 +464,8 @@ export function Settings({
 
           <div className="settings__sidebar-footer">
             <div className="settings__app-info">
-              OpenVibe Desktop
-              <span>v0.3.1</span>
+              {t("appName")}
+              <span>{t("appVersion")}</span>
             </div>
           </div>
         </div>
@@ -453,13 +477,15 @@ export function Settings({
                 ? t("general")
                 : activeTab === "design"
                   ? t("design")
-                  : activeTab === "models"
-                    ? t("models")
-                    : activeTab === "providers"
-                      ? t("providers")
-                      : activeTab === "mcp"
-                        ? t("mcpServers")
-                        : t("hotkeys")}
+                  : activeTab === "code"
+                    ? t("codeTab")
+                    : activeTab === "models"
+                      ? t("models")
+                      : activeTab === "providers"
+                        ? t("providers")
+                        : activeTab === "mcp"
+                          ? t("mcpServers")
+                          : t("hotkeys")}
             </h2>
 
             <button className="settings__close" onClick={onClose}>
@@ -475,34 +501,22 @@ export function Settings({
               <>
                 <div className="settings__subsection">
                   <div className="settings__control-group">
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("language")}</div>
-                        <div className="settings__control-desc">{t("languageDesc")}</div>
-                      </div>
+                    <ControlRow label={t("language")} description={t("languageDesc")}>
                       <Select
                         value={general.language}
                         options={languageOptions.map((o) => ({ value: o.value, label: t("lang" + o.value) }))}
                         onChange={(v) => updateGeneral("language", v)}
                       />
-                    </div>
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("autoAccept")}</div>
-                        <div className="settings__control-desc">{t("autoAcceptDesc")}</div>
-                      </div>
+                    </ControlRow>
+                    <ControlRow label={t("autoAccept")} description={t("autoAcceptDesc")}>
                       <input
                         type="checkbox"
                         className="settings__checkbox"
                         checked={general.autoAccept}
                         onChange={(e) => updateGeneral("autoAccept", e.target.checked)}
                       />
-                    </div>
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("terminalShell")}</div>
-                        <div className="settings__control-desc">{t("terminalShellDesc")}</div>
-                      </div>
+                    </ControlRow>
+                    <ControlRow label={t("terminalShell")} description={t("terminalShellDesc")}>
                       <Select
                         value={general.terminalShell}
                         options={[
@@ -512,61 +526,53 @@ export function Settings({
                         ]}
                         onChange={(v) => updateGeneral("terminalShell", v)}
                       />
-                    </div>
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("showThinking")}</div>
-                        <div className="settings__control-desc">{t("showThinkingDesc")}</div>
-                      </div>
+                    </ControlRow>
+                    <ControlRow label={t("showThinking")} description={t("showThinkingDesc")}>
                       <input
                         type="checkbox"
                         className="settings__checkbox"
                         checked={general.showThinking}
                         onChange={(e) => updateGeneral("showThinking", e.target.checked)}
                       />
-                    </div>
+                    </ControlRow>
+                    <ControlRow label={t("renderFileTree")} description={t("renderFileTreeDesc")}>
+                      <input
+                        type="checkbox"
+                        className="settings__checkbox"
+                        checked={general.renderFileTree}
+                        onChange={(e) => updateGeneral("renderFileTree", e.target.checked)}
+                      />
+                    </ControlRow>
                   </div>
                 </div>
 
                 <div className="settings__subsection">
                   <div className="settings__subsection-title">{t("soundNotifications")}</div>
                   <div className="settings__control-group">
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("soundEnabled")}</div>
-                        <div className="settings__control-desc">{t("soundEnabledDesc")}</div>
-                      </div>
+                    <ControlRow label={t("soundEnabled")} description={t("soundEnabledDesc")}>
                       <input
                         type="checkbox"
                         className="settings__checkbox"
                         checked={general.soundEnabled}
                         onChange={(e) => updateGeneral("soundEnabled", e.target.checked)}
                       />
-                    </div>
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("soundOnComplete")}</div>
-                        <div className="settings__control-desc">{t("soundOnCompleteDesc")}</div>
-                      </div>
+                    </ControlRow>
+                    <ControlRow label={t("soundOnComplete")} description={t("soundOnCompleteDesc")}>
                       <input
                         type="checkbox"
                         className="settings__checkbox"
                         checked={general.soundOnComplete}
                         onChange={(e) => updateGeneral("soundOnComplete", e.target.checked)}
                       />
-                    </div>
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("soundOnStop")}</div>
-                        <div className="settings__control-desc">{t("soundOnStopDesc")}</div>
-                      </div>
+                    </ControlRow>
+                    <ControlRow label={t("soundOnStop")} description={t("soundOnStopDesc")}>
                       <input
                         type="checkbox"
                         className="settings__checkbox"
                         checked={general.soundOnStop}
                         onChange={(e) => updateGeneral("soundOnStop", e.target.checked)}
                       />
-                    </div>
+                    </ControlRow>
                   </div>
                 </div>
 
@@ -576,23 +582,61 @@ export function Settings({
               <>
                 <div className="settings__subsection" style={{ paddingTop: "var(--settings-py)" }}>
                   <div className="settings__control-group">
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("theme")}</div>
-                        <div className="settings__control-desc">{t("themeDesc")}</div>
-                      </div>
+                    <ControlRow label={t("theme")} description={t("themeDesc")}>
                       <Select
                         value={currentTheme.id}
                         options={themes.map((t) => ({ value: t.id, label: t.name }))}
                         onChange={(v) => setTheme(v)}
                         onHover={(v) => preview(v)}
                       />
-                    </div>
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("colorScheme")}</div>
-                        <div className="settings__control-desc">{t("colorSchemeDesc")}</div>
+                    </ControlRow>
+                    <ControlRow label={t("manageThemes")} description={t("manageThemesDesc")}>
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button
+                          className="settings__connect-btn"
+                          onClick={() => {
+                            const input = document.createElement("input");
+                            input.type = "file";
+                            input.accept = ".json";
+                            input.onchange = async (e) => {
+                              const file = (e.target as HTMLInputElement).files?.[0];
+                              if (!file) return;
+                              const text = await file.text();
+                              try {
+                                const json = JSON.parse(text);
+                                const customTheme = parseVSCodeTheme(json);
+                                addCustomTheme(customTheme);
+                                setTheme(customTheme.id);
+                                console.log("Imported theme", customTheme.name);
+                              } catch (err) {
+                                console.error("Failed to parse theme", err);
+                              }
+                            };
+                            input.click();
+                          }}
+                        >
+                          <Upload size={14} style={{ marginRight: 6 }} /> {t("importTheme")}
+                        </button>
+                        <button
+                          className="settings__connect-btn"
+                          onClick={() => {
+                            const dataStr =
+                              "data:text/json;charset=utf-8," +
+                              encodeURIComponent(JSON.stringify(currentTheme, null, 2));
+                            const dlAnchorElem = document.createElement("a");
+                            dlAnchorElem.setAttribute("href", dataStr);
+                            dlAnchorElem.setAttribute(
+                              "download",
+                              `${currentTheme.name.toLowerCase().replace(/\s+/g, "-")}-theme.json`,
+                            );
+                            dlAnchorElem.click();
+                          }}
+                        >
+                          <Download size={14} style={{ marginRight: 6 }} /> {t("exportTheme")}
+                        </button>
                       </div>
+                    </ControlRow>
+                    <ControlRow label={t("colorScheme")} description={t("colorSchemeDesc")}>
                       <Select
                         value={colorScheme}
                         options={[
@@ -602,12 +646,8 @@ export function Settings({
                         ]}
                         onChange={(v) => setColorScheme(v as "dark" | "light" | "system")}
                       />
-                    </div>
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("font")}</div>
-                        <div className="settings__control-desc">{t("fontDesc")}</div>
-                      </div>
+                    </ControlRow>
+                    <ControlRow label={t("font")} description={t("fontDesc")}>
                       <Select
                         value={general.font}
                         options={[
@@ -617,12 +657,8 @@ export function Settings({
                         ]}
                         onChange={(v) => updateGeneral("font", v)}
                       />
-                    </div>
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("codeFont")}</div>
-                        <div className="settings__control-desc">{t("codeFontDesc")}</div>
-                      </div>
+                    </ControlRow>
+                    <ControlRow label={t("codeFont")} description={t("codeFontDesc")}>
                       <Select
                         value={general.codeFont}
                         options={[
@@ -633,12 +669,8 @@ export function Settings({
                         ]}
                         onChange={(v) => updateGeneral("codeFont", v)}
                       />
-                    </div>
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("borderRadius")}</div>
-                        <div className="settings__control-desc">{t("borderRadiusDesc")}</div>
-                      </div>
+                    </ControlRow>
+                    <ControlRow label={t("borderRadius")} description={t("borderRadiusDesc")}>
                       <NumberInput
                         value={general.radius}
                         step={1}
@@ -646,18 +678,24 @@ export function Settings({
                         max={16}
                         onChange={(v) => updateGeneral("radius", v)}
                       />
-                    </div>
+                    </ControlRow>
+                    <ControlRow label={t("borderStyle")} description={t("borderStyleDesc")}>
+                      <Select
+                        value={general.borderStyle}
+                        options={[
+                          { value: "bordered", label: t("borderStyleBordered") },
+                          { value: "borderless", label: t("borderStyleBorderless") },
+                        ]}
+                        onChange={(v) => updateGeneral("borderStyle", v)}
+                      />
+                    </ControlRow>
                   </div>
                 </div>
 
                 <div className="settings__subsection">
                   <div className="settings__subsection-title">{t("uiZoom")}</div>
                   <div className="settings__control-group">
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("zoomStep")}</div>
-                        <div className="settings__control-desc">{t("zoomStepDesc")}</div>
-                      </div>
+                    <ControlRow label={t("zoomStep")} description={t("zoomStepDesc")}>
                       <NumberInput
                         value={general.zoomStep}
                         step={0.05}
@@ -665,12 +703,8 @@ export function Settings({
                         max={1}
                         onChange={(v) => updateGeneral("zoomStep", v)}
                       />
-                    </div>
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("zoomDefault")}</div>
-                        <div className="settings__control-desc">{t("zoomDefaultDesc")}</div>
-                      </div>
+                    </ControlRow>
+                    <ControlRow label={t("zoomDefault")} description={t("zoomDefaultDesc")}>
                       <NumberInput
                         value={general.zoomDefault}
                         step={0.05}
@@ -678,18 +712,14 @@ export function Settings({
                         max={3}
                         onChange={(v) => updateGeneral("zoomDefault", v)}
                       />
-                    </div>
+                    </ControlRow>
                   </div>
                 </div>
 
                 <div className="settings__subsection">
                   <div className="settings__subsection-title">{t("windowEffects")}</div>
                   <div className="settings__control-group">
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("blurOverlay")}</div>
-                        <div className="settings__control-desc">{t("blurOverlayDesc")}</div>
-                      </div>
+                    <ControlRow label={t("blurOverlay")} description={t("blurOverlayDesc")}>
                       <Select
                         value={general.blur}
                         options={[
@@ -699,7 +729,7 @@ export function Settings({
                         ]}
                         onChange={(v) => updateGeneral("blur", v)}
                       />
-                    </div>
+                    </ControlRow>
                   </div>
                 </div>
 
@@ -738,13 +768,69 @@ export function Settings({
                     ))}
                   </div>
                   <div className="settings__control-group" style={{ marginTop: "var(--settings-py)" }}>
-                    <div className="settings__control-row">
-                      <div className="settings__control-info">
-                        <div className="settings__control-label">{t("animMultiplier")}</div>
-                        <div className="settings__control-desc">{t("animMultiplierDesc")}</div>
-                      </div>
+                    <ControlRow label={t("animMultiplier")} description={t("animMultiplierDesc")}>
                       <NumberInput value={animMultiplier} step={0.1} min={0} max={5} onChange={setAnimMultiplier} />
-                    </div>
+                    </ControlRow>
+                  </div>
+                </div>
+              </>
+            ) : activeTab === "code" ? (
+              <>
+                <div className="settings__subsection" style={{ paddingTop: "var(--settings-py)" }}>
+                  <div className="settings__control-group">
+                    <ControlRow label={t("editorFontSize")} description={t("editorFontSizeDesc")}>
+                      <NumberInput
+                        value={general.editorFontSize}
+                        step={1}
+                        min={8}
+                        max={32}
+                        onChange={(v) => updateGeneral("editorFontSize", v)}
+                      />
+                    </ControlRow>
+                    <ControlRow label={t("editorLineHeight")} description={t("editorLineHeightDesc")}>
+                      <NumberInput
+                        value={general.editorLineHeight}
+                        step={0.1}
+                        min={1.0}
+                        max={3.0}
+                        onChange={(v) => updateGeneral("editorLineHeight", v)}
+                      />
+                    </ControlRow>
+                    <ControlRow label={t("editorLigatures")} description={t("editorLigaturesDesc")}>
+                      <input
+                        type="checkbox"
+                        className="settings__checkbox"
+                        checked={general.editorLigatures}
+                        onChange={(e) => updateGeneral("editorLigatures", e.target.checked)}
+                      />
+                    </ControlRow>
+                    <ControlRow label={t("editorCursorStyle")} description={t("editorCursorStyleDesc")}>
+                      <Select
+                        value={general.editorCursorStyle}
+                        options={[
+                          { value: "line", label: t("cursorLine") },
+                          { value: "block", label: t("cursorBlock") },
+                          { value: "underline", label: t("cursorUnderline") },
+                          { value: "line-thin", label: t("cursorLineThin") },
+                          { value: "block-outline", label: t("cursorBlockOutline") },
+                          { value: "underline-thin", label: t("cursorUnderlineThin") },
+                        ]}
+                        onChange={(v) => updateGeneral("editorCursorStyle", v)}
+                      />
+                    </ControlRow>
+                    <ControlRow label={t("editorCursorBlink")} description={t("editorCursorBlinkDesc")}>
+                      <Select
+                        value={general.editorCursorBlink}
+                        options={[
+                          { value: "blink", label: t("blinkBlink") },
+                          { value: "smooth", label: t("blinkSmooth") },
+                          { value: "phase", label: t("blinkPhase") },
+                          { value: "expand", label: t("blinkExpand") },
+                          { value: "solid", label: t("blinkSolid") },
+                        ]}
+                        onChange={(v) => updateGeneral("editorCursorBlink", v)}
+                      />
+                    </ControlRow>
                   </div>
                 </div>
               </>
@@ -1004,10 +1090,7 @@ export function Settings({
                             {items.map((h) => {
                               const isRecording = recordingId === h.id;
                               return (
-                                <div key={h.id} className="settings__control-row">
-                                  <div className="settings__control-info">
-                                    <div className="settings__control-label">{h.label}</div>
-                                  </div>
+                                <ControlRow key={h.id} label={h.label}>
                                   <button
                                     className={
                                       "settings__hotkey-btn" + (isRecording ? " settings__hotkey-btn--recording" : "")
@@ -1024,7 +1107,7 @@ export function Settings({
                                   >
                                     {isRecording ? "..." : h.keys}
                                   </button>
-                                </div>
+                                </ControlRow>
                               );
                             })}
                           </div>

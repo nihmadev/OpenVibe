@@ -3,6 +3,7 @@ import type { McpConfig, McpServerConfig, McpServerStatus } from "../../types.js
 import { mcpGetConfig, mcpSaveConfig, mcpGetServers, mcpStartServer, mcpStopServer } from "../../tauri-bridge.js";
 import { Server, Plus, Edit2, Trash2, Download, Upload, AlertCircle } from "lucide-react";
 import { TrashIcon, PlusIcon } from "../Icons/icons.js";
+import { Toggle, Input } from "../ui/index.js";
 
 import { useTranslate } from "../../hooks/useI18n.js";
 
@@ -246,12 +247,7 @@ export function McpSettingsPanel(): React.ReactElement {
               <div className="settings__control-label">{t("mcpRawConfig")}</div>
               <div className="settings__control-desc">{t("mcpVisualEditor")}</div>
             </div>
-            <input
-              type="checkbox"
-              className="settings__checkbox"
-              checked={isRawMode}
-              onChange={(e) => setIsRawMode(e.target.checked)}
-            />
+            <Toggle checked={isRawMode} onValueChange={setIsRawMode} />
           </div>
           <div className="settings__control-row">
             <div className="settings__control-info">
@@ -311,11 +307,9 @@ enabled = true`}
                   <div className="settings__provider-name">{server.name}</div>
                 </div>
                 <div className="settings__provider-actions">
-                  <input
-                    type="checkbox"
-                    className="settings__checkbox"
+                  <Toggle
                     checked={server.enabled}
-                    onChange={(e) => handleToggleServer(server.name, e.target.checked)}
+                    onValueChange={(checked) => handleToggleServer(server.name, checked)}
                     title={server.enabled ? t("mcpDisableServer") : t("mcpEnableServer")}
                   />
                   <button className="settings__edit-btn" onClick={() => openEditModal(server)} title={t("edit")}>
@@ -385,8 +379,8 @@ enabled = true`}
 
               <div className="connect-popup__section">
                 <label className="connect-popup__label">{t("mcpServerName")}</label>
-                <input
-                  className="connect-popup__input"
+                <Input
+                  containerClassName="connect-popup__input"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="filesystem"
@@ -395,8 +389,8 @@ enabled = true`}
 
               <div className="connect-popup__section">
                 <label className="connect-popup__label">{t("mcpCommandPath")}</label>
-                <input
-                  className="connect-popup__input"
+                <Input
+                  containerClassName="connect-popup__input"
                   value={formCommand}
                   onChange={(e) => setFormCommand(e.target.value)}
                   placeholder={t("mcpCommandPlaceholder")}
@@ -405,8 +399,8 @@ enabled = true`}
 
               <div className="connect-popup__section">
                 <label className="connect-popup__label">{t("mcpArguments")}</label>
-                <input
-                  className="connect-popup__input"
+                <Input
+                  containerClassName="connect-popup__input"
                   value={formArgs}
                   onChange={(e) => setFormArgs(e.target.value)}
                   placeholder="-y @modelcontextprotocol/server-filesystem /tmp"
@@ -420,8 +414,8 @@ enabled = true`}
                 <div className="connect-popup__pairs">
                   {formEnv.map((item, idx) => (
                     <div key={idx} className="connect-popup__pair-row">
-                      <input
-                        className="connect-popup__input connect-popup__pair-key"
+                      <Input
+                        containerClassName="connect-popup__input connect-popup__pair-key"
                         value={item.key}
                         onChange={(e) => {
                           const updated = [...formEnv];
@@ -430,8 +424,8 @@ enabled = true`}
                         }}
                         placeholder={t("mcpEnvKeyPlaceholder")}
                       />
-                      <input
-                        className="connect-popup__input connect-popup__pair-value"
+                      <Input
+                        containerClassName="connect-popup__input connect-popup__pair-value"
                         value={item.value}
                         onChange={(e) => {
                           const updated = [...formEnv];
@@ -461,12 +455,7 @@ enabled = true`}
 
               <div className="connect-popup__section" style={{ marginTop: 8 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <input
-                    type="checkbox"
-                    className="settings__checkbox"
-                    checked={formEnabled}
-                    onChange={(e) => setFormEnabled(e.target.checked)}
-                  />
+                  <Toggle checked={formEnabled} onValueChange={setFormEnabled} />
                   <label className="connect-popup__label">{t("mcpEnableOnStartup")}</label>
                 </div>
               </div>

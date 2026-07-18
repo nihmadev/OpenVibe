@@ -2,6 +2,7 @@ import React from "react";
 import type { McpServerStatus } from "../../types.js";
 import { Server, RefreshCw, Settings as SettingsIcon } from "lucide-react";
 import { useTranslate } from "../../hooks/useI18n.js";
+import { Toggle } from "../ui/index.js";
 import "./Titlebar.css";
 
 interface McpStatusDropdownProps {
@@ -57,16 +58,11 @@ export function McpStatusDropdown({
                   <span className="titlebar__mcp-server-name">{server.name}</span>
                 </div>
 
-                <button
-                  type="button"
-                  className={`mcp-switch ${server.enabled ? "mcp-switch--active" : ""}`}
-                  onClick={() => onToggleServer(server.name, !server.enabled)}
-                  aria-checked={server.enabled}
-                  role="switch"
+                <Toggle
+                  checked={server.enabled}
+                  onValueChange={(checked) => onToggleServer(server.name, checked)}
                   title={server.enabled ? t("mcpStopServer") : t("mcpStartServer")}
-                >
-                  <span className="mcp-switch__thumb" />
-                </button>
+                />
               </div>
             );
           })
