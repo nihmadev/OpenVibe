@@ -3,7 +3,7 @@ import { HistoryItem } from "../AgentChat/types.js";
 import { describe, pickFile } from "../AgentChat/utils.js";
 import { FailIcon } from "../Icons/icons.js";
 import { FileBadge } from "../AgentChat/components/FileBadge.js";
-import { ChevronRightIcon, Loader2Icon } from "../Icons/icons.js";
+import { ChevronRightIcon, Loader2Icon, ShowMoreIcon } from "../Icons/icons.js";
 import { FileIcon, FolderIcon } from "../Icons/file-icons.js";
 import { CodeBlock, resolveMonacoLang } from "../CodeBlock/CodeBlock.js";
 import { DiffEditor } from "../DiffEditor/DiffEditor.js";
@@ -181,6 +181,8 @@ function getToolResultLang(item: HistoryItem): string {
 }
 
 function ListDirBlock({ item }: { item: HistoryItem }) {
+  const pageSize = 10;
+  const [visibleCount, setVisibleCount] = React.useState(pageSize);
   const content = item.text || "";
   const lines = content
     .split("\n")
@@ -191,13 +193,16 @@ function ListDirBlock({ item }: { item: HistoryItem }) {
     return <div className="tool__diff-loading">Empty directory.</div>;
   }
 
+  const visibleLines = lines.slice(0, visibleCount);
+  const hasMore = visibleCount < lines.length;
+
   return (
     <div className="list-dir-block">
-      {lines.map((line, i) => {
+      {visibleLines.map((line, i) => {
         const isDir = line.endsWith("/");
         const name = isDir ? line.slice(0, -1) : line;
         return (
-          <div key={i} className="list-dir-row">
+          <div key={i} className="list-dir-row" style={{ animationDelay: `${Math.min(i, pageSize - 1) * 24}ms` }}>
             <span className="list-dir-icon">
               {isDir ? <FolderIcon open={false} name={name} /> : <FileIcon name={name} />}
             </span>
@@ -205,6 +210,12 @@ function ListDirBlock({ item }: { item: HistoryItem }) {
           </div>
         );
       })}
+      {hasMore && (
+        <button className="list-dir-more" onClick={() => setVisibleCount((count) => count + pageSize)}>
+          <ShowMoreIcon />
+          Show more...
+        </button>
+      )}
     </div>
   );
 }

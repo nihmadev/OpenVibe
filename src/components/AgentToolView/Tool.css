@@ -152,6 +152,7 @@
 
 .tool--has-diff {
   flex-wrap: wrap;
+  row-gap: 2px;
 }
 
 .tool__diff-stats {
@@ -326,8 +327,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding-top: 4px;
-  padding-bottom: 4px;
+  padding-top: 0;
+  padding-bottom: 2px;
 }
 
 .list-dir-row {
@@ -336,6 +337,18 @@
   gap: 6px;
   font-size: 13px;
   color: var(--fg);
+  animation: list-dir-row-in 180ms ease-out both;
+}
+
+@keyframes list-dir-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .list-dir-icon {
@@ -354,4 +367,26 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.list-dir-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  margin: 3px 0 0;
+  min-height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg-dim);
+  font: inherit;
+  font-size: 13px;
+  line-height: 16px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.list-dir-more:hover {
+  color: var(--fg);
 }
