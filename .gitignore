@@ -14,3 +14,4 @@ my_folder/
 src-tauri/tests
 vscode/
 openvibe.toml
+venv_translate/
