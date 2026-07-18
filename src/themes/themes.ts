@@ -260,4 +260,92 @@ export function getThemeById(id: string): ThemeDef | undefined {
   return themes.find((t) => t.id === id);
 }
 
+export function parseVSCodeTheme(json: any): ThemeDef {
+  const name = json.name || "Custom Theme";
+  const id = "custom-" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+  // Basic mapping of standard vs code colors to OpenVibe tokens
+  const colors = json.colors || {};
+
+  const bg = colors["editor.background"] || "#1e1e1e";
+  const fg = colors["editor.foreground"] || "#d4d4d4";
+  const line = colors["editorGroup.border"] || colors["sideBar.border"] || "#333333";
+  const accent = colors["button.background"] || colors["focusBorder"] || "#007acc";
+
+  const isLight = json.type === "light";
+
+  const vars: ThemeVars = {
+    "--bg": bg,
+    "--bg-2": colors["sideBar.background"] || darken(bg, 0.05),
+    "--bg-3": colors["list.hoverBackground"] || lighten(bg, 0.1),
+    "--line": line,
+    "--line-strong": colors["widget.shadow"] || darken(line, 0.2),
+    "--fg": fg,
+    "--fg-dim": colors["editorLineNumber.foreground"] || darken(fg, 0.3),
+    "--fg-muted": colors["descriptionForeground"] || darken(fg, 0.5),
+    "--accent": accent,
+    "--cyan": colors["terminal.ansiCyan"] || "#29b8db",
+    "--green": colors["terminal.ansiGreen"] || "#23d18b",
+    "--yellow": colors["terminal.ansiYellow"] || "#f5f543",
+    "--red": colors["terminal.ansiRed"] || "#f14c4c",
+    "--avatar-bg": accent,
+    "--white": "#ffffff",
+    "--knob": fg,
+    "--knob-bg": colors["scrollbarSlider.background"] || "#444444",
+    "--toggle-checked": accent,
+    "--primary": accent,
+
+    // syntax defaults
+    "--syntax-comment": colors["editorLineNumber.foreground"] || "#6a9955",
+    "--syntax-keyword": accent,
+    "--syntax-string": colors["terminal.ansiGreen"] || "#ce9178",
+    "--syntax-primitive": colors["terminal.ansiCyan"] || "#569cd6",
+    "--syntax-variable": fg,
+    "--syntax-property": colors["terminal.ansiCyan"] || "#9cdcfe",
+    "--syntax-type": colors["terminal.ansiYellow"] || "#4ec9b0",
+    "--syntax-constant": colors["terminal.ansiCyan"] || "#4fc1ff",
+    "--syntax-operator": fg,
+    "--syntax-punctuation": colors["editorLineNumber.foreground"] || "#d4d4d4",
+    "--syntax-object": colors["terminal.ansiRed"] || "#f48771",
+  };
+
+  // Try to refine syntax tokens if tokenColors is present
+  if (Array.isArray(json.tokenColors)) {
+    for (const token of json.tokenColors) {
+      if (!token.scope || !token.settings || !token.settings.foreground) continue;
+      const scopes = Array.isArray(token.scope) ? token.scope : [token.scope];
+      const color = token.settings.foreground;
+
+      for (const scope of scopes) {
+        if (scope.includes("comment")) vars["--syntax-comment"] = color;
+        else if (scope.includes("keyword")) vars["--syntax-keyword"] = color;
+        else if (scope.includes("string")) vars["--syntax-string"] = color;
+        else if (scope.includes("constant.language")) vars["--syntax-primitive"] = color;
+        else if (scope.includes("variable")) vars["--syntax-variable"] = color;
+        else if (scope.includes("variable.other.property") || scope.includes("property"))
+          vars["--syntax-property"] = color;
+        else if (scope.includes("entity.name.type")) vars["--syntax-type"] = color;
+        else if (scope.includes("constant")) vars["--syntax-constant"] = color;
+        else if (scope.includes("keyword.operator")) vars["--syntax-operator"] = color;
+        else if (scope.includes("punctuation")) vars["--syntax-punctuation"] = color;
+      }
+    }
+  }
+
+  // VS Code JSON doesn't separate light and dark strictly for both, but usually it's one theme.
+  // We'll apply it to both lightVars and darkVars. In a real scenario, the user imports a specific light or dark theme.
+  return {
+    id,
+    name,
+    darkVars: vars,
+    lightVars: vars,
+  };
+}
+
+export function addCustomTheme(theme: ThemeDef) {
+  if (!themes.find((t) => t.id === theme.id)) {
+    themes.push(theme);
+  }
+}
+
 export { hexWithAlpha, hexToArgb };

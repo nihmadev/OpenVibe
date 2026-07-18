@@ -29,6 +29,11 @@
   --blur-overlay: 0px;
 }
 
+html.theme-borderless {
+  --line: transparent !important;
+  --line-strong: rgba(0, 0, 0, 0.1) !important;
+}
+
 * {
   box-sizing: border-box;
 }

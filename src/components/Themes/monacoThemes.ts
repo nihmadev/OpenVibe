@@ -128,7 +128,7 @@ export function makeMonacoTheme(vars: ThemeVars, isDark: boolean): monaco.editor
       "editorLineNumber.activeForeground": fg,
       "editor.lineHighlightBackground": bg2,
       "editor.selectionBackground": hexToArgb(lineStrong, 0.3),
-      "editorCursor.foreground": accent,
+      "editorCursor.foreground": fg,
       "editorIndentGuide.background": line,
       "editorIndentGuide.activeBackground": lineStrong,
       "editorWidget.background": bg2,

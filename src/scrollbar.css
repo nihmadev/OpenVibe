@@ -111,7 +111,12 @@ code::-webkit-scrollbar-button {
 .settings__custom-select-dropdown-body,
 .project-rail__list,
 .session-list__list,
-.sc-results {
+.sc-results,
+.inline-vibe-textarea,
+.inline-vibe-zone-container,
+.inline-vibe-portal-root,
+.inline-vibe-zone-content,
+.inline-vibe-input-wrapper {
   scrollbar-width: none !important;
 }
 
@@ -138,7 +143,22 @@ code::-webkit-scrollbar-button {
 .session-list__list::-webkit-scrollbar-track,
 .sc-results::-webkit-scrollbar,
 .sc-results::-webkit-scrollbar-thumb,
-.sc-results::-webkit-scrollbar-track {
+.sc-results::-webkit-scrollbar-track,
+.inline-vibe-textarea::-webkit-scrollbar,
+.inline-vibe-textarea::-webkit-scrollbar-thumb,
+.inline-vibe-textarea::-webkit-scrollbar-track,
+.inline-vibe-zone-container::-webkit-scrollbar,
+.inline-vibe-zone-container::-webkit-scrollbar-thumb,
+.inline-vibe-zone-container::-webkit-scrollbar-track,
+.inline-vibe-portal-root::-webkit-scrollbar,
+.inline-vibe-portal-root::-webkit-scrollbar-thumb,
+.inline-vibe-portal-root::-webkit-scrollbar-track,
+.inline-vibe-zone-content::-webkit-scrollbar,
+.inline-vibe-zone-content::-webkit-scrollbar-thumb,
+.inline-vibe-zone-content::-webkit-scrollbar-track,
+.inline-vibe-input-wrapper::-webkit-scrollbar,
+.inline-vibe-input-wrapper::-webkit-scrollbar-thumb,
+.inline-vibe-input-wrapper::-webkit-scrollbar-track {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
