@@ -38,6 +38,7 @@ export default tseslint.config(
       "public/monaco-editor/",
       "vscode/",
       "packages/",
+      "venv/",
       "*.rs",
       "venv_translate/",
     ],

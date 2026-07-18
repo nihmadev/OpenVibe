@@ -105,15 +105,21 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
           .then((name) => {
             if (name) setUserName(name);
           })
-          .catch(() => {});
+          .catch((error) => {
+            void error;
+          });
       }
-    } catch (_e) {}
+    } catch (error) {
+      void error;
+    }
 
     const loadSetting = async (key: string, setter: (v: any) => void, def: string) => {
       try {
         const v = await window.vibe.state.get(key);
         if (v !== null && v !== undefined) setter(v);
-      } catch (_e) {}
+      } catch (error) {
+        void error;
+      }
     };
 
     loadSetting("settings:useRegionalProxy", (v) => setUseProxy(v === "true"), "true");
@@ -148,7 +154,9 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
       if (window.vibe?.state?.set) {
         await window.vibe.state.set("onboarding:completed", "true");
       }
-    } catch (_e) {}
+    } catch (error) {
+      void error;
+    }
     const multiplier = parseFloat(animMultiplier);
     const closeDuration = 400 * (Number.isFinite(multiplier) ? Math.max(0.01, multiplier) : 1);
     setTimeout(() => {
@@ -160,21 +168,27 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
     setUseProxy(checked);
     try {
       window.vibe?.state?.set?.("settings:useRegionalProxy", String(checked));
-    } catch (_e) {}
+    } catch (error) {
+      void error;
+    }
   };
 
   const handleAutoAcceptToggle = (checked: boolean) => {
     setAutoAccept(checked);
     try {
       window.vibe?.state?.set?.("settings:autoAccept", String(checked));
-    } catch (_e) {}
+    } catch (error) {
+      void error;
+    }
   };
 
   const handleShowThinkingToggle = (checked: boolean) => {
     setShowThinking(checked);
     try {
       window.vibe?.state?.set?.("settings:showThinking", String(checked));
-    } catch (_e) {}
+    } catch (error) {
+      void error;
+    }
   };
 
   const updateBooleanSetting = (
@@ -185,14 +199,18 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
     setter(checked);
     try {
       window.vibe?.state?.set?.(`settings:${key}`, String(checked));
-    } catch (_e) {}
+    } catch (error) {
+      void error;
+    }
   };
 
   const handleShellChange = (val: string) => {
     setTerminalShell(val);
     try {
       window.vibe?.state?.set?.("settings:terminalShell", val);
-    } catch (_e) {}
+    } catch (error) {
+      void error;
+    }
   };
 
   const handleFontChange = (val: string) => {
@@ -200,14 +218,18 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
     applyInterfaceFont(val);
     try {
       window.vibe?.state?.set?.("settings:font", val);
-    } catch (_e) {}
+    } catch (error) {
+      void error;
+    }
   };
 
   const handleEditorFontSizeChange = (val: string) => {
     setEditorFontSize(val);
     try {
       window.vibe?.state?.set?.("settings:editorFontSize", val);
-    } catch (_e) {}
+    } catch (error) {
+      void error;
+    }
   };
 
   const handleSetTheme = (id: string) => {
@@ -314,7 +336,9 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
                         onLanguageChange(newLang);
                         try {
                           window.vibe?.state?.set?.("settings:language", newLang);
-                        } catch (_e) {}
+                        } catch (error) {
+                          void error;
+                        }
                       }}
                     />
                   </div>
