@@ -8,7 +8,6 @@
   animation-name: var(--anim-panel-appear-keyframes, fade-in);
   animation-duration: calc(var(--anim-panel-appear-duration, 0.2s) * var(--anim-panel-appear-enabled, 1));
   animation-timing-function: var(--anim-panel-appear-easing, ease);
-  
 }
 
 .welcome__main {
