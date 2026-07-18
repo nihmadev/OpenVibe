@@ -1,15 +1,17 @@
 import React, { useRef, useEffect, useCallback } from "react";
 import { MinusIcon, PlusIcon } from "../Icons/icons.js";
+import "./ui.css";
 
-interface NumberInputProps {
+export interface NumberInputProps {
   value: string;
   step: number;
   min: number;
   max: number;
   onChange: (value: string) => void;
+  className?: string;
 }
 
-export function NumberInput({ value, step, min, max, onChange }: NumberInputProps) {
+export function NumberInput({ value, step, min, max, onChange, className }: NumberInputProps) {
   const num = parseFloat(value) || 0;
   const decRef = useRef<HTMLButtonElement>(null);
   const incRef = useRef<HTMLButtonElement>(null);
@@ -47,11 +49,11 @@ export function NumberInput({ value, step, min, max, onChange }: NumberInputProp
   }, [stepValue]);
 
   return (
-    <div className="settings__number-input-wrap">
+    <div className={`ui-number-input-wrap ${className || ""}`.trim()}>
       <button
         ref={decRef}
         type="button"
-        className="settings__number-btn"
+        className="ui-number-btn"
         onClick={() => stepValue(-1)}
         disabled={num <= min}
         tabIndex={-1}
@@ -60,7 +62,7 @@ export function NumberInput({ value, step, min, max, onChange }: NumberInputProp
       </button>
       <input
         type="number"
-        className="settings__number-input"
+        className="ui-number-input"
         value={value}
         step={step}
         min={min}
@@ -70,7 +72,7 @@ export function NumberInput({ value, step, min, max, onChange }: NumberInputProp
       <button
         ref={incRef}
         type="button"
-        className="settings__number-btn"
+        className="ui-number-btn"
         onClick={() => stepValue(1)}
         disabled={num >= max}
         tabIndex={-1}

@@ -1,0 +1,446 @@
+/* Generic UI Component Styles */
+
+/* --- Button --- */
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius, 6px);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  outline: none;
+  background: transparent;
+  color: var(--fg, #ececec);
+}
+
+.ui-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ui-button--primary {
+  background-color: var(--bg-3, #3c3c3c);
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+.ui-button--primary:hover:not(:disabled) {
+  background-color: var(--fg);
+  border-color: var(--fg);
+  color: var(--bg);
+}
+
+.ui-button--secondary {
+  background-color: var(--bg-3, #3c3c3c);
+  border-color: var(--line-strong);
+}
+.ui-button--secondary:hover:not(:disabled) {
+  background-color: var(--line);
+}
+
+.ui-button--ghost {
+  background-color: transparent;
+}
+.ui-button--ghost:hover:not(:disabled) {
+  background-color: var(--bg-3, #3c3c3c);
+}
+
+.ui-button--danger {
+  background-color: transparent;
+  color: #f48771;
+  border-color: rgba(244, 135, 113, 0.3);
+}
+.ui-button--danger:hover:not(:disabled) {
+  background-color: rgba(244, 135, 113, 0.1);
+}
+
+/* --- Toggle --- */
+.ui-toggle {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+}
+.ui-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.ui-toggle__slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--bg-3, #3c3c3c);
+  transition: 0.2s;
+  border-radius: 20px;
+  border: 1px solid var(--line-strong);
+}
+.ui-toggle__slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: var(--fg, #ececec);
+  transition: 0.2s;
+  border-radius: 50%;
+}
+.ui-toggle input:checked + .ui-toggle__slider {
+  background-color: var(--toggle-checked, var(--accent, #007acc));
+  border-color: var(--toggle-checked, var(--accent, #007acc));
+}
+.ui-toggle input:checked + .ui-toggle__slider:before {
+  transform: translateX(16px);
+  background-color: #fff;
+}
+
+/* --- Control Row --- */
+.ui-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+  gap: 12px;
+  min-height: 28px;
+  position: relative;
+}
+.ui-control-row:last-child {
+  border-bottom: none;
+}
+.ui-control-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.ui-control-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg);
+}
+.ui-control-desc {
+  font-size: 11px;
+  color: var(--fg-dim);
+  margin-top: 1px;
+}
+
+/* --- Input --- */
+.ui-input-wrap {
+  display: flex;
+  align-items: center;
+  background-color: var(--vscode-input-background, #252526);
+  border: 1px solid var(--vscode-input-border, #3c3c3c);
+  border-radius: var(--radius, 4px);
+  padding: 4px 8px;
+  transition: border-color 0.2s;
+}
+.ui-input-wrap:focus-within {
+  border-color: var(--vscode-focusBorder, var(--fg-dim, #858585));
+}
+.ui-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--vscode-input-foreground, #cccccc);
+  font-size: 13px;
+  padding: 0;
+}
+.ui-input::placeholder {
+  color: var(--vscode-input-placeholderForeground, #858585);
+}
+.ui-input-icon {
+  margin-right: 6px;
+  color: var(--vscode-input-placeholderForeground, #858585);
+  display: flex;
+  align-items: center;
+}
+.ui-input-right {
+  margin-left: 6px;
+  display: flex;
+  align-items: center;
+}
+
+/* --- Select --- */
+.ui-select {
+  position: relative;
+  min-width: 100px;
+}
+.ui-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px 10px;
+  background: var(--bg-3, #2a2a2a);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm, 4px);
+  color: var(--fg, #cccccc);
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+}
+.ui-select-trigger:hover {
+  background: var(--line);
+}
+.ui-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--bg-2, #1e1e1e);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm, 4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.ui-select-dropdown--portal {
+  position: fixed;
+  z-index: 9999;
+}
+.ui-select-item {
+  width: 100%;
+  text-align: left;
+  padding: 5px 10px;
+  background: transparent;
+  border: none;
+  color: var(--fg, #cccccc);
+  font-size: 12px;
+  cursor: pointer;
+}
+.ui-select-item:hover {
+  background: var(--line);
+}
+.ui-select-item.active {
+  background: var(--bg-3, #3c3c3c);
+  font-weight: 600;
+  color: var(--fg, #ececec);
+}
+
+/* --- Number Input --- */
+.ui-number-input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius, 6px);
+  background: var(--bg-3, #2a2a2a);
+  overflow: hidden;
+}
+.ui-number-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  color: var(--fg, #cccccc);
+  cursor: pointer;
+}
+.ui-number-btn:hover:not(:disabled) {
+  background: var(--bg-4, #3c3c3c);
+}
+.ui-number-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.ui-number-input {
+  width: 48px;
+  height: 28px;
+  text-align: center;
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--line-strong);
+  border-right: 1px solid var(--line-strong);
+  color: var(--fg, #cccccc);
+  font-size: 13px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+.ui-number-input::-webkit-inner-spin-button,
+.ui-number-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* --- List --- */
+@keyframes uiListSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ui-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.ui-list-group {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  overflow: hidden;
+  animation: uiListSlideIn 0.2s ease both;
+  animation-delay: calc(var(--delay, 0) * 30ms);
+}
+
+.ui-list-group:first-child {
+  border-radius: var(--radius-md, 6px) var(--radius-md, 6px) 0 0;
+}
+
+.ui-list-group:last-child {
+  border-bottom: 1px solid var(--line);
+  border-radius: 0 0 var(--radius-md, 6px) var(--radius-md, 6px);
+}
+
+.ui-list-group:only-child {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md, 6px);
+}
+
+.ui-list-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-2, #1e1e1e);
+  border: none;
+  border-bottom: 1px solid var(--line);
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.ui-list-group--collapsed .ui-list-group__header {
+  border-bottom: none;
+}
+
+.ui-list-group__header:hover {
+  background: var(--bg-3, #2a2a2a);
+}
+
+.ui-list-group__header-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ui-list-group__icon {
+  display: flex;
+  align-items: center;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.ui-list-group__chevron {
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.ui-list-group__content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 2000px;
+  opacity: 1;
+  transition:
+    max-height 0.35s ease,
+    opacity 0.25s ease;
+}
+
+.ui-list-group__content--collapsed {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Standalone list items directly inside .ui-list get stagger slide-in and separating bottom borders */
+.ui-list > .ui-list-item {
+  animation: uiListSlideIn 0.2s ease both;
+  animation-delay: calc(var(--delay, 0) * 30ms);
+  border-bottom: 1px solid var(--line);
+}
+
+.ui-list > .ui-list-item:last-child {
+  border-bottom: none;
+}
+
+.ui-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: 0;
+  color: var(--fg);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.ui-list-item:hover {
+  background: var(--bg-3, #2a2a2a);
+}
+
+.ui-list-item--active {
+  background: var(--bg-3, #2a2a2a);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* Items inside ListGroup content section have no borders between them, exactly like ModelSelector */
+.ui-list-group__content .ui-list-item {
+  border: 0;
+  padding: 6px 16px;
+  font-size: 14px;
+}
+
+.ui-list-item__icon {
+  display: flex;
+  align-items: center;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.ui-list-item__icon--left {
+  margin-right: 8px;
+}
+
+.ui-list-item__icon--right {
+  margin-left: auto;
+}
+
+.ui-list-item__content {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

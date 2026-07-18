@@ -1,21 +1,24 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import "./ui.css";
 
-interface Option {
+export interface Option {
   value: string;
   label: string;
   fontFamily?: string;
 }
 
-interface SelectProps {
+export interface SelectProps {
   value: string;
   options: Option[];
   onChange: (value: string) => void;
   onHover?: (value: string | null) => void;
+  className?: string;
 }
 
 function getContainerRect() {
-  const el = document.querySelector(".settings__container");
+  // Try to find the closest scrolling container, or fallback to body/viewport
+  const el = document.querySelector(".settings__container") || document.body;
   return el?.getBoundingClientRect() ?? null;
 }
 
@@ -62,7 +65,7 @@ function computeDropUp(r: DOMRect, optionCount: number) {
   return spaceBelow < dropHeight + 8;
 }
 
-export function Select({ value, options, onChange, onHover }: SelectProps) {
+export function Select({ value, options, onChange, onHover, className }: SelectProps) {
   const [open, setOpen] = useState(false);
   const [dropUp, setDropUp] = useState(false);
   const [rect, setRect] = useState<DOMRect | null>(null);
@@ -137,7 +140,7 @@ export function Select({ value, options, onChange, onHover }: SelectProps) {
       ? createPortal(
           <div
             ref={wrapRef}
-            className="settings__custom-select-dropdown settings__custom-select-dropdown--portal"
+            className="ui-select-dropdown ui-select-dropdown--portal"
             style={{
               position: "fixed",
               left: pos.left,
@@ -148,12 +151,12 @@ export function Select({ value, options, onChange, onHover }: SelectProps) {
               borderBottom: dropUp ? 0 : undefined,
             }}
           >
-            <div className="settings__custom-select-dropdown-body">
+            <div className="ui-select-dropdown-body">
               {options.map((o) => (
                 <button
                   key={o.value}
                   type="button"
-                  className={`settings__custom-select-item ${o.value === value ? "active" : ""}`}
+                  className={`ui-select-item ${o.value === value ? "active" : ""}`}
                   onMouseEnter={() => onHover?.(o.value)}
                   onMouseLeave={() => onHover?.(null)}
                   onClick={() => {
@@ -172,11 +175,11 @@ export function Select({ value, options, onChange, onHover }: SelectProps) {
       : null;
 
   return (
-    <div className="settings__custom-select">
+    <div className={`ui-select ${className || ""}`.trim()}>
       <button
         ref={triggerRef}
         type="button"
-        className="settings__custom-select-trigger"
+        className="ui-select-trigger"
         onClick={() => (open ? setOpen(false) : openDropdown())}
       >
         <span>{selected?.label ?? value}</span>
