@@ -91,17 +91,18 @@
   width: 14px;
   left: 2px;
   bottom: 2px;
-  background-color: var(--fg, #ececec);
+  background-color: var(--white, #ffffff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   transition: 0.2s;
   border-radius: 50%;
 }
 .ui-toggle input:checked + .ui-toggle__slider {
-  background-color: var(--toggle-checked, var(--accent, #007acc));
-  border-color: var(--toggle-checked, var(--accent, #007acc));
+  background-color: var(--toggle-checked, var(--fg, #cccccc));
+  border-color: var(--toggle-checked, var(--fg, #cccccc));
 }
 .ui-toggle input:checked + .ui-toggle__slider:before {
   transform: translateX(16px);
-  background-color: #fff;
+  background-color: var(--bg, #1a1a1a);
 }
 
 /* --- Control Row --- */
@@ -205,10 +206,18 @@
   z-index: 100;
   max-height: 200px;
   overflow-y: auto;
+  scrollbar-width: none !important; /* Firefox */
+}
+.ui-select-dropdown::-webkit-scrollbar,
+.ui-select-dropdown *::-webkit-scrollbar {
+  display: none !important; /* Safari and Chrome */
+  width: 0 !important;
+  height: 0 !important;
 }
 .ui-select-dropdown--portal {
   position: fixed;
-  z-index: 9999;
+  /* Portalled selects must stay above full-screen overlays such as onboarding. */
+  z-index: 100000;
 }
 .ui-select-item {
   width: 100%;

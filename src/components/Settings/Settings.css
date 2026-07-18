@@ -7,12 +7,8 @@
   justify-content: center;
   z-index: 200;
   background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(var(--blur-overlay));
-  -webkit-backdrop-filter: blur(var(--blur-overlay));
-  animation-name: var(--anim-panel-appear-keyframes, fade-in);
-  animation-duration: calc(var(--anim-panel-appear-duration, 0.15s) * var(--anim-panel-appear-enabled, 1));
-  animation-timing-function: var(--anim-panel-appear-easing, ease);
-  animation-fill-mode: both;
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
 }
 
 .settings__container {
@@ -28,7 +24,6 @@
   animation-name: var(--anim-panel-appear-keyframes, slide-up-in);
   animation-duration: calc(var(--anim-panel-appear-duration, 0.18s) * var(--anim-panel-appear-enabled, 1));
   animation-timing-function: var(--anim-panel-appear-easing, cubic-bezier(0.2, 0, 0.2, 1));
-  animation-fill-mode: both;
 }
 
 /* Sidebar */
@@ -424,7 +419,8 @@
   position: absolute;
   width: 12px;
   height: 12px;
-  background: var(--knob);
+  background: var(--white, #ffffff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   border-radius: 50%;
   top: 2px;
   left: 2px;
@@ -433,7 +429,7 @@
 
 .settings__checkbox:checked::before {
   transform: translateX(14px);
-  background: var(--knob);
+  background: var(--bg, #1a1a1a);
 }
 
 /* Providers */
@@ -704,8 +700,8 @@
   justify-content: center;
   z-index: 300;
   background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(var(--blur-overlay));
-  -webkit-backdrop-filter: blur(var(--blur-overlay));
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
 }
 
 .connect-popup {
@@ -1310,8 +1306,9 @@
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(var(--blur-overlay));
-  -webkit-backdrop-filter: blur(var(--blur-overlay));
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+
   animation: fade-in 0.14s ease;
 }
 
@@ -2021,35 +2018,30 @@
   animation-name: anim-fade-in-preview;
   animation-duration: calc(0.22s * var(--anim-multiplier, 1));
   animation-timing-function: ease;
-  animation-fill-mode: both;
 }
 
 .apm-preview--slide {
   animation-name: anim-slide-in-preview;
   animation-duration: calc(0.26s * var(--anim-multiplier, 1));
   animation-timing-function: cubic-bezier(0.2, 0, 0.2, 1);
-  animation-fill-mode: both;
 }
 
 .apm-preview--slide.apm-sidebar {
   animation-name: anim-slide-in-x-preview;
   animation-duration: calc(0.26s * var(--anim-multiplier, 1));
   animation-timing-function: cubic-bezier(0.2, 0, 0.2, 1);
-  animation-fill-mode: both;
 }
 
 .apm-preview--scale {
   animation-name: anim-scale-in-preview;
   animation-duration: calc(0.22s * var(--anim-multiplier, 1));
   animation-timing-function: cubic-bezier(0.34, 1, 0.64, 1);
-  animation-fill-mode: both;
 }
 
 .apm-preview--fade-slide {
   animation-name: anim-fade-slide-in-preview;
   animation-duration: calc(0.26s * var(--anim-multiplier, 1));
   animation-timing-function: cubic-bezier(0.2, 0, 0.2, 1);
-  animation-fill-mode: both;
 }
 
 .apm-preview--none {
@@ -2534,8 +2526,8 @@
   justify-content: center;
   z-index: 2000;
   background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(var(--blur-overlay, 4px));
-  -webkit-backdrop-filter: blur(var(--blur-overlay, 4px));
+  backdrop-filter: blur(var(--blur-amount, 4px));
+  -webkit-backdrop-filter: blur(var(--blur-amount, 4px));
 }
 
 .mcp-modal {

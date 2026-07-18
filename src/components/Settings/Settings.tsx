@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Select, NumberInput, ControlRow, Toggle } from "../ui/index.js";
+import { Select, NumberInput, ControlRow, Toggle, Button } from "../ui/index.js";
 import "./Settings.css";
 import type { Provider } from "../../types.js";
 import { ConnectPopup } from "../ConnectPopup/ConnectPopup.js";
@@ -35,7 +35,8 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onProviderChanged?: (model: string, baseUrl: string) => void;
-  initialTab?: Tab;
+  activeTab?: Tab;
+  onTabChange?: (tab: Tab) => void;
   onLanguageChange?: (lang: string) => void;
   shortcuts?: ShortcutDef[];
   onUpdateBinding?: (id: string, combo: KeyCombo) => Promise<void>;
@@ -46,7 +47,8 @@ export function Settings({
   open,
   onClose,
   onProviderChanged,
-  initialTab,
+  activeTab = "general",
+  onTabChange,
   onLanguageChange,
   shortcuts,
   onUpdateBinding,
@@ -55,14 +57,12 @@ export function Settings({
   const { currentTheme, setTheme, preview, colorScheme, setColorScheme, resolvedScheme } = useTheme();
   const { t } = useI18n();
   const { settings: animSettings, set: setAnim, animMultiplier, setAnimMultiplier } = useAnimations();
-  const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "general");
+  const setActiveTab = (tab: Tab) => {
+    if (onTabChange) onTabChange(tab);
+  };
   const [recordingId, setRecordingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const errorTimer = useRef<ReturnType<typeof setTimeout>>();
-
-  useEffect(() => {
-    if (open && initialTab) setActiveTab(initialTab);
-  }, [open, initialTab]);
 
   useEffect(() => {
     if (!open) {
@@ -146,6 +146,7 @@ export function Settings({
     editorCursorBlink: "blink",
     borderStyle: "bordered" as string,
     renderFileTree: false,
+    useRegionalProxy: true,
   };
   type GeneralSettings = typeof defaultGeneral;
   const [general, setGeneral] = useState<GeneralSettings>({ ...defaultGeneral });
@@ -179,7 +180,7 @@ export function Settings({
     const r = parseFloat(general.radius) || 6;
     document.documentElement.style.setProperty("--radius", r + "px");
     const blurMap: Record<string, string> = { none: "0px", subtle: "8px", strong: "20px" };
-    document.documentElement.style.setProperty("--blur-overlay", blurMap[general.blur] ?? "0px");
+    document.documentElement.style.setProperty("--blur-amount", blurMap[general.blur] ?? "0px");
 
     if (general.borderStyle === "borderless") {
       document.documentElement.classList.add("theme-borderless");
@@ -305,7 +306,7 @@ export function Settings({
     }
     if (key === "blur") {
       const m: Record<string, string> = { none: "0px", subtle: "8px", strong: "20px" };
-      document.documentElement.style.setProperty("--blur-overlay", m[value as string] ?? "0px");
+      document.documentElement.style.setProperty("--blur-amount", m[value as string] ?? "0px");
     }
     if (key === "borderStyle") {
       if (value === "borderless") {
@@ -504,7 +505,10 @@ export function Settings({
                     <ControlRow label={t("language")} description={t("languageDesc")}>
                       <Select
                         value={general.language}
-                        options={languageOptions.map((o) => ({ value: o.value, label: t("lang" + o.value) }))}
+                        options={languageOptions.map((o) => {
+                          const lbl = String(t("lang" + o.value) || o.value);
+                          return { value: o.value, label: lbl.charAt(0).toUpperCase() + lbl.slice(1) };
+                        })}
                         onChange={(v) => updateGeneral("language", v)}
                       />
                     </ControlRow>
@@ -542,6 +546,25 @@ export function Settings({
                         checked={general.renderFileTree}
                         onChange={(e) => updateGeneral("renderFileTree", e.target.checked)}
                       />
+                    </ControlRow>
+                    <ControlRow label={t("useRegionalProxy")} description={t("useRegionalProxyDesc")}>
+                      <input
+                        type="checkbox"
+                        className="settings__checkbox"
+                        checked={general.useRegionalProxy}
+                        onChange={(e) => updateGeneral("useRegionalProxy", e.target.checked)}
+                      />
+                    </ControlRow>
+                    <ControlRow label={t("rerunOnboarding")} description={t("rerunOnboardingDesc")}>
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          onClose();
+                          window.dispatchEvent(new CustomEvent("vibe:open-welcome-screen"));
+                        }}
+                      >
+                        {t("rerunOnboarding")}
+                      </Button>
                     </ControlRow>
                   </div>
                 </div>

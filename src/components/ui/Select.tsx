@@ -146,7 +146,9 @@ export function Select({ value, options, onChange, onHover, className }: SelectP
               left: pos.left,
               width: pos.width,
               ...(dropUp ? { bottom: pos.bottom, top: "auto" } : { top: pos.top, bottom: "auto" }),
-              borderRadius: dropUp ? "var(--radius-md) var(--radius-md) 0 0" : "0 0 var(--radius-md) var(--radius-md)",
+              borderRadius: dropUp
+                ? "var(--radius-sm, 4px) var(--radius-sm, 4px) 0 0"
+                : "0 0 var(--radius-sm, 4px) var(--radius-sm, 4px)",
               borderTop: dropUp ? undefined : 0,
               borderBottom: dropUp ? 0 : undefined,
             }}
@@ -181,6 +183,15 @@ export function Select({ value, options, onChange, onHover, className }: SelectP
         type="button"
         className="ui-select-trigger"
         onClick={() => (open ? setOpen(false) : openDropdown())}
+        style={
+          open
+            ? {
+                borderRadius: dropUp
+                  ? "0 0 var(--radius-sm, 4px) var(--radius-sm, 4px)"
+                  : "var(--radius-sm, 4px) var(--radius-sm, 4px) 0 0",
+              }
+            : undefined
+        }
       >
         <span>{selected?.label ?? value}</span>
         <svg
