@@ -21,7 +21,12 @@ export function ToolBlock({ item }: { item: HistoryItem }): React.ReactElement {
             <FileBadge info={file} />
           </>
         ) : null}
-        {suffix ? <span className="tool__suffix"> {suffix}</span> : null}
+        {suffix ? (
+          <span className="tool__suffix" title={suffix}>
+            {" "}
+            {suffix}
+          </span>
+        ) : null}
       </span>
     </div>
   );

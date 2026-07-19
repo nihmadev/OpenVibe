@@ -1,4 +1,4 @@
-import { HistoryItem } from "./types.js";
+import { HistoryItem, TodoTask } from "./types.js";
 import { basename } from "../../utils/paths.js";
 export { basename };
 
@@ -65,27 +65,75 @@ export function toRelativePath(filePath: string, cwd?: string): string {
   return filePath;
 }
 
+type TodoActivity = { kind: "created" | "completed" | "blocked"; task?: TodoTask };
+
+function todoActivity(item: HistoryItem): TodoActivity | null {
+  const args = item.toolArgs as { tasks?: TodoTask[] } | undefined;
+  const tasks = Array.isArray(args?.tasks) ? args.tasks : [];
+  const previous = item.todoPreviousTasks;
+  if (!previous) return tasks.length > 0 ? { kind: "created" } : null;
+
+  const byId = (task: TodoTask) => task.id || task.title;
+  const before = new Map(previous.map((task) => [byId(task), task]));
+  const blocked = tasks.find((task) => {
+    const oldStatus = before.get(byId(task))?.status;
+    return (task.status === "blocked" || task.status === "waiting_user") && oldStatus !== task.status;
+  });
+  if (blocked) return { kind: "blocked", task: blocked };
+
+  const completed = tasks.find((task) => task.status === "completed" && before.get(byId(task))?.status !== "completed");
+  return completed ? { kind: "completed", task: completed } : null;
+}
+
+/** Todo updates are frequent; only milestones belong in the agent activity feed. */
+export function isMeaningfulTodoActivity(item: HistoryItem): boolean {
+  return item.toolName === "todo" && todoActivity(item) !== null;
+}
+
 export function describe(
   item: HistoryItem,
   cwd?: string,
+  t?: (key: string, params?: Record<string, string | number | boolean>) => string,
 ): { verb: string; file: FileBadgeInfo | null; suffix: string } {
   const file = pickFile(item.toolArgs);
   if (file && cwd && file.rawPath) {
     file.rawPath = toRelativePath(file.rawPath, cwd);
   }
   const pending = item.ok === undefined;
+  const label = (key: string, fallback: string): string => (t ? t(key) : fallback);
   switch (item.toolName) {
+    case "todo": {
+      const taskLabel = (task: TodoTask) => task.title.trim();
+      const activity = todoActivity(item);
+      if (activity?.kind === "completed" && activity.task) {
+        return { verb: label("todoCompleted", "Completed task"), file: null, suffix: taskLabel(activity.task) };
+      }
+      if (activity?.kind === "blocked" && activity.task) {
+        return { verb: label("todoBlocked", "Blocked on task"), file: null, suffix: taskLabel(activity.task) };
+      }
+      return { verb: label("todoCreated", "Created task plan"), file: null, suffix: "" };
+    }
     case "read_file":
-      return { verb: pending ? "Reading" : "Read", file, suffix: "" };
+      return { verb: pending ? label("reading", "Reading") : label("read", "Read"), file, suffix: "" };
     case "write_file":
       return {
-        verb: item.ok === false ? "Failed to write" : pending ? "Writing" : "Edited",
+        verb:
+          item.ok === false
+            ? label("failedWrite", "Failed to write")
+            : pending
+              ? label("writing", "Writing")
+              : label("written", "Written"),
         file,
         suffix: "",
       };
     case "edit_file":
       return {
-        verb: item.ok === false ? "Failed to edit" : pending ? "Editing" : "Edited",
+        verb:
+          item.ok === false
+            ? label("failedEdit", "Failed to edit")
+            : pending
+              ? label("editing", "Editing")
+              : label("edited", "Edited"),
         file,
         suffix: "",
       };
@@ -93,7 +141,7 @@ export function describe(
       const args = item.toolArgs as { path?: string } | undefined;
       const path = args?.path ?? ".";
       return {
-        verb: pending ? "Listing" : "Listed",
+        verb: pending ? label("listing", "Listing") : label("listed", "Listed"),
         file: { name: basename(path) || path, ext: "", cls: "dir", rawPath: path },
         suffix: "",
       };
@@ -102,7 +150,9 @@ export function describe(
       const args = item.toolArgs as { query?: string } | undefined;
       const text = args?.query ?? "";
       return {
-        verb: pending ? "Searching in codebase" : "Search in codebase",
+        verb: pending
+          ? label("searchingCodebase", "Searching in codebase")
+          : label("searchedCodebase", "Search in codebase"),
         file: null,
         suffix: text ? `"${text}"` : "",
       };
@@ -110,15 +160,52 @@ export function describe(
     case "bash": {
       const args = item.toolArgs as { command?: string } | undefined;
       return {
-        verb: pending ? "Running" : "Ran",
+        verb: pending ? label("running", "Running") : label("ran", "Ran"),
         file: null,
         suffix: args?.command ?? "",
       };
     }
+    case "git_status":
+    case "git_branches":
+    case "git_log":
+    case "git_diff":
+    case "git_show":
+    case "git_blame":
+    case "git_refs":
+    case "git_merge_base":
+    case "git_tree":
+    case "git_grep":
+    case "git_check_ignore":
+    case "git_stash_list":
+    case "git_reflog":
+    case "git_remotes":
+    case "git_worktrees":
+    case "git_submodules": {
+      const names: Record<string, [string, string]> = {
+        git_status: ["gitStatus", "gitStatusDone"],
+        git_branches: ["gitBranches", "gitBranchesDone"],
+        git_log: ["gitLog", "gitLogDone"],
+        git_diff: ["gitDiff", "gitDiffDone"],
+        git_show: ["gitShow", "gitShowDone"],
+        git_blame: ["gitBlame", "gitBlameDone"],
+        git_refs: ["gitRefs", "gitRefsDone"],
+        git_merge_base: ["gitInspect", "gitInspectDone"],
+        git_tree: ["gitInspect", "gitInspectDone"],
+        git_grep: ["gitInspect", "gitInspectDone"],
+        git_check_ignore: ["gitInspect", "gitInspectDone"],
+        git_stash_list: ["gitInspect", "gitInspectDone"],
+        git_reflog: ["gitInspect", "gitInspectDone"],
+        git_remotes: ["gitRefs", "gitRefsDone"],
+        git_worktrees: ["gitInspect", "gitInspectDone"],
+        git_submodules: ["gitInspect", "gitInspectDone"],
+      };
+      const [activeKey, doneKey] = names[item.toolName!];
+      return { verb: pending ? label(activeKey, activeKey) : label(doneKey, doneKey), file: null, suffix: "" };
+    }
     case "agent": {
       const args = item.toolArgs as { task?: string } | undefined;
       return {
-        verb: pending ? "Exploring" : "Explored",
+        verb: pending ? label("exploring", "Exploring") : label("explored", "Explored"),
         file: null,
         suffix: args?.task ?? "",
       };
@@ -134,7 +221,7 @@ export function describe(
           suffix: `[${serverName}] ${toolName}`,
         };
       }
-      return { verb: item.toolName ?? "Tool", file, suffix: "" };
+      return { verb: item.toolName ?? label("tool", "Tool"), file, suffix: "" };
     }
   }
 }

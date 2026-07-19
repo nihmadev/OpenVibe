@@ -8,6 +8,7 @@ import { DiffEditor } from "../../DiffEditor/DiffEditor.js";
 import { resolveMonacoLang } from "../../CodeBlock/CodeBlock.js";
 import { pickFile, toRelativePath } from "../utils.js";
 import type { HistoryItem } from "../types.js";
+import { ContextMenu } from "../../ContextMenu/ContextMenu.js";
 
 interface FileChangeInfo {
   filePath: string;
@@ -154,19 +155,70 @@ function FileChangesSummary({ items, currentId, cwd }: { items: HistoryItem[]; c
   );
 }
 
+/** Keep the normal copy action readable while Raw preserves the exact model output. */
+function toPlainText(markdown: string): string {
+  return markdown
+    .replace(/^\s*```[^\n]*\n/gm, "")
+    .replace(/^\s*```\s*$/gm, "")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/`([^`\n]+)`/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, "$1")
+    .replace(/(?<!_)_([^_\n]+)_(?!_)/g, "$1");
+}
+
+function formatRawTrace(items: HistoryItem[]): string {
+  return items
+    .filter((entry) => entry.kind !== "user")
+    .map((entry) => {
+      if (entry.kind === "tool") {
+        const args = entry.toolArgs ?? (entry.toolStream ? entry.toolStream : undefined);
+        const argsText = typeof args === "string" ? args : JSON.stringify(args ?? {}, null, 2);
+        return [
+          `## Tool call: ${entry.toolName ?? "unknown"}`,
+          `id: ${entry.id}`,
+          `status: ${entry.ok === false ? "failed" : entry.ok === true ? "ok" : "pending"}`,
+          "arguments:",
+          "```json",
+          argsText,
+          "```",
+          entry.text ? "result:" : "result: (empty)",
+          entry.text || "",
+        ].join("\n");
+      }
+
+      if (entry.kind === "assistant") {
+        const sections = [`## Assistant message: ${entry.id}`];
+        if (entry.reasoningName) sections.push(`reasoning name: ${entry.reasoningName}`);
+        if (entry.reasoning) sections.push("<thinking>\n" + entry.reasoning + "\n</thinking>");
+        if (entry.text) sections.push(entry.text);
+        return sections.join("\n\n");
+      }
+
+      return `## ${entry.kind}\n${entry.text}`;
+    })
+    .join("\n\n---\n\n");
+}
+
 export function MessageFooter({
   item,
   items,
+  runItems,
   onRegenerate,
   cwd,
 }: {
   item: HistoryItem;
   items: HistoryItem[];
+  runItems: HistoryItem[];
   onRegenerate?: (id: string) => void;
   cwd?: string;
 }): React.ReactElement {
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
+  const [copyMenu, setCopyMenu] = useState<{ x: number; y: number } | null>(null);
   const hasDiff = useMemo(() => {
     const idx = items.findIndex((it) => it.id === item.id);
     if (idx <= 0) return false;
@@ -196,10 +248,15 @@ export function MessageFooter({
     };
   }, [items]);
 
-  const onCopy = () => {
-    navigator.clipboard.writeText(item.text);
+  const copyText = (text: string) => {
+    void navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const openCopyMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setCopyMenu({ x: rect.right - 4, y: rect.bottom + 4 });
   };
 
   return (
@@ -231,7 +288,13 @@ export function MessageFooter({
         </div>
         <div className="msg__footer-right">
           <Tooltip text={t("copy")}>
-            <button className="msg__footer-btn" onClick={onCopy}>
+            <button
+              className="msg__footer-btn"
+              onClick={openCopyMenu}
+              aria-label={t("copy")}
+              aria-haspopup="menu"
+              aria-expanded={copyMenu !== null}
+            >
               {copied ? (
                 <svg
                   width="14"
@@ -282,6 +345,17 @@ export function MessageFooter({
           </Tooltip>
         </div>
       </div>
+      {copyMenu && (
+        <ContextMenu
+          x={copyMenu.x}
+          y={copyMenu.y}
+          onClose={() => setCopyMenu(null)}
+          items={[
+            { label: t("copyFormatted"), onClick: () => copyText(toPlainText(item.text)) },
+            { label: t("copyRaw"), onClick: () => copyText(formatRawTrace(runItems)) },
+          ]}
+        />
+      )}
     </div>
   );
 }
