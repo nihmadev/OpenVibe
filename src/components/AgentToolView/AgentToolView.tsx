@@ -7,17 +7,47 @@ import { ChevronRightIcon, Loader2Icon, ShowMoreIcon } from "../Icons/icons.js";
 import { FileIcon, FolderIcon } from "../Icons/file-icons.js";
 import { CodeBlock, resolveMonacoLang } from "../CodeBlock/CodeBlock.js";
 import { DiffEditor } from "../DiffEditor/DiffEditor.js";
-import { Server } from "lucide-react";
+import { useI18n } from "../../hooks/useI18n.js";
+import { BookOpen, Bot, FilePlus2, FolderOpen, Pencil, Search, Server, SquareTerminal, Wrench } from "lucide-react";
 import "./Tool.css";
+
+function ToolKindIcon({ name, size = 14 }: { name?: string; size?: number }): React.ReactElement {
+  const props = { size, strokeWidth: 1.7, "aria-hidden": true } as const;
+  if (name?.startsWith("git_")) {
+    return <img src="/icons/providers/github.svg" width={size} height={size} alt="" aria-hidden="true" />;
+  }
+  switch (name) {
+    case "read_file":
+    case "view_file":
+      return <BookOpen {...props} />;
+    case "search_codebase":
+    case "grep_search":
+      return <Search {...props} />;
+    case "bash":
+    case "run_command":
+      return <SquareTerminal {...props} />;
+    case "edit_file":
+      return <Pencil {...props} />;
+    case "write_file":
+      return <FilePlus2 {...props} />;
+    case "list_dir":
+      return <FolderOpen {...props} />;
+    case "agent":
+      return <Bot {...props} />;
+    default:
+      return <Wrench {...props} />;
+  }
+}
 
 // ─── Animated counter ─────────────────────────────────────────────────────
 
 function AnimatedValue({ value, prefix }: { value: number; prefix: string }) {
   const [display, setDisplay] = React.useState(value);
+  const displayRef = React.useRef(value);
   const raf = React.useRef<number>(0);
 
   React.useEffect(() => {
-    const from = display;
+    const from = displayRef.current;
     const to = value;
     if (from === to) return;
     const start = performance.now();
@@ -26,7 +56,9 @@ function AnimatedValue({ value, prefix }: { value: number; prefix: string }) {
     const tick = (now: number) => {
       const t = Math.min((now - start) / duration, 1);
       const eased = 1 - (1 - t) * (1 - t);
-      setDisplay(Math.round(from + (to - from) * eased));
+      const next = Math.round(from + (to - from) * eased);
+      displayRef.current = next;
+      setDisplay(next);
       if (t < 1) raf.current = requestAnimationFrame(tick);
     };
 
@@ -229,7 +261,8 @@ export function AgentToolView({
   onDrillDown?: (id: string) => void;
   cwd?: string;
 }) {
-  const { verb, file, suffix } = describe(item, cwd);
+  const { t } = useI18n();
+  const { verb, file, suffix } = describe(item, cwd, t);
   const isPending = item.ok === undefined;
   const isErr = item.ok === false;
   const isStreaming = isPending && !!item.toolStream;
@@ -272,10 +305,12 @@ export function AgentToolView({
           }
         }}
       >
-        <span className="tool__icon">{isPending ? <Loader2Icon /> : null}</span>
+        <span className="tool__icon">{isPending ? <Loader2Icon /> : <ToolKindIcon name={item.toolName} />}</span>
         <span className="tool__line">
-          <span className="tool__verb">{verb}</span>
-          <span className="tool__agent-task">{suffix}</span>
+          <span className="tool__agent-task">{suffix || verb}</span>
+          <span className="tool__agent-open">
+            <ChevronRightIcon />
+          </span>
         </span>
       </div>
     );
@@ -285,12 +320,22 @@ export function AgentToolView({
   const hasResultText = item.ok === true && !!item.text;
   const stateCls = isStreaming ? "tool--streaming" : isPending ? "tool--pending" : isErr ? "tool--err" : "tool--ok";
   const isReadFile = item.toolName === "read_file";
-  const hasExpandable = (diffInfo !== null || hasResultText || isStreaming) && !isSearchCodebase && !isReadFile;
+  const isGitTool = item.toolName?.startsWith("git_") === true;
+  const hasExpandable =
+    (diffInfo !== null || hasResultText || isStreaming) && !isSearchCodebase && !isReadFile && !isGitTool;
 
   return (
     <div className={`tool ${isMcp ? "tool--mcp" : ""} ${stateCls}${hasExpandable ? " tool--has-diff" : ""}`}>
       <span className="tool__icon">
-        {isPending ? <Loader2Icon /> : isErr ? <FailIcon /> : isMcp ? <Server size={14} /> : null}
+        {isPending ? (
+          <Loader2Icon />
+        ) : isErr ? (
+          <FailIcon />
+        ) : isMcp ? (
+          <Server size={14} strokeWidth={1.7} aria-hidden="true" />
+        ) : (
+          <ToolKindIcon name={item.toolName} />
+        )}
       </span>
       <span className="tool__line">
         <span className="tool__verb">{verb}</span>
@@ -318,7 +363,12 @@ export function AgentToolView({
             </button>
           </>
         )}
-        {suffix ? <span className="tool__suffix"> {suffix}</span> : null}
+        {suffix ? (
+          <span className="tool__suffix" title={suffix}>
+            {" "}
+            {suffix}
+          </span>
+        ) : null}
       </span>
       {hasExpandable && (
         <div
