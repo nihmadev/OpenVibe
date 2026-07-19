@@ -1,6 +1,6 @@
 {
   "name": "openvibe-desktop",
-  "version": "1.3.4",
+  "version": "1.3.6",
   "description": "OpenVibe Desktop — open-source agentic coding environment. Bring your own AI model.",
   "license": "SEE LICENSE IN LICENSE",
   "author": "nihmadev <lolz@nihmadev.fun>",
@@ -14,6 +14,8 @@
   },
   "scripts": {
     "build": "tsc",
+    "dev": "npm run build && node dist/cli.js",
+    "test": "npm run build && node --test test/*.test.mjs",
     "prepublishOnly": "npm run build",
     "watch": "tsc --watch"
   },
