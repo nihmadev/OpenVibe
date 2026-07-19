@@ -13,9 +13,16 @@ interface DiffEditorProps {
   original: string;
   modified: string;
   language: string;
+  /** Use the parent's height (the full editor view) instead of content height (chat cards). */
+  fill?: boolean;
 }
 
-export const DiffEditor = React.memo(function DiffEditor({ original, modified, language }: DiffEditorProps) {
+export const DiffEditor = React.memo(function DiffEditor({
+  original,
+  modified,
+  language,
+  fill = false,
+}: DiffEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
@@ -52,7 +59,7 @@ export const DiffEditor = React.memo(function DiffEditor({ original, modified, l
       const modifiedModel = m.editor.createModel(modifiedRef.current, language);
 
       const diffEditor = m.editor.createDiffEditor(container, {
-        renderSideBySide: true,
+        renderSideBySide: false,
         readOnly: true,
         fontSize: 12,
         fontFamily: "var(--mono)",
@@ -75,8 +82,30 @@ export const DiffEditor = React.memo(function DiffEditor({ original, modified, l
 
       diffEditor.setModel({ original: originalModel, modified: modifiedModel });
 
-      // The container fills its CSS flex parent — no dynamic height needed.
+      const updateHeight = () => {
+        if (fill || !container) return;
+        const originalHeight = diffEditor.getOriginalEditor().getContentHeight();
+        const modifiedHeight = diffEditor.getModifiedEditor().getContentHeight();
+        const contentHeight = Math.max(originalHeight, modifiedHeight);
+        container.style.height = `${Math.max(Math.min(contentHeight, 600), 60)}px`;
+        diffEditor.layout();
+      };
+
+      // GitDiffViewer owns an explicit flex height; chat cards do not.
       diffEditor.layout();
+      const originalSize = fill ? null : diffEditor.getOriginalEditor().onDidContentSizeChange(updateHeight);
+      const modifiedSize = fill ? null : diffEditor.getModifiedEditor().onDidContentSizeChange(updateHeight);
+      if (!fill) updateHeight();
+
+      // Tool diffs are mounted while their accordion is display:none. Re-layout
+      // when they become visible so Monaco can measure the available width.
+      const resizeObserver = !fill
+        ? new ResizeObserver(() => {
+            diffEditor.layout();
+            updateHeight();
+          })
+        : null;
+      resizeObserver?.observe(container);
 
       const onWheel = (e: WheelEvent) => {
         const ed = editorRef.current?.getModifiedEditor();
@@ -98,6 +127,9 @@ export const DiffEditor = React.memo(function DiffEditor({ original, modified, l
 
       cleanupRef.current = () => {
         container.removeEventListener("wheel", onWheel);
+        originalSize?.dispose();
+        modifiedSize?.dispose();
+        resizeObserver?.disconnect();
         try {
           diffEditor.dispose();
         } catch {
@@ -156,9 +188,13 @@ export const DiffEditor = React.memo(function DiffEditor({ original, modified, l
   return (
     <div
       className="diff-editor"
-      style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, height: "100%" }}
+      style={fill ? { flex: 1, display: "flex", flexDirection: "column", minHeight: 0, height: "100%" } : undefined}
     >
-      <div ref={containerRef} className="diff-editor__container" style={{ flex: 1, minHeight: 0, height: "100%" }} />
+      <div
+        ref={containerRef}
+        className="diff-editor__container"
+        style={fill ? { flex: 1, minHeight: 0, height: "100%" } : undefined}
+      />
     </div>
   );
 });

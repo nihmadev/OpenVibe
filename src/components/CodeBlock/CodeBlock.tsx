@@ -5,8 +5,7 @@ import "./CodeBlock.css";
 import { useTheme } from "../../hooks/useTheme.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { makeMonacoTheme } from "../Themes/monacoThemes.js";
-import { CopyIcon, InsertTerminalIcon, RunIcon } from "../Icons/icons.js";
-import { useTerminalActions } from "../../hooks/useTerminalActions.js";
+import { CopyIcon } from "../Icons/icons.js";
 
 type Monaco = any;
 
@@ -146,8 +145,6 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
   const displayCode = code.trimEnd();
   const codeRef = useRef(displayCode);
   codeRef.current = displayCode;
-  const { runCommand, insertCommand } = useTerminalActions();
-
   const isTerminal = isTerminalLanguage(language);
 
   const { currentTheme, previewTheme, colorScheme } = useTheme();
@@ -176,7 +173,7 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
 
       const initialCode = codeRef.current;
       const initialLines = initialCode.split("\n").length;
-      const initialHeight = Math.max(Math.min(initialLines * 18 + 12, 600), 26);
+      const initialHeight = Math.max(initialLines * 18 + 12, 26);
       container.style.height = `${initialHeight}px`;
 
       const editor = m.editor.create(container, {
@@ -235,8 +232,8 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
           rafId = null;
           try {
             const h = editor.getContentHeight();
-            const clampedH = Math.max(Math.min(h, 600), 26);
-            container.style.height = `${clampedH}px`;
+            const contentHeight = Math.max(h, 26);
+            container.style.height = `${contentHeight}px`;
             editor.layout();
           } catch {
             /* editor might be disposed */
@@ -351,7 +348,7 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
         ed.setScrollLeft(prevScrollLeft);
 
         const lines = latestCode.split("\n").length;
-        const h = Math.max(Math.min(lines * 18 + 12, 600), 26);
+        const h = Math.max(lines * 18 + 12, 26);
         if (containerRef.current) {
           containerRef.current.style.height = `${h}px`;
         }
@@ -386,7 +383,7 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
   };
 
   const lineCount = displayCode.split("\n").length;
-  const estimatedHeight = Math.max(Math.min(lineCount * 18 + 12, 600), 26);
+  const estimatedHeight = Math.max(lineCount * 18 + 12, 26);
 
   return (
     <div className={`code-block${isTerminal ? " code-block--terminal" : ""}`}>
@@ -411,24 +408,6 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
             )}
           </button>
         </Tooltip>
-        {isTerminal && (
-          <>
-            <Tooltip text={t("insertTerminal")}>
-              <button
-                className="code-block__action-btn"
-                onClick={() => insertCommand(code)}
-                aria-label={t("insertTerminal")}
-              >
-                <InsertTerminalIcon />
-              </button>
-            </Tooltip>
-            <Tooltip text={t("runCommand")}>
-              <button className="code-block__action-btn" onClick={() => runCommand(code)} aria-label={t("runCommand")}>
-                <RunIcon />
-              </button>
-            </Tooltip>
-          </>
-        )}
       </div>
       <div className="code-block__body" style={{ minHeight: `${estimatedHeight}px` }}>
         <div ref={containerRef} className="code-block__container" style={{ height: `${estimatedHeight}px` }} />
