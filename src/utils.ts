@@ -24,7 +24,7 @@ export function recordToItems(record: ChatRecord): any[] {
           : Array.isArray(msg.content)
             ? msg.content.map((p) => (p.type === "text" ? p.text : "")).join("")
             : "";
-      if (text) {
+      if (text || msg.reasoningContent || msg.reasoningName) {
         const item: any = { id: localId(), kind: "assistant", text, msgIndex: i };
         if (msg.reasoningContent) {
           item.reasoning = msg.reasoningContent;

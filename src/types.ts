@@ -157,6 +157,7 @@ export interface VibeApi {
   init: () => Promise<{ ok: true; config: VibeConfig } | { ok: false; error: string }>;
   send: (text: string) => Promise<{ ok: boolean; error?: string }>;
   sendParts: (parts: ContentPart[], display?: string) => Promise<{ ok: boolean; error?: string }>;
+  updateTodo: (context: string) => Promise<{ ok: boolean; error?: string }>;
   instantRevert: (msgIndex: number) => Promise<RollbackPreview>;
   revertUndo: () => Promise<void>;
   reset: () => Promise<void>;
@@ -166,6 +167,8 @@ export interface VibeApi {
     minimize: () => Promise<void>;
     maximize: () => Promise<void>;
     close: () => Promise<void>;
+    setSize: (width: number, height: number) => Promise<void>;
+    setFullscreen: (fullscreen: boolean) => Promise<void>;
   };
   state: {
     get: (key: string) => Promise<string | null>;
