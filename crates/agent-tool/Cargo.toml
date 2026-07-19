@@ -16,4 +16,6 @@ mcp = { path = "../mcp" }
 lsp = { path = "../lsp" }
 reqwest = { version = "0.13", features = ["json", "http2"] }
 
+[dev-dependencies]
+tempfile = "3"
 

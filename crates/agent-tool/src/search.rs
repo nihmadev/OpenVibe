@@ -33,8 +33,9 @@ pub async fn tool_search_codebase(cwd: &str, args: &serde_json::Value) -> Result
         .get("query")
         .and_then(|v| v.as_str())
         .ok_or_else(|| "Missing 'query' argument".to_string())?;
-    let root = if cwd.is_empty() { "." } else { cwd };
-    let resolved_root = resolve_path(root, ".");
+    let workspace_root = if cwd.is_empty() { "." } else { cwd };
+    let requested_root = args.get("root").and_then(|v| v.as_str()).unwrap_or(".");
+    let resolved_root = resolve_path(workspace_root, requested_root);
 
     let is_regex_query = regex::Regex::new(&format!("(?i){}", query)).is_ok();
 
@@ -137,4 +138,34 @@ pub async fn tool_search_codebase(cwd: &str, args: &serde_json::Value) -> Result
     }
 
     Ok(clip(&additional.join("\n"), MAX_OUTPUT_CHARS))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn root_restricts_search_to_requested_directory() {
+        let dir = tempfile::tempdir().unwrap();
+        let scoped = dir.path().join("crates/git");
+        let unrelated = dir.path().join("src");
+        std::fs::create_dir_all(&scoped).unwrap();
+        std::fs::create_dir_all(&unrelated).unwrap();
+        std::fs::write(scoped.join("lib.rs"), "const SCOPE_PROBE: bool = true;\n").unwrap();
+        std::fs::write(
+            unrelated.join("frontend.ts"),
+            "const SCOPE_PROBE = false;\n",
+        )
+        .unwrap();
+
+        let result = tool_search_codebase(
+            dir.path().to_str().unwrap(),
+            &serde_json::json!({"query": "SCOPE_PROBE", "root": "crates/git"}),
+        )
+        .await
+        .unwrap();
+
+        assert!(result.contains("crates/git"));
+        assert!(!result.contains("frontend.ts"));
+    }
 }
