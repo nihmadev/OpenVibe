@@ -23,6 +23,7 @@ pub struct AppState {
     pub llm_cancels: Mutex<HashMap<String, Arc<AtomicBool>>>,
     pub agent: Mutex<Option<agent::Agent>>,
     pub agent_cancel: Mutex<Option<Arc<AtomicBool>>>,
+    pub todo_context: Mutex<Option<String>>,
     pub http_client: reqwest::Client,
     pub provider_url: Arc<tokio::sync::Mutex<String>>,
     pub warmer_stop_tx: Mutex<Option<watch::Sender<bool>>>,
@@ -264,6 +265,7 @@ pub fn run() {
                 llm_cancels: Mutex::new(HashMap::new()),
                 agent: Mutex::new(initial_agent),
                 agent_cancel: Mutex::new(None),
+                todo_context: Mutex::new(None),
                 http_client: shared_client,
                 provider_url,
                 warmer_stop_tx: Mutex::new(Some(warmer_stop_tx)),
@@ -286,6 +288,7 @@ pub fn run() {
             // Agent commands
             commands::agent::agent_new,
             commands::agent::agent_send,
+            commands::agent::agent_update_todo,
             commands::agent::agent_stop,
             commands::agent::agent_reset,
             commands::agent::agent_summarize,
@@ -376,6 +379,8 @@ pub fn run() {
             commands::misc::window_minimize,
             commands::misc::window_maximize,
             commands::misc::window_close,
+            commands::misc::window_set_size,
+            commands::misc::window_set_fullscreen,
             commands::misc::is_maximized,
             commands::misc::get_cwd,
             commands::misc::set_model,
@@ -405,6 +410,9 @@ pub fn run() {
             // LSP commands
             commands::lsp::get_lsp_servers,
             commands::lsp::lsp_start_server,
+            commands::lsp::lsp_connect,
+            commands::lsp::lsp_send,
+            commands::lsp::lsp_running_servers,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

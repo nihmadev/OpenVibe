@@ -65,6 +65,15 @@ pub fn window_minimize(app_handle: tauri::AppHandle) -> Result<(), String> {
 #[tauri::command]
 pub fn window_maximize(app_handle: tauri::AppHandle) -> Result<(), String> {
     if let Some(window) = app_handle.get_webview_window("main") {
+        // Fullscreen is independent from maximized on Wayland. Calling
+        // maximize() while fullscreen is active is commonly ignored by the
+        // compositor, so leave fullscreen first and restore a usable window.
+        if window.is_fullscreen().unwrap_or(false) {
+            window.set_fullscreen(false).map_err(|e| e.to_string())?;
+            window.set_size(tauri::LogicalSize::new(1300_u32, 820_u32)).map_err(|e| e.to_string())?;
+            let _ = window.center();
+            return Ok(());
+        }
         if window.is_maximized().unwrap_or(false) {
             window.unmaximize().map_err(|e| e.to_string())?;
         } else {
@@ -78,6 +87,32 @@ pub fn window_maximize(app_handle: tauri::AppHandle) -> Result<(), String> {
 pub fn window_close(app_handle: tauri::AppHandle) -> Result<(), String> {
     if let Some(window) = app_handle.get_webview_window("main") {
         window.close().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+/// Request a native resize for the onboarding flow. On Wayland this is a
+/// compositor request, so the resulting size may be clamped or ignored.
+#[tauri::command]
+pub fn window_set_size(app_handle: tauri::AppHandle, width: u32, height: u32) -> Result<(), String> {
+    if let Some(window) = app_handle.get_webview_window("main") {
+        if window.is_fullscreen().unwrap_or(false) {
+            window.set_fullscreen(false).map_err(|e| e.to_string())?;
+        }
+        if window.is_maximized().unwrap_or(false) {
+            window.unmaximize().map_err(|e| e.to_string())?;
+        }
+        window.set_size(tauri::LogicalSize::new(width, height)).map_err(|e| e.to_string())?;
+        // Best-effort centering; Wayland compositors may choose the placement.
+        let _ = window.center();
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn window_set_fullscreen(app_handle: tauri::AppHandle, fullscreen: bool) -> Result<(), String> {
+    if let Some(window) = app_handle.get_webview_window("main") {
+        window.set_fullscreen(fullscreen).map_err(|e| e.to_string())?;
     }
     Ok(())
 }
