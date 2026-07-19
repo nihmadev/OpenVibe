@@ -65,4 +65,8 @@ impl LspServer {
             None
         }
     }
+
+    pub fn is_running(&self) -> bool {
+        self.process.is_some()
+    }
 }
