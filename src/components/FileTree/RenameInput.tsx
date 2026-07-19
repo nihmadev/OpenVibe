@@ -1,12 +1,22 @@
 import React, { useEffect, useState } from "react";
+import { FileIcon, FolderIcon } from "../Icons/index.js";
+import { Input } from "../ui/Input.js";
 
 interface RenameInputProps {
   initial: string;
+  kind: "file" | "dir";
+  folderOpen?: boolean;
   onCommit: (name: string) => void;
   onCancel: () => void;
 }
 
-export function RenameInput({ initial, onCommit, onCancel }: RenameInputProps): React.ReactElement {
+export function RenameInput({
+  initial,
+  kind,
+  folderOpen = false,
+  onCommit,
+  onCancel,
+}: RenameInputProps): React.ReactElement {
   const [value, setValue] = useState(initial);
   const ref = React.useRef<HTMLInputElement | null>(null);
 
@@ -19,27 +29,30 @@ export function RenameInput({ initial, onCommit, onCancel }: RenameInputProps): 
   }, [initial]);
 
   return (
-    <input
-      ref={ref}
-      className="ftree__rename"
-      value={value}
-      onChange={(e) => setValue(e.target.value)}
-      onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
+    <div className="ftree__rename-control" onClick={(e) => e.stopPropagation()}>
+      <Input
+        ref={ref}
+        className="ftree__rename"
+        containerClassName="ftree__rename-wrap"
+        icon={kind === "dir" ? <FolderIcon open={folderOpen} name={value.trim()} /> : <FileIcon name={value.trim()} />}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            if (value.trim() && value !== initial) onCommit(value.trim());
+            else onCancel();
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            onCancel();
+          }
+        }}
+        onBlur={() => {
           if (value.trim() && value !== initial) onCommit(value.trim());
           else onCancel();
-        } else if (e.key === "Escape") {
-          e.preventDefault();
-          onCancel();
-        }
-      }}
-      onBlur={() => {
-        if (value.trim() && value !== initial) onCommit(value.trim());
-        else onCancel();
-      }}
-      spellCheck={false}
-    />
+        }}
+        spellCheck={false}
+      />
+    </div>
   );
 }

@@ -4,15 +4,7 @@ import type { FsEntry } from "../../types.js";
 import { ContextMenu, type MenuItem } from "../ContextMenu/ContextMenu.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
 import { useI18n } from "../../hooks/useI18n.js";
-import {
-  FileIcon,
-  FolderIcon,
-  ChevronRightIcon,
-  CollapseAllIcon,
-  NewFileIcon,
-  NewFolderIcon,
-  RefreshIcon,
-} from "../Icons/index.js";
+import { ChevronRightIcon, CollapseAllIcon, NewFileIcon, NewFolderIcon, RefreshIcon } from "../Icons/index.js";
 import { FileNode } from "./FileNode";
 import { RenameInput } from "./RenameInput";
 import { basename, dirnameOf } from "./utils.js";
@@ -27,6 +19,7 @@ export function FileTree({ cwd, onOpenFile, activeFile, revealPath }: RootProps)
   const [renaming, setRenaming] = useState<string | null>(null);
   const [cutPath, setCutPath] = useState<string | null>(null);
   const [creating, setCreating] = useState<{ dir: string; kind: "file" | "dir" } | null>(null);
+  const [selectedDir, setSelectedDir] = useState(cwd);
 
   // Dirs whose children need to be re-fetched (after rename/delete inside them)
   async function refreshDir(dir: string): Promise<void> {
@@ -79,6 +72,7 @@ export function FileTree({ cwd, onOpenFile, activeFile, revealPath }: RootProps)
   useEffect(() => {
     setRoot(null);
     setStates(new Map());
+    setSelectedDir(cwd);
     window.vibe.fs.list(cwd).then((res) => {
       if (res.ok) setRoot(res.entries);
       else setRoot([]);
@@ -171,14 +165,37 @@ export function FileTree({ cwd, onOpenFile, activeFile, revealPath }: RootProps)
     setCreating(null);
     if (!name.trim()) return;
 
-    let res;
-    if (kind === "file") res = await window.vibe.fs.createFile(dir, name);
-    else res = await window.vibe.fs.createDir(dir, name);
+    const parts = name
+      .trim()
+      .split(/[\\/]+/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (parts.length === 0) return;
+
+    // The native API creates one child at a time. Walk the path and reuse
+    // existing directories so inputs such as `i18n/new/v2` work naturally.
+    let targetDir = dir;
+    let res: { ok: true; path: string } | { ok: false; error: string } = { ok: true, path: targetDir };
+    const directoryParts = kind === "dir" ? parts : parts.slice(0, -1);
+    for (const part of directoryParts) {
+      const listed = await window.vibe.fs.list(targetDir);
+      const existing = listed.ok ? listed.entries.find((entry) => entry.isDir && entry.name === part) : undefined;
+      if (existing) {
+        targetDir = existing.path;
+        continue;
+      }
+      res = await window.vibe.fs.createDir(targetDir, part);
+      if (!res.ok) break;
+      targetDir = res.path;
+    }
+    if (res.ok && kind === "file") {
+      res = await window.vibe.fs.createFile(targetDir, parts[parts.length - 1]!);
+    }
 
     if (!res.ok) {
       alert(t("createFailed", { error: res.error }));
     } else {
-      refreshDir(dir);
+      await refreshAll();
     }
   }
 
@@ -275,12 +292,12 @@ export function FileTree({ cwd, onOpenFile, activeFile, revealPath }: RootProps)
         </Tooltip>
         <div className="ftree__actions">
           <Tooltip text={t("newFileTooltip")}>
-            <button className="ftree__action" onClick={() => promptCreate(cwd, "file")}>
+            <button className="ftree__action" onClick={() => promptCreate(selectedDir, "file")}>
               <NewFileIcon />
             </button>
           </Tooltip>
           <Tooltip text={t("newFolderTooltip")}>
-            <button className="ftree__action" onClick={() => promptCreate(cwd, "dir")}>
+            <button className="ftree__action" onClick={() => promptCreate(selectedDir, "dir")}>
               <NewFolderIcon />
             </button>
           </Tooltip>
@@ -329,8 +346,7 @@ export function FileTree({ cwd, onOpenFile, activeFile, revealPath }: RootProps)
         {creating && creating.dir === cwd ? (
           <div className="ftree__row" style={{ paddingLeft: 8 }}>
             <span className="ftree__chev">{creating.kind === "dir" ? <ChevronRightIcon open={false} /> : null}</span>
-            {creating.kind === "dir" ? <FolderIcon open={false} /> : <FileIcon />}
-            <RenameInput initial="" onCommit={commitCreate} onCancel={() => setCreating(null)} />
+            <RenameInput initial="" kind={creating.kind} onCommit={commitCreate} onCancel={() => setCreating(null)} />
           </div>
         ) : null}
         {root?.map((e) => (
@@ -349,6 +365,10 @@ export function FileTree({ cwd, onOpenFile, activeFile, revealPath }: RootProps)
             onContext={setCtx}
             cutPath={cutPath}
             refreshAll={refreshAll}
+            creating={creating}
+            onCommitCreate={commitCreate}
+            onCancelCreate={() => setCreating(null)}
+            onSelectDir={setSelectedDir}
           />
         ))}
       </div>

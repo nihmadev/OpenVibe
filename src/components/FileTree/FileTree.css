@@ -126,6 +126,36 @@
   font-weight: 500;
 }
 
+.ftree__compact-segment {
+  cursor: pointer;
+}
+
+.ftree__compact-segment:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ftree__rename-control {
+  flex: 1;
+  min-width: 0;
+}
+.ftree__rename-wrap {
+  min-width: 0;
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: var(--bg-2, #1e1e1e);
+  border-color: var(--line-strong, #3c3c3c);
+}
+.ftree__rename-wrap .ui-input-icon {
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.ftree__rename {
+  min-width: 0;
+  font: inherit;
+  background: transparent;
+}
+
 .ftree__subtree {
   display: none;
 }

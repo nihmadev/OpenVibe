@@ -1,4 +1,5 @@
 .titlebar {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -20,10 +21,13 @@
 }
 
 .titlebar__center {
+  position: absolute;
+  left: 50%;
+  width: clamp(200px, calc(100% - 520px), 400px);
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1;
   -webkit-app-region: no-drag;
 }
 
@@ -268,6 +272,14 @@
   flex-direction: column;
   overflow: hidden;
   font-size: 12px;
+}
+
+/* The dropdown is rendered inside the native titlebar drag region. Every
+   interactive element in it must opt out, otherwise clicks start moving the
+   window instead of activating MCP/LSP controls. */
+.titlebar__mcp-dropdown,
+.titlebar__mcp-dropdown * {
+  -webkit-app-region: no-drag;
 }
 
 .titlebar__mcp-header {
