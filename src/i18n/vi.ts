@@ -423,7 +423,7 @@ export const vi: Partial<Translations> = {
   terminalShell: "Vỏ thiết bị đầu cuối",
   welcomeTitle: "rung cảm",
   appName: "Máy tính để bàn OpenVibe",
-  appVersion: "v1.3.4",
+  appVersion: "v1.3.5",
   shell: "Vỏ bọc",
   langRussian: "tiếng Nga",
   langEnglish: "Tiếng Anh",
