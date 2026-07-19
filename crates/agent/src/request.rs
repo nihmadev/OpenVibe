@@ -149,7 +149,52 @@ fn build_request(config: &LlmConfig) -> (String, reqwest::header::HeaderMap) {
     );
 
     let is_github = config.base_url.contains("models.github.ai");
-    let should_proxy = !is_github && config.api_url.is_some() && config.provider_id.is_some();
+
+    // The regional proxy only supports the built-in provider routes and an
+    // allow-list of upstream hosts. Custom providers are stored with IDs such
+    // as `p_...`; routing those through /v3 would make the proxy reject valid
+    // arbitrary OpenAI-compatible endpoints with the misleading
+    // `x-provider-base-url header required` response. Keep custom endpoints
+    // direct (the models command already follows this behavior).
+    let proxy_provider = config.provider_id.as_deref().is_some_and(|id| {
+        matches!(
+            id,
+            "anthropic"
+                | "openai"
+                | "google"
+                | "deepseek"
+                | "groq"
+                | "openrouter"
+                | "ollama"
+                | "cerebras"
+                | "moonshot"
+                | "zai"
+                | "opencode"
+                | "github"
+                | "together"
+                | "fireworks"
+                | "mistral"
+                | "xai"
+                | "cohere"
+                | "qwen"
+                | "azure-openai"
+                | "amazon-bedrock"
+                | "huggingface"
+                | "replicate"
+                | "deepinfra"
+                | "perplexity"
+                | "anyscale"
+                | "vercel"
+                | "fal"
+                | "baseten"
+                | "hyperbolic"
+                | "minimax"
+                | "nvidia"
+                | "sambanova"
+                | "siliconcloud"
+        )
+    });
+    let should_proxy = !is_github && proxy_provider && config.api_url.is_some();
 
     let url = if should_proxy {
         let base = config.api_url.as_ref().unwrap().trim_end_matches('/');

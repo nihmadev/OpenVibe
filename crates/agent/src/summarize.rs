@@ -10,6 +10,7 @@ impl Agent {
     pub async fn summarize_with(
         config: AgentConfig,
         messages: Vec<ChatMessage>,
+        language: &str,
         client: &reqwest::Client,
     ) -> String {
         if messages.len() < 2 {
@@ -28,12 +29,12 @@ impl Agent {
         let mut prompt = context_messages;
         prompt.push(ChatMessage {
             role: "user".to_string(),
-            content: Some(serde_json::Value::String(
+            content: Some(serde_json::Value::String(format!(
                 "Provide a very short (max 3-5 words) descriptive title for this conversation. \
-                 Respond ONLY with the title text. No quotes, no intro like 'Title:', \
-                 no punctuation at the end."
-                    .to_string(),
-            )),
+                     Write the title entirely in {language}. Do not translate it to English unless \
+                     the conversation is in English. Respond ONLY with the title text. No quotes, \
+                     no intro like 'Title:', no punctuation at the end."
+            ))),
             name: None,
             tool_call_id: None,
             tool_calls: None,
@@ -137,6 +138,12 @@ impl Agent {
     }
 
     pub async fn summarize(&self, client: &reqwest::Client) -> String {
-        Self::summarize_with(self.config().clone(), self.messages.clone(), client).await
+        Self::summarize_with(
+            self.config().clone(),
+            self.messages.clone(),
+            "Russian",
+            client,
+        )
+        .await
     }
 }
