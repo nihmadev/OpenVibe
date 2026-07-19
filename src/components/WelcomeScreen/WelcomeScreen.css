@@ -12,6 +12,18 @@
   transition: opacity calc(0.4s * var(--anim-multiplier, 1)) ease;
 }
 
+.welcome-window-drag-region {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 28px;
+  z-index: 2;
+  cursor: grab;
+}
+
+.welcome-window-drag-region:active {
+  cursor: grabbing;
+}
+
 .welcome-screen--visible {
   opacity: 1;
 }

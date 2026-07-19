@@ -1,5 +1,7 @@
 import React from "react";
+import { FolderOpen } from "lucide-react";
 import { ProjectRail } from "../ProjectRail/ProjectRail.js";
+import { Button } from "../ui/Button.js";
 import type { Project } from "../../types.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import "./Welcome.css";
@@ -40,24 +42,27 @@ export function Welcome({
           onSettings={() => setSettingsOpen(true)}
         />
         <div className="welcome__content">
-          <div className="welcome__title">{t("welcomeTitle")}</div>
-          <div className="welcome__subtitle">{t("welcomeSubtitle")}</div>
-          <button className="welcome__btn" onClick={() => handleAddProject(onProjectChange)}>
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
+          <section className="welcome__hero" aria-labelledby="welcome-title">
+            <div className="welcome__icon" aria-hidden="true">
+              ?
+            </div>
+
+            <div className="welcome__copy">
+              <h1 className="welcome__title" id="welcome-title">
+                {t("openProject")}
+              </h1>
+              <p className="welcome__subtitle">{t("welcomeSubtitle")}</p>
+            </div>
+
+            <Button
+              className="welcome__action"
+              variant="primary"
+              icon={<FolderOpen size={16} strokeWidth={1.7} aria-hidden="true" />}
+              onClick={() => handleAddProject(onProjectChange)}
             >
-              <path d="M1.5 4.5h4l1.5 1.5h7.5v7a1 1 0 0 1-1 1h-12a1 1 0 0 1-1-1v-8.5z" />
-            </svg>
-            {t("openProject")}
-          </button>
+              {t("openFolder")}
+            </Button>
+          </section>
         </div>
       </div>
     </div>

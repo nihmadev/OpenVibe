@@ -6,7 +6,13 @@ import "./PromptInput.css";
 import { Attachment, EditorPart, MentionState, SendPayload } from "./types.js";
 import { IMAGE_RE } from "./utils.js";
 import { fileToAttachment, newAttachmentId } from "./utils/attachments.js";
-import { createTextFragment, getCursorPosition, setCursorPosition, setRangeEdge } from "./utils/editor-dom.js";
+import {
+  createTextFragment,
+  getCursorPosition,
+  readEditorParts,
+  setCursorPosition,
+  setRangeEdge,
+} from "./utils/editor-dom.js";
 import {
   canNavigateHistoryAtCursor,
   navigatePromptHistory,
@@ -151,46 +157,20 @@ export function PromptInput({
 
   // ─── DOM helpers ────────────────────────────────────────
 
-  const editorText = useCallback((): string => (editorRef.current?.textContent ?? "").replace(/\u200B/g, ""), []);
-
   const parseEditor = useCallback((): EditorPart[] => {
     const el = editorRef.current;
     if (!el) return [{ type: "text", content: "" }];
-    const parts: EditorPart[] = [];
-    let buffer = "";
-    const flush = () => {
-      if (buffer) {
-        parts.push({ type: "text", content: buffer });
-        buffer = "";
-      }
-    };
-    const walk = (node: Node) => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        buffer += node.textContent ?? "";
-        return;
-      }
-      if (node.nodeType !== Node.ELEMENT_NODE) return;
-      const el = node as HTMLElement;
-      if (el.dataset.type === "file") {
-        flush();
-        parts.push({ type: "file", content: el.textContent ?? "", path: el.dataset.path });
-        return;
-      }
-      if (el.tagName === "BR") {
-        buffer += "\n";
-        return;
-      }
-      for (const child of Array.from(el.childNodes)) walk(child);
-    };
-    Array.from(el.childNodes).forEach((child, i, arr) => {
-      const isBlock = child.nodeType === Node.ELEMENT_NODE && ["DIV", "P"].includes((child as HTMLElement).tagName);
-      walk(child);
-      if (isBlock && i < arr.length - 1) buffer += "\n";
-    });
-    flush();
-    if (parts.length === 0) parts.push({ type: "text", content: "" });
-    return parts;
+    return readEditorParts(el);
   }, []);
+
+  const editorText = useCallback(
+    (): string =>
+      parseEditor()
+        .map((part) => part.content)
+        .join("")
+        .replace(/\u200B/g, ""),
+    [parseEditor],
+  );
 
   const getCursor = useCallback((): number => {
     const el = editorRef.current;

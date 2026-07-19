@@ -1,7 +1,8 @@
 import React from "react";
-import { RefreshIcon, CollapseAllIcon, Loader2Icon, ClearIcon, TreeViewIcon } from "../Icons/index.js";
+import { RefreshIcon, CollapseAllIcon, Loader2Icon, ClearIcon } from "../Icons/index.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
 import { useTranslate } from "../../hooks/useI18n.js";
+import "@vscode/codicons/dist/codicon.css";
 import "./SearchInCode.css";
 import { getLanguageFromFilename } from "../../utils/searchSyntax.js";
 import { useCodeSearch } from "./hooks/useCodeSearch.js";
@@ -85,13 +86,14 @@ export function SearchInCode({ cwd, onOpenFile, onClose }: SearchInCodeProps): R
               <ClearIcon />
             </button>
           </Tooltip>
-          <Tooltip text={t("viewAsTree")}>
+          <Tooltip text={viewAsTree ? t("viewAsFlatList") : t("viewAsTree")}>
             <button
               className={`sc-action-btn ${viewAsTree ? "sc-action-btn--active" : ""}`}
               onClick={() => setViewAsTree((v) => !v)}
-              aria-label={t("viewAsTree")}
+              aria-label={viewAsTree ? t("viewAsFlatList") : t("viewAsTree")}
+              aria-pressed={viewAsTree}
             >
-              <TreeViewIcon />
+              <i className={viewAsTree ? "codicon codicon-list-flat" : "codicon codicon-list-tree"} />
             </button>
           </Tooltip>
           <Tooltip text={t("collapseAllTooltip")}>
@@ -266,10 +268,10 @@ export function SearchInCode({ cwd, onOpenFile, onClose }: SearchInCodeProps): R
             treeNodes={treeNodes}
             collapsedTree={collapsedTree}
             onToggleTreeNode={toggleTreeNode}
+            loadingFiles={loadingFiles}
             query={query}
             matchCase={matchCase}
             onOpenFile={onOpenFile}
-            onClose={onClose}
           />
         )}
       </div>

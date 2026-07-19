@@ -544,6 +544,8 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 500;
+  flex: 1;
+  min-width: 0;
 }
 
 .sc-tree-path {
@@ -565,4 +567,14 @@
   width: 1px;
   background: var(--line);
   pointer-events: none;
+}
+
+.sc-tree-message {
+  display: flex;
+  align-items: center;
+  min-height: 22px;
+  color: var(--fg-muted);
+  font-size: 11px;
+  font-style: italic;
+  position: relative;
 }

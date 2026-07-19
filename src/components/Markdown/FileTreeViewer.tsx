@@ -31,7 +31,9 @@ function TreeGuide({ type }: { type: "I" | "T" | "L" | "empty" }) {
 
 export function FileTreeViewer({ content }: FileTreeViewerProps): React.ReactElement {
   const lines = content.split("\n");
-  const regex = /^([│\s├└─]*)([^#\n]+?)(?:\s+(#.*))?$/;
+  // Annotations are commonly emitted as either `# comment` or `– comment`/`— comment`.
+  // Keep the separator out of the name so icon lookup still receives the actual filename.
+  const regex = /^([│\s├└─]*)([^#\n–—]+?)(?:\s+(#.*|[–—]\s+.*))?$/;
 
   const nodes = lines
     .map((line, idx) => {
@@ -76,9 +78,7 @@ export function FileTreeViewer({ content }: FileTreeViewerProps): React.ReactEle
               <FolderIcon open={true} name={cleanName} />
             ) : getFileIcon(cleanName) ? (
               <FileIcon name={cleanName} />
-            ) : (
-              <span className="inline-file">{cleanName}</span>
-            )}
+            ) : null}
             <span>{cleanName}</span>
             {comment && (
               <span

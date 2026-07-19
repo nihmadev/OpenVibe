@@ -43,7 +43,6 @@ export function useCodeSearch({ cwd, onOpenFile, onClose }: UseCodeSearchProps) 
   const searchParamsRef = useRef({ query, useRegex, includeFilter, excludeFilter, matchCase, matchWholeWord, cwd });
   searchParamsRef.current = { query, useRegex, includeFilter, excludeFilter, matchCase, matchWholeWord, cwd };
   const searchGenRef = useRef(0);
-  const treePreloadGenRef = useRef(0);
   const committedQueryRef = useRef({ query: "", matchCase: false, lang: "" });
 
   const fileMatchesRef = useRef(fileMatchesMap);
@@ -96,7 +95,6 @@ export function useCodeSearch({ cwd, onOpenFile, onClose }: UseCodeSearchProps) 
       if (debounceRef.current) clearTimeout(debounceRef.current);
       const queryStr = q;
       const gen = ++searchGenRef.current;
-      treePreloadGenRef.current = 0;
       debounceRef.current = setTimeout(async () => {
         if (!queryStr.trim() || !cwd) {
           setFileEntries([]);
@@ -125,6 +123,11 @@ export function useCodeSearch({ cwd, onOpenFile, onClose }: UseCodeSearchProps) 
             committedQueryRef.current = { query: queryStr.trim(), matchCase: p.matchCase, lang: "" };
             if (res.files && res.files.length > 0) {
               setCollapsedFiles(new Set(res.files.map((f: FileGroupEntry) => f.path)));
+              setCollapsedTree((prev) => {
+                const next = new Set(prev);
+                for (const file of res.files as FileGroupEntry[]) next.add(file.rel);
+                return next;
+              });
             }
           } else {
             setFileEntries([]);
@@ -217,11 +220,10 @@ export function useCodeSearch({ cwd, onOpenFile, onClose }: UseCodeSearchProps) 
   const handleCollapseAll = useCallback(() => {
     if (viewAsTree) {
       const all: string[] = [];
-      const collect = (nodes: TreeNode[], parentPath = "") => {
+      const collect = (nodes: TreeNode[]) => {
         for (const n of nodes) {
-          const p = parentPath ? `${parentPath}/${n.name}` : n.name;
-          all.push(p);
-          collect(n.children, p);
+          if (n.isDir || n.matchesCount > 0) all.push(n.path);
+          collect(n.children);
         }
       };
       collect(treeNodes);
@@ -232,24 +234,22 @@ export function useCodeSearch({ cwd, onOpenFile, onClose }: UseCodeSearchProps) 
     }
   }, [fileEntries, treeNodes, viewAsTree]);
 
-  const toggleTreeNode = useCallback((path: string) => {
-    setCollapsedTree((prev) => {
-      const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
-      return next;
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!viewAsTree || fileEntries.length === 0) return;
-    const gen = searchGenRef.current;
-    if (treePreloadGenRef.current === gen) return;
-    treePreloadGenRef.current = gen;
-    for (const entry of fileEntries) {
-      loadFileMatches(entry.path);
-    }
-  }, [viewAsTree, fileEntries, loadFileMatches]);
+  const toggleTreeNode = useCallback(
+    (path: string, filePath?: string) => {
+      const opening = collapsedTree.has(path);
+      setCollapsedTree((prev) => {
+        const next = new Set(prev);
+        if (next.has(path)) {
+          next.delete(path);
+        } else {
+          next.add(path);
+        }
+        return next;
+      });
+      if (opening && filePath) void loadFileMatches(filePath);
+    },
+    [collapsedTree, loadFileMatches],
+  );
 
   // Hook subscriptions
   useSearchShortcuts({

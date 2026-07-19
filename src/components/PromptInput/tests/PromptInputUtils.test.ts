@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { newAttachId, basename, IMAGE_RE } from "../utils";
+import { createTextFragment, readEditorParts } from "../utils/editor-dom";
 
 describe("newAttachId", () => {
   it("generates ID with a prefix and timestamp", () => {
@@ -52,5 +53,19 @@ describe("IMAGE_RE", () => {
   it("is case-insensitive", () => {
     expect(IMAGE_RE.test("photo.PNG")).toBe(true);
     expect(IMAGE_RE.test("photo.JPG")).toBe(true);
+  });
+});
+
+describe("readEditorParts", () => {
+  it("preserves pasted Markdown line breaks represented by br elements", () => {
+    const editor = document.createElement("div");
+    editor.appendChild(createTextFragment("# Heading\n\n- first\n- second\n\n---\n\n```ts\nconst ok = true;\n```"));
+
+    expect(readEditorParts(editor)).toEqual([
+      {
+        type: "text",
+        content: "# Heading\n\n- first\n- second\n\n---\n\n```ts\nconst ok = true;\n```",
+      },
+    ]);
   });
 });

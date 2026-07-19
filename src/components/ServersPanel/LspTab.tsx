@@ -14,17 +14,23 @@ export function LspTab(): React.ReactElement {
 
     async function fetchServers() {
       try {
-        const backendServers: any[] = await invoke("get_lsp_servers");
+        const [backendServers, runningServers] = await Promise.all([
+          invoke<any[]>("get_lsp_servers"),
+          invoke<string[]>("lsp_running_servers"),
+        ]);
         const currentServers = lspStore.getServers();
 
         const mapped = backendServers.map((s) => {
           const existing = currentServers.find((c) => c.id === s.id);
-          if (existing) return existing;
+          const running = runningServers.includes(s.id);
+          if (existing) {
+            return { ...existing, enabled: running, status: running ? ("running" as const) : existing.status };
+          }
           return {
             id: s.id,
             name: s.name,
-            enabled: false,
-            status: "stopped" as const,
+            enabled: running,
+            status: running ? ("running" as const) : ("stopped" as const),
           };
         });
         lspStore.setServers(mapped);

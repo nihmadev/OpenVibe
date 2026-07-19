@@ -310,35 +310,54 @@ export function getStatusLetter(file: FileStatus) {
 }
 
 export function buildTree(fileList: FileStatus[]) {
-  const root: { folders: Record<string, any>; files: FileStatus[] } = {
+  const root: GitFolderTree<FileStatus> = {
     folders: {},
     files: [],
+    path: "",
   };
 
   fileList.forEach((file) => {
-    const parts = file.path.split(/[\\/]/);
-    if (parts.length === 1) {
-      root.files.push(file);
-    } else {
-      let current = root;
-      for (let i = 0; i < parts.length - 1; i++) {
-        const folder = parts[i];
-        if (!current.folders[folder]) {
-          current.folders[folder] = { folders: {}, files: [], path: parts.slice(0, i + 1).join("/") };
-        }
-        current = current.folders[folder];
+    const isDir = file.isDir || /[\\/]$/.test(file.path);
+    const parts = file.path.split(/[\\/]/).filter(Boolean);
+    if (parts.length === 0) return;
+    let current = root;
+    const folderCount = isDir ? parts.length : parts.length - 1;
+    for (let i = 0; i < folderCount; i++) {
+      const folder = parts[i]!;
+      if (!current.folders[folder]) {
+        current.folders[folder] = { folders: {}, files: [], path: parts.slice(0, i + 1).join("/") };
       }
-      current.files.push(file);
+      current = current.folders[folder];
     }
+    if (!isDir) current.files.push(file);
   });
 
-  return root;
+  return compactGitFolders(root);
+}
+
+type GitFolderTree<F> = { folders: Record<string, GitFolderTree<F>>; files: F[]; path: string };
+
+function compactGitFolders<F>(node: GitFolderTree<F>): GitFolderTree<F> {
+  const compacted: Record<string, GitFolderTree<F>> = {};
+  for (let [name, child] of Object.entries(node.folders)) {
+    compactGitFolders(child);
+    while (child.files.length === 0 && Object.keys(child.folders).length === 1) {
+      const [nextName, nextChild] = Object.entries(child.folders)[0]!;
+      name = `${name}/${nextName}`;
+      child = nextChild;
+      compactGitFolders(child);
+    }
+    compacted[name] = child;
+  }
+  node.folders = compacted;
+  return node;
 }
 
 export function buildCommitTree(fileList: CommitFile[]) {
-  const root: { folders: Record<string, any>; files: CommitFile[] } = {
+  const root: GitFolderTree<CommitFile> = {
     folders: {},
     files: [],
+    path: "",
   };
   fileList.forEach((file) => {
     const parts = file.path.split(/[\\/]/);
@@ -356,5 +375,5 @@ export function buildCommitTree(fileList: CommitFile[]) {
       current.files.push(file);
     }
   });
-  return root;
+  return compactGitFolders(root);
 }
