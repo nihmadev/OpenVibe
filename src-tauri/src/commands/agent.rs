@@ -43,6 +43,21 @@ pub async fn agent_new(state: State<'_, AppState>, cwd: String) -> Result<(), St
     Ok(())
 }
 
+/// Update the agent's control-plane todo state without creating a user prompt.
+/// If a generation is active, the state is queued and applied before its next send.
+#[tauri::command]
+pub async fn agent_update_todo(state: State<'_, AppState>, context: String) -> Result<(), String> {
+    {
+        let mut pending = state.todo_context.lock().map_err(|e| e.to_string())?;
+        *pending = Some(context.clone());
+    }
+    let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
+    if let Some(agent) = agent_lock.as_mut() {
+        agent.set_todo_context(Some(context));
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn agent_send(
     app_handle: AppHandle,
@@ -65,6 +80,10 @@ pub async fn agent_send(
         agent_lock.take()
     }
     .ok_or_else(|| "No agent created yet. Call agent_new first.".to_string())?;
+
+    if let Some(todo) = state.todo_context.lock().map_err(|e| e.to_string())?.clone() {
+        agent.set_todo_context(Some(todo));
+    }
 
     let executor = agent_tool::AgentToolExecutor::with_mcp(state.mcp_manager.clone());
 
@@ -110,7 +129,7 @@ pub async fn agent_send(
         *cancel_lock = None;
     }
 
-    let (needs_title, active_id, db_path, agent_cfg, msgs) = {
+    let (needs_title, active_id, db_path, agent_cfg, msgs, language) = {
         let msgs = agent.messages.clone();
         let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as i64;
         let active = state.active_chat_id.lock().map_err(|e| e.to_string())?;
@@ -137,11 +156,17 @@ pub async fn agent_send(
             }
         }
         drop(active);
+        let language = state
+            .projects
+            .lock()
+            .ok()
+            .and_then(|p| p.get_state("settings:language").ok().flatten())
+            .unwrap_or_else(|| "Russian".to_string());
         let app = state.app_handle.lock().map_err(|e| e.to_string())?;
         if let Some(ref handle) = *app {
             let _ = handle.emit("vibe:chats:updated", ());
         }
-        (is_new, cur_id, db_p, agent.config().clone(), msgs)
+        (is_new, cur_id, db_p, agent.config().clone(), msgs, language)
     };
 
     if needs_title {
@@ -149,7 +174,7 @@ pub async fn agent_send(
             let http_client = state.http_client.clone();
             let app_handle_clone = app_handle.clone();
             tokio::spawn(async move {
-                let title = Agent::summarize_with(agent_cfg, msgs, &http_client).await;
+                let title = Agent::summarize_with(agent_cfg, msgs, &language, &http_client).await;
                 if !title.is_empty() && title != "New chat" {
                     if let Ok(mut store) = chats::ChatStore::new(&db_path) {
                         if let Ok(Some(mut record)) = store.get(&chat_id) {
@@ -194,6 +219,7 @@ pub async fn agent_stop(state: State<'_, AppState>) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn agent_reset(state: State<'_, AppState>) -> Result<(), String> {
+    *state.todo_context.lock().map_err(|e| e.to_string())? = None;
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     if let Some(ref mut agent) = *agent_lock {
         agent.reset();
@@ -209,7 +235,13 @@ pub async fn agent_summarize(state: State<'_, AppState>) -> Result<String, Strin
         (agent.get_messages().to_vec(), agent.config().clone())
     };
 
-    let title = Agent::summarize_with(cfg, messages, &state.http_client).await;
+    let language = state
+        .projects
+        .lock()
+        .ok()
+        .and_then(|p| p.get_state("settings:language").ok().flatten())
+        .unwrap_or_else(|| "Russian".to_string());
+    let title = Agent::summarize_with(cfg, messages, &language, &state.http_client).await;
 
     Ok(title)
 }
@@ -258,6 +290,7 @@ pub async fn agent_revert_undo(state: State<'_, AppState>) -> Result<(), String>
 
 #[tauri::command]
 pub async fn agent_set_cwd(state: State<'_, AppState>, cwd: String) -> Result<(), String> {
+    *state.todo_context.lock().map_err(|e| e.to_string())? = None;
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     if let Some(ref mut agent) = *agent_lock {
         agent.set_cwd(cwd);

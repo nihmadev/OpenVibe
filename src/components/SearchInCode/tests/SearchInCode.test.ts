@@ -7,6 +7,7 @@ import {
   groupByFile,
   buildTree,
   sortNodes,
+  computeTreeNodes,
 } from "../utils/searchTreeUtils.js";
 import type { ContentMatch } from "../../../types.js";
 
@@ -415,10 +416,9 @@ describe("buildTree", () => {
     const groups = [{ path: "/root/a/b/c/d.ts", rel: "a/b/c/d.ts", name: "d.ts", matches: [] }];
     const tree = buildTree(groups);
     expect(tree).toHaveLength(1);
-    expect(tree[0].name).toBe("a");
-    expect(tree[0].children[0].name).toBe("b");
-    expect(tree[0].children[0].children[0].name).toBe("c");
-    expect(tree[0].children[0].children[0].children[0].name).toBe("d.ts");
+    expect(tree[0].name).toBe("a/b/c");
+    expect(tree[0].path).toBe("a/b/c");
+    expect(tree[0].children[0].name).toBe("d.ts");
   });
 
   it("handles empty groups", () => {
@@ -475,5 +475,44 @@ describe("sortNodes", () => {
     ]);
     expect(nodes[0].children[0].name).toBe("a.ts");
     expect(nodes[0].children[1].name).toBe("z.ts");
+  });
+});
+
+// ── computeTreeNodes ──
+
+describe("computeTreeNodes", () => {
+  const fileEntries = [
+    { path: "/root/src/a.ts", rel: "src/a.ts", name: "a.ts", matchCount: 2 },
+    { path: "/root/src/utils/b.ts", rel: "src/utils/b.ts", name: "b.ts", matchCount: 1 },
+  ];
+
+  it("builds the file tree before individual matches are loaded", () => {
+    const tree = computeTreeNodes(fileEntries, {});
+    const src = tree.find((node) => node.path === "src")!;
+    const file = src.children.find((node) => node.path === "src/a.ts")!;
+
+    expect(file.name).toBe("a.ts");
+    expect(file.matchesCount).toBe(2);
+    expect(file.matches).toHaveLength(0);
+    expect(file.filePath).toBe("/root/src/a.ts");
+  });
+
+  it("attaches loaded matches to the corresponding file", () => {
+    const match: ContentMatch = {
+      path: "/root/src/a.ts",
+      rel: "src/a.ts",
+      name: "a.ts",
+      line: 4,
+      column: 2,
+      content: "const needle = true;",
+    };
+    const tree = computeTreeNodes(fileEntries, {
+      "/root/src/a.ts": { matches: [match], total: 2 },
+    });
+    const src = tree.find((node) => node.path === "src")!;
+    const file = src.children.find((node) => node.path === "src/a.ts")!;
+
+    expect(file.matches).toEqual([match]);
+    expect(file.matchesCount).toBe(2);
   });
 });

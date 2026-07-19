@@ -3,6 +3,14 @@ import { activeChatId, setActiveChatId } from "./state.js";
 import type { ContentPart, RollbackPreview } from "../types.js";
 
 export const chatsBridge = {
+  updateTodo: async (context: string) => {
+    try {
+      await invoke("agent_update_todo", { context });
+      return { ok: true as const };
+    } catch (e) {
+      return { ok: false as const, error: String(e) };
+    }
+  },
   send: async (text: string) => {
     try {
       await invoke("agent_send", { input: text, contentParts: null as any });

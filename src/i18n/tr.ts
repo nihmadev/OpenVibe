@@ -424,7 +424,7 @@ export const tr: Partial<Translations> = {
   terminalShell: "Terminal Kabuğu",
   welcomeTitle: "titreşim",
   appName: "OpenVibe Masaüstü",
-  appVersion: "v1.3.4",
+  appVersion: "v1.3.5",
   shell: "Kabuk",
   langRussian: "Rusça",
   langEnglish: "İngilizce",

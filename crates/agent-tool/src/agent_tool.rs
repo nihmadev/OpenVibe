@@ -11,7 +11,10 @@ use agent::ToolDefinition;
 use crate::definition::build_readonly_tool_definitions;
 use crate::{bash, list_dir, read, search};
 
-const MAX_TURNS: usize = 25;
+// A research helper should converge quickly. Long autonomous explorations are
+// especially harmful because every tool result is fed back into its context.
+const MAX_TURNS: usize = 12;
+const MAX_TOOL_CALLS: usize = 10;
 
 static SUB_AGENT_CLIENT: std::sync::OnceLock<reqwest::Client> = std::sync::OnceLock::new();
 
@@ -72,16 +75,22 @@ pub async fn execute(
     ];
 
     let mut full_result = String::new();
+    let mut tool_calls_used = 0usize;
 
     for _turn in 0..MAX_TURNS {
         if cancel.load(Ordering::Relaxed) {
             return Err("Aborted".to_string());
         }
 
+        let available_tools = if tool_calls_used >= MAX_TOOL_CALLS {
+            Vec::new()
+        } else {
+            read_only_tools.clone()
+        };
         let turn = stream_chat(
             &config,
             sub_messages.clone(),
-            read_only_tools.clone(),
+            available_tools,
             &cancel_sub,
             client,
             &|_| {},
@@ -127,6 +136,22 @@ pub async fn execute(
             return Ok(full_result.trim().to_string());
         }
 
+        // Preserve the assistant tool-call message so every following tool
+        // result has a valid parent in the provider conversation protocol.
+        sub_messages.push(ChatMessage {
+            role: "assistant".to_string(),
+            content: if turn.content.trim().is_empty() {
+                None
+            } else {
+                Some(serde_json::Value::String(turn.content.clone()))
+            },
+            name: None,
+            tool_call_id: None,
+            tool_calls: Some(turn.tool_calls.clone()),
+            reasoning_content: turn.reasoning_content.clone(),
+            reasoning_name: turn.reasoning_name.clone(),
+        });
+
         let mut prepared_calls = Vec::new();
         for call in &turn.tool_calls {
             if cancel.load(Ordering::Relaxed) {
@@ -135,6 +160,23 @@ pub async fn execute(
 
             let tool_name = &call.function.name;
             let args_str = &call.function.arguments;
+
+            if tool_calls_used >= MAX_TOOL_CALLS {
+                sub_messages.push(ChatMessage {
+                    role: "tool".to_string(),
+                    content: Some(serde_json::Value::String(
+                        "Research tool budget exhausted. Summarize the evidence already collected."
+                            .to_string(),
+                    )),
+                    name: None,
+                    tool_call_id: Some(call.id.clone()),
+                    tool_calls: None,
+                    reasoning_content: None,
+                    reasoning_name: None,
+                });
+                continue;
+            }
+            tool_calls_used += 1;
 
             let parsed_args: serde_json::Value = if args_str.trim().is_empty() {
                 serde_json::Value::Object(serde_json::Map::new())

@@ -15,3 +15,6 @@ src-tauri/tests
 vscode/
 openvibe.toml
 venv_translate/
+.i18n-translation-cache.json
+.i18n-translation-cache.json
+.i18n-translation-report.txt

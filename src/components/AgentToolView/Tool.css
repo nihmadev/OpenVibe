@@ -46,12 +46,16 @@
   min-width: 0;
   display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
+  /* Keep the command/status row constrained to the tool width. A wrapping
+     flex row lets a long, unbroken shell command use its min-content width
+     and push the whole chat layout horizontally. */
+  flex-wrap: nowrap;
   gap: 4px;
 }
 
 .tool__verb {
   color: var(--fg-dim);
+  flex-shrink: 0;
 }
 
 .tool--pending .tool__verb {
@@ -75,12 +79,13 @@
   color: var(--fg-dim);
   font-family: inherit;
   font-size: 14px;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
-  display: inline-flex;
-  align-items: center;
+  display: block;
 }
 
 /* ── diff stats inline ── */
@@ -142,6 +147,20 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+}
+
+.tool__agent-open {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  color: var(--fg-muted);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.tool--agent:hover .tool__agent-open,
+.tool--agent:focus-visible .tool__agent-open {
+  opacity: 1;
 }
 
 .tool--agent.tool--pending .tool__verb {

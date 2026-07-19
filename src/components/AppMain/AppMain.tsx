@@ -1,10 +1,11 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { ProjectRail } from "../ProjectRail/ProjectRail.js";
 import { SessionList } from "../SessionList/SessionList.js";
 import { AgentChat } from "../AgentChat/AgentChat.js";
 import { SubAgentView } from "../SubAgentView/SubAgentView.js";
 import { PromptInput } from "../PromptInput/PromptInput.js";
+import { Todo } from "../Todo/Todo.js";
 import { Terminals } from "../Terminals/Terminals.js";
 import { EditorArea } from "../Editor/EditorArea.js";
 import { SearchInCode } from "../SearchInCode/SearchInCode.js";
@@ -14,6 +15,7 @@ import { GitPanel } from "../GitPanel/GitPanel.js";
 import type { Project, ChatSummary, VibeConfig, FileSnapshot } from "../../types.js";
 import type { HistoryItem } from "../AgentChat/types.js";
 import { recordToItems, localId } from "../../utils.js";
+import { currentTodoTasks } from "../AgentChat/agentRunModel.js";
 
 /** Drag-handle divider — directly manipulates the target element during drag,
  *  avoiding React re-renders. Only commits the final width to state on mouseup. */
@@ -216,9 +218,12 @@ export function AppMain({
   const [sidebarResizing, setSidebarResizing] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const cwd = folder ?? config.cwd;
+  const todoTasks = useMemo(() => currentTodoTasks(items), [items]);
 
-  // Panel widths (px). Chat is fixed, editor takes the rest, filetree is fixed.
-  const [chatWidth, setChatWidth] = useState(320);
+  // Keep chat and editor balanced until the user explicitly resizes them.
+  // A fixed 320px initial chat width made the first opened editor consume most
+  // of a wide window. Once resized, the chosen pixel width is kept as before.
+  const [chatWidth, setChatWidth] = useState<number | null>(null);
   const [searchWidth, setSearchWidth] = useState(400);
   const [gitWidth, setGitWidth] = useState(300);
   const [ftreeWidth, setFtreeWidth] = useState(280);
@@ -409,7 +414,9 @@ export function AppMain({
             className="layout__chat"
             style={
               openFiles.length > 0
-                ? { flex: `0 1 ${chatWidth}px`, minWidth: 200, maxWidth: 2400 }
+                ? chatWidth === null
+                  ? { flex: "1 1 0", minWidth: 200, maxWidth: 2400 }
+                  : { flex: `0 1 ${chatWidth}px`, minWidth: 200, maxWidth: 2400 }
                 : searchInCodeOpen || gitPanelOpen
                   ? { flex: "1 1 0", minWidth: 200 }
                   : { flex: "1 1 0" }
@@ -477,6 +484,8 @@ export function AppMain({
                   }}
                   onDrillDown={handleDrillDown}
                 />
+
+                {todoTasks && <Todo tasks={todoTasks} />}
 
                 <PromptInput
                   disabled={busy}

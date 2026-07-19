@@ -28,6 +28,10 @@ pub async fn parse_sse_stream(
     let mut tool_acc: HashMap<usize, ToolCallAcc> = HashMap::new();
     let mut buffer = String::with_capacity(4096);
     let mut buf_idx = 0usize;
+    // `Response::chunk()` is allowed to split a multibyte UTF-8 character.
+    // Keep an incomplete suffix until the next network chunk instead of
+    // dropping the whole chunk.
+    let mut utf8_tail = Vec::new();
 
     loop {
         if cancel.load(Ordering::Relaxed) {
@@ -37,10 +41,7 @@ pub async fn parse_sse_stream(
         let chunk = tokio::time::timeout(Duration::from_millis(100), res.chunk()).await;
         match chunk {
             Ok(Ok(Some(bytes))) => {
-                let Ok(chunk_str) = std::str::from_utf8(&bytes) else {
-                    continue;
-                };
-                buffer.push_str(chunk_str);
+                append_utf8_chunk(&bytes, &mut utf8_tail, &mut buffer);
 
                 while let Some(pos) = buffer[buf_idx..].find('\n') {
                     let abs_pos = buf_idx + pos;
@@ -64,6 +65,10 @@ pub async fn parse_sse_stream(
                 }
             }
             Ok(Ok(None)) => {
+                if !utf8_tail.is_empty() {
+                    buffer.push_str(&String::from_utf8_lossy(&utf8_tail));
+                    utf8_tail.clear();
+                }
                 let remaining = buffer[buf_idx..].trim();
                 if !remaining.is_empty() {
                     process_sse_line(
@@ -126,6 +131,33 @@ pub async fn parse_sse_stream(
         reasoning_content,
         reasoning_name,
     })
+}
+
+/// Append a network chunk without losing text when UTF-8 is split at a chunk
+/// boundary. Invalid bytes inside a chunk are preserved as replacement
+/// characters rather than causing the entire chunk to disappear.
+fn append_utf8_chunk(bytes: &[u8], tail: &mut Vec<u8>, output: &mut String) {
+    tail.extend_from_slice(bytes);
+    match std::str::from_utf8(tail) {
+        Ok(text) => {
+            output.push_str(text);
+            tail.clear();
+        }
+        Err(error) if error.error_len().is_none() => {
+            let valid_up_to = error.valid_up_to();
+            output.push_str(
+                std::str::from_utf8(&tail[..valid_up_to])
+                    .expect("valid_up_to must end on a UTF-8 boundary"),
+            );
+            let incomplete = tail[valid_up_to..].to_vec();
+            tail.clear();
+            tail.extend_from_slice(&incomplete);
+        }
+        Err(_) => {
+            output.push_str(&String::from_utf8_lossy(tail));
+            tail.clear();
+        }
+    }
 }
 
 fn extract_thought_name(tag: &str) -> Option<String> {
@@ -424,6 +456,26 @@ fn process_sse_line(
         if let Some(args) = fc.get("arguments").and_then(|v| v.as_str()) {
             entry.arguments.push_str(args);
             on_tool_args(&entry.id, &entry.arguments);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::append_utf8_chunk;
+
+    #[test]
+    fn preserves_utf8_when_chunks_split_inside_cyrillic_text() {
+        let source = "параллельный запуск";
+        let bytes = source.as_bytes();
+
+        for split in 1..bytes.len() {
+            let mut tail = Vec::new();
+            let mut output = String::new();
+            append_utf8_chunk(&bytes[..split], &mut tail, &mut output);
+            append_utf8_chunk(&bytes[split..], &mut tail, &mut output);
+            assert!(tail.is_empty());
+            assert_eq!(output, source, "split at byte {split}");
         }
     }
 }

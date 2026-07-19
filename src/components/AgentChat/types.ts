@@ -22,6 +22,37 @@ export interface HistoryItem {
   reasoningName?: string;
   msgIndex?: number;
   subItems?: HistoryItem[];
+  startedAt?: number;
+  completedAt?: number;
+  /** Transient context used to render a meaningful todo activity. */
+  todoPreviousTasks?: TodoTask[];
+}
+
+export type TodoStatus = "pending" | "in_progress" | "blocked" | "waiting_user" | "completed" | "skipped";
+export type TodoPriority = "critical" | "high" | "normal" | "low";
+
+export interface TodoTask {
+  id?: string;
+  title: string;
+  status: TodoStatus;
+  priority?: TodoPriority;
+  order?: number;
+  dependsOn?: string[];
+  acceptanceCriteria?: string[];
+  nextAction?: string;
+  blocker?: string;
+  evidence?: string[];
+  owner?: "agent" | "user" | "subagent";
+  userLocked?: boolean;
+}
+
+export interface TodoCheckpoint {
+  goal?: string;
+  summary?: string;
+  nextAction?: string;
+  blockers?: string[];
+  constraints?: string[];
+  changedFiles?: string[];
 }
 
 export interface Props {

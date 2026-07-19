@@ -54,6 +54,8 @@ export interface ThemeVars {
   "--syntax-operator": string;
   "--syntax-punctuation": string;
   "--syntax-object": string;
+  "--markdown-link": string;
+  "--markdown-link-text": string;
 }
 
 export interface ThemeDef {
@@ -151,6 +153,8 @@ function deriveVars(
     "--syntax-operator": o["syntax-operator"] || accent,
     "--syntax-punctuation": o["syntax-punctuation"] || ink,
     "--syntax-object": o["syntax-object"] || error,
+    "--markdown-link": o["markdown-link"] || palette.interactive || primary,
+    "--markdown-link-text": o["markdown-link-text"] || o["markdown-link"] || palette.interactive || primary,
   };
 }
 
@@ -194,6 +198,8 @@ const defaultDark: ThemeVars = {
   "--syntax-operator": "#e3e2e2",
   "--syntax-punctuation": "#e6e6e6",
   "--syntax-object": "#f87171",
+  "--markdown-link": "#67e8f9",
+  "--markdown-link-text": "#67e8f9",
 };
 
 const defaultLight: ThemeVars = {
@@ -227,6 +233,8 @@ const defaultLight: ThemeVars = {
   "--syntax-operator": "#7c6af7",
   "--syntax-punctuation": "#1a1a1a",
   "--syntax-object": "#dc2626",
+  "--markdown-link": "#0284c7",
+  "--markdown-link-text": "#0284c7",
 };
 
 export const themes: ThemeDef[] = [
@@ -307,6 +315,8 @@ export function parseVSCodeTheme(json: any): ThemeDef {
     "--syntax-operator": fg,
     "--syntax-punctuation": colors["editorLineNumber.foreground"] || "#d4d4d4",
     "--syntax-object": colors["terminal.ansiRed"] || "#f48771",
+    "--markdown-link": colors["textLink.activeForeground"] || colors["textLink.foreground"] || accent,
+    "--markdown-link-text": colors["textLink.foreground"] || accent,
   };
 
   // Try to refine syntax tokens if tokenColors is present

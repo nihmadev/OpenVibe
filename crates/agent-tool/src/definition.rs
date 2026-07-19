@@ -1,7 +1,7 @@
 use agent::ToolDefinition;
 
 pub fn build_tool_definitions() -> Vec<ToolDefinition> {
-    vec![
+    let mut definitions = vec![
         ToolDefinition {
             type_: "function".to_string(),
             function: agent::ToolDefFunction {
@@ -80,11 +80,12 @@ pub fn build_tool_definitions() -> Vec<ToolDefinition> {
             type_: "function".to_string(),
             function: agent::ToolDefFunction {
                 name: "search_codebase".to_string(),
-                description: "Search the entire codebase for specific content, logic, or answers. This is the PRIMARY tool for finding WHERE something is implemented or searching for text. Use this for both regex patterns and natural language questions.".to_string(),
+                description: "Search source text for specific symbols or strings. When the user names a file, directory, crate, or package, ALWAYS set root to that scope instead of searching the entire workspace.".to_string(),
                 parameters: serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "query": { "type": "string", "description": "Filename or path pattern to search for" }
+                        "query": { "type": "string", "description": "Text or regex pattern to search for" },
+                        "root": { "type": "string", "description": "Optional directory to restrict the search to; required when the user explicitly limits scope" }
                     },
                     "required": ["query"]
                 }),
@@ -93,8 +94,78 @@ pub fn build_tool_definitions() -> Vec<ToolDefinition> {
         ToolDefinition {
             type_: "function".to_string(),
             function: agent::ToolDefFunction {
+                name: "git_status".to_string(),
+                description: "Show the current Git branch and working tree changes (read-only).".to_string(),
+                parameters: serde_json::json!({"type":"object","properties":{"path":{"type":"string","description":"Optional path inside the repository"}}}),
+            },
+        },
+        ToolDefinition { type_: "function".to_string(), function: agent::ToolDefFunction {
+                name: "git_branches".to_string(), description: "List local and remote Git branches (read-only).".to_string(), parameters: serde_json::json!({"type":"object","properties":{}}),
+            }, },
+        ToolDefinition { type_: "function".to_string(), function: agent::ToolDefFunction {
+                name: "git_log".to_string(), description: "List recent Git commits from a branch, tag, or commit without checking it out (read-only).".to_string(), parameters: serde_json::json!({"type":"object","properties":{"ref":{"type":"string","description":"Branch, remote branch, tag, or commit SHA; defaults to HEAD"},"max_count":{"type":"integer","minimum":1,"maximum":100}}}),
+            }, },
+        ToolDefinition { type_: "function".to_string(), function: agent::ToolDefFunction {
+                name: "git_diff".to_string(), description: "Show working tree changes or compare Git branches, tags, and commits (read-only).".to_string(), parameters: serde_json::json!({"type":"object","properties":{"staged":{"type":"boolean","description":"Compare staged changes with HEAD"},"base":{"type":"string","description":"Base branch, tag, or commit"},"target":{"type":"string","description":"Optional target branch, tag, or commit"},"path":{"type":"string","description":"Optional file or directory filter"}}}),
+            }, },
+        ToolDefinition {
+            type_: "function".to_string(),
+            function: agent::ToolDefFunction {
+                name: "todo".to_string(),
+                description: "Create or update the persistent execution plan and checkpoint memory. Use one task entry per requested outcome. Use stable ids, priorities, dependencies, acceptance criteria, next_action and evidence. Preserve user_locked tasks and call again with the full list whenever progress changes. There is no one-active-task limit: independent tasks may be in_progress at the same time; keep dependent tasks pending until their dependencies complete, then advance all eligible next tasks together. Pass an empty list to clear the plan.".to_string(),
+                parameters: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "tasks": {
+                            "type": "array",
+                            "description": "The complete current task plan. Keep every requested outcome as its own entry; order is priority/display order, not a limit on parallel execution.",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "title": { "type": "string", "description": "Concise task title" },
+                                    "id": { "type": "string", "description": "Stable task id; preserve it across updates" },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": ["pending", "in_progress", "blocked", "waiting_user", "completed", "skipped"]
+                                    },
+                                    "priority": { "type": "string", "enum": ["critical", "high", "normal", "low"] },
+                                    "order": { "type": "integer" },
+                                    "dependsOn": { "type": "array", "items": { "type": "string" } },
+                                    "acceptanceCriteria": { "type": "array", "items": { "type": "string" } },
+                                    "nextAction": { "type": "string" },
+                                    "blocker": { "type": "string" },
+                                    "evidence": { "type": "array", "items": { "type": "string" } },
+                                    "owner": { "type": "string", "enum": ["agent", "user", "subagent"] },
+                                    "userLocked": { "type": "boolean" }
+                                },
+                                "required": ["title", "status"],
+                                "additionalProperties": false
+                            }
+                        },
+                        "checkpoint": {
+                            "type": "object",
+                            "description": "Compact resume packet for context recovery",
+                            "properties": {
+                                "goal": { "type": "string" },
+                                "summary": { "type": "string" },
+                                "nextAction": { "type": "string" },
+                                "blockers": { "type": "array", "items": { "type": "string" } },
+                                "constraints": { "type": "array", "items": { "type": "string" } },
+                                "changedFiles": { "type": "array", "items": { "type": "string" } }
+                            },
+                            "additionalProperties": false
+                        }
+                    },
+                    "required": ["tasks"],
+                    "additionalProperties": false
+                }),
+            },
+        },
+        ToolDefinition {
+            type_: "function".to_string(),
+            function: agent::ToolDefFunction {
                 name: "agent".to_string(),
-                description: "Explore the codebase for complex research tasks that require multiple steps (searching, reading, analyzing). Use this instead of search_codebase when you need deep investigation — e.g. finding a bug, understanding architecture, or tracing logic across multiple files.".to_string(),
+                description: "Perform bounded read-only research when several targeted searches or reads are genuinely required. Preserve every scope restriction from the user in the task, and do not use this for a single crate or directory that can be inspected directly.".to_string(),
                 parameters: serde_json::json!({
                     "type": "object",
                     "properties": {
@@ -104,11 +175,13 @@ pub fn build_tool_definitions() -> Vec<ToolDefinition> {
                 }),
             },
         },
-    ]
+    ];
+    definitions.extend(extra_git_tool_definitions());
+    definitions
 }
 
 pub fn build_readonly_tool_definitions() -> Vec<ToolDefinition> {
-    vec![
+    let mut definitions = vec![
         ToolDefinition {
             type_: "function".to_string(),
             function: agent::ToolDefFunction {
@@ -145,11 +218,139 @@ pub fn build_readonly_tool_definitions() -> Vec<ToolDefinition> {
                 parameters: serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "query": { "type": "string" }
+                        "query": { "type": "string" },
+                        "root": { "type": "string", "description": "Optional directory that bounds the search" }
                     },
                     "required": ["query"]
                 }),
             },
         },
+    ];
+    definitions.extend(git_tool_definitions());
+    definitions
+}
+
+fn git_tool(
+    name: &str,
+    description: &str,
+    properties: serde_json::Value,
+    required: &[&str],
+) -> ToolDefinition {
+    ToolDefinition {
+        type_: "function".to_string(),
+        function: agent::ToolDefFunction {
+            name: name.to_string(),
+            description: description.to_string(),
+            parameters: serde_json::json!({
+                "type": "object",
+                "properties": properties,
+                "required": required
+            }),
+        },
+    }
+}
+
+fn git_tool_definitions() -> Vec<ToolDefinition> {
+    vec![
+        git_tool(
+            "git_status",
+            "Show Git branch and working tree status (read-only).",
+            serde_json::json!({"path":{"type":"string"}}),
+            &[],
+        ),
+        git_tool(
+            "git_branches",
+            "List local and remote Git branches (read-only).",
+            serde_json::json!({"kind":{"type":"string","enum":["local","remote","all"]},"pattern":{"type":"string"}}),
+            &[],
+        ),
+        git_tool(
+            "git_log",
+            "List commits from a ref (read-only).",
+            serde_json::json!({"ref":{"type":"string"},"max_count":{"type":"integer","minimum":1,"maximum":100},"path":{"type":"string"},"author":{"type":"string"},"grep":{"type":"string"},"since":{"type":"string"},"until":{"type":"string"},"all":{"type":"boolean"},"first_parent":{"type":"boolean"}}),
+            &[],
+        ),
+        git_tool(
+            "git_diff",
+            "Show working tree or ref differences (read-only).",
+            serde_json::json!({"staged":{"type":"boolean"},"base":{"type":"string"},"target":{"type":"string"},"path":{"type":"string"},"format":{"type":"string","enum":["patch","stat","name_status","numstat"]},"context_lines":{"type":"integer"},"ignore_whitespace":{"type":"boolean"}}),
+            &[],
+        ),
+        git_tool(
+            "git_show",
+            "Show commit metadata, patch, or file content at a ref (read-only).",
+            serde_json::json!({"ref":{"type":"string"},"path":{"type":"string"},"mode":{"type":"string","enum":["metadata","patch","content"]}}),
+            &[],
+        ),
+        git_tool(
+            "git_blame",
+            "Show line attribution for a file (read-only).",
+            serde_json::json!({"path":{"type":"string"},"ref":{"type":"string"},"start_line":{"type":"integer"},"end_line":{"type":"integer"}}),
+            &["path"],
+        ),
+        git_tool(
+            "git_merge_base",
+            "Find a merge base or test ancestry (read-only).",
+            serde_json::json!({"base":{"type":"string"},"target":{"type":"string"},"mode":{"type":"string","enum":["merge_base","is_ancestor"]}}),
+            &["base", "target"],
+        ),
+        git_tool(
+            "git_tree",
+            "List files in a ref without checkout (read-only).",
+            serde_json::json!({"ref":{"type":"string"},"path":{"type":"string"},"recursive":{"type":"boolean"}}),
+            &[],
+        ),
+        git_tool(
+            "git_grep",
+            "Search tracked content in a ref (read-only).",
+            serde_json::json!({"query":{"type":"string"},"ref":{"type":"string"},"path":{"type":"string"}}),
+            &["query"],
+        ),
+        git_tool(
+            "git_check_ignore",
+            "Explain ignore rules for paths (read-only).",
+            serde_json::json!({"paths":{"type":"array","items":{"type":"string"}}}),
+            &["paths"],
+        ),
+        git_tool(
+            "git_stash_list",
+            "List stashes (read-only).",
+            serde_json::json!({}),
+            &[],
+        ),
+        git_tool(
+            "git_reflog",
+            "Show local reference history (read-only).",
+            serde_json::json!({"ref":{"type":"string"},"max_count":{"type":"integer","minimum":1,"maximum":100}}),
+            &[],
+        ),
+        git_tool(
+            "git_remotes",
+            "List repository remotes (read-only).",
+            serde_json::json!({}),
+            &[],
+        ),
+        git_tool(
+            "git_refs",
+            "List tags, branches, or all refs (read-only).",
+            serde_json::json!({"kind":{"type":"string","enum":["tags","heads","remotes","all"]},"pattern":{"type":"string"}}),
+            &[],
+        ),
+        git_tool(
+            "git_worktrees",
+            "List linked worktrees (read-only).",
+            serde_json::json!({}),
+            &[],
+        ),
+        git_tool(
+            "git_submodules",
+            "Show submodule status (read-only).",
+            serde_json::json!({}),
+            &[],
+        ),
     ]
+}
+
+fn extra_git_tool_definitions() -> Vec<ToolDefinition> {
+    git_tool_definitions().into_iter().skip(4).collect()
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, Component, type ReactNode } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useI18n } from "../../hooks/useI18n.js";
 import { useTheme } from "../../hooks/useTheme.js";
 import { useAnimations } from "../../hooks/useAnimations.js";
@@ -62,6 +63,15 @@ const POPULAR_THEME_IDS = [
   "vercel",
 ];
 
+// Enough room for each onboarding page without showing a full editor-sized
+// window immediately. Native resize is best-effort on Wayland compositors.
+const ONBOARDING_WINDOW_SIZES: Record<number, [number, number]> = {
+  1: [900, 680],
+  2: [980, 720],
+  3: [1180, 820],
+  4: [1180, 820],
+};
+
 function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps): React.ReactElement {
   const { t, lang } = useI18n();
   const { currentTheme, setTheme, colorScheme, setColorScheme } = useTheme();
@@ -74,6 +84,12 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
   const [visible, setVisible] = useState(false);
   const [animDir, setAnimDir] = useState<"forward" | "backward">("forward");
   const bodyRef = useRef<HTMLDivElement>(null);
+  const startWindowDrag = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    void getCurrentWindow()
+      .startDragging()
+      .catch(() => {});
+  };
 
   const [useProxy, setUseProxy] = useState(true);
   const [autoAccept, setAutoAccept] = useState(false);
@@ -96,6 +112,14 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
     const timer = setTimeout(() => setVisible(true), 50);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    const size = ONBOARDING_WINDOW_SIZES[step];
+    if (!size) return;
+    window.vibe?.window?.setSize?.(...size).catch(() => {
+      // Wayland may clamp or reject a client resize request.
+    });
+  }, [step]);
 
   useEffect(() => {
     try {
@@ -157,6 +181,10 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
     } catch (error) {
       void error;
     }
+    // This is native window fullscreen, not the browser Fullscreen API.
+    window.vibe?.window?.setFullscreen?.(true).catch(() => {
+      // Continue normally if the compositor declines the request.
+    });
     const multiplier = parseFloat(animMultiplier);
     const closeDuration = 400 * (Number.isFinite(multiplier) ? Math.max(0.01, multiplier) : 1);
     setTimeout(() => {
@@ -257,6 +285,7 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
     <div
       className={`welcome-screen ${isClosing ? "welcome-screen--closing" : ""} ${visible ? "welcome-screen--visible" : ""}`}
     >
+      <div className="welcome-window-drag-region" onMouseDown={startWindowDrag} />
       <div className={`ws-card ${step >= 3 ? "ws-card--settings" : ""}`}>
         <div className="ws-card-header">
           <div className="ws-progress-dots">

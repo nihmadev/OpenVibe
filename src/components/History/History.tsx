@@ -17,6 +17,8 @@ import {
   CopyIcon,
   RefreshIcon2,
 } from "../Icons/icons.js";
+import { ErrorNotice } from "../AgentChat/components/ErrorNotice.js";
+import { Markdown } from "../Markdown/Markdown.js";
 
 export interface AttachmentView {
   id: string;
@@ -534,7 +536,9 @@ export function History({ items, onPickModel, onRegenerate, streamingId, busy }:
         if (item.kind === "user") {
           return (
             <div key={item.id} className="msg msg--user-wrap">
-              <div className="msg msg--user">{item.text}</div>
+              <div className="msg msg--user">
+                <Markdown content={item.text} isAssistant={false} />
+              </div>
               {item.attachments && item.attachments.length > 0 ? (
                 <div className="msg__attachments">
                   {item.attachments.map((a) =>
@@ -564,6 +568,8 @@ export function History({ items, onPickModel, onRegenerate, streamingId, busy }:
             </div>
           );
         }
+
+        if (item.kind === "error") return <ErrorNotice key={item.id} text={item.text} />;
 
         return (
           <div key={item.id} className={cls}>

@@ -15,6 +15,7 @@ import { useTheme } from "../../hooks/useTheme.js";
 import { makeMonacoTheme } from "../Themes/monacoThemes.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { scg2Tracker } from "../../services/scg2Tracker.js";
+import { connectMonacoLsp, type MonacoLspSession } from "../../services/monacoLspClient.js";
 
 // Wire up Monaco workers for Vite (one-time, module scope is fine)
 if (typeof self !== "undefined") {
@@ -180,11 +181,38 @@ let monacoProvidersRegistered = false;
 export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMatchLength }: Props): React.ReactElement {
   const { t } = useI18n();
   const [content, setContent] = useState<string | null>(null);
+  const isContentLoading = content === null;
   const [original, setOriginal] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoInstanceRef = useRef<typeof monaco | null>(null);
+  const lspSessionRef = useRef<MonacoLspSession | null>(null);
+
+  useEffect(() => {
+    if (isContentLoading || !cwd) return;
+    const m = monacoInstanceRef.current;
+    const model = editorRef.current?.getModel();
+    if (!m || !model) return;
+
+    let cancelled = false;
+    let disposable: MonacoLspSession | null = null;
+    void connectMonacoLsp(m, model, cwd)
+      .then((result) => {
+        if (cancelled) result?.dispose();
+        else {
+          disposable = result;
+          lspSessionRef.current = result;
+        }
+      })
+      .catch((error) => console.error(`Failed to connect Monaco to LSP for ${model.getLanguageId()}:`, error));
+
+    return () => {
+      cancelled = true;
+      disposable?.dispose();
+      if (lspSessionRef.current === disposable) lspSessionRef.current = null;
+    };
+  }, [isContentLoading, cwd, path]);
 
   const [editorOptions, setEditorOptions] = useState<any>({
     fontSize: 13,
@@ -848,6 +876,7 @@ User Instruction: ${promptText}`;
       if (!res.ok) setError(res.error);
       else {
         updateCacheOriginal(content);
+        lspSessionRef.current?.didSave();
       }
     } catch (e: any) {
       setSaving(false);

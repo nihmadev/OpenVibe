@@ -5,6 +5,44 @@ All notable changes to OpenVibe will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.5](https://github.com/nihmadev/OpenVibe/compare/v1.3.4...v1.3.5) (2026-07-19)
+
+This release makes agent runs easier to follow and gives the agent safer, more useful project context, while polishing the editor, search, updater, and cross-platform experience.
+
+### Added
+
+* **Agent runs and persistent plans**
+  * Added a persistent `todo` tool with task status, priorities, dependencies, acceptance criteria, evidence, and checkpoint data.
+  * Grouped related reasoning and tool calls into readable activity sections with summaries, timing, progress, and dedicated error notices.
+  * Added clearer rendering for agent reasoning, tool output, stopped runs, and failures.
+
+* **Git-aware agent tools**
+  * Added read-only tools for Git status, branches, refs, log, diff, show, blame, and merge-base queries.
+  * Added scoped code search parameters so searches can be limited to the file, directory, crate, or package named by the user.
+  * Added validation and output limits for Git arguments and command results.
+
+* **Editor, LSP, and search improvements**
+  * Added an inline Vibe panel and a Monaco LSP client for richer code assistance.
+  * Improved Git diff viewing, editor/file navigation, search tree behavior, filtering, and keyboard interactions.
+  * Added safer Markdown sanitization and structured file-tree rendering.
+
+* **Desktop and UI foundations**
+  * Refreshed loading, welcome, titlebar, terminal, and settings surfaces.
+  * Added update-policy handling and version comparison for interactive and non-interactive desktop updates.
+  * Added path, agent-run, todo, search, updater, and Markdown test coverage.
+
+### Fixed
+
+* Preserved valid assistant tool-call messages and bounded autonomous research so provider conversations remain valid and focused.
+* Improved handling of malformed tool arguments, cancellation, SSE streaming, and agent/chat state transitions.
+* Corrected cross-platform path handling and Git history/diff edge cases, including missing files and scoped paths.
+* Prevented unsafe Markdown content and invalid update versions from reaching the UI or updater.
+* Refreshed locale resources and kept untranslated strings from being replaced with incorrect values.
+
+### Changed
+
+* Bumped the application, desktop package, Tauri manifest, and release metadata to `1.3.5`.
+
 ## [1.3.4](https://github.com/nihmadev/OpenVibe/compare/v1.3.3...v1.3.4) (2026-07-19)
 
 This release is focused on a more complete developer workspace: language-server support, richer Git inspection, a guided first-run experience, more dependable provider connectivity, and a substantial UI and localization refresh.

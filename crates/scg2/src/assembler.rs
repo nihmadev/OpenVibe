@@ -7,6 +7,59 @@ use std::fs;
 use std::path::Path;
 use std::time::Instant;
 
+fn query_tokens(query: &str) -> Vec<String> {
+    query
+        .to_lowercase()
+        .split(|ch: char| !ch.is_alphanumeric() && ch != '_' && ch != '-')
+        .filter(|token| !token.is_empty())
+        .map(str::to_string)
+        .collect()
+}
+
+fn detect_explicit_crate_scopes(cwd: &Path, query: &str) -> Vec<std::path::PathBuf> {
+    let crates_dir = cwd.join("crates");
+    let Ok(entries) = fs::read_dir(&crates_dir) else {
+        return Vec::new();
+    };
+
+    let query_lower = query.to_lowercase().replace('\\', "/");
+    let tokens = query_tokens(query);
+    let crate_markers: Vec<usize> = tokens
+        .iter()
+        .enumerate()
+        .filter_map(|(index, token)| {
+            (token.starts_with("crate") || token.starts_with("крейт")).then_some(index)
+        })
+        .collect();
+
+    let mut scopes = Vec::new();
+    for entry in entries.flatten() {
+        if !entry.file_type().is_ok_and(|kind| kind.is_dir()) {
+            continue;
+        }
+        let name = entry.file_name().to_string_lossy().to_lowercase();
+        let explicit_path = query_lower.contains(&format!("crates/{name}"));
+        let named_near_marker = tokens.iter().enumerate().any(|(index, token)| {
+            token == &name
+                && crate_markers
+                    .iter()
+                    .any(|marker| index.abs_diff(*marker) <= 2)
+        });
+
+        if explicit_path || named_near_marker {
+            scopes.push(std::path::PathBuf::from("crates").join(name));
+        }
+    }
+    scopes.sort();
+    scopes.dedup();
+    scopes
+}
+
+fn path_is_in_scopes(path: &Path, cwd: &Path, scopes: &[std::path::PathBuf]) -> bool {
+    let relative = path.strip_prefix(cwd).unwrap_or(path);
+    scopes.iter().any(|scope| relative.starts_with(scope))
+}
+
 /// Evaluates candidate code snippets across workspace heuristics and constructs token-bounded LLM prompt blocks.
 pub struct ContextAssembler {
     config: Scg2Config,
@@ -25,56 +78,14 @@ impl ContextAssembler {
         graph: &ContextGraph,
         diagnostics: &DiagnosticsStore,
         cwd: &Path,
-        _user_query: Option<&str>,
+        user_query: Option<&str>,
     ) -> Vec<ContextSnippet> {
         let now = Instant::now();
         let mut candidates: Vec<ContextSnippet> = Vec::new();
         let mut ast_service = crate::ast::AstService::new();
-
-        // 0. Project Rules (Highest Priority - Score 1.0)
-        let mut rules_path = cwd.to_path_buf();
-        loop {
-            let viberules = rules_path.join(".viberules");
-            let cursorrules = rules_path.join(".cursorrules");
-            if viberules.exists() {
-                if let Ok(content) = fs::read_to_string(&viberules) {
-                    candidates.push(ContextSnippet {
-                        path: viberules
-                            .strip_prefix(cwd)
-                            .unwrap_or(&viberules)
-                            .to_path_buf(),
-                        range: LineRange {
-                            start_line: 1,
-                            end_line: content.lines().count() as u32,
-                        },
-                        content,
-                        score: 1.0,
-                        reason: "Project Rules (.viberules)".to_string(),
-                    });
-                }
-                break;
-            } else if cursorrules.exists() {
-                if let Ok(content) = fs::read_to_string(&cursorrules) {
-                    candidates.push(ContextSnippet {
-                        path: cursorrules
-                            .strip_prefix(cwd)
-                            .unwrap_or(&cursorrules)
-                            .to_path_buf(),
-                        range: LineRange {
-                            start_line: 1,
-                            end_line: content.lines().count() as u32,
-                        },
-                        content,
-                        score: 1.0,
-                        reason: "Project Rules (.cursorrules)".to_string(),
-                    });
-                }
-                break;
-            }
-            if !rules_path.pop() {
-                break;
-            }
-        }
+        let explicit_scopes = user_query
+            .map(|query| detect_explicit_crate_scopes(cwd, query))
+            .unwrap_or_default();
 
         // 1. Explicit User Selection Snippet (Highest Priority - Score 1.0)
         if let Some(active_file) = recency.active_file() {
@@ -200,8 +211,46 @@ impl ContextAssembler {
             }
         }
 
+        // An explicitly named crate is a hard context boundary. Editor focus,
+        // diagnostics and git recency outside it must not override user intent.
+        if !explicit_scopes.is_empty() {
+            candidates.retain(|snippet| path_is_in_scopes(&snippet.path, cwd, &explicit_scopes));
+
+            // Seed the scoped context even when the user has another file open.
+            for scope in &explicit_scopes {
+                for relative in ["Cargo.toml", "src/lib.rs", "src/main.rs"] {
+                    let path = cwd.join(scope).join(relative);
+                    if !path.is_file() {
+                        continue;
+                    }
+                    let Ok(content) = fs::read_to_string(&path) else {
+                        continue;
+                    };
+                    let snippet_text = if relative.ends_with(".rs") {
+                        ast_service.skeletonize_file(&path, &content)
+                    } else {
+                        content
+                    };
+                    let rel_path = path.strip_prefix(cwd).unwrap_or(&path).to_path_buf();
+                    if candidates.iter().any(|snippet| snippet.path == rel_path) {
+                        continue;
+                    }
+                    candidates.push(ContextSnippet {
+                        path: rel_path,
+                        range: LineRange {
+                            start_line: 1,
+                            end_line: snippet_text.lines().count() as u32,
+                        },
+                        content: snippet_text,
+                        score: 0.98,
+                        reason: "Explicit User Scope Entry Point".to_string(),
+                    });
+                }
+            }
+        }
+
         // Semantic Search Boost
-        if let Some(query) = _user_query {
+        if let Some(query) = user_query {
             let terms: Vec<String> = query
                 .to_lowercase()
                 .split_whitespace()
@@ -351,5 +400,71 @@ impl ContextAssembler {
         };
 
         slice.join("\n")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::diagnostics::DiagnosticsStore;
+    use crate::graph::ContextGraph;
+    use crate::recency::RecencyStore;
+    use crate::types::EditorEventBatch;
+
+    #[test]
+    fn detects_explicit_crate_scope_in_english_and_russian() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::create_dir_all(dir.path().join("crates/git")).unwrap();
+        fs::create_dir_all(dir.path().join("crates/agent")).unwrap();
+
+        assert_eq!(
+            detect_explicit_crate_scopes(dir.path(), "Explain only the git crate"),
+            vec![std::path::PathBuf::from("crates/git")]
+        );
+        assert_eq!(
+            detect_explicit_crate_scopes(dir.path(), "Подробно объясни крейт git, только его"),
+            vec![std::path::PathBuf::from("crates/git")]
+        );
+    }
+
+    #[test]
+    fn explicit_crate_scope_excludes_unrelated_editor_context() {
+        let dir = tempfile::tempdir().unwrap();
+        let git_dir = dir.path().join("crates/git");
+        let frontend = dir.path().join("src/frontend.ts");
+        fs::create_dir_all(git_dir.join("src")).unwrap();
+        fs::create_dir_all(frontend.parent().unwrap()).unwrap();
+        fs::write(git_dir.join("Cargo.toml"), "[package]\nname = \"git\"\n").unwrap();
+        fs::write(git_dir.join("src/lib.rs"), "pub fn status() {}\n").unwrap();
+        fs::write(&frontend, "export const unrelated = true;\n").unwrap();
+
+        let config = Scg2Config::default();
+        let mut recency = RecencyStore::new(config.clone());
+        recency.process_batch(&EditorEventBatch {
+            active_file: Some(frontend),
+            cursor: None,
+            visible_ranges: Vec::new(),
+            selection: None,
+            diagnostics: Vec::new(),
+            is_edit: false,
+            timestamp_ms: 0,
+            hovered_word: None,
+        });
+
+        let snippets = ContextAssembler::new(config).assemble_context(
+            &recency,
+            &ContextGraph::new(),
+            &DiagnosticsStore::new(),
+            dir.path(),
+            Some("Объясни только крейт git"),
+        );
+
+        assert!(!snippets.is_empty());
+        assert!(snippets
+            .iter()
+            .all(|snippet| snippet.path.starts_with("crates/git")));
+        assert!(snippets
+            .iter()
+            .any(|snippet| snippet.path == Path::new("crates/git/src/lib.rs")));
     }
 }

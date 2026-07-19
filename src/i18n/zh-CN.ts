@@ -423,7 +423,7 @@ export const zhCN: Partial<Translations> = {
   mcpCall: "MCP 呼叫",
   welcomeTitle: "氛围",
   appName: "OpenVibe 桌面",
-  appVersion: "v1.3.4",
+  appVersion: "v1.3.5",
   shell: "壳",
   langRussian: "俄语",
   langEnglish: "英语",

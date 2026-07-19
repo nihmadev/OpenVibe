@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import "./Titlebar.css";
 import { Tooltip } from "../Tooltip/Tooltip.js";
@@ -97,6 +98,18 @@ export function Titlebar({
   const [mcpServers, setMcpServers] = useState<McpServerStatus[]>([]);
   const [lspServers, setLspServers] = useState<LspServerItem[]>(lspStore.getServers());
   const [mcpDropdownOpen, setMcpDropdownOpen] = useState(false);
+
+  const handleWindowDrag = (event: React.MouseEvent<HTMLElement>) => {
+    if (event.button !== 0) return;
+    const target = event.target as HTMLElement;
+    // The Servers popover contains div-based tabs (MCP/LSP), so they do not
+    // match the usual interactive-element selector. Do not start a native
+    // window drag from any point inside the popover.
+    if (target.closest("button, input, select, textarea, a, [role=button], .titlebar__mcp-dropdown")) return;
+    void getCurrentWindow()
+      .startDragging()
+      .catch(() => {});
+  };
 
   useEffect(() => {
     return lspStore.subscribe(setLspServers);
@@ -264,7 +277,7 @@ export function Titlebar({
   }
 
   return (
-    <div className="titlebar">
+    <div className="titlebar" onMouseDown={handleWindowDrag}>
       <div className="titlebar__left" onContextMenu={(e) => onSectionCtx(e, LEFT_BTNS)}>
         <Tooltip text={t("menu")} side="bottom">
           <button
@@ -333,10 +346,10 @@ export function Titlebar({
       </div>
 
       <div className="titlebar__center">
-        <div className="titlebar__search" onClick={onSearchOpen}>
+        <button type="button" className="titlebar__search" onClick={onSearchOpen}>
           <SearchIcon />
           <span className="titlebar__search-text">{t("searchIn", { folder: folderLabel(folder) })}</span>
-        </div>
+        </button>
       </div>
 
       <div className="titlebar__right" onContextMenu={(e) => onSectionCtx(e, RIGHT_BTNS)}>
@@ -384,7 +397,7 @@ export function Titlebar({
         {isVisible("search-in-code") && (
           <Tooltip text={t("searchInCode")} side="bottom">
             <button
-              className={btnClasses("search-in-code")}
+              className={btnClasses("search-in-code", searchInCodeOpen ? "titlebar__action-btn--active" : "")}
               onClick={onToggleSearchInCode}
               onContextMenu={(e) => onBtnCtx(e, "search-in-code")}
               aria-label={t("searchInCode")}

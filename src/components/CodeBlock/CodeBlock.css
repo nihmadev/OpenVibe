@@ -116,17 +116,6 @@
   padding-left: 10px !important;
 }
 
-.code-block--terminal .code-block__container .monaco-editor .lines-content,
-.code-block--terminal .code-block__container .monaco-editor .view-lines {
-  left: 0 !important;
-  margin-left: -4px !important;
-  padding-left: 0 !important;
-}
-
-.code-block--terminal .code-block__pre {
-  padding-left: 2px !important;
-}
-
 .code-block__container .monaco-editor .decorationsOverviewRuler,
 .code-block__container .monaco-editor .scroll-decoration,
 .code-block__container .monaco-editor .cigr,

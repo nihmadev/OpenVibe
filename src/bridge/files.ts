@@ -17,6 +17,8 @@ export const filesBridge = {
     minimize: () => invoke("window_minimize"),
     maximize: () => invoke("window_maximize"),
     close: () => invoke("window_close"),
+    setSize: (width: number, height: number) => invoke("window_set_size", { width, height }),
+    setFullscreen: (fullscreen: boolean) => invoke("window_set_fullscreen", { fullscreen }),
   },
 
   state: {

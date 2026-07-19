@@ -36,6 +36,10 @@ export interface NodeProps {
   onContext: (state: CtxState) => void;
   cutPath: string | null;
   refreshAll: () => Promise<void>;
+  creating?: { dir: string; kind: "file" | "dir" } | null;
+  onCommitCreate?: (name: string) => Promise<void>;
+  onCancelCreate?: () => void;
+  onSelectDir?: (path: string) => void;
   isLast?: boolean;
   guides?: boolean[];
 }

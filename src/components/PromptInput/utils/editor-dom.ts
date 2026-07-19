@@ -1,4 +1,44 @@
+import type { EditorPart } from "../types.js";
+
 const MAX_BREAKS = 200;
+
+export function readEditorParts(root: HTMLElement): EditorPart[] {
+  const parts: EditorPart[] = [];
+  let buffer = "";
+  const flush = () => {
+    if (buffer) {
+      parts.push({ type: "text", content: buffer });
+      buffer = "";
+    }
+  };
+  const walk = (node: Node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      buffer += node.textContent ?? "";
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    const element = node as HTMLElement;
+    if (element.dataset.type === "file") {
+      flush();
+      parts.push({ type: "file", content: element.textContent ?? "", path: element.dataset.path });
+      return;
+    }
+    if (element.tagName === "BR") {
+      buffer += "\n";
+      return;
+    }
+    for (const child of Array.from(element.childNodes)) walk(child);
+  };
+
+  Array.from(root.childNodes).forEach((child, index, children) => {
+    const isBlock = child.nodeType === Node.ELEMENT_NODE && ["DIV", "P"].includes((child as HTMLElement).tagName);
+    walk(child);
+    if (isBlock && index < children.length - 1) buffer += "\n";
+  });
+  flush();
+  if (parts.length === 0) parts.push({ type: "text", content: "" });
+  return parts;
+}
 
 export function createTextFragment(content: string): DocumentFragment {
   const fragment = document.createDocumentFragment();

@@ -102,7 +102,7 @@ export function GitDiffViewer({ path, cwd }: GitDiffViewerProps) {
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, height: "100%" }}>
-      <DiffEditor original={original} modified={modified} language={lang} />
+      <DiffEditor original={original} modified={modified} language={lang} fill />
     </div>
   );
 }

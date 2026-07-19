@@ -38,24 +38,6 @@ export async function initVibeBridge() {
     }),
   );
   addTauriUnlistenFn(
-    await listen("vibe:agent:send-complete", () => {
-      if (activeChatId) {
-        invoke("chats_list")
-          .then((list: any) => {
-            const current = (list as any[]).find((c: any) => c.id === activeChatId);
-            if (current && current.title === "New chat") {
-              invoke<string>("agent_summarize").then((title) => {
-                if (title && title !== "New chat") {
-                  invoke("chats_rename", { id: activeChatId, title }).catch(() => {});
-                }
-              });
-            }
-          })
-          .catch(() => {});
-      }
-    }),
-  );
-  addTauriUnlistenFn(
     await listen("vibe:agent:assistant-start", () => {
       emitEvent({ kind: "assistant-start" });
     }),

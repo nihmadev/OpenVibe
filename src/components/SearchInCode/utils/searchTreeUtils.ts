@@ -1,9 +1,11 @@
 import type { ContentMatch } from "../../../types.js";
+import { compactFolderTree } from "../../../utils/paths.js";
 
 export interface FileGroup {
   path: string;
   rel: string;
   name: string;
+  matchCount?: number;
   matches: ContentMatch[];
 }
 
@@ -15,6 +17,7 @@ export interface TreeNode {
   children: TreeNode[];
   matchesCount: number;
   matches: ContentMatch[];
+  filePath?: string;
 }
 
 export interface FileGroupEntry {
@@ -88,8 +91,9 @@ export function buildTree(groups: FileGroup[]): TreeNode[] {
       isDir: false,
       relDir: dirPath,
       children: [],
-      matchesCount: group.matches.length,
+      matchesCount: group.matchCount ?? group.matches.length,
       matches: group.matches,
+      filePath: group.path,
     };
     if (dirPath) {
       const parent = getOrCreateDir(dirPath);
@@ -97,7 +101,7 @@ export function buildTree(groups: FileGroup[]): TreeNode[] {
       let curr: string | undefined = dirPath;
       while (curr) {
         const d = dirMap.get(curr);
-        if (d) d.matchesCount += group.matches.length;
+        if (d) d.matchesCount += fileNode.matchesCount;
         const p = curr.split("/").slice(0, -1).join("/");
         curr = p || undefined;
       }
@@ -106,7 +110,7 @@ export function buildTree(groups: FileGroup[]): TreeNode[] {
     }
   }
 
-  return sortNodes(rootNodes);
+  return compactFolderTree(sortNodes(rootNodes));
 }
 
 export function sortNodes(nodes: TreeNode[]): TreeNode[] {
@@ -222,10 +226,12 @@ export function computeTreeNodes(
   fileEntries: FileGroupEntry[],
   fileMatchesMap: Record<string, { matches: ContentMatch[]; total: number }>,
 ): TreeNode[] {
-  const allMatches: ContentMatch[] = [];
-  for (const entry of fileEntries) {
-    const fm = fileMatchesMap[entry.path];
-    if (fm) allMatches.push(...fm.matches);
-  }
-  return sortNodes(buildTree(groupByFile(allMatches)));
+  const groups: FileGroup[] = fileEntries.map((entry) => ({
+    path: entry.path,
+    rel: entry.rel,
+    name: entry.name,
+    matchCount: entry.matchCount,
+    matches: fileMatchesMap[entry.path]?.matches ?? [],
+  }));
+  return buildTree(groups);
 }

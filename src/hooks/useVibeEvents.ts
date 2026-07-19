@@ -53,6 +53,7 @@ export function useVibeEvents(onActivity: () => void) {
 
       switch (e.kind) {
         case "user": {
+          const now = Date.now();
           const atts = pendingAttachments.current;
           pendingAttachments.current = undefined;
           flush();
@@ -64,16 +65,19 @@ export function useVibeEvents(onActivity: () => void) {
               text: e.text,
               msgIndex: (e as any).index,
               attachments: atts?.length ? atts : undefined,
+              startedAt: now,
+              completedAt: now,
             },
           ]);
           break;
         }
         case "assistant-start": {
           const id = localId();
+          const startedAt = Date.now();
           streamingId.current = id;
           flush();
           setStreamingNow(id);
-          setItems((prev) => [...(prev ?? []), { id, kind: "assistant", text: "" }]);
+          setItems((prev) => [...(prev ?? []), { id, kind: "assistant", text: "", startedAt }]);
           break;
         }
         case "assistant-chunk": {
@@ -132,6 +136,7 @@ export function useVibeEvents(onActivity: () => void) {
           break;
         }
         case "assistant-end": {
+          const completedAt = Date.now();
           streamingId.current = null;
           flush();
           setStreamingNow(null);
@@ -143,7 +148,7 @@ export function useVibeEvents(onActivity: () => void) {
               .map((it) => {
                 if (it.id === sid && it.kind === "assistant") {
                   const trimmed = it.text.trim();
-                  const next = { ...it, reasoningDone: it.reasoning ? true : it.reasoningDone };
+                  const next = { ...it, reasoningDone: it.reasoning ? true : it.reasoningDone, completedAt };
                   if (textNoiseRe.test(trimmed)) return { ...next, text: "" };
                   return next;
                 }
@@ -163,6 +168,7 @@ export function useVibeEvents(onActivity: () => void) {
               text: "",
               toolName: e.name,
               toolArgs: e.args,
+              startedAt: Date.now(),
             },
           ]);
           break;
@@ -185,14 +191,17 @@ export function useVibeEvents(onActivity: () => void) {
           break;
         case "tool-result":
           flush();
-          setItems((prev) => {
-            if (!prev) return prev;
-            // Failed read/search/list calls are still sent to the model as a
-            // tool message (with a diagnostic hint), but are not useful chat
-            // content for the user. Remove the pending visualization entirely.
-            if (!e.ok) return prev.filter((it) => it.id !== e.id);
-            return prev.map((it) => (it.id === e.id ? { ...it, text: e.text, ok: true } : it));
-          });
+          {
+            const completedAt = Date.now();
+            setItems((prev) => {
+              if (!prev) return prev;
+              // Failed read/search/list calls are still sent to the model as a
+              // tool message (with a diagnostic hint), but are not useful chat
+              // content for the user. Remove the pending visualization entirely.
+              if (!e.ok) return prev.filter((it) => it.id !== e.id);
+              return prev.map((it) => (it.id === e.id ? { ...it, text: e.text, ok: true, completedAt } : it));
+            });
+          }
           break;
         case "tool-denied":
           flush();
@@ -202,11 +211,16 @@ export function useVibeEvents(onActivity: () => void) {
           });
           break;
         case "info": {
+          const now = Date.now();
           flush();
-          setItems((prev) => [...(prev ?? []), { id: localId(), kind: "info", text: e.text }]);
+          setItems((prev) => [
+            ...(prev ?? []),
+            { id: localId(), kind: "info", text: e.text, startedAt: now, completedAt: now },
+          ]);
           break;
         }
         case "stopped": {
+          const now = Date.now();
           setBusy(false);
           flush();
           setStreamingNow(null);
@@ -218,7 +232,7 @@ export function useVibeEvents(onActivity: () => void) {
               ...prev.map((it) =>
                 it.id === sid && it.kind === "assistant" && it.reasoning ? { ...it, reasoningDone: true } : it,
               ),
-              { id: localId(), kind: "stopped", text: "" },
+              { id: localId(), kind: "stopped", text: "", startedAt: now, completedAt: now },
             ];
           });
           break;
@@ -227,19 +241,22 @@ export function useVibeEvents(onActivity: () => void) {
           playAudio("succes.mp3");
           break;
         case "error":
-          setBusy(false);
-          flush();
-          setStreamingNow(null);
-          streamingId.current = null;
-          setItems((prev) => {
-            if (!prev) return prev;
-            return [
-              ...prev.map((it) =>
-                it.id === sid && it.kind === "assistant" && it.reasoning ? { ...it, reasoningDone: true } : it,
-              ),
-              { id: localId(), kind: "error", text: e.text },
-            ];
-          });
+          {
+            const now = Date.now();
+            setBusy(false);
+            flush();
+            setStreamingNow(null);
+            streamingId.current = null;
+            setItems((prev) => {
+              if (!prev) return prev;
+              return [
+                ...prev.map((it) =>
+                  it.id === sid && it.kind === "assistant" && it.reasoning ? { ...it, reasoningDone: true } : it,
+                ),
+                { id: localId(), kind: "error", text: e.text, startedAt: now, completedAt: now },
+              ];
+            });
+          }
           break;
       }
 

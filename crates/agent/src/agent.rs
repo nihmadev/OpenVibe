@@ -14,6 +14,7 @@ pub struct Agent {
     pub cancel: Arc<AtomicBool>,
     pub file_snapshots: Vec<SnapshotEntry>,
     pub undo_state: Option<UndoState>,
+    todo_context: Option<String>,
 }
 
 impl Agent {
@@ -34,11 +35,16 @@ impl Agent {
             cancel: Arc::new(AtomicBool::new(false)),
             file_snapshots: Vec::new(),
             undo_state: None,
+            todo_context: None,
         }
     }
 
     pub fn update_system_prompt(&mut self, scg2_context: Option<&str>) {
-        let system = crate::prompt::system_prompt_with_scg2(&self.config.cwd, scg2_context);
+        let mut system = crate::prompt::system_prompt_with_scg2(&self.config.cwd, scg2_context);
+        if let Some(todo) = &self.todo_context {
+            system.push_str("\n\nCURRENT TODO CONTROL STATE (user-managed; follow it):\n");
+            system.push_str(todo);
+        }
         if !self.messages.is_empty() && self.messages[0].role == "system" {
             self.messages[0].content = Some(serde_json::Value::String(system));
         } else {
@@ -57,6 +63,11 @@ impl Agent {
         }
     }
 
+    pub fn set_todo_context(&mut self, context: Option<String>) {
+        self.todo_context = context;
+        self.update_system_prompt(None);
+    }
+
     pub fn reset(&mut self) {
         let system = system_prompt(&self.config.cwd);
         self.messages = vec![ChatMessage {
@@ -72,6 +83,7 @@ impl Agent {
         self.cancel.store(false, Ordering::Relaxed);
         self.file_snapshots.clear();
         self.undo_state = None;
+        self.todo_context = None;
     }
 
     pub fn set_cwd(&mut self, cwd: String) {
@@ -90,6 +102,7 @@ impl Agent {
         self.cancel.store(false, Ordering::Relaxed);
         self.file_snapshots.clear();
         self.undo_state = None;
+        self.todo_context = None;
     }
 
     pub fn set_messages(&mut self, msgs: Vec<ChatMessage>) {

@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { get } from "node:https";
 import { request as httpGet } from "node:http";
 import { exec as execCb } from "node:child_process";
+import { status, ui } from "./ui.js";
 
 const GITHUB_REPO = "nihmadev/OpenVibe";
 const API_BASE = process.env.OPENVIBE_API_URL || `https://api.github.com/repos/${GITHUB_REPO}`;
@@ -76,6 +77,7 @@ function fetchJSON(url: string): Promise<any> {
         }
       });
     });
+    req.setTimeout(5_000, () => req.destroy(new Error("update check timed out")));
     req.on("error", reject);
     req.end();
   });
@@ -94,12 +96,11 @@ async function downloadFile(url: string, dest: string): Promise<void> {
   await writeFile(dest, Buffer.from(arrayBuffer));
 }
 
-export async function checkForUpdate(versionFile: string): Promise<UpdateInfo | null> {
+export async function checkForUpdate(): Promise<UpdateInfo | null> {
   const { platform, arch } = getPlatform();
 
   try {
     const baseURL = API_BASE.replace(/\/+$/, "");
-    const url = `${baseURL}/releases/latest`;
 
     // Try the Go API first
     if (!process.env.OPENVIBE_API_URL && baseURL.includes("api.github.com")) {
@@ -178,7 +179,7 @@ export async function downloadAndVerify(info: UpdateInfo): Promise<string> {
     }
   }
 
-  console.log(`Downloading OpenVibe ${info.version} (${info.platform}-${info.arch})...`);
+  console.log(status("info", `Downloading ${ui.accent(`v${info.version}`)} · ${ui.muted(`${info.platform}-${info.arch}`)}`));
   await downloadFile(info.url, filePath);
 
   if (info.sha256) {
@@ -187,7 +188,7 @@ export async function downloadAndVerify(info: UpdateInfo): Promise<string> {
       await unlink(filePath);
       throw new Error(`SHA256 mismatch: expected ${info.sha256}, got ${hash}`);
     }
-    console.log("SHA256 verified");
+    console.log(status("success", "Download verified"));
   }
 
   return makeExecutableAndLink(filePath, binDir, info);

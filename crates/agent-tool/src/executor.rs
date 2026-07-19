@@ -84,7 +84,7 @@ impl ToolExecutor for AgentToolExecutor {
     }
 
     fn is_read_only(&self, name: &str) -> bool {
-        if matches!(name, "read_file" | "list_dir" | "search_codebase") {
+        if matches!(name, "read_file" | "list_dir" | "search_codebase" | "todo") {
             return true;
         }
         if name.starts_with("mcp__") {

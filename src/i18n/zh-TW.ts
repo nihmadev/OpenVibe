@@ -423,7 +423,7 @@ export const zhTW: Partial<Translations> = {
   mcpCall: "MCP 呼叫",
   welcomeTitle: "氛圍",
   appName: "OpenVibe 桌面",
-  appVersion: "v1.3.4",
+  appVersion: "v1.3.5",
   shell: "殼",
   langRussian: "俄文",
   langEnglish: "英語",

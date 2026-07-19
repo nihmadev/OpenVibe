@@ -1,6 +1,7 @@
 use crate::AppState;
 use lsp::LspServerConfig;
-use tauri::{command, State};
+use serde_json::Value;
+use tauri::{command, AppHandle, Emitter, State};
 
 #[command]
 pub async fn get_lsp_servers() -> Result<Vec<LspServerConfig>, String> {
@@ -10,6 +11,10 @@ pub async fn get_lsp_servers() -> Result<Vec<LspServerConfig>, String> {
 #[command]
 pub async fn lsp_start_server(id: String, state: State<'_, AppState>) -> Result<(), String> {
     tracing::info!("Received request to start LSP server: {}", id);
+
+    if state.lsp_manager.is_active(&id).await {
+        return Ok(());
+    }
 
     // Basic auto-install for runtimes based on language
     if ["ts", "html", "css", "json", "php"].contains(&id.as_str()) {
@@ -91,4 +96,33 @@ pub async fn lsp_start_server(id: String, state: State<'_, AppState>) -> Result<
 
     tracing::info!("LSP server {} started successfully", id);
     Ok(())
+}
+
+#[command]
+pub async fn lsp_connect(id: String, app: AppHandle, state: State<'_, AppState>) -> Result<(), String> {
+    let mut messages = state.lsp_manager.subscribe(&id).await.map_err(|e| e.to_string())?;
+    tauri::async_runtime::spawn(async move {
+        loop {
+            match messages.recv().await {
+                Ok(message) => {
+                    let _ = app.emit("vibe:lsp:message", serde_json::json!({ "id": id, "message": message }));
+                }
+                Err(tokio::sync::broadcast::error::RecvError::Lagged(skipped)) => {
+                    tracing::warn!("LSP event bridge lagged by {skipped} messages");
+                }
+                Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+            }
+        }
+    });
+    Ok(())
+}
+
+#[command]
+pub async fn lsp_send(id: String, message: Value, state: State<'_, AppState>) -> Result<(), String> {
+    state.lsp_manager.send(&id, &message).await.map_err(|e| e.to_string())
+}
+
+#[command]
+pub async fn lsp_running_servers(state: State<'_, AppState>) -> Result<Vec<String>, String> {
+    Ok(state.lsp_manager.active_servers().await)
 }
