@@ -1,5 +1,6 @@
 pub mod agent;
 pub mod chats;
+pub mod clipboard;
 pub mod editor;
 pub mod fs;
 pub mod git;

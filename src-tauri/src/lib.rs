@@ -161,13 +161,11 @@ impl AppState {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Workaround for WebKitGTK 4.1 AppImage crash (Could not create default EGL display)
-    std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
-
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .setup(move |app| {
             // Initialize project store
             let data_dir = dirs::data_dir().unwrap_or_else(|| std::path::PathBuf::from(".")).join("openvibe");
@@ -389,6 +387,8 @@ pub fn run() {
             commands::misc::state_get,
             commands::misc::state_set,
             commands::misc::get_system_user,
+            // Clipboard commands
+            commands::clipboard::clipboard_write_text,
             // LLM commands
             commands::llm::llm_stream,
             commands::llm::llm_abort,
