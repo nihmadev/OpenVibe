@@ -9,6 +9,7 @@ import { resolveMonacoLang } from "../../CodeBlock/CodeBlock.js";
 import { pickFile, toRelativePath } from "../utils.js";
 import type { HistoryItem } from "../types.js";
 import { ContextMenu } from "../../ContextMenu/ContextMenu.js";
+import { writeClipboard } from "../../../utils/clipboard.js";
 
 interface FileChangeInfo {
   filePath: string;
@@ -248,10 +249,12 @@ export function MessageFooter({
     };
   }, [items]);
 
-  const copyText = (text: string) => {
-    void navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyText = async (text: string) => {
+    const ok = await writeClipboard(text);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const openCopyMenu = (event: React.MouseEvent<HTMLButtonElement>) => {

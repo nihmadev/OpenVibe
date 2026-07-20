@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useI18n } from "../../../hooks/useI18n.js";
 import { Tooltip } from "../../Tooltip/Tooltip.js";
 import type { HistoryItem } from "../types.js";
+import { writeClipboard } from "../../../utils/clipboard.js";
 
 export function UserMessageActions({
   item,
@@ -13,10 +14,12 @@ export function UserMessageActions({
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
 
-  const onCopy = () => {
-    navigator.clipboard.writeText(item.text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const onCopy = async () => {
+    const ok = await writeClipboard(item.text);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (
