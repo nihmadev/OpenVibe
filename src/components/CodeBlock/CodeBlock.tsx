@@ -6,6 +6,7 @@ import { useTheme } from "../../hooks/useTheme.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { makeMonacoTheme } from "../Themes/monacoThemes.js";
 import { CopyIcon } from "../Icons/icons.js";
+import { writeClipboard } from "../../utils/clipboard.js";
 
 type Monaco = any;
 
@@ -376,10 +377,12 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
     ed.deltaDecorations([], decos);
   }, [decorations, isEditorReady]);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    const ok = await writeClipboard(code);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const lineCount = displayCode.split("\n").length;

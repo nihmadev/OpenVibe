@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
+import { writeClipboard } from "../../utils/clipboard.js";
 import { escapeHtml } from "../../utils/string.js";
 import { FileIcon, FolderIcon } from "../Icons/file-icons.js";
 import { getFileIcon } from "../Icons/utils.js";
@@ -178,10 +179,12 @@ function renderInlineHtml(html: string, noFileIcons?: boolean): React.ReactNode[
 function AccentCodeBlock({ code }: { code: string }): React.ReactElement {
   const [copied, setCopied] = useState(false);
   const displayCode = code.trimEnd();
-  const handleCopy = () => {
-    navigator.clipboard.writeText(displayCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    const ok = await writeClipboard(displayCode);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
   const escaped = escapeHtmlCode(displayCode);
   return (
