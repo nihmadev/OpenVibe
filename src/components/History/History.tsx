@@ -4,6 +4,7 @@ import "./History.css";
 import "../AgentToolView/Tool.css";
 import "../AgentChat/FBadge.css";
 import { useI18n } from "../../hooks/useI18n.js";
+import { writeClipboard } from "../../utils/clipboard.js";
 import {
   ChevronRightIcon,
   CircularProgress,
@@ -391,10 +392,12 @@ function MessageFooter({
     };
   }, [items]);
 
-  const onCopy = () => {
-    navigator.clipboard.writeText(item.text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const onCopy = async () => {
+    const ok = await writeClipboard(item.text);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (

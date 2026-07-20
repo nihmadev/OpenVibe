@@ -3,6 +3,7 @@ import { Markdown } from "../../Markdown/Markdown.js";
 import { formatRelativeTime } from "../utils/commitGraphUtils.js";
 import type { CommitGraphNode, CommitFile } from "../types.js";
 import { useI18n } from "../../../hooks/useI18n.js";
+import { writeClipboard } from "../../../utils/clipboard.js";
 
 export interface GitCommitTooltipProps {
   hoveredCommit: CommitGraphNode;
@@ -224,7 +225,7 @@ export function GitCommitTooltip({
             title={t("copyCommitHash")}
             onClick={(e) => {
               e.stopPropagation();
-              navigator.clipboard.writeText(hoveredCommit.id);
+              writeClipboard(hoveredCommit.id);
             }}
           >
             <i className="codicon codicon-copy"></i>
