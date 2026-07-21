@@ -21,6 +21,7 @@ pub async fn agent_new(state: State<'_, AppState>, cwd: String) -> Result<(), St
             auto_approve: false,
             provider_id: None,
             api_url: Some("https://api.nihmadev.fun".to_string()),
+            reasoning_effort: None,
         })
     };
 
@@ -91,16 +92,21 @@ pub async fn agent_send(
         let _ = app_handle.emit(event, data);
     };
 
-    // Refresh dynamic SCG2 context before agent send
-    let cwd_path = std::path::Path::new(&agent.config().cwd);
-    let scg2_context = state.scg2_engine.get_smart_context(cwd_path, Some(&input));
-    if !scg2_context.trim().is_empty() {
-        agent.update_system_prompt(Some(&scg2_context));
-    }
+    // Save cwd before mutably borrowing agent
+    let cwd_buf = std::path::PathBuf::from(&agent.config().cwd);
 
-    agent.add_user_message(input, content_parts, &emit);
+    // 1. Add user message & emit immediately so UI shows it right away
+    agent.add_user_message(input.clone(), content_parts, &emit);
 
-    // Save chat state before starting generation
+    // 2. Run SCG2 in a blocking thread (file reads, git, AST parsing) in parallel
+    let scg2_handle = {
+        let engine = state.scg2_engine.clone();
+        let cwd = cwd_buf;
+        let inp = input.clone();
+        tokio::task::spawn_blocking(move || engine.get_smart_context(&cwd, Some(&inp)))
+    };
+
+    // 3. Save chat state in parallel with SCG2
     {
         let msgs = agent.messages.clone();
         let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as i64;
@@ -119,6 +125,12 @@ pub async fn agent_send(
         if let Some(ref handle) = *app {
             let _ = handle.emit("vibe:chats:updated", ());
         }
+    }
+
+    // 4. Await SCG2 result & update system prompt before LLM call
+    let scg2_context = scg2_handle.await.map_err(|e| e.to_string())?;
+    if !scg2_context.trim().is_empty() {
+        agent.update_system_prompt(Some(&scg2_context));
     }
 
     agent.send(&executor, &state.http_client, &emit).await;

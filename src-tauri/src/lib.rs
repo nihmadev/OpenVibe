@@ -167,11 +167,10 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .setup(move |app| {
-            // Initialize project store
-            let data_dir = dirs::data_dir().unwrap_or_else(|| std::path::PathBuf::from(".")).join("openvibe");
-            let data_dir_str = data_dir.to_string_lossy().to_string();
+            let app_dir = dirs::data_dir().unwrap_or_else(|| std::path::PathBuf::from(".")).join("OpenVibe");
+            let app_dir_str = app_dir.to_string_lossy().to_string();
 
-            let project_store = db::ProjectStore::new(&data_dir_str).expect("Failed to initialize project store");
+            let project_store = db::ProjectStore::new(&app_dir_str).expect("Failed to initialize project store");
 
             // Get initial project
             let (initial_cwd, initial_project_id) = {
@@ -225,7 +224,7 @@ pub fn run() {
             http_client::spawn_connection_warmer(shared_client.clone(), provider_url.clone(), warmer_stop_rx);
 
             // MCP Manager
-            let mcp_config_path = mcp::resolve_config_path(&initial_cwd);
+            let mcp_config_path = mcp::resolve_config_path(&initial_cwd, &app_dir_str);
 
             let mcp_manager = Arc::new(mcp::McpManager::new(mcp_config_path));
             let mcp_clone = mcp_manager.clone();
@@ -248,7 +247,7 @@ pub fn run() {
             };
 
             // LSP Manager and Runtime Manager
-            let runtimes_dir = std::path::PathBuf::from(&data_dir_str).join("runtimes");
+            let runtimes_dir = app_dir.join("runtimes");
             let lsp_manager = Arc::new(lsp::LspManager::new(runtimes_dir.clone()));
             let runtime_manager = Arc::new(lsp::runtime::RuntimeManager::new(runtimes_dir));
 
@@ -382,6 +381,7 @@ pub fn run() {
             commands::misc::is_maximized,
             commands::misc::get_cwd,
             commands::misc::set_model,
+            commands::misc::set_reasoning_effort,
             commands::misc::set_provider,
             commands::misc::window_zoom,
             commands::misc::state_get,

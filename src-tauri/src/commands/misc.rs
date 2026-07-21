@@ -21,6 +21,7 @@ pub struct ClientConfig {
     pub api_key: String,
     pub api_url: Option<String>,
     pub provider_id: Option<String>,
+    pub reasoning_effort: Option<String>,
 }
 
 #[tauri::command]
@@ -35,6 +36,7 @@ pub fn init_app(state: State<AppState>) -> Result<InitResult, String> {
             "apiKey": if c.api_key.is_empty() { "" } else { "***" },
             "apiUrl": c.api_url,
             "providerId": c.provider_id,
+            "reasoningEffort": c.reasoning_effort,
         })
     });
     Ok(InitResult { ok: true, config: config_val, error: None })
@@ -51,6 +53,7 @@ pub fn read_config(state: State<AppState>) -> Result<Option<ClientConfig>, Strin
         api_key: c.api_key.clone(),
         api_url: c.api_url.clone(),
         provider_id: c.provider_id.clone(),
+        reasoning_effort: c.reasoning_effort.clone(),
     }))
 }
 
@@ -148,6 +151,22 @@ pub fn set_model(state: State<AppState>, model: String) -> Result<(), String> {
     if let Ok(mut agent_lock) = state.agent.lock() {
         if let Some(ref mut agent) = *agent_lock {
             agent.config_mut().model = model;
+        }
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_reasoning_effort(state: State<AppState>, reasoning_effort: Option<String>) -> Result<(), String> {
+    {
+        let mut config = state.config.lock().map_err(|e| e.to_string())?;
+        if let Some(ref mut c) = *config {
+            c.reasoning_effort = reasoning_effort.clone();
+        }
+    }
+    if let Ok(mut agent_lock) = state.agent.lock() {
+        if let Some(ref mut agent) = *agent_lock {
+            agent.config_mut().reasoning_effort = reasoning_effort;
         }
     }
     Ok(())
