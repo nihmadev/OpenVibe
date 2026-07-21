@@ -176,11 +176,16 @@
 .ui-select {
   position: relative;
   min-width: 100px;
+  transition:
+    width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  interpolate-size: allow-keywords;
 }
 .ui-select-trigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   width: 100%;
   padding: 4px 10px;
   background: var(--bg-3, #2a2a2a);
@@ -193,6 +198,15 @@
 }
 .ui-select-trigger:hover {
   background: var(--line);
+}
+.ui-select-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.ui-select-trigger svg {
+  flex-shrink: 0;
 }
 .ui-select-dropdown {
   position: absolute;

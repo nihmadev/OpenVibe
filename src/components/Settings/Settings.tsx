@@ -137,7 +137,7 @@ export function Settings({
     soundOnStop: true,
     zoomStep: "0.2",
     zoomDefault: "1.2",
-    radius: "6",
+    radius: "10",
     blur: "none",
     editorFontSize: "13",
     editorLineHeight: "1.5",
@@ -145,6 +145,7 @@ export function Settings({
     editorCursorStyle: "line",
     editorCursorBlink: "blink",
     borderStyle: "bordered" as string,
+    tabStyle: "default" as string,
     renderFileTree: false,
     useRegionalProxy: true,
   };
@@ -186,6 +187,12 @@ export function Settings({
       document.documentElement.classList.add("theme-borderless");
     } else {
       document.documentElement.classList.remove("theme-borderless");
+    }
+
+    if (general.tabStyle === "pills") {
+      document.documentElement.classList.add("theme-tab-pills");
+    } else {
+      document.documentElement.classList.remove("theme-tab-pills");
     }
   }, [generalLoaded]);
 
@@ -313,6 +320,13 @@ export function Settings({
         document.documentElement.classList.add("theme-borderless");
       } else {
         document.documentElement.classList.remove("theme-borderless");
+      }
+    }
+    if (key === "tabStyle") {
+      if (value === "pills") {
+        document.documentElement.classList.add("theme-tab-pills");
+      } else {
+        document.documentElement.classList.remove("theme-tab-pills");
       }
     }
   }
@@ -710,6 +724,16 @@ export function Settings({
                           { value: "borderless", label: t("borderStyleBorderless") },
                         ]}
                         onChange={(v) => updateGeneral("borderStyle", v)}
+                      />
+                    </ControlRow>
+                    <ControlRow label={t("tabStyle")} description={t("tabStyleDesc")}>
+                      <Select
+                        value={general.tabStyle}
+                        options={[
+                          { value: "default", label: t("tabStyleDefault") },
+                          { value: "pills", label: t("tabStylePills") },
+                        ]}
+                        onChange={(v) => updateGeneral("tabStyle", v)}
                       />
                     </ControlRow>
                   </div>

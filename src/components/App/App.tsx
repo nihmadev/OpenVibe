@@ -66,6 +66,7 @@ export function App(): React.ReactElement {
   const [gitPanelOpen, setGitPanelOpen] = useState(false);
   const [openFiles, setOpenFiles] = useState<string[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<string | null>(null);
   const [hoveredProject, setHoveredProject] = useState<Project | null>(null);
   const [hoveredChats, setHoveredChats] = useState<ChatSummary[]>([]);
 
@@ -101,6 +102,19 @@ export function App(): React.ReactElement {
   );
 
   const { connectedModels, handlePickModel } = useModels(config, setConfig, settingsOpen);
+  const [reasoningEffort, setReasoningEffort] = useState<string | undefined>(config?.reasoningEffort ?? undefined);
+  useEffect(() => {
+    setReasoningEffort(config?.reasoningEffort ?? undefined);
+  }, [config?.reasoningEffort]);
+  const handleReasoningEffortChange = useCallback(
+    (effort: string | null) => {
+      const val = effort ?? undefined;
+      setReasoningEffort(val);
+      window.vibe.setReasoningEffort(effort);
+      if (config) setConfig({ ...config, reasoningEffort: val });
+    },
+    [config],
+  );
 
   const { items, setItems, busy, streamingNow, pendingAttachments } = useVibeEvents(useCallback(() => {}, []));
 
@@ -166,12 +180,31 @@ export function App(): React.ReactElement {
     [projects],
   );
 
-  const handleOpenFile = useCallback((path: string, line?: number, column?: number, matchLength?: number) => {
-    setOpenFiles((prev) => (prev.includes(path) ? prev : [...prev, path]));
-    setActiveFile(path);
-    setGotoLine(line);
-    setGotoColumn(column);
-    setGotoMatchLength(matchLength);
+  const handleOpenFile = useCallback(
+    (path: string, line?: number, column?: number, matchLength?: number) => {
+      let needsPreview = false;
+      setOpenFiles((prev) => {
+        if (prev.includes(path)) return prev;
+        needsPreview = true;
+        const previewIdx = previewFile !== null ? prev.indexOf(previewFile) : -1;
+        if (previewIdx !== -1) {
+          const next = [...prev];
+          next[previewIdx] = path;
+          return next;
+        }
+        return [...prev, path];
+      });
+      setActiveFile(path);
+      if (needsPreview) setPreviewFile(path);
+      setGotoLine(line);
+      setGotoColumn(column);
+      setGotoMatchLength(matchLength);
+    },
+    [previewFile],
+  );
+
+  const handlePinFile = useCallback((path: string) => {
+    setPreviewFile((prev) => (prev === path ? null : prev));
   }, []);
 
   const handleCloseFile = useCallback((path: string) => {
@@ -183,6 +216,7 @@ export function App(): React.ReactElement {
         const idx = prev.indexOf(path);
         return next[Math.min(idx, next.length - 1)] ?? null;
       });
+      setPreviewFile((cur) => (cur === path ? null : cur));
       return next;
     });
   }, []);
@@ -582,6 +616,8 @@ export function App(): React.ReactElement {
               handlePickModel={handlePickModel}
               handleSubmit={handleSubmit}
               onStop={() => window.vibe.stop()}
+              reasoningEffort={reasoningEffort}
+              onReasoningEffortChange={handleReasoningEffortChange}
               terminalOpen={terminalOpen}
               setTerminalOpen={setTerminalOpen}
               fileTreeOpen={fileTreeOpen}
@@ -589,9 +625,11 @@ export function App(): React.ReactElement {
               connectedModels={connectedModels}
               openFiles={openFiles}
               activeFile={activeFile}
+              previewFile={previewFile}
               handleOpenFile={handleOpenFile}
               handleCloseFile={handleCloseFile}
               handleActivateFile={handleActivateFile}
+              onPinFile={handlePinFile}
               setItems={setItems}
               setProjects={setProjects}
               searchInCodeOpen={searchInCodeOpen}

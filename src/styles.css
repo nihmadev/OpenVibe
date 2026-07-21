@@ -17,7 +17,7 @@
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   /* Border radius scale — controlled via settings */
-  --radius: 6px;
+  --radius: 10px;
   --radius-xs: max(2px, calc(var(--radius) - 3px));
   --radius-sm: max(3px, calc(var(--radius) - 2px));
   --radius-md: var(--radius);

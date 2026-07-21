@@ -28,3 +28,13 @@ export function getFolderIcon(name: string | undefined, open: boolean): string {
   if (icon) return `${icon}.svg`;
   return open ? "folder-open.svg" : "folder.svg";
 }
+
+export function getFileIconUrl(filename: string): string {
+  const icon = getFileIcon(filename) ?? "document.svg";
+  return `icons/symbols/files/${icon}`;
+}
+
+export function getFolderIconUrl(name?: string, open: boolean = false): string {
+  const icon = getFolderIcon(name, open);
+  return `icons/symbols/folders/${icon}`;
+}

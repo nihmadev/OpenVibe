@@ -141,6 +141,9 @@ interface AppMainProps {
   handlePickModel: (model: string) => void;
   handleSubmit: (payload: any) => void;
   onStop: () => void;
+  reasoningEffort?: string;
+  onReasoningEffortChange?: (effort: string | null) => void;
+  providerId?: string;
   terminalOpen: boolean;
   setTerminalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   fileTreeOpen: boolean;
@@ -149,9 +152,11 @@ interface AppMainProps {
   connectedModels: any[];
   openFiles: string[];
   activeFile: string | null;
+  previewFile: string | null;
   handleOpenFile: (path: string, line?: number, column?: number) => void;
   handleCloseFile: (path: string) => void;
   handleActivateFile: (path: string) => void;
+  onPinFile: (path: string) => void;
   setItems: React.Dispatch<React.SetStateAction<any[]>>;
   revealPath?: string | null;
   setProjects?: (projects: Project[]) => void;
@@ -195,14 +200,19 @@ export function AppMain({
   handlePickModel,
   handleSubmit,
   onStop,
+  reasoningEffort,
+  onReasoningEffortChange,
+  providerId,
   terminalOpen,
   setTerminalOpen,
   connectedModels,
   openFiles,
   activeFile,
+  previewFile,
   handleOpenFile,
   handleCloseFile,
   handleActivateFile,
+  onPinFile,
   setItems,
   fileTreeOpen,
   gitPanelOpen = false,
@@ -238,14 +248,18 @@ export function AppMain({
 
   // dirty files set — tracked here so EditorArea tabs can show the dot
   const [dirtyFiles, setDirtyFiles] = useState<Set<string>>(new Set());
-  const handleDirtyChange = useCallback((path: string, dirty: boolean) => {
-    setDirtyFiles((prev) => {
-      const next = new Set(prev);
-      if (dirty) next.add(path);
-      else next.delete(path);
-      return next;
-    });
-  }, []);
+  const handleDirtyChange = useCallback(
+    (path: string, dirty: boolean) => {
+      setDirtyFiles((prev) => {
+        const next = new Set(prev);
+        if (dirty) next.add(path);
+        else next.delete(path);
+        return next;
+      });
+      if (dirty) onPinFile(path);
+    },
+    [onPinFile],
+  );
 
   // ── Rollback state ──
   const [rollbackIndex, setRollbackIndex] = useState<number | null>(null);
@@ -411,7 +425,7 @@ export function AppMain({
           {/* Chat panel */}
           <div
             ref={chatPanelRef}
-            className="layout__chat"
+            className={"layout__chat" + (items.length === 0 ? " layout__chat--empty" : "")}
             style={
               openFiles.length > 0
                 ? chatWidth === null
@@ -503,6 +517,9 @@ export function AppMain({
                   rollbackFilesChanged={rollbackChanged}
                   rollbackMessagesRemoved={rollbackRemoved}
                   onRollbackRestore={handleUndoRollback}
+                  providerId={config.providerId}
+                  currentEffort={reasoningEffort}
+                  onReasoningEffortChange={onReasoningEffortChange}
                 />
               </>
             )}
@@ -605,10 +622,12 @@ export function AppMain({
                 <EditorArea
                   openFiles={openFiles}
                   activeFile={activeFile}
+                  previewFile={previewFile}
                   dirtyFiles={dirtyFiles}
                   onActivate={handleActivateFile}
                   onClose={handleCloseFile}
                   onDirtyChange={handleDirtyChange}
+                  onPinFile={onPinFile}
                   cwd={cwd}
                   gotoLine={gotoLine}
                   gotoColumn={gotoColumn}
