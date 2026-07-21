@@ -7,9 +7,16 @@ use crate::types::{ContextSnippet, EditorEventBatch, Scg2Config};
 use parking_lot::Mutex;
 use std::fs;
 use std::path::Path;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use tracing::debug;
+
+struct Scg2Cache {
+    context: String,
+    query: Option<String>,
+    generation: u64,
+}
 
 /// The central orchestration engine for Smart Context Generation 2 (SCG2).
 ///
@@ -23,6 +30,8 @@ pub struct Scg2Engine {
     _config: Scg2Config,
     tx_events: mpsc::Sender<EditorEventBatch>,
     rx_events: Mutex<Option<mpsc::Receiver<EditorEventBatch>>>,
+    generation: AtomicU64,
+    cache: Mutex<Option<Scg2Cache>>,
 }
 
 impl Scg2Engine {
@@ -43,6 +52,8 @@ impl Scg2Engine {
             _config: config,
             tx_events,
             rx_events: Mutex::new(Some(rx_events)),
+            generation: AtomicU64::new(0),
+            cache: Mutex::new(None),
         }
     }
 
@@ -137,6 +148,7 @@ impl Scg2Engine {
         if let Err(e) = self.tx_events.try_send(batch) {
             debug!("SCG2 event queue full or dropped: {}", e);
         }
+        self.generation.fetch_add(1, Ordering::Release);
     }
 
     /// Evaluates workspace state heuristics and compiles a list of top-scored `ContextSnippet` instances.
@@ -151,7 +163,23 @@ impl Scg2Engine {
 
     /// Evaluates workspace state heuristics and formats selected code snippets into a markdown system prompt block.
     pub fn get_smart_context(&self, cwd: &Path, query: Option<&str>) -> String {
+        let current_gen = self.generation.load(Ordering::Acquire);
+        {
+            let cache_lock = self.cache.lock();
+            if let Some(ref cached) = *cache_lock {
+                if cached.generation == current_gen && cached.query.as_deref() == query {
+                    return cached.context.clone();
+                }
+            }
+        }
         let snippets = self.get_smart_snippets(cwd, query);
-        self.assembler.format_prompt_section(&snippets)
+        let context = self.assembler.format_prompt_section(&snippets);
+        let mut cache_lock = self.cache.lock();
+        *cache_lock = Some(Scg2Cache {
+            context: context.clone(),
+            query: query.map(String::from),
+            generation: current_gen,
+        });
+        context
     }
 }

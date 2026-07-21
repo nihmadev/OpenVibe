@@ -13,6 +13,7 @@ import {
   setCursorPosition,
   setRangeEdge,
 } from "./utils/editor-dom.js";
+import { createMarkdownFragment } from "./utils/markdown.js";
 import {
   canNavigateHistoryAtCursor,
   navigatePromptHistory,
@@ -123,9 +124,7 @@ function RollbackPill({
     >
       <div style={{ display: "flex", alignItems: "center", gap: "6px", overflow: "hidden", textOverflow: "ellipsis" }}>
         <RefreshCwIcon width={13} height={13} />
-        <span>
-          {fileCount > 0 ? `${fileCount} files modified` : "Rollback active"}
-        </span>
+        <span>{fileCount > 0 ? `${fileCount} files modified` : "Rollback active"}</span>
       </div>
       <button
         onClick={onRestore}
@@ -178,6 +177,26 @@ export function PromptInput({
   const [composing, setComposing] = useState(false);
   const [popover, setPopover] = useState<"at" | null>(null);
   const [dirty, setDirty] = useState(false);
+
+  const [markdownEnabled, setMarkdownEnabled] = useState<boolean>(
+    () => localStorage.getItem("openvibe_prompt_markdown") !== "false",
+  );
+  const [showGhostSyntax, setShowGhostSyntax] = useState<boolean>(
+    () => localStorage.getItem("openvibe_prompt_markdown_ghost") === "true",
+  );
+
+  useEffect(() => {
+    const handleSettingsChange = () => {
+      setMarkdownEnabled(localStorage.getItem("openvibe_prompt_markdown") !== "false");
+      setShowGhostSyntax(localStorage.getItem("openvibe_prompt_markdown_ghost") === "true");
+    };
+    window.addEventListener("vibe:settings-changed", handleSettingsChange);
+    window.addEventListener("storage", handleSettingsChange);
+    return () => {
+      window.removeEventListener("vibe:settings-changed", handleSettingsChange);
+      window.removeEventListener("storage", handleSettingsChange);
+    };
+  }, []);
 
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -322,7 +341,11 @@ export function PromptInput({
       el.innerHTML = "";
       for (const part of parts) {
         if (part.type === "text") {
-          el.appendChild(createTextFragment(part.content));
+          if (markdownEnabled) {
+            el.appendChild(createMarkdownFragment(part.content, { showSyntaxMarkers: showGhostSyntax }));
+          } else {
+            el.appendChild(createTextFragment(part.content));
+          }
           continue;
         }
         if (part.type === "file") {
@@ -334,16 +357,23 @@ export function PromptInput({
       if (last?.nodeType === Node.ELEMENT_NODE && (last as HTMLElement).tagName === "BR")
         el.appendChild(document.createTextNode("\u200B"));
     },
-    [createPill],
+    [createPill, markdownEnabled, showGhostSyntax],
   );
 
-  const setEditorText = useCallback((text: string) => {
-    const el = editorRef.current;
-    if (el) {
-      el.innerHTML = "";
-      el.textContent = text;
-    }
-  }, []);
+  const setEditorText = useCallback(
+    (text: string) => {
+      const el = editorRef.current;
+      if (el) {
+        el.innerHTML = "";
+        if (markdownEnabled) {
+          el.appendChild(createMarkdownFragment(text, { showSyntaxMarkers: showGhostSyntax }));
+        } else {
+          el.appendChild(createTextFragment(text));
+        }
+      }
+    },
+    [markdownEnabled, showGhostSyntax],
+  );
 
   const clearEditor = useCallback(() => {
     const el = editorRef.current;
@@ -432,6 +462,14 @@ export function PromptInput({
       return;
     }
     setDirty(true);
+
+    if (!composing) {
+      const cursor = getCursor();
+      const parts = parseEditor();
+      renderEditor(parts);
+      setCursorPosition(el, cursor);
+    }
+
     if (mode === "normal") {
       const cursor = getCursor();
       const atMatch = text.slice(0, cursor).match(/@(\S*)$/);
@@ -445,7 +483,19 @@ export function PromptInput({
     } else setPopover(null);
     setHistoryIndex(-1);
     queueScroll();
-  }, [mode, attachments.length, dirty, editorText, getCursor, onAtInput, queueScroll]);
+  }, [
+    mode,
+    attachments.length,
+    dirty,
+    composing,
+    editorText,
+    getCursor,
+    onAtInput,
+    parseEditor,
+    renderEditor,
+    closeMention,
+    queueScroll,
+  ]);
 
   const addPartAtCursor = useCallback(
     (part: EditorPart) => {

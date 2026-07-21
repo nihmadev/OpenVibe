@@ -10,6 +10,12 @@ pub fn load_config(cwd: &str) -> Config {
     let cwd_env = PathBuf::from(cwd).join(".env");
     dotenv::load_dotenv(&cwd_env, &mut env);
 
+    // Global API key fallback: %APPDATA%/OpenVibe/.env
+    if let Some(data_dir) = dirs::data_dir() {
+        let app_env = data_dir.join("OpenVibe").join(".env");
+        dotenv::load_dotenv(&app_env, &mut env);
+    }
+
     if let Some(home) = dirs::home_dir() {
         let vibe_config = home.join(".vibe").join("config");
         dotenv::load_dotenv(&vibe_config, &mut env);
@@ -247,5 +253,6 @@ pub fn load_config(cwd: &str) -> Config {
         auto_approve: true,
         provider_id,
         api_url,
+        reasoning_effort: None,
     }
 }

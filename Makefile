@@ -39,6 +39,15 @@ clean:
 setup:
 	npm run setup
 
+cli:
+	cargo build -p openvibe-cli
+
+cli-run:
+	cargo run -p openvibe-cli
+
+cli-check:
+	cargo check -p openvibe-cli
+
 docker-build:
 	docker build -t openvibe-builder .
 

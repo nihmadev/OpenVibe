@@ -22,6 +22,7 @@ export async function fileToAttachment(file: File): Promise<Attachment | null> {
   const dataUrl = await fileToDataUrl(file);
   return {
     id: newAttachId(),
+    kind: "image",
     name: file.name,
     dataUrl,
     sizeBytes: file.size,

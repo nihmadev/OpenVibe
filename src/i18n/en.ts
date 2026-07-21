@@ -623,4 +623,8 @@ export const en: Partial<Translations> = {
   animSnappy: "Snappy (0.5x)",
   animUltraSmooth: "Ultra Smooth (2x)",
   animDisabled: "Disabled (0x)",
+  promptMarkdown: "Markdown in Prompt Input",
+  promptMarkdownDesc: "Render Markdown formatting live while typing prompts",
+  promptMarkdownGhost: "Show Syntax Markers (**)",
+  promptMarkdownGhostDesc: "Display dimmed syntax characters (**, `, #) inside formatted text",
 };

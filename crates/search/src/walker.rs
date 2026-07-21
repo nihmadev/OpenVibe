@@ -28,10 +28,21 @@ fn relpath(path: &str, base: &str) -> String {
     let p = Path::new(path);
     let b = Path::new(base);
     if let Ok(rel) = p.strip_prefix(b) {
-        rel.to_string_lossy().to_string()
-    } else {
-        path.to_string()
+        return rel.to_string_lossy().replace('\\', "/");
     }
+
+    let p_norm = path.replace('\\', "/");
+    let b_norm = base.replace('\\', "/");
+    let p_lower = p_norm.to_lowercase();
+    let b_lower = b_norm.to_lowercase();
+    if p_lower.starts_with(&b_lower) {
+        let mut rel = &p_norm[b_norm.len()..];
+        if rel.starts_with('/') {
+            rel = &rel[1..];
+        }
+        return rel.to_string();
+    }
+    p_norm
 }
 
 fn walk(root: &Path) -> Vec<WalkEntry> {
@@ -103,15 +114,35 @@ fn ensure_index(root: &str) -> Vec<WalkEntry> {
 }
 
 fn score(haystack: &str, needle: &str) -> f64 {
-    if needle.is_empty() {
-        return 1.0;
+    let h = haystack.to_lowercase().replace('\\', "/");
+    let n = needle.to_lowercase().replace('\\', "/");
+
+    if n.is_empty() {
+        let base = h.split('/').next_back().unwrap_or(&h);
+        let depth = h.match_indices('/').count() as f64;
+        let mut penalty = 0.0;
+        if base.ends_with(".mod")
+            || base.ends_with(".sum")
+            || base.ends_with(".lock")
+            || base.starts_with('.')
+        {
+            penalty -= 20.0;
+        }
+        if depth == 0.0 {
+            penalty -= 5.0;
+        }
+        return 1.0 + depth * 3.0 + penalty;
     }
-    let h = haystack.to_lowercase();
-    let n = needle.to_lowercase();
-    let base = h.split(['/', '\\']).next_back().unwrap_or(&h).to_string();
+
+    let base = h.split('/').next_back().unwrap_or(&h).to_string();
+    if base == n {
+        return 200.0 - h.len() as f64 / 1000.0;
+    }
+    if base.starts_with(&n) {
+        return 150.0 - h.len() as f64 / 1000.0;
+    }
     if base.contains(&n) {
-        let bonus = if base.starts_with(&n) { 50.0 } else { 0.0 };
-        return 100.0 + bonus - h.len() as f64 / 1000.0;
+        return 100.0 - h.len() as f64 / 1000.0;
     }
     if h.contains(&n) {
         return 50.0 - h.len() as f64 / 1000.0;

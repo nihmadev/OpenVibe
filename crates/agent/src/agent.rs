@@ -15,6 +15,7 @@ pub struct Agent {
     pub file_snapshots: Vec<SnapshotEntry>,
     pub undo_state: Option<UndoState>,
     todo_context: Option<String>,
+    pub last_prompt_tokens: Option<usize>,
 }
 
 impl Agent {
@@ -36,6 +37,7 @@ impl Agent {
             file_snapshots: Vec::new(),
             undo_state: None,
             todo_context: None,
+            last_prompt_tokens: None,
         }
     }
 
@@ -84,6 +86,7 @@ impl Agent {
         self.file_snapshots.clear();
         self.undo_state = None;
         self.todo_context = None;
+        self.last_prompt_tokens = None;
     }
 
     pub fn set_cwd(&mut self, cwd: String) {
@@ -103,6 +106,7 @@ impl Agent {
         self.file_snapshots.clear();
         self.undo_state = None;
         self.todo_context = None;
+        self.last_prompt_tokens = None;
     }
 
     pub fn set_messages(&mut self, msgs: Vec<ChatMessage>) {

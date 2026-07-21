@@ -9,6 +9,8 @@ export interface Attachment {
   name: string;
   /** Image data URL. */
   dataUrl?: string;
+  /** Size in bytes. */
+  sizeBytes?: number;
 }
 
 export interface SendPayload {

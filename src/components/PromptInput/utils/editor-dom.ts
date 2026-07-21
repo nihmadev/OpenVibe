@@ -27,7 +27,54 @@ export function readEditorParts(root: HTMLElement): EditorPart[] {
       buffer += "\n";
       return;
     }
+
+    const hasSyntax = element.querySelector(".prompt-input__md-syntax") !== null;
+    const cl = element.classList;
+
+    const prefix = !hasSyntax
+      ? cl.contains("prompt-input__md-bold")
+        ? "**"
+        : cl.contains("prompt-input__md-italic")
+          ? "*"
+          : cl.contains("prompt-input__md-code")
+            ? "`"
+            : cl.contains("prompt-input__md-strike")
+              ? "~~"
+              : cl.contains("prompt-input__md-h-plain")
+                ? "# "
+                : cl.contains("prompt-input__md-h3")
+                  ? "### "
+                  : cl.contains("prompt-input__md-h4")
+                    ? "#### "
+                    : cl.contains("prompt-input__md-blockquote")
+                      ? "> "
+                      : cl.contains("prompt-input__md-list-item")
+                        ? (element.dataset.bullet ?? "- ")
+                        : ""
+      : "";
+
+    const suffix = !hasSyntax
+      ? cl.contains("prompt-input__md-bold")
+        ? "**"
+        : cl.contains("prompt-input__md-italic")
+          ? "*"
+          : cl.contains("prompt-input__md-code")
+            ? "`"
+            : cl.contains("prompt-input__md-strike")
+              ? "~~"
+              : cl.contains("prompt-input__md-link") && element.dataset.url
+                ? `](${element.dataset.url})`
+                : ""
+      : "";
+
+    if (!hasSyntax && cl.contains("prompt-input__md-link")) {
+      buffer += "[";
+    } else {
+      buffer += prefix;
+    }
+
     for (const child of Array.from(element.childNodes)) walk(child);
+    buffer += suffix;
   };
 
   Array.from(root.childNodes).forEach((child, index, children) => {
@@ -93,10 +140,30 @@ export function getCursorPosition(parent: HTMLElement): number {
   return getTextLength(preCaretRange.cloneContents());
 }
 
+export function getLeafNodes(parent: Node): Node[] {
+  const leaves: Node[] = [];
+  const walk = (node: Node) => {
+    const isPill =
+      node.nodeType === Node.ELEMENT_NODE &&
+      ((node as HTMLElement).dataset.type === "file" || (node as HTMLElement).dataset.type === "agent");
+    const isBreak = node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).tagName === "BR";
+    if (node.nodeType === Node.TEXT_NODE || isPill || isBreak) {
+      leaves.push(node);
+      return;
+    }
+    for (const child of Array.from(node.childNodes)) {
+      walk(child);
+    }
+  };
+  walk(parent);
+  return leaves;
+}
+
 export function setCursorPosition(parent: HTMLElement, position: number) {
   let remaining = position;
-  let node = parent.firstChild;
-  while (node) {
+  const leaves = getLeafNodes(parent);
+
+  for (const node of leaves) {
     const length = getNodeLength(node);
     const isText = node.nodeType === Node.TEXT_NODE;
     const isPill =
@@ -139,17 +206,17 @@ export function setCursorPosition(parent: HTMLElement, position: number) {
     }
 
     remaining -= length;
-    node = node.nextSibling;
   }
 
   const fallbackRange = document.createRange();
   const fallbackSelection = window.getSelection();
-  const last = parent.lastChild;
+  const last = leaves[leaves.length - 1];
   if (last && last.nodeType === Node.TEXT_NODE) {
     const len = last.textContent ? last.textContent.length : 0;
     fallbackRange.setStart(last, len);
-  }
-  if (!last || last.nodeType !== Node.TEXT_NODE) {
+  } else if (last) {
+    fallbackRange.setStartAfter(last);
+  } else {
     fallbackRange.selectNodeContents(parent);
   }
   fallbackRange.collapse(false);
@@ -159,9 +226,9 @@ export function setCursorPosition(parent: HTMLElement, position: number) {
 
 export function setRangeEdge(parent: HTMLElement, range: Range, edge: "start" | "end", offset: number) {
   let remaining = offset;
-  const nodes = Array.from(parent.childNodes);
+  const leaves = getLeafNodes(parent);
 
-  for (const node of nodes) {
+  for (const node of leaves) {
     const length = getNodeLength(node);
     const isText = node.nodeType === Node.TEXT_NODE;
     const isPill =

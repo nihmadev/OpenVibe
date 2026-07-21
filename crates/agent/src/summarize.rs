@@ -51,6 +51,7 @@ impl Agent {
             model: config.model.clone(),
             api_url: config.api_url.clone(),
             provider_id: config.provider_id.clone(),
+            reasoning_effort: None,
         };
 
         let title_capture = title.clone();

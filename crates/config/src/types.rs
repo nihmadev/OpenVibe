@@ -9,6 +9,7 @@ pub struct Config {
     pub auto_approve: bool,
     pub provider_id: Option<String>,
     pub api_url: Option<String>,
+    pub reasoning_effort: Option<String>,
 }
 
 impl Config {
@@ -20,6 +21,7 @@ impl Config {
             cwd: self.cwd.clone(),
             api_url: self.api_url.clone(),
             provider_id: self.provider_id.clone(),
+            reasoning_effort: self.reasoning_effort.clone(),
         }
     }
 }

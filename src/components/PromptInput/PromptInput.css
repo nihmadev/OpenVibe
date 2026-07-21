@@ -898,3 +898,110 @@
   white-space: nowrap;
   color: var(--fg);
 }
+
+/* ── Markdown styling inside PromptInput editor ── */
+.prompt-input__md-syntax {
+  opacity: 0.45;
+  font-weight: normal;
+  user-select: text;
+}
+
+/* Headings: # (H1) and ## (H2) stay normal font size (14px) so input remains compact */
+.prompt-input__md-h-plain {
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 1.45;
+  color: var(--fg);
+  display: inline;
+}
+
+/* H3 .. H6 headings */
+.prompt-input__md-h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+  line-height: 1.4;
+  display: inline;
+}
+
+.prompt-input__md-h4,
+.prompt-input__md-h5,
+.prompt-input__md-h6 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  line-height: 1.45;
+  display: inline;
+}
+
+/* Inline formatting */
+.prompt-input__md-bold {
+  font-weight: 600;
+  color: var(--fg);
+  display: inline;
+}
+
+.prompt-input__md-italic {
+  font-style: italic;
+  display: inline;
+}
+
+.prompt-input__md-strike {
+  text-decoration: line-through;
+  opacity: 0.75;
+  display: inline;
+}
+
+.prompt-input__md-code {
+  font-family: var(--mono);
+  background: var(--bg-3, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--fg);
+  display: inline;
+}
+
+.prompt-input__md-codeblock {
+  display: inline-block;
+  font-family: var(--mono);
+  background: var(--bg-3, rgba(0, 0, 0, 0.2));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--fg);
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.prompt-input__md-blockquote {
+  display: inline-block;
+  border-left: 3px solid var(--line-strong, #555);
+  padding-left: 8px;
+  color: var(--fg-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+.prompt-input__md-hr {
+  display: inline-block;
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  margin: 0;
+  opacity: 0.6;
+}
+
+.prompt-input__md-list-item {
+  display: inline;
+  padding-left: 0;
+  margin: 0;
+}
+
+.prompt-input__md-link {
+  color: var(--accent-color, #3b82f6);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  display: inline;
+}

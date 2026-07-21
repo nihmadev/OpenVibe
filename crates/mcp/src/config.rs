@@ -104,25 +104,19 @@ pub struct RootConfig {
     pub servers: Option<Vec<McpServerConfig>>,
 }
 
-pub fn resolve_config_path<P: AsRef<Path>>(cwd_path: P) -> std::path::PathBuf {
+pub fn resolve_config_path<P: AsRef<Path>>(
+    cwd_path: P,
+    global_config_dir: P,
+) -> std::path::PathBuf {
     let project_config = cwd_path.as_ref().join("openvibe.toml");
     if project_config.exists() {
         return project_config;
     }
-    if let Ok(home) = std::env::var("HOME") {
-        let home_path = std::path::PathBuf::from(home);
-        let global_dir = home_path.join(".config").join("openvibe");
-        let global_config = global_dir.join("openvibe.toml");
-        if global_config.exists() {
-            return global_config;
-        }
-        let global_file = home_path.join(".config").join("openvibe.toml");
-        if global_file.exists() {
-            return global_file;
-        }
+    let global_config = global_config_dir.as_ref().join("openvibe.toml");
+    if global_config.exists() {
+        return global_config;
     }
-
-    project_config
+    global_config
 }
 
 pub fn load_mcp_config<P: AsRef<Path>>(path: P) -> Result<McpConfig, String> {

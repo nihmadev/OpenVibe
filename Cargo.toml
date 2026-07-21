@@ -1,9 +1,23 @@
 [workspace]
 resolver = "2"
-members = ["src-tauri", "crates/*"]
+members = [
+    "src-tauri",
+    "crates/agent",
+    "crates/agent-tool",
+    "crates/chats",
+    "crates/config",
+    "crates/db",
+    "crates/editor",
+    "crates/git",
+    "crates/lsp",
+    "crates/mcp",
+    "crates/scg2",
+    "crates/search",
+    "crates/terminal",
+]
 
 [profile.release]
 strip = true
 lto = "thin"
 codegen-units = 1
-opt-level = 2
+opt-level = 3

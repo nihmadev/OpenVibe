@@ -11,6 +11,9 @@ pub const SKIP_DIRS: &[&str] = &[
     ".vite",
     "target",
     ".vscode",
+    "monaco",
+    "monaco-editor",
+    "vendor",
 ];
 
 pub const MAX_FILE_BYTES: u64 = 256 * 1024;

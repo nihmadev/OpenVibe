@@ -6,6 +6,7 @@ pub struct AgentConfig {
     pub cwd: String,
     pub api_url: Option<String>,
     pub provider_id: Option<String>,
+    pub reasoning_effort: Option<String>,
 }
 
 impl AgentConfig {
@@ -16,6 +17,7 @@ impl AgentConfig {
             model: self.model.clone(),
             api_url: self.api_url.clone(),
             provider_id: self.provider_id.clone(),
+            reasoning_effort: self.reasoning_effort.clone(),
         }
     }
 }
@@ -28,4 +30,5 @@ pub struct LlmConfig {
     pub model: String,
     pub api_url: Option<String>,
     pub provider_id: Option<String>,
+    pub reasoning_effort: Option<String>,
 }

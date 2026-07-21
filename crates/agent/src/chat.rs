@@ -24,12 +24,24 @@ pub struct ToolCall {
     #[serde(rename = "type")]
     pub type_: String,
     pub function: ToolCallFunction,
+    #[serde(flatten, default, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub extra_fields: serde_json::Map<String, serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ToolCallFunction {
     pub name: String,
     pub arguments: String,
+    #[serde(flatten, default, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub extra_fields: serde_json::Map<String, serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct TokenUsage {
+    pub prompt_tokens: usize,
+    pub completion_tokens: usize,
+    pub total_tokens: usize,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -38,4 +50,5 @@ pub struct AssistantTurn {
     pub tool_calls: Vec<ToolCall>,
     pub reasoning_content: Option<String>,
     pub reasoning_name: Option<String>,
+    pub usage: Option<TokenUsage>,
 }

@@ -677,6 +677,10 @@ export const ru = {
   animSnappy: "Быстрые (0.5x)",
   animUltraSmooth: "Ультра плавные (2x)",
   animDisabled: "Отключены (0x)",
+  promptMarkdown: "Markdown в поле ввода",
+  promptMarkdownDesc: "Отрисовка форматирования Markdown при вводе промптов",
+  promptMarkdownGhost: "Показывать символы синтаксиса (**)",
+  promptMarkdownGhostDesc: "Отображать затемненные спецсимволы (**, `, #) внутри форматированного текста",
 };
 
 export type Translations = typeof ru;

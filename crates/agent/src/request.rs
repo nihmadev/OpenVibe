@@ -47,7 +47,13 @@ pub async fn stream_chat(
             "model": config.model,
             "messages": messages_to_api_json(outbound_messages),
             "stream": true,
+            "stream_options": { "include_usage": true },
         });
+        if let Some(ref effort) = config.reasoning_effort {
+            if !effort.is_empty() {
+                body["reasoning_effort"] = serde_json::json!(effort);
+            }
+        }
         if !tools.is_empty() {
             body["tools"] = serde_json::json!(tools);
             body["tool_choice"] = serde_json::json!("auto");
@@ -76,7 +82,6 @@ pub async fn stream_chat(
                             }
                         }
                         if status_val == 413 {
-                            on_delta("[context too long, trimming history…]");
                             current_messages = trim_messages(current_messages, 10);
                             tokio::time::sleep(Duration::from_millis(1000)).await;
                             continue;
@@ -88,10 +93,6 @@ pub async fn stream_chat(
                     }
 
                     wait_ms = wait_ms.min(60000);
-                    on_delta(&format!(
-                        "[rate limited, retrying in {}s…]",
-                        (wait_ms as f64 / 1000.0).ceil()
-                    ));
                     tokio::time::sleep(Duration::from_millis(wait_ms)).await;
                     continue;
                 }

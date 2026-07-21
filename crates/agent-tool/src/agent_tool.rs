@@ -14,7 +14,7 @@ use crate::{bash, list_dir, read, search};
 // A research helper should converge quickly. Long autonomous explorations are
 // especially harmful because every tool result is fed back into its context.
 const MAX_TURNS: usize = 12;
-const MAX_TOOL_CALLS: usize = 10;
+const MAX_TOOL_CALLS: usize = 100;
 
 static SUB_AGENT_CLIENT: std::sync::OnceLock<reqwest::Client> = std::sync::OnceLock::new();
 
@@ -136,15 +136,45 @@ pub async fn execute(
             return Ok(full_result.trim().to_string());
         }
 
+        let mut sub_content = if turn.content.trim().is_empty() {
+            None
+        } else {
+            Some(serde_json::Value::String(turn.content.clone()))
+        };
+
+        if !turn.tool_calls.is_empty() {
+            let reasoning = turn.reasoning_content.as_deref().unwrap_or("");
+            let tag_name = turn.reasoning_name.as_deref().unwrap_or("Thinking");
+            let thought_text = if reasoning.trim().is_empty() {
+                "Analyzing and preparing tool execution."
+            } else {
+                reasoning.trim()
+            };
+            let thought_block = format!(
+                "<thought name=\"{}\">\n{}\n</thought>",
+                tag_name, thought_text
+            );
+
+            let current_text = match &sub_content {
+                Some(serde_json::Value::String(s)) => s.clone(),
+                _ => String::new(),
+            };
+
+            if !current_text.contains("<thought") {
+                let new_text = if current_text.trim().is_empty() {
+                    thought_block
+                } else {
+                    format!("{}\n{}", thought_block, current_text)
+                };
+                sub_content = Some(serde_json::Value::String(new_text));
+            }
+        }
+
         // Preserve the assistant tool-call message so every following tool
         // result has a valid parent in the provider conversation protocol.
         sub_messages.push(ChatMessage {
             role: "assistant".to_string(),
-            content: if turn.content.trim().is_empty() {
-                None
-            } else {
-                Some(serde_json::Value::String(turn.content.clone()))
-            },
+            content: sub_content,
             name: None,
             tool_call_id: None,
             tool_calls: Some(turn.tool_calls.clone()),

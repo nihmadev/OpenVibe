@@ -818,7 +818,17 @@ export function StopIcon(): React.ReactElement {
   );
 }
 
-export function RefreshCwIcon(): React.ReactElement {
+export function RefreshCwIcon({
+  width = 18,
+  height = 18,
+  className,
+  style,
+}: {
+  width?: number;
+  height?: number;
+  className?: string;
+  style?: React.CSSProperties;
+} = {}): React.ReactElement {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -827,8 +837,10 @@ export function RefreshCwIcon(): React.ReactElement {
       strokeWidth="2.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      width="18"
-      height="18"
+      width={width}
+      height={height}
+      className={className}
+      style={style}
     >
       <polyline points="1 4 1 10 7 10" />
       <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />

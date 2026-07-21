@@ -99,8 +99,75 @@ pub fn messages_to_api_json(messages: Vec<ChatMessage>) -> Vec<serde_json::Value
         .into_iter()
         .map(|m| {
             let mut obj = serde_json::Map::new();
-            obj.insert("role".to_string(), serde_json::Value::String(m.role));
-            if let Some(content) = m.content {
+            obj.insert(
+                "role".to_string(),
+                serde_json::Value::String(m.role.clone()),
+            );
+
+            let mut content_val = m.content.clone();
+
+            // If assistant message has tool_calls, ensure content includes a <thought> tag.
+            // Gemini 2.0 / 3.x models strictly enforce `thought_signature` or <thought> block
+            // in functionCall parts when returning assistant turns with tool_calls.
+            if m.role == "assistant" && m.tool_calls.as_ref().map_or(false, |tc| !tc.is_empty()) {
+                let reasoning = m.reasoning_content.as_deref().unwrap_or("");
+                let tag_name = m.reasoning_name.as_deref().unwrap_or("Thinking");
+                let thought_text = if reasoning.trim().is_empty() {
+                    "Executing tool call."
+                } else {
+                    reasoning.trim()
+                };
+
+                let thought_block = format!(
+                    "<thought name=\"{}\">\n{}\n</thought>",
+                    tag_name, thought_text
+                );
+
+                let current_text = match &content_val {
+                    Some(serde_json::Value::String(s)) => s.clone(),
+                    _ => String::new(),
+                };
+
+                if !current_text.contains("<thought") {
+                    let new_text = if current_text.trim().is_empty() {
+                        thought_block
+                    } else {
+                        format!("{}\n{}", thought_block, current_text)
+                    };
+                    content_val = Some(serde_json::Value::String(new_text));
+                }
+            } else if m.role == "assistant" {
+                if let Some(ref reasoning) = m.reasoning_content {
+                    if !reasoning.is_empty() {
+                        let tag_name = m.reasoning_name.as_deref().unwrap_or("");
+                        let thought_block = if tag_name.is_empty() {
+                            format!("<thought>\n{}\n</thought>", reasoning.trim())
+                        } else {
+                            format!(
+                                "<thought name=\"{}\">\n{}\n</thought>",
+                                tag_name,
+                                reasoning.trim()
+                            )
+                        };
+
+                        let current_text = match &content_val {
+                            Some(serde_json::Value::String(s)) => s.clone(),
+                            _ => String::new(),
+                        };
+
+                        if !current_text.contains("<thought") {
+                            let new_text = if current_text.trim().is_empty() {
+                                thought_block
+                            } else {
+                                format!("{}\n{}", thought_block, current_text)
+                            };
+                            content_val = Some(serde_json::Value::String(new_text));
+                        }
+                    }
+                }
+            }
+
+            if let Some(content) = content_val {
                 obj.insert("content".to_string(), content);
             }
             if let Some(name) = m.name {
@@ -125,6 +192,12 @@ pub fn messages_to_api_json(messages: Vec<ChatMessage>) -> Vec<serde_json::Value
                         serde_json::Value::String(reasoning_content.clone()),
                     );
                 }
+            } else if m.role == "assistant" && obj.contains_key("tool_calls") {
+                // If reasoning_content field wasn't present, add a dummy reasoning_content field for Gemini OpenAI proxy compatibility
+                obj.insert(
+                    "reasoning_content".to_string(),
+                    serde_json::Value::String("Thinking about tool call execution.".to_string()),
+                );
             }
             serde_json::Value::Object(obj)
         })

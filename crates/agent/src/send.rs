@@ -36,7 +36,9 @@ fn clean_tool_calls(tool_calls: Vec<ToolCall>) -> Vec<ToolCall> {
                     function: ToolCallFunction {
                         name,
                         arguments: args_str,
+                        extra_fields: call.function.extra_fields,
                     },
+                    extra_fields: call.extra_fields,
                 });
             }
             match serde_json::from_str::<serde_json::Value>(&args_str) {
@@ -56,7 +58,9 @@ fn clean_tool_calls(tool_calls: Vec<ToolCall>) -> Vec<ToolCall> {
                         function: ToolCallFunction {
                             name,
                             arguments: cleaned,
+                            extra_fields: call.function.extra_fields,
                         },
+                        extra_fields: call.extra_fields,
                     })
                 }
                 _ => Some(ToolCall {
@@ -65,7 +69,9 @@ fn clean_tool_calls(tool_calls: Vec<ToolCall>) -> Vec<ToolCall> {
                     function: ToolCallFunction {
                         name,
                         arguments: args_str,
+                        extra_fields: call.function.extra_fields,
                     },
+                    extra_fields: call.extra_fields,
                 }),
             }
         })
@@ -150,6 +156,8 @@ impl Agent {
         client: &reqwest::Client,
         emit: &(dyn for<'a> Fn(&'a str, serde_json::Value) + Send + Sync),
     ) {
+        self.cancel.store(false, Ordering::Relaxed);
+
         let tool_defs = executor.definitions();
         let cwd = self.config().cwd.clone();
         let llm_config = self.config().llm_config();
@@ -300,6 +308,12 @@ impl Agent {
                 }
             };
 
+            if let Some(ref u) = turn_result.usage {
+                if u.prompt_tokens > 0 {
+                    self.last_prompt_tokens = Some(u.prompt_tokens);
+                }
+            }
+
             let mut content_text = turn_result.content.trim().to_string();
             let noise_phrases = [
                 "done",
@@ -316,13 +330,45 @@ impl Agent {
             let cleaned_tool_calls = clean_tool_calls(turn_result.tool_calls);
             emit("vibe:agent:assistant-end", serde_json::Value::Null);
 
+            let mut assistant_content = if content_text.is_empty() {
+                None
+            } else {
+                Some(serde_json::Value::String(content_text.clone()))
+            };
+
+            // Gemini and reasoning models require thought_signature / <thought> block in assistant messages
+            // when responding with tool_calls. Guarantee that <thought> is present in content_text when stored in history.
+            if !cleaned_tool_calls.is_empty() {
+                let reasoning = turn_result.reasoning_content.as_deref().unwrap_or("");
+                let tag_name = turn_result.reasoning_name.as_deref().unwrap_or("Thinking");
+                let thought_text = if reasoning.trim().is_empty() {
+                    "Analyzing and preparing tool execution."
+                } else {
+                    reasoning.trim()
+                };
+                let thought_block = format!(
+                    "<thought name=\"{}\">\n{}\n</thought>",
+                    tag_name, thought_text
+                );
+
+                let current_text = match &assistant_content {
+                    Some(serde_json::Value::String(s)) => s.clone(),
+                    _ => String::new(),
+                };
+
+                if !current_text.contains("<thought") {
+                    let new_text = if current_text.trim().is_empty() {
+                        thought_block
+                    } else {
+                        format!("{}\n{}", thought_block, current_text)
+                    };
+                    assistant_content = Some(serde_json::Value::String(new_text));
+                }
+            }
+
             self.messages.push(ChatMessage {
                 role: "assistant".to_string(),
-                content: if content_text.is_empty() {
-                    None
-                } else {
-                    Some(serde_json::Value::String(content_text.clone()))
-                },
+                content: assistant_content,
                 name: None,
                 tool_call_id: None,
                 tool_calls: if cleaned_tool_calls.is_empty() {

@@ -148,6 +148,8 @@ export function Settings({
     tabStyle: "default" as string,
     renderFileTree: false,
     useRegionalProxy: true,
+    promptMarkdown: true,
+    promptMarkdownGhost: false,
   };
   type GeneralSettings = typeof defaultGeneral;
   const [general, setGeneral] = useState<GeneralSettings>({ ...defaultGeneral });
@@ -299,8 +301,16 @@ export function Settings({
     });
     window.vibe.state.set(SETTINGS_PREFIX + key, String(value));
 
-    // Dispatch event so other components can react dynamically
+    if (key === "promptMarkdown") {
+      localStorage.setItem("openvibe_prompt_markdown", String(value));
+    }
+    if (key === "promptMarkdownGhost") {
+      localStorage.setItem("openvibe_prompt_markdown_ghost", String(value));
+    }
+
+    // Dispatch events so other components can react dynamically
     window.dispatchEvent(new CustomEvent("settings-changed", { detail: { key, value } }));
+    window.dispatchEvent(new CustomEvent("vibe:settings-changed", { detail: { key, value } }));
 
     if (key === "language" && onLanguageChange) {
       onLanguageChange(value as string);
@@ -559,6 +569,22 @@ export function Settings({
                         className="settings__checkbox"
                         checked={general.renderFileTree}
                         onChange={(e) => updateGeneral("renderFileTree", e.target.checked)}
+                      />
+                    </ControlRow>
+                    <ControlRow label={t("promptMarkdown")} description={t("promptMarkdownDesc")}>
+                      <input
+                        type="checkbox"
+                        className="settings__checkbox"
+                        checked={general.promptMarkdown}
+                        onChange={(e) => updateGeneral("promptMarkdown", e.target.checked)}
+                      />
+                    </ControlRow>
+                    <ControlRow label={t("promptMarkdownGhost")} description={t("promptMarkdownGhostDesc")}>
+                      <input
+                        type="checkbox"
+                        className="settings__checkbox"
+                        checked={general.promptMarkdownGhost}
+                        onChange={(e) => updateGeneral("promptMarkdownGhost", e.target.checked)}
                       />
                     </ControlRow>
                     <ControlRow label={t("useRegionalProxy")} description={t("useRegionalProxyDesc")}>

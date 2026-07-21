@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::Duration;
 
-use crate::chat::{AssistantTurn, ToolCall, ToolCallFunction};
+use crate::chat::{AssistantTurn, TokenUsage, ToolCall, ToolCallFunction};
 
 struct ToolCallAcc {
     id: String,
     name: String,
     arguments: String,
+    extra_fields: serde_json::Map<String, serde_json::Value>,
+    func_extra_fields: serde_json::Map<String, serde_json::Value>,
 }
 
 pub async fn parse_sse_stream(
@@ -26,11 +27,8 @@ pub async fn parse_sse_stream(
     let mut in_thought_tag = false;
     let mut thought_buf = String::new();
     let mut tool_acc: HashMap<usize, ToolCallAcc> = HashMap::new();
+    let mut usage: Option<TokenUsage> = None;
     let mut buffer = String::with_capacity(4096);
-    let mut buf_idx = 0usize;
-    // `Response::chunk()` is allowed to split a multibyte UTF-8 character.
-    // Keep an incomplete suffix until the next network chunk instead of
-    // dropping the whole chunk.
     let mut utf8_tail = Vec::new();
 
     loop {
@@ -38,15 +36,14 @@ pub async fn parse_sse_stream(
             return Err("Aborted".to_string());
         }
 
-        let chunk = tokio::time::timeout(Duration::from_millis(100), res.chunk()).await;
-        match chunk {
-            Ok(Ok(Some(bytes))) => {
+        match res.chunk().await {
+            Ok(Some(bytes)) => {
                 append_utf8_chunk(&bytes, &mut utf8_tail, &mut buffer);
 
-                while let Some(pos) = buffer[buf_idx..].find('\n') {
-                    let abs_pos = buf_idx + pos;
-                    let line = &buffer[buf_idx..abs_pos];
-                    buf_idx = abs_pos + 1;
+                let mut scan_start = 0usize;
+                while let Some(pos) = buffer[scan_start..].find('\n') {
+                    let abs_pos = scan_start + pos;
+                    let line = &buffer[scan_start..abs_pos];
                     process_sse_line(
                         line,
                         &mut content,
@@ -56,20 +53,25 @@ pub async fn parse_sse_stream(
                         &mut in_thought_tag,
                         &mut thought_buf,
                         &mut tool_acc,
+                        &mut usage,
                         on_delta,
                         on_reasoning,
                         on_reasoning_name,
                         on_reasoning_end,
                         on_tool_args,
                     );
+                    scan_start = abs_pos + 1;
+                }
+                if scan_start > 0 {
+                    buffer.drain(..scan_start);
                 }
             }
-            Ok(Ok(None)) => {
+            Ok(None) => {
                 if !utf8_tail.is_empty() {
                     buffer.push_str(&String::from_utf8_lossy(&utf8_tail));
                     utf8_tail.clear();
                 }
-                let remaining = buffer[buf_idx..].trim();
+                let remaining = buffer.trim();
                 if !remaining.is_empty() {
                     process_sse_line(
                         remaining,
@@ -80,6 +82,7 @@ pub async fn parse_sse_stream(
                         &mut in_thought_tag,
                         &mut thought_buf,
                         &mut tool_acc,
+                        &mut usage,
                         on_delta,
                         on_reasoning,
                         on_reasoning_name,
@@ -87,10 +90,10 @@ pub async fn parse_sse_stream(
                         on_tool_args,
                     );
                 }
+                buffer.clear();
                 break;
             }
-            Ok(Err(e)) => return Err(e.to_string()),
-            Err(_) => {} // timeout – loop back to check cancel
+            Err(e) => return Err(e.to_string()),
         }
     }
 
@@ -121,7 +124,9 @@ pub async fn parse_sse_stream(
             function: ToolCallFunction {
                 name: v.name,
                 arguments: v.arguments,
+                extra_fields: v.func_extra_fields,
             },
+            extra_fields: v.extra_fields,
         })
         .collect();
 
@@ -130,12 +135,10 @@ pub async fn parse_sse_stream(
         tool_calls,
         reasoning_content,
         reasoning_name,
+        usage,
     })
 }
 
-/// Append a network chunk without losing text when UTF-8 is split at a chunk
-/// boundary. Invalid bytes inside a chunk are preserved as replacement
-/// characters rather than causing the entire chunk to disappear.
 fn append_utf8_chunk(bytes: &[u8], tail: &mut Vec<u8>, output: &mut String) {
     tail.extend_from_slice(bytes);
     match std::str::from_utf8(tail) {
@@ -160,9 +163,132 @@ fn append_utf8_chunk(bytes: &[u8], tail: &mut Vec<u8>, output: &mut String) {
     }
 }
 
+#[inline]
+fn find_ascii_ignore_case(haystack: &str, needle: &str) -> Option<usize> {
+    if needle.is_empty() {
+        return Some(0);
+    }
+    let needle_bytes = needle.as_bytes();
+    let haystack_bytes = haystack.as_bytes();
+    if needle_bytes.len() > haystack_bytes.len() {
+        return None;
+    }
+    for i in 0..=haystack_bytes.len() - needle_bytes.len() {
+        if haystack_bytes[i..i + needle_bytes.len()]
+            .iter()
+            .zip(needle_bytes.iter())
+            .all(|(h, n)| h.eq_ignore_ascii_case(n))
+        {
+            return Some(i);
+        }
+    }
+    None
+}
+
+fn find_thought_open_tag(s: &str) -> Option<(usize, usize)> {
+    let pos_think = find_ascii_ignore_case(s, "<think");
+    let pos_thought = find_ascii_ignore_case(s, "<thought");
+
+    let pos = match (pos_think, pos_thought) {
+        (Some(a), Some(b)) => std::cmp::min(a, b),
+        (Some(a), None) => a,
+        (None, Some(b)) => b,
+        (None, None) => return None,
+    };
+
+    let remainder = &s[pos..];
+    let gt_idx = remainder.find('>')?;
+    Some((pos, gt_idx + 1))
+}
+
+fn find_thought_close_tag(s: &str) -> Option<(usize, usize)> {
+    let pos_think = find_ascii_ignore_case(s, "</think");
+    let pos_thought = find_ascii_ignore_case(s, "</thought");
+
+    let pos = match (pos_think, pos_thought) {
+        (Some(a), Some(b)) => std::cmp::min(a, b),
+        (Some(a), None) => a,
+        (None, Some(b)) => b,
+        (None, None) => return None,
+    };
+
+    let remainder = &s[pos..];
+    let gt_idx = remainder.find('>')?;
+    Some((pos, gt_idx + 1))
+}
+
+#[inline]
+fn is_partial_thought_open(tail: &str) -> bool {
+    let tail_bytes = tail.as_bytes();
+    let p1 = b"<think";
+    let p2 = b"<thought";
+
+    let match_p1 = if tail_bytes.len() <= p1.len() {
+        tail_bytes
+            .iter()
+            .zip(p1.iter())
+            .all(|(b, p)| b.eq_ignore_ascii_case(p))
+    } else {
+        tail_bytes[..p1.len()]
+            .iter()
+            .zip(p1.iter())
+            .all(|(b, p)| b.eq_ignore_ascii_case(p))
+            && !tail_bytes.contains(&b'>')
+    };
+
+    let match_p2 = if tail_bytes.len() <= p2.len() {
+        tail_bytes
+            .iter()
+            .zip(p2.iter())
+            .all(|(b, p)| b.eq_ignore_ascii_case(p))
+    } else {
+        tail_bytes[..p2.len()]
+            .iter()
+            .zip(p2.iter())
+            .all(|(b, p)| b.eq_ignore_ascii_case(p))
+            && !tail_bytes.contains(&b'>')
+    };
+
+    match_p1 || match_p2
+}
+
+#[inline]
+fn is_partial_thought_close(tail: &str) -> bool {
+    let tail_bytes = tail.as_bytes();
+    let p1 = b"</think";
+    let p2 = b"</thought";
+
+    let match_p1 = if tail_bytes.len() <= p1.len() {
+        tail_bytes
+            .iter()
+            .zip(p1.iter())
+            .all(|(b, p)| b.eq_ignore_ascii_case(p))
+    } else {
+        tail_bytes[..p1.len()]
+            .iter()
+            .zip(p1.iter())
+            .all(|(b, p)| b.eq_ignore_ascii_case(p))
+            && !tail_bytes.contains(&b'>')
+    };
+
+    let match_p2 = if tail_bytes.len() <= p2.len() {
+        tail_bytes
+            .iter()
+            .zip(p2.iter())
+            .all(|(b, p)| b.eq_ignore_ascii_case(p))
+    } else {
+        tail_bytes[..p2.len()]
+            .iter()
+            .zip(p2.iter())
+            .all(|(b, p)| b.eq_ignore_ascii_case(p))
+            && !tail_bytes.contains(&b'>')
+    };
+
+    match_p1 || match_p2
+}
+
 fn extract_thought_name(tag: &str) -> Option<String> {
-    let lower = tag.to_lowercase();
-    let idx = lower.find("name")?;
+    let idx = find_ascii_ignore_case(tag, "name")?;
     let after_name = &tag[idx + 4..];
     let eq_idx = after_name.find('=')?;
     let after_eq = after_name[eq_idx + 1..].trim_start();
@@ -212,78 +338,73 @@ fn process_text_chunk(
         *has_seen_reasoning = true;
     }
 
-    let mut s = format!("{}{}", thought_buf, text);
-    thought_buf.clear();
+    let owned_input;
+    let mut s: &str = if !thought_buf.is_empty() {
+        thought_buf.push_str(text);
+        owned_input = std::mem::take(thought_buf);
+        &owned_input
+    } else {
+        text
+    };
 
     while !s.is_empty() {
         if !*in_thought_tag && !is_api_reasoning {
-            let lower = s.to_lowercase();
-            if let Some(pos) = lower.find("<thought") {
-                if pos > 0 {
-                    let before = &s[..pos];
-                    content.push_str(before);
-                    on_delta(before);
-                }
-                let remainder = &s[pos..];
-                if let Some(gt_idx) = remainder.find('>') {
-                    let tag = &remainder[..=gt_idx];
-                    if let Some(name) = extract_thought_name(tag) {
-                        *reasoning_name = Some(name.clone());
-                        on_reasoning_name(&name);
-                    }
-                    *in_thought_tag = true;
-                    *has_seen_reasoning = true;
-                    s = remainder[gt_idx + 1..].to_string();
-                } else {
-                    thought_buf.push_str(remainder);
-                    break;
-                }
-            } else {
-                if let Some(lt_idx) = s.rfind('<') {
-                    let tail_lower = s[lt_idx..].to_lowercase();
-                    if "<thought".starts_with(&tail_lower)
-                        || (tail_lower.starts_with("<thought") && !tail_lower.contains('>'))
-                    {
-                        let before = &s[..lt_idx];
-                        if !before.is_empty() {
-                            content.push_str(before);
-                            on_delta(before);
-                        }
-                        thought_buf.push_str(&s[lt_idx..]);
-                        break;
-                    }
-                }
-                content.push_str(&s);
-                on_delta(&s);
-                break;
-            }
-        } else {
-            let lower = s.to_lowercase();
-            if !*in_thought_tag && is_api_reasoning {
-                if let Some(pos) = lower.find("<thought") {
-                    let remainder = &s[pos..];
-                    if let Some(gt_idx) = remainder.find('>') {
-                        let tag = &remainder[..=gt_idx];
+            // Only search for thought open tag if no main content has been emitted yet
+            // and the tag appears at the start of text (or after whitespace only).
+            let can_open_thought = content.trim().is_empty();
+            let mut tag_opened = false;
+
+            if can_open_thought {
+                if let Some((pos, tag_len)) = find_thought_open_tag(s) {
+                    if s[..pos].trim().is_empty() {
+                        let tag = &s[pos..pos + tag_len];
                         if let Some(name) = extract_thought_name(tag) {
                             *reasoning_name = Some(name.clone());
                             on_reasoning_name(&name);
                         }
                         *in_thought_tag = true;
-                        let before = &s[..pos];
-                        if !before.is_empty() {
-                            reasoning_content
-                                .get_or_insert_with(String::new)
-                                .push_str(before);
-                            on_reasoning(before);
+                        *has_seen_reasoning = true;
+                        s = &s[pos + tag_len..];
+                        tag_opened = true;
+                    }
+                } else if let Some(lt_idx) = s.rfind('<') {
+                    if s[..lt_idx].trim().is_empty() {
+                        let tail = &s[lt_idx..];
+                        if is_partial_thought_open(tail) {
+                            thought_buf.push_str(tail);
+                            break;
                         }
-                        s = remainder[gt_idx + 1..].to_string();
-                        continue;
                     }
                 }
             }
 
-            let lower = s.to_lowercase();
-            if let Some(end_pos) = lower.find("</thought>") {
+            if !tag_opened {
+                content.push_str(s);
+                on_delta(s);
+                break;
+            }
+        } else {
+            if !*in_thought_tag && is_api_reasoning {
+                if let Some((pos, tag_len)) = find_thought_open_tag(s) {
+                    let tag = &s[pos..pos + tag_len];
+                    if let Some(name) = extract_thought_name(tag) {
+                        *reasoning_name = Some(name.clone());
+                        on_reasoning_name(&name);
+                    }
+                    *in_thought_tag = true;
+                    let before = &s[..pos];
+                    if !before.is_empty() {
+                        reasoning_content
+                            .get_or_insert_with(String::new)
+                            .push_str(before);
+                        on_reasoning(before);
+                    }
+                    s = &s[pos + tag_len..];
+                    continue;
+                }
+            }
+
+            if let Some((end_pos, tag_len)) = find_thought_close_tag(s) {
                 let before = &s[..end_pos];
                 if !before.is_empty() {
                     reasoning_content
@@ -294,11 +415,11 @@ fn process_text_chunk(
                 *in_thought_tag = false;
                 *has_seen_reasoning = false;
                 on_reasoning_end();
-                s = s[end_pos + 10..].to_string();
+                s = &s[end_pos + tag_len..];
             } else {
                 if let Some(lt_idx) = s.rfind('<') {
-                    let tail_lower = s[lt_idx..].to_lowercase();
-                    if "</thought>".starts_with(&tail_lower) {
+                    let tail = &s[lt_idx..];
+                    if is_partial_thought_close(tail) {
                         let before = &s[..lt_idx];
                         if !before.is_empty() {
                             reasoning_content
@@ -306,14 +427,14 @@ fn process_text_chunk(
                                 .push_str(before);
                             on_reasoning(before);
                         }
-                        thought_buf.push_str(&s[lt_idx..]);
+                        thought_buf.push_str(tail);
                         break;
                     }
                 }
                 reasoning_content
                     .get_or_insert_with(String::new)
-                    .push_str(&s);
-                on_reasoning(&s);
+                    .push_str(s);
+                on_reasoning(s);
                 break;
             }
         }
@@ -330,6 +451,7 @@ fn process_sse_line(
     in_thought_tag: &mut bool,
     thought_buf: &mut String,
     tool_acc: &mut HashMap<usize, ToolCallAcc>,
+    usage: &mut Option<TokenUsage>,
     on_delta: &(dyn Fn(&str) + Send + Sync),
     on_reasoning: &(dyn Fn(&str) + Send + Sync),
     on_reasoning_name: &(dyn Fn(&str) + Send + Sync),
@@ -360,6 +482,29 @@ fn process_sse_line(
             return;
         }
     };
+
+    if let Some(usage_obj) = event.get("usage") {
+        let prompt = usage_obj
+            .get("prompt_tokens")
+            .and_then(|v| v.as_u64())
+            .unwrap_or(0) as usize;
+        let completion = usage_obj
+            .get("completion_tokens")
+            .and_then(|v| v.as_u64())
+            .unwrap_or(0) as usize;
+        let total = usage_obj
+            .get("total_tokens")
+            .and_then(|v| v.as_u64())
+            .map(|v| v as usize)
+            .unwrap_or(prompt + completion);
+        if prompt > 0 || total > 0 {
+            *usage = Some(TokenUsage {
+                prompt_tokens: prompt,
+                completion_tokens: completion,
+                total_tokens: total,
+            });
+        }
+    }
 
     let delta = match event
         .get("choices")
@@ -413,18 +558,21 @@ fn process_sse_line(
         for tc in tcs {
             let idx = tc.get("index").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
             let entry = tool_acc.entry(idx).or_insert_with(|| ToolCallAcc {
-                id: format!(
-                    "call_{}_{idx}",
-                    std::time::SystemTime::now()
-                        .duration_since(std::time::UNIX_EPOCH)
-                        .unwrap_or_default()
-                        .as_millis()
-                ),
+                id: format!("call_{idx}"),
                 name: String::new(),
                 arguments: String::new(),
+                extra_fields: serde_json::Map::new(),
+                func_extra_fields: serde_json::Map::new(),
             });
             if let Some(id) = tc.get("id").and_then(|v| v.as_str()) {
                 entry.id = id.to_string();
+            }
+            if let Some(obj) = tc.as_object() {
+                for (k, v) in obj {
+                    if k != "index" && k != "id" && k != "type" && k != "function" {
+                        entry.extra_fields.insert(k.clone(), v.clone());
+                    }
+                }
             }
             if let Some(func) = tc.get("function") {
                 if let Some(name) = func.get("name").and_then(|v| v.as_str()) {
@@ -434,21 +582,24 @@ fn process_sse_line(
                     entry.arguments.push_str(args);
                     on_tool_args(&entry.id, &entry.arguments);
                 }
+                if let Some(fobj) = func.as_object() {
+                    for (k, v) in fobj {
+                        if k != "name" && k != "arguments" {
+                            entry.func_extra_fields.insert(k.clone(), v.clone());
+                        }
+                    }
+                }
             }
         }
     }
 
     if let Some(fc) = delta.get("function_call") {
         let entry = tool_acc.entry(0).or_insert_with(|| ToolCallAcc {
-            id: format!(
-                "call_{}_f",
-                std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_millis()
-            ),
+            id: "call_0".to_string(),
             name: String::new(),
             arguments: String::new(),
+            extra_fields: serde_json::Map::new(),
+            func_extra_fields: serde_json::Map::new(),
         });
         if let Some(name) = fc.get("name").and_then(|v| v.as_str()) {
             entry.name = name.to_string();
@@ -456,6 +607,13 @@ fn process_sse_line(
         if let Some(args) = fc.get("arguments").and_then(|v| v.as_str()) {
             entry.arguments.push_str(args);
             on_tool_args(&entry.id, &entry.arguments);
+        }
+        if let Some(fc_obj) = fc.as_object() {
+            for (k, v) in fc_obj {
+                if k != "name" && k != "arguments" {
+                    entry.func_extra_fields.insert(k.clone(), v.clone());
+                }
+            }
         }
     }
 }
@@ -477,5 +635,42 @@ mod tests {
             assert!(tail.is_empty());
             assert_eq!(output, source, "split at byte {split}");
         }
+    }
+
+    #[test]
+    fn test_in_text_thought_tags_do_not_hijack_content() {
+        use super::process_text_chunk;
+
+        let mut content = String::new();
+        let mut reasoning_content: Option<String> = None;
+        let mut reasoning_name: Option<String> = None;
+        let mut has_seen_reasoning = false;
+        let mut in_thought_tag = false;
+        let mut thought_buf = String::new();
+
+        let noop_delta = |_s: &str| {};
+        let noop_reasoning = |_s: &str| {};
+        let noop_reasoning_name = |_s: &str| {};
+        let noop_reasoning_end = || {};
+
+        let text = "* Парсер отслеживает теги типа `<think>` или `<thought>`. Все работает хорошо.";
+        process_text_chunk(
+            text,
+            false,
+            &mut content,
+            &mut reasoning_content,
+            &mut reasoning_name,
+            &mut has_seen_reasoning,
+            &mut in_thought_tag,
+            &mut thought_buf,
+            &noop_delta,
+            &noop_reasoning,
+            &noop_reasoning_name,
+            &noop_reasoning_end,
+        );
+
+        assert_eq!(content, text);
+        assert!(!in_thought_tag);
+        assert!(reasoning_content.is_none());
     }
 }
