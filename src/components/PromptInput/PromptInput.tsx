@@ -4,7 +4,7 @@ import { useI18n } from "../../hooks/useI18n.js";
 import "./PromptInput.css";
 
 import { Attachment, EditorPart, MentionState, SendPayload } from "./types.js";
-import { IMAGE_RE } from "./utils.js";
+import { IMAGE_RE, fileToAttachment } from "./utils.js";
 import { getRecentMentions, addRecentMention } from "./utils/recentMentions.js";
 import {
   createTextFragment,
@@ -91,6 +91,59 @@ function useSpring(target: number, deps: React.DependencyList) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
   return value;
+}
+
+function RollbackPill({
+  messageText,
+  fileCount,
+  filesChanged,
+  messagesRemoved,
+  onRestore,
+}: {
+  messageText: string;
+  fileCount: number;
+  filesChanged: { path: string; content: string | null }[];
+  messagesRemoved: number;
+  onRestore: () => void;
+}) {
+  return (
+    <div
+      className="prompt-input__rollback-pill"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "8px",
+        padding: "6px 12px",
+        background: "var(--surface-2, rgba(255, 255, 255, 0.05))",
+        borderRadius: "6px",
+        fontSize: "12px",
+        margin: "0 8px 6px 8px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <RefreshCwIcon width={13} height={13} />
+        <span>
+          {fileCount > 0 ? `${fileCount} files modified` : "Rollback active"}
+        </span>
+      </div>
+      <button
+        onClick={onRestore}
+        style={{
+          background: "var(--accent-color, #3b82f6)",
+          color: "#ffffff",
+          border: "none",
+          borderRadius: "4px",
+          padding: "3px 10px",
+          cursor: "pointer",
+          fontSize: "11px",
+          fontWeight: 500,
+        }}
+      >
+        Restore
+      </button>
+    </div>
+  );
 }
 
 export function PromptInput({

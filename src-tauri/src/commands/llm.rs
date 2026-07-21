@@ -3,7 +3,7 @@ use agent::chat::ChatMessage;
 use agent::config::LlmConfig;
 use agent::definition::ToolDefinition;
 use agent::request::stream_chat;
-use agent::token::compute_context_usage_with_last;
+use agent::token::compute_context_usage;
 use agent::token::ContextUsage;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -15,7 +15,7 @@ pub fn estimate_context_tokens(state: State<AppState>) -> Result<ContextUsage, S
     let agent = agent_lock.as_ref().ok_or_else(|| "No agent".to_string())?;
     let messages = agent.get_messages();
     let model = agent.config().model.clone();
-    let usage = compute_context_usage_with_last(messages, &model, agent.last_prompt_tokens);
+    let usage = compute_context_usage(messages, &model);
     Ok(usage)
 }
 

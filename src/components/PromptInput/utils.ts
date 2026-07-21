@@ -14,3 +14,16 @@ export async function fileToDataUrl(file: File): Promise<string> {
 }
 
 export const IMAGE_RE = /\.(png|jpe?g|gif|webp|bmp|svg)$/i;
+
+import type { Attachment } from "./types.js";
+
+export async function fileToAttachment(file: File): Promise<Attachment | null> {
+  if (!IMAGE_RE.test(file.name) && !file.type.startsWith("image/")) return null;
+  const dataUrl = await fileToDataUrl(file);
+  return {
+    id: newAttachId(),
+    name: file.name,
+    dataUrl,
+    sizeBytes: file.size,
+  };
+}

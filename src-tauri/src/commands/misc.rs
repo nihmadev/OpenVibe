@@ -158,16 +158,9 @@ pub fn set_model(state: State<AppState>, model: String) -> Result<(), String> {
 
 #[tauri::command]
 pub fn set_reasoning_effort(state: State<AppState>, reasoning_effort: Option<String>) -> Result<(), String> {
-    {
-        let mut config = state.config.lock().map_err(|e| e.to_string())?;
-        if let Some(ref mut c) = *config {
-            c.reasoning_effort = reasoning_effort.clone();
-        }
-    }
-    if let Ok(mut agent_lock) = state.agent.lock() {
-        if let Some(ref mut agent) = *agent_lock {
-            agent.config_mut().reasoning_effort = reasoning_effort;
-        }
+    let mut config = state.config.lock().map_err(|e| e.to_string())?;
+    if let Some(ref mut c) = *config {
+        c.reasoning_effort = reasoning_effort;
     }
     Ok(())
 }
