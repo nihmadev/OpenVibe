@@ -423,7 +423,7 @@ export const mr: Partial<Translations> = {
   mcpCall: "MCP कॉल",
   welcomeTitle: "vibe",
   appName: "OpenVibe डेस्कटॉप",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "शेल",
   langRussian: "रशियन",
   langEnglish: "इंग्रजी",

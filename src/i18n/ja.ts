@@ -424,7 +424,7 @@ export const ja: Partial<Translations> = {
   mcpCall: "MCPコール",
   welcomeTitle: "雰囲気",
   appName: "OpenVibe デスクトップ",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   langRussian: "ロシア",
   langEnglish: "英語",
   langChinese: "中文 (繁體)",

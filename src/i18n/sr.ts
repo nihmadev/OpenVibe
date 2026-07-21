@@ -424,7 +424,7 @@ export const sr: Partial<Translations> = {
   terminalShell: "Терминал Схелл",
   welcomeTitle: "вибрација",
   appName: "ОпенВибе Десктоп",
-  appVersion: "в1.3.5",
+  appVersion: "в1.3.6",
   shell: "Схелл",
   langRussian: "руски",
   langEnglish: "енглески",

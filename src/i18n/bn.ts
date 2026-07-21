@@ -171,7 +171,7 @@ export const bn: Partial<Translations> = {
   clearChatHotkey: "চ্যাট পরিষ্কার করুন",
   focusInputHotkey: "ইনপুট ফোকাস করুন",
   appName: "OpenVibe Desktop",
-  appVersion: "v1.0.0",
+  appVersion: "v1.3.6",
   manuallyStopped: "ব্যবহারকারী দ্বারা বন্ধ করা হয়েছে",
 
   // MCP

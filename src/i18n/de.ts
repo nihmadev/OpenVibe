@@ -425,7 +425,7 @@ export const de: Partial<Translations> = {
   terminalShell: "Terminal-Shell",
   welcomeTitle: "Stimmung",
   appName: "OpenVibe-Desktop",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "Hülse",
   langRussian: "Russisch",
   langEnglish: "Englisch",

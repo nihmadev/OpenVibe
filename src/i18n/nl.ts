@@ -423,7 +423,7 @@ export const nl: Partial<Translations> = {
   terminalShell: "Terminalshell",
   welcomeTitle: "stemming",
   appName: "OpenVibe-bureaublad",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "Schelp",
   langRussian: "Russisch",
   langEnglish: "Engels",

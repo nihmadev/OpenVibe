@@ -211,6 +211,10 @@ export const en: Partial<Translations> = {
   searchModelPlaceholder: "Search models...",
   addProvider: "Add provider",
   configureModels: "Configure models",
+  reasoningEffortNone: "None",
+  reasoningEffortLow: "Low",
+  reasoningEffortMedium: "Medium",
+  reasoningEffortHigh: "High",
   noModelsFound: "No models found",
   noModelsEnabled: "No models enabled",
   searching: "searching…",
@@ -417,6 +421,8 @@ export const en: Partial<Translations> = {
   agentRunInProgress: "In progress",
   agentRunWorkingFor: "Working {time}",
   agentRunWorkedFor: "Worked for {time}",
+  showToolCalls: "Show tool calls",
+  hideToolCalls: "Hide tool calls",
   agentRunSeconds_one: "{count} second",
   agentRunSeconds_few: "{count} seconds",
   agentRunSeconds: "{count} seconds",
@@ -516,7 +522,7 @@ export const en: Partial<Translations> = {
   terminalShell: "Terminal Shell",
   welcomeTitle: "vibe",
   appName: "OpenVibe Desktop",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "Shell",
 
   // Language names
@@ -591,6 +597,10 @@ export const en: Partial<Translations> = {
   borderStyleDesc: "Toggle panel borders on or off",
   borderStyleBordered: "Bordered",
   borderStyleBorderless: "Borderless",
+  tabStyle: "Tab Style",
+  tabStyleDesc: "Square or rounded pills for editor tabs",
+  tabStyleDefault: "Default",
+  tabStylePills: "Pills",
 
   // Onboarding / WelcomeScreen
   welcomeGreeting: "Hello, {name}",

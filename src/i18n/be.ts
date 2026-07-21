@@ -426,7 +426,7 @@ export const be: Partial<Translations> = {
   terminalShell: "Тэрмінальная абалонка",
   welcomeTitle: "атмасфера",
   appName: "Працоўны стол OpenVibe",
-  appVersion: "версія 1.3.5",
+  appVersion: "версія 1.3.6",
   shell: "Ракавінка",
   langRussian: "рускі",
   langEnglish: "англійская",

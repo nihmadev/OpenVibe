@@ -422,7 +422,7 @@ export const sv: Partial<Translations> = {
   terminalShell: "Terminalskal",
   welcomeTitle: "vibe",
   appName: "OpenVibe Desktop",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "Skal",
   langRussian: "ryska",
   langEnglish: "engelska",

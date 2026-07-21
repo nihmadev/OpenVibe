@@ -423,7 +423,7 @@ export const kk: Partial<Translations> = {
   terminalShell: "Терминал қабығы",
   welcomeTitle: "діріл",
   appName: "OpenVibe жұмыс үстелі",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "Shell",
   langRussian: "орыс",
   langEnglish: "Ағылшын",

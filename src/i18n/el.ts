@@ -423,7 +423,7 @@ export const el: Partial<Translations> = {
   terminalShell: "Terminal Shell",
   welcomeTitle: "ατμόσφαιρα",
   appName: "OpenVibe Desktop",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "Κέλυφος",
   langRussian: "ρωσικός",
   langEnglish: "αγγλικός",

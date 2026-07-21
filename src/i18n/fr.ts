@@ -427,7 +427,7 @@ export const fr: Partial<Translations> = {
   terminalShell: "Coque de terminal",
   welcomeTitle: "ambiance",
   appName: "Bureau OpenVibe",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "Coquille",
   langRussian: "russe",
   langEnglish: "Anglais",

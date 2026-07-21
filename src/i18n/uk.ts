@@ -426,7 +426,7 @@ export const uk: Partial<Translations> = {
   terminalShell: "Термінальна оболонка",
   welcomeTitle: "атмосфера",
   appName: "Робочий стіл OpenVibe",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "оболонка",
   langRussian: "російська",
   langEnglish: "англійська",

@@ -422,7 +422,7 @@ export const fa: Partial<Translations> = {
   mcpCall: "تماس MCP",
   welcomeTitle: "حس درونی",
   appName: "OpenVibe Desktop",
-  appVersion: "نسخه 1.3.5",
+  appVersion: "نسخه 1.3.6",
   shell: "پوسته",
   langRussian: "روسی",
   langEnglish: "انگلیسی",

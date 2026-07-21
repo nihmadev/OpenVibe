@@ -422,7 +422,7 @@ export const ko: Partial<Translations> = {
   terminalShell: "터미널 쉘",
   welcomeTitle: "분위기",
   appName: "오픈바이브 데스크탑",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "껍데기",
   langRussian: "러시아인",
   langEnglish: "영어",

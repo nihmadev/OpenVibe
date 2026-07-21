@@ -423,7 +423,7 @@ export const pt: Partial<Translations> = {
   terminalShell: "Concha terminal",
   welcomeTitle: "vibração",
   appName: "Área de trabalho OpenVibe",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "Concha",
   langRussian: "russo",
   langEnglish: "Inglês",

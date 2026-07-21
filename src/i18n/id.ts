@@ -423,7 +423,7 @@ export const id: Partial<Translations> = {
   terminalShell: "Cangkang Terminal",
   welcomeTitle: "atmosfer",
   appName: "Desktop OpenVibe",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "Kerang",
   langRussian: "Rusia",
   langEnglish: "Bahasa inggris",

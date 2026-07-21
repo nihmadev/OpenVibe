@@ -423,7 +423,7 @@ export const hi: Partial<Translations> = {
   mcpCall: "एमसीपी कॉल",
   welcomeTitle: "अनुभूति",
   appName: "ओपनवाइब डेस्कटॉप",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   langRussian: "रूसी",
   langEnglish: "अंग्रेज़ी",
   langChinese: "中文 (繁體)",

@@ -422,7 +422,7 @@ export const am: Partial<Translations> = {
   mcpCall: "የኤምሲፒ ጥሪ",
   welcomeTitle: "መንቀጥቀጥ",
   appName: "Vibe ዴስክቶፕን ይክፈቱ",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "ዛጎል",
   langRussian: "ራሺያኛ",
   langEnglish: "እንግሊዝኛ",

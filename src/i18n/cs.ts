@@ -171,7 +171,7 @@ export const cs: Partial<Translations> = {
   clearChatHotkey: "Vymazat chat",
   focusInputHotkey: "Zaostřit na vstup",
   appName: "OpenVibe Desktop",
-  appVersion: "v1.0.0",
+  appVersion: "v1.3.6",
   manuallyStopped: "Zastaveno uživatelem",
 
   // MCP

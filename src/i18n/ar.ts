@@ -424,7 +424,7 @@ export const ar: Partial<Translations> = {
   mcpCall: "نداء MCP",
   welcomeTitle: "الاهتزاز",
   appName: "سطح المكتب المفتوح فايب",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   langRussian: "الروسية",
   langEnglish: "إنجليزي",
   langChinese: "中文 (繁體)",

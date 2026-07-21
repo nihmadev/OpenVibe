@@ -426,7 +426,7 @@ export const es: Partial<Translations> = {
   terminalShell: "Carcasa de terminales",
   welcomeTitle: "onda",
   appName: "Escritorio OpenVibe",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "Caparazón",
   langRussian: "ruso",
   langEnglish: "Inglés",

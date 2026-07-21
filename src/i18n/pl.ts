@@ -424,7 +424,7 @@ export const pl: Partial<Translations> = {
   terminalShell: "Powłoka terminala",
   welcomeTitle: "wibracja",
   appName: "Pulpit OpenVibe",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "Powłoka",
   langRussian: "rosyjski",
   langEnglish: "angielski",

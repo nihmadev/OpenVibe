@@ -423,7 +423,7 @@ export const fil: Partial<Translations> = {
   mcpCall: "Tawag sa MCP",
   welcomeTitle: "vibe",
   appName: "OpenVibe Desktop",
-  appVersion: "v1.3.5",
+  appVersion: "v1.3.6",
   shell: "Shell",
   langRussian: "Ruso",
   langEnglish: "Ingles",
