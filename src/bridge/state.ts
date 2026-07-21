@@ -13,6 +13,7 @@ export let currentConfig: {
   apiKey: string;
   apiUrl?: string;
   providerId?: string;
+  reasoningEffort?: string;
 } | null = null;
 export function setCurrentConfig(cfg: typeof currentConfig) {
   currentConfig = cfg;

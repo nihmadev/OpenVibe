@@ -24,6 +24,7 @@ export async function initVibeBridge() {
     apiKey: cfg.apiKey ?? "",
     apiUrl: cfg.apiUrl,
     providerId: cfg.providerId,
+    reasoningEffort: cfg.reasoningEffort ?? undefined,
   });
 
   // Create Rust agent

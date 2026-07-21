@@ -9,6 +9,7 @@ export interface VibeConfig {
   apiKey: string;
   apiUrl?: string;
   providerId?: string;
+  reasoningEffort?: string;
 }
 
 export type ContentPart = { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
@@ -190,6 +191,7 @@ export interface VibeApi {
   setModel: (model: string) => Promise<void>;
   setCwd: (cwd: string) => Promise<void>;
   setProvider: (apiKey: string, baseUrl: string, model: string, providerId?: string) => Promise<void>;
+  setReasoningEffort: (reasoningEffort: string | null) => Promise<void>;
   providers: {
     list: () => Promise<Provider[]>;
     save: (provider: Provider) => Promise<void>;

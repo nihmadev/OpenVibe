@@ -8,6 +8,11 @@ export const configBridge = {
     return invoke("set_model", { model });
   },
 
+  setReasoningEffort: (reasoningEffort: string | null) => {
+    if (currentConfig) currentConfig.reasoningEffort = reasoningEffort ?? undefined;
+    return invoke("set_reasoning_effort", { reasoningEffort });
+  },
+
   setCwd: (cwd: string) => {
     if (currentConfig) currentConfig.cwd = cwd;
     return invoke("agent_set_cwd", { cwd });
