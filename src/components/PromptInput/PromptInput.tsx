@@ -5,7 +5,7 @@ import "./PromptInput.css";
 
 import { Attachment, EditorPart, MentionState, SendPayload } from "./types.js";
 import { IMAGE_RE } from "./utils.js";
-import { fileToAttachment, newAttachmentId } from "./utils/attachments.js";
+import { getRecentMentions, addRecentMention } from "./utils/recentMentions.js";
 import {
   createTextFragment,
   getCursorPosition,
@@ -22,12 +22,13 @@ import {
 import { normalizePaste, pasteMode } from "./utils/paste.js";
 import { promptPlaceholder } from "./utils/placeholder.js";
 import { PromptDragOverlay } from "./components/DragOverlay.js";
-import { PromptContextItems } from "./components/ContextItems.js";
 import { PromptImageAttachments } from "./components/ImageAttachments.js";
 import { MentionPopup } from "./components/MentionPopup.js";
 import { ModelSelector } from "./components/ModelSelector.js";
+import { ReasoningEffortSelector } from "./components/ReasoningEffortSelector.js";
+import { getReasoningEfforts } from "../../constants.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
-import { RollbackPill } from "../RollbackPill/RollbackPill.js";
+import { getFileIconUrl, getFolderIconUrl } from "../Icons/utils.js";
 import { StopIcon, RefreshCwIcon, ArrowUpIcon, AttachPlusIcon } from "../Icons/icons.js";
 
 export type { Attachment, SendPayload };
@@ -48,6 +49,9 @@ interface Props {
   rollbackFilesChanged?: { path: string; content: string | null }[];
   rollbackMessagesRemoved?: number;
   onRollbackRestore?: () => void;
+  providerId?: string;
+  currentEffort?: string;
+  onReasoningEffortChange?: (effort: string | null) => void;
 }
 
 // ─── helpers ─────────────────────────────────────────────
@@ -105,6 +109,9 @@ export function PromptInput({
   rollbackFilesChanged,
   rollbackMessagesRemoved,
   onRollbackRestore,
+  providerId,
+  currentEffort,
+  onReasoningEffortChange,
 }: Props): React.ReactElement {
   const { t } = useI18n();
   const editorRef = useRef<HTMLDivElement | null>(null);
@@ -142,6 +149,18 @@ export function PromptInput({
     const m = models.find((m) => m.id === currentModel);
     return m ? m.name : currentModel || t("selectModelFallback");
   }, [models, currentModel, t]);
+
+  const reasoningEffortOptions = useMemo(() => {
+    const pid = providerId ?? "";
+    const efforts = getReasoningEfforts(pid, currentModel);
+    if (!efforts) return [];
+    return [
+      { value: "", labelKey: "reasoningEffortNone" },
+      ...efforts.map((e) => ({ value: e, labelKey: "reasoningEffort" + e.charAt(0).toUpperCase() + e.slice(1) })),
+    ];
+  }, [providerId, currentModel]);
+
+  const hasReasoningEffort = reasoningEffortOptions.length > 0;
 
   const placeholder = useMemo(
     () =>
@@ -216,30 +235,54 @@ export function PromptInput({
 
   // ─── editor rendering ──────────────────────────────────
 
-  const renderEditor = useCallback((parts: EditorPart[]) => {
-    const el = editorRef.current;
-    if (!el) return;
-    el.innerHTML = "";
-    for (const part of parts) {
-      if (part.type === "text") {
-        el.appendChild(createTextFragment(part.content));
-        continue;
-      }
-      if (part.type === "file") {
-        const pill = document.createElement("span");
-        pill.textContent = part.content;
-        pill.setAttribute("data-type", "file");
-        if (part.path) pill.setAttribute("data-path", part.path);
-        pill.setAttribute("contenteditable", "false");
-        pill.style.userSelect = "text";
-        pill.style.cursor = "default";
-        el.appendChild(pill);
-      }
-    }
-    const last = el.lastChild;
-    if (last?.nodeType === Node.ELEMENT_NODE && (last as HTMLElement).tagName === "BR")
-      el.appendChild(document.createTextNode("\u200B"));
+  const createPill = useCallback((path: string, display: string, isDir?: boolean): HTMLElement => {
+    const pill = document.createElement("span");
+    pill.className = "prompt-input__file-pill";
+    pill.setAttribute("data-type", "file");
+    pill.setAttribute("data-path", path);
+    pill.setAttribute("contenteditable", "false");
+    pill.style.userSelect = "text";
+    pill.style.cursor = "default";
+
+    const img = document.createElement("img");
+    img.className = "prompt-input__file-pill-icon";
+    img.src = isDir ? getFolderIconUrl(display) : getFileIconUrl(display);
+    img.alt = "";
+    img.setAttribute("aria-hidden", "true");
+    img.draggable = false;
+    img.style.width = "14px";
+    img.style.height = "14px";
+    img.style.flexShrink = "0";
+
+    const textSpan = document.createElement("span");
+    textSpan.textContent = display.replace(/^@/, "");
+
+    pill.appendChild(img);
+    pill.appendChild(textSpan);
+    return pill;
   }, []);
+
+  const renderEditor = useCallback(
+    (parts: EditorPart[]) => {
+      const el = editorRef.current;
+      if (!el) return;
+      el.innerHTML = "";
+      for (const part of parts) {
+        if (part.type === "text") {
+          el.appendChild(createTextFragment(part.content));
+          continue;
+        }
+        if (part.type === "file") {
+          const pill = createPill(part.path ?? part.content, part.content);
+          el.appendChild(pill);
+        }
+      }
+      const last = el.lastChild;
+      if (last?.nodeType === Node.ELEMENT_NODE && (last as HTMLElement).tagName === "BR")
+        el.appendChild(document.createTextNode("\u200B"));
+    },
+    [createPill],
+  );
 
   const setEditorText = useCallback((text: string) => {
     const el = editorRef.current;
@@ -266,17 +309,6 @@ export function PromptInput({
       sel?.removeAllRanges();
       sel?.addRange(range);
     });
-  }, []);
-
-  const createPill = useCallback((path: string, display: string): HTMLElement => {
-    const pill = document.createElement("span");
-    pill.textContent = display;
-    pill.setAttribute("data-type", "file");
-    pill.setAttribute("data-path", path);
-    pill.setAttribute("contenteditable", "false");
-    pill.style.userSelect = "text";
-    pill.style.cursor = "default";
-    return pill;
   }, []);
 
   // ─── attachments ────────────────────────────────────────
@@ -312,7 +344,14 @@ export function PromptInput({
   const onAtInput = useCallback(
     (query: string) => {
       setMentionState((prev) => ({ ...prev, active: true, selected: 0, loading: true }));
-      window.vibe.fs.find(workspace, query, 30).then((res) => {
+      if (!query.trim()) {
+        const recents = getRecentMentions();
+        if (recents.length > 0) {
+          setMentionState((prev) => (!prev.active ? prev : { ...prev, matches: recents, loading: false }));
+          return;
+        }
+      }
+      window.vibe.fs.findAll(workspace, query, 30).then((res) => {
         setMentionState((prev) =>
           !prev.active
             ? prev
@@ -377,7 +416,7 @@ export function PromptInput({
         const text = editorText();
         const beforeCursor = text.slice(0, cursor);
         const atMatch = beforeCursor.match(/@(\S*)$/);
-        const pill = createPill(part.path ?? part.content, part.content);
+        const pill = createPill(part.path ?? part.content, part.content, (part as any).isDir);
         const gap = document.createTextNode(" ");
         if (atMatch) {
           const start = atMatch.index ?? cursor - atMatch[0].length;
@@ -429,32 +468,10 @@ export function PromptInput({
   const applyMention = useCallback(
     (match: FileMatch) => {
       closeMention();
-      const el = editorRef.current;
-      if (!el) return;
-      const text = editorText();
-      const cursor = getCursor();
-      const before = text.slice(0, cursor);
-      const atMatch = before.match(/@(\S*)$/);
-      if (!atMatch) return;
-      const atStart = atMatch.index ?? cursor - atMatch[0].length;
-      const inserted = "@" + match.rel + " ";
-      const sel = window.getSelection();
-      if (sel && sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        setRangeEdge(el, range, "start", atStart);
-        setRangeEdge(el, range, "end", cursor);
-        range.deleteContents();
-      }
-      setEditorText(text.slice(0, atStart) + inserted + text.slice(cursor));
-      requestAnimationFrame(() => setCursorPosition(el, atStart + inserted.length));
-      addAttachment({
-        id: newAttachmentId(),
-        kind: IMAGE_RE.test(match.path) ? "image" : "file",
-        path: match.path,
-        name: match.name,
-      });
+      addRecentMention(match);
+      addPartAtCursor({ type: "file", content: "@" + match.rel, path: match.path, isDir: match.isDir } as any);
     },
-    [closeMention, editorText, getCursor, setEditorText, addAttachment],
+    [closeMention, addPartAtCursor],
   );
 
   // ─── submit ─────────────────────────────────────────────
@@ -471,7 +488,13 @@ export function PromptInput({
     for (const a of attachments) {
       if (a.kind === "image" && a.dataUrl) parts.push({ type: "image_url", image_url: { url: a.dataUrl } });
     }
-    const fileRefs = attachments.filter((a) => a.kind === "file" && a.path).map((a) => a.path!);
+
+    const editorParts = parseEditor();
+    const inlineFiles = editorParts.filter((p) => p.type === "file" && p.path).map((p) => p.path!);
+    const fileRefs = Array.from(
+      new Set([...inlineFiles, ...attachments.filter((a) => a.kind === "file" && a.path).map((a) => a.path!)]),
+    );
+
     if (fileRefs.length > 0) {
       const existingText = (parts.find((p) => p.type === "text") as { text: string } | undefined)?.text ?? "";
       const merged = (existingText + "\n\nAttached files:\n" + fileRefs.map((f) => "- " + f).join("\n")).trim();
@@ -488,7 +511,7 @@ export function PromptInput({
     setMode("normal");
     setPopover(null);
     onSubmit({ parts, display: text, attachments: attachments.slice() });
-  }, [disabled, editorText, attachments, clearEditor, onSubmit, onStop]);
+  }, [disabled, editorText, parseEditor, attachments, clearEditor, onSubmit, onStop]);
 
   // ─── history navigation ─────────────────────────────────
 
@@ -684,22 +707,15 @@ export function PromptInput({
       const dt = e.dataTransfer;
       if (!dt) return;
       const vibePath = dt.getData("application/x-vibe-path");
-      const vibeName = dt.getData("application/x-vibe-name");
       if (vibePath) {
         let rel = vibePath;
         if (vibePath.startsWith(workspace)) rel = vibePath.slice(workspace.length).replace(/^[\\/]/, "");
         addPartAtCursor({ type: "file", content: "@" + rel, path: vibePath });
-        addAttachment({
-          id: newAttachmentId(),
-          kind: "file",
-          path: vibePath,
-          name: vibeName || rel.split(/[\\/]/).pop() || rel,
-        });
         return;
       }
       if (dt.files && dt.files.length > 0) await handleFiles(dt.files);
     },
-    [workspace, addPartAtCursor, addAttachment, handleFiles],
+    [workspace, addPartAtCursor, handleFiles],
   );
 
   // ─── file input ─────────────────────────────────────────
@@ -742,13 +758,6 @@ export function PromptInput({
     () => attachments.filter((a): a is Attachment & { kind: "image" } => a.kind === "image"),
     [attachments],
   );
-  const fileAttachments = useMemo(() => attachments.filter((a) => a.kind === "file"), [attachments]);
-
-  const contextItems = useMemo(
-    () =>
-      fileAttachments.map((a) => ({ key: a.id, path: a.path ?? a.name, comment: undefined, type: "file" as const })),
-    [fileAttachments],
-  );
 
   const placeholderVisible = !dirty && !editorText().length;
   const stopping = disabled;
@@ -776,14 +785,6 @@ export function PromptInput({
         onDrop={handleDrop}
       >
         <PromptDragOverlay type={dragOver ? "image" : null} label={t("dropFilesAttach")} />
-
-        {contextItems.length > 0 && (
-          <PromptContextItems
-            items={contextItems}
-            remove={(key: string) => setAttachments((prev) => prev.filter((a) => a.id !== key))}
-            t={(s: string) => s}
-          />
-        )}
 
         {imageAttachments.length > 0 && (
           <PromptImageAttachments
@@ -912,6 +913,13 @@ export function PromptInput({
                   onPickModel={onPickModel}
                   onOpenSettings={onOpenSettings ?? (() => {})}
                 />
+                {onReasoningEffortChange && hasReasoningEffort && (
+                  <ReasoningEffortSelector
+                    currentEffort={currentEffort}
+                    onChange={onReasoningEffortChange}
+                    effortOptions={reasoningEffortOptions}
+                  />
+                )}
               </div>
               {/* Shell mode indicator */}
               <div className="prompt-input__bottom-shell" style={shell}>
