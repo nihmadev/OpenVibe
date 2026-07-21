@@ -54,4 +54,10 @@ describe("sanitizeMarkdown", () => {
     const sanitized = sanitizeMarkdown(input, false);
     expect(sanitized).toBe("6. **`search_codebase`** кодовой базе (паттерн или естественный запрос)");
   });
+
+  it("preserves already-closed bold code spans with parentheses like **`definitions()`**", () => {
+    const input = "- **`definitions()`** — вызывает `build_tool_definitions()`, затем **`execute()`**";
+    const sanitized = sanitizeMarkdown(input, false);
+    expect(sanitized).toBe(input);
+  });
 });

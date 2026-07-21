@@ -80,7 +80,7 @@ function sanitizeLineParity(line: string, isActiveStreamingLine: boolean): strin
 
   // Smart recovery for unclosed **`word or *`word dropped by LLM before space/punctuation/EOL
   // E.g., `**\`search_codebase кодовой базе` -> `**\`search_codebase\`** кодовой базе`
-  line = line.replace(/(\*\*`|\*`)([\w\-./+]+)(?=\s|[^\w\-./+`*]|$)/g, (match, prefix, word, offset, fullStr) => {
+  line = line.replace(/(\*\*`|\*`)([\w\-./+()]+)(?=\s|[^\w\-./+()`*]|$)/g, (match, prefix, word, offset, fullStr) => {
     const afterSpan = fullStr.slice(offset + prefix.length + word.length);
     if (!afterSpan.startsWith("`")) {
       const closing = prefix.startsWith("**") ? "`**" : "`*";
