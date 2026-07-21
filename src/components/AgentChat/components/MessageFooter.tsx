@@ -173,22 +173,33 @@ function toPlainText(markdown: string): string {
 
 function formatRawTrace(items: HistoryItem[]): string {
   return items
-    .filter((entry) => entry.kind !== "user")
     .map((entry) => {
+      if (entry.kind === "user") {
+        const sections = [`## User message: ${entry.id}`];
+        if (entry.text) sections.push(entry.text);
+        if (entry.attachments?.length) {
+          sections.push("attachments: " + entry.attachments.map((a) => a.name).join(", "));
+        }
+        return sections.join("\n");
+      }
+
       if (entry.kind === "tool") {
         const args = entry.toolArgs ?? (entry.toolStream ? entry.toolStream : undefined);
         const argsText = typeof args === "string" ? args : JSON.stringify(args ?? {}, null, 2);
-        return [
+        const sections = [
           `## Tool call: ${entry.toolName ?? "unknown"}`,
           `id: ${entry.id}`,
           `status: ${entry.ok === false ? "failed" : entry.ok === true ? "ok" : "pending"}`,
-          "arguments:",
-          "```json",
-          argsText,
-          "```",
-          entry.text ? "result:" : "result: (empty)",
-          entry.text || "",
-        ].join("\n");
+        ];
+        if (entry.startedAt) sections.push(`startedAt: ${entry.startedAt}`);
+        if (entry.completedAt) sections.push(`completedAt: ${entry.completedAt}`);
+        sections.push("arguments:", "```json", argsText, "```");
+        if (entry.text) {
+          sections.push("result:", entry.text);
+        } else {
+          sections.push("result: (empty)");
+        }
+        return sections.join("\n");
       }
 
       if (entry.kind === "assistant") {
@@ -199,7 +210,15 @@ function formatRawTrace(items: HistoryItem[]): string {
         return sections.join("\n\n");
       }
 
-      return `## ${entry.kind}\n${entry.text}`;
+      if (entry.kind === "error") {
+        return [`## Error: ${entry.id}`, entry.text].join("\n");
+      }
+
+      if (entry.kind === "info") {
+        return [`## Info: ${entry.id}`, entry.text].join("\n");
+      }
+
+      return `## ${entry.kind}: ${entry.id}\n${entry.text}`;
     })
     .join("\n\n---\n\n");
 }

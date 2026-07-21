@@ -195,8 +195,36 @@ export function groupToolActivities(items: HistoryItem[]): HistoryItem[][] {
   return groups;
 }
 
-export function getRunTiming(items: HistoryItem[]): { startedAt?: number; completedAt?: number } {
-  const startedAt = items.find((item) => item.startedAt !== undefined)?.startedAt;
+export function getRunTiming(
+  items: HistoryItem[],
+  allItems?: HistoryItem[],
+): { startedAt?: number; completedAt?: number } {
+  let startedAt: number | undefined;
+
+  if (allItems && allItems.length > 0) {
+    const firstRunItem = items[0];
+    if (firstRunItem) {
+      const idx = allItems.findIndex((it) => it.id === firstRunItem.id);
+      if (idx > 0) {
+        for (let i = idx - 1; i >= 0; i--) {
+          if (allItems[i]?.kind === "user" && allItems[i]?.startedAt !== undefined) {
+            startedAt = allItems[i]!.startedAt;
+            break;
+          }
+        }
+      }
+    } else {
+      const lastUser = [...allItems].reverse().find((it) => it.kind === "user" && it.startedAt !== undefined);
+      if (lastUser) {
+        startedAt = lastUser.startedAt;
+      }
+    }
+  }
+
+  if (!startedAt) {
+    startedAt = items.find((item) => item.startedAt !== undefined)?.startedAt;
+  }
+
   const completed = [...items].reverse().find((item) => item.completedAt !== undefined)?.completedAt;
   return { startedAt, completedAt: completed };
 }

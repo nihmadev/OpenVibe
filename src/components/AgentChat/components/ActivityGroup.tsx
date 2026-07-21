@@ -49,13 +49,18 @@ function ActivityIcon({ item }: { item: HistoryItem }): React.ReactElement {
 export function ActivityGroup({ items, cwd, onDrillDown }: ActivityGroupProps): React.ReactElement {
   const { t } = useI18n();
   const hasPending = items.some((item) => item.ok === undefined);
+  const allComplete = !hasPending;
   const [open, setOpen] = useState(true);
   // Keep a burst of completed tool calls readable. Results are already
   // available, so this only paces their presentation in the chat timeline.
-  const [visibleCount, setVisibleCount] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(allComplete ? items.length : 0);
   const summary = useMemo(() => summarizeToolActivities(items, t), [items, t]);
 
   React.useEffect(() => {
+    if (allComplete) {
+      setVisibleCount(items.length);
+      return;
+    }
     const revealTimer = window.setTimeout(() => {
       setVisibleCount((count) => Math.min(items.length, Math.max(1, count + 1)));
       interval = window.setInterval(() => {
@@ -75,7 +80,7 @@ export function ActivityGroup({ items, cwd, onDrillDown }: ActivityGroupProps): 
       if (revealTimer !== undefined) window.clearTimeout(revealTimer);
       if (interval !== undefined) window.clearInterval(interval);
     };
-  }, [items.length]);
+  }, [items.length, allComplete]);
 
   return (
     <section className="activity-group">
@@ -95,7 +100,7 @@ export function ActivityGroup({ items, cwd, onDrillDown }: ActivityGroupProps): 
         <div className="activity-group__items">
           {items.slice(0, visibleCount).map((item, index) => (
             <div
-              className="agent-run__tool activity-group__item-enter"
+              className={`agent-run__tool${!allComplete ? " activity-group__item-enter" : ""}`}
               style={{ "--activity-index": index } as React.CSSProperties}
               key={item.id}
             >

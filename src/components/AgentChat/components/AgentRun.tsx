@@ -21,10 +21,25 @@ interface AgentRunProps {
   onDrillDown?: (id: string) => void;
 }
 
-function ReasoningActivity({ item, runActive }: { item: HistoryItem; runActive: boolean }): React.ReactElement {
+function ConsolidatedReasoning({
+  items,
+  runActive,
+}: {
+  items: HistoryItem[];
+  runActive: boolean;
+}): React.ReactElement | null {
   const { t } = useI18n();
-  const isDone = item.reasoningDone === true || item.completedAt !== undefined || !runActive;
-  const hasContent = !!item.reasoning?.trim();
+
+  const reasoningItems = useMemo(
+    () => items.filter((item) => item.kind === "assistant" && (item.reasoning?.trim() || item.reasoningName)),
+    [items],
+  );
+
+  const isDone =
+    !runActive ||
+    (reasoningItems.length > 0 &&
+      reasoningItems.every((it) => it.reasoningDone === true || it.completedAt !== undefined));
+  const hasContent = reasoningItems.some((it) => it.reasoning?.trim() || it.reasoningName);
   const [open, setOpen] = useState(hasContent && !isDone);
   const wasDone = useRef(isDone);
 
@@ -32,6 +47,16 @@ function ReasoningActivity({ item, runActive }: { item: HistoryItem; runActive: 
     if (isDone && !wasDone.current) setOpen(false);
     wasDone.current = isDone;
   }, [isDone]);
+
+  if (reasoningItems.length === 0) return null;
+
+  const latestActiveItem = reasoningItems[reasoningItems.length - 1];
+  const activeTitle = latestActiveItem?.reasoningName || t("thinkingInProgress");
+  const titleText = !isDone
+    ? activeTitle
+    : reasoningItems.length > 1
+      ? `${t("thinkingComplete")} (${reasoningItems.length})`
+      : t("thinkingComplete");
 
   return (
     <div className="agent-run__reasoning">
@@ -45,12 +70,36 @@ function ReasoningActivity({ item, runActive }: { item: HistoryItem; runActive: 
         <span className="agent-run__thinking-icon">
           <Brain aria-hidden="true" />
         </span>
-        <span className="agent-run__thinking-title">{t(isDone ? "thinkingComplete" : "thinkingInProgress")}</span>
+        <span className="agent-run__thinking-title">{titleText}</span>
         {hasContent && <ChevronDown className="agent-run__thinking-chevron" aria-hidden="true" />}
       </button>
       {hasContent && open && (
         <div className="agent-run__thinking-content">
-          <Markdown content={item.reasoning!} isAssistant={true} noFileIcons={true} isStreaming={!isDone} />
+          <div className="agent-run__thinking-steps">
+            {reasoningItems.map((item, idx) => {
+              const title = item.reasoningName;
+              const body = item.reasoning?.trim();
+              const itemDone = item.reasoningDone === true || item.completedAt !== undefined || !runActive;
+              return (
+                <div key={item.id || idx} className="agent-run__thinking-step">
+                  <div className="agent-run__thinking-step-marker">
+                    <span
+                      className={`agent-run__thinking-step-dot${!itemDone ? " agent-run__thinking-step-dot--active" : ""}`}
+                    />
+                    <span className="agent-run__thinking-step-line" />
+                  </div>
+                  <div className="agent-run__thinking-step-body">
+                    {title && <div className="agent-run__thinking-step-title">{title}</div>}
+                    {body && (
+                      <div className="agent-run__thinking-step-text">
+                        <Markdown content={body} isAssistant={true} noFileIcons={true} isStreaming={!itemDone} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
@@ -71,7 +120,7 @@ export function AgentRun({
   const { t } = useI18n();
   const [now, setNow] = useState(() => Date.now());
   const mountedAt = useRef(now);
-  const timing = useMemo(() => getRunTiming(items), [items]);
+  const timing = useMemo(() => getRunTiming(items, allItems), [items, allItems]);
   const toolActivityGroups = useMemo(() => groupToolActivities(items), [items]);
   const toolGroupByFirstId = useMemo(
     () => new Map(toolActivityGroups.map((group) => [group[0]!.id, group])),
@@ -82,6 +131,7 @@ export function AgentRun({
     [toolActivityGroups],
   );
   const wasStopped = items.some((item) => item.kind === "stopped");
+  const [toolsExpanded, setToolsExpanded] = useState(true);
 
   useEffect(() => {
     if (!isActive) return;
@@ -89,16 +139,11 @@ export function AgentRun({
     return () => window.clearInterval(timer);
   }, [isActive]);
 
-  const start = timing.startedAt ?? (isActive ? mountedAt.current : undefined);
-  const end = isActive ? now : timing.completedAt;
-  const duration =
-    start !== undefined && end !== undefined ? formatRunDurationLabel(Math.max(0, end - start), t) : null;
+  const start = timing.startedAt ?? mountedAt.current;
+  const end = isActive ? now : (timing.completedAt ?? now);
+  const duration = formatRunDurationLabel(Math.max(0, end - start), t);
 
-  const timeLabel = duration
-    ? t(isActive ? "agentRunWorkingFor" : "agentRunWorkedFor", { time: duration })
-    : isActive
-      ? t("agentRunWorking")
-      : t("completed");
+  const timeLabel = t(isActive ? "agentRunWorkingFor" : "agentRunWorkedFor", { time: duration });
 
   return (
     <div className="agent-run">
@@ -106,10 +151,20 @@ export function AgentRun({
         <div className="agent-run__summary-copy">
           <div className={`agent-run__time${isActive ? " agent-run__time--active" : ""}`}>{timeLabel}</div>
         </div>
+        <button
+          className={`agent-run__toggle${!toolsExpanded ? " agent-run__toggle--collapsed" : ""}`}
+          type="button"
+          onClick={() => setToolsExpanded((v) => !v)}
+          aria-expanded={toolsExpanded}
+          aria-label={toolsExpanded ? t("hideToolCalls") : t("showToolCalls")}
+        >
+          <ChevronDown className="agent-run__toggle-chevron" aria-hidden="true" />
+        </button>
       </div>
       <div className="agent-run__separator" />
 
-      <div className="agent-run__details">
+      <div className={`agent-run__details${!toolsExpanded ? " agent-run__details--collapsed" : ""}`}>
+        {showThinking && <ConsolidatedReasoning items={items} runActive={isActive} />}
         {(() => {
           const content: React.ReactNode[] = [];
           items.forEach((item) => {
@@ -133,19 +188,12 @@ export function AgentRun({
               return;
             }
             if (item.kind === "assistant") {
-              if (!showThinking) return;
-              const hasReasoning = !!(item.reasoning || item.reasoningName);
               const hasNarration = item.id !== finalItem?.id && item.text.trim().length > 0;
-              if (!hasReasoning && !hasNarration) return;
+              if (!hasNarration) return;
               content.push(
-                <React.Fragment key={item.id}>
-                  {hasReasoning && <ReasoningActivity item={item} runActive={isActive} />}
-                  {hasNarration && (
-                    <div className="agent-run__narration">
-                      <Markdown content={item.text} isAssistant={true} noFileIcons={true} />
-                    </div>
-                  )}
-                </React.Fragment>,
+                <div className="agent-run__narration" key={item.id}>
+                  <Markdown content={item.text} isAssistant={true} noFileIcons={true} />
+                </div>,
               );
               return;
             }
