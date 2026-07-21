@@ -180,9 +180,10 @@ let monacoProvidersRegistered = false;
 
 export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMatchLength }: Props): React.ReactElement {
   const { t } = useI18n();
-  const [content, setContent] = useState<string | null>(null);
+  const initialCached = MODEL_CACHE.get(path);
+  const [content, setContent] = useState<string | null>(() => (initialCached ? initialCached.model.getValue() : null));
   const isContentLoading = content === null;
-  const [original, setOriginal] = useState<string>("");
+  const [original, setOriginal] = useState<string>(() => (initialCached ? initialCached.originalContent : ""));
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -660,12 +661,12 @@ User Instruction: ${promptText}`;
     if (inlineZoneIdRef.current !== null || inlineZoneNode !== null) {
       const existingTextarea =
         inlineZoneNode?.querySelector("textarea") || ed.getDomNode()?.querySelector(".inline-vibe-textarea");
-      if (existingTextarea && document.activeElement !== existingTextarea) {
+      if (existingTextarea && document.body.contains(existingTextarea) && document.activeElement !== existingTextarea) {
         (existingTextarea as HTMLElement).focus();
-      } else {
-        cleanupInlineSession();
+        return;
       }
-      return;
+      // If zone was detached, stale or already focused, clean it up and continue to create fresh session
+      cleanupInlineSession();
     }
 
     cleanupInlineSession();
@@ -792,32 +793,72 @@ User Instruction: ${promptText}`;
     m.editor.setTheme(monacoThemeName);
   }, [themeVars, monacoThemeName, isDark]);
 
-  // Load content from disk when path changes
+  // Load content from disk when path changes (with instant cache switching)
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
       setError(null);
-      setContent(null);
+      cleanupInlineSession();
+      const cached = MODEL_CACHE.get(path);
+
+      // Instant in-memory tab switch if model is already cached
+      if (cached) {
+        setContent(cached.model.getValue());
+        setOriginal(cached.originalContent);
+        const ed = editorRef.current;
+        if (ed && ed.getModel() !== cached.model) {
+          ed.setModel(cached.model);
+        }
+      }
 
       const res = await window.vibe.fs.read(path);
       if (cancelled) return;
 
       if (!res.ok) {
-        setError(res.error);
+        if (!cached) setError(res.error);
         return;
       }
 
-      setContent(res.content);
-      setOriginal(res.content);
-
-      // Preload type definitions and local imports for every file switch.
-      // onMount only fires once (when the editor is first created), so
-      // subsequent file changes depend on this path.
       const m = monacoInstanceRef.current;
+      const uriStr = "file://" + path.replace(/\\/g, "/");
+      let model = m
+        ? m.editor.getModel(m.Uri.parse(uriStr)) || m.editor.getModel(m.Uri.file(path.replace(/\\/g, "/")))
+        : null;
+
+      if (m && !model) {
+        try {
+          model = m.editor.createModel(res.content, getLanguage(path), m.Uri.file(path.replace(/\\/g, "/")));
+        } catch {
+          model = m.editor.getModel(m.Uri.file(path.replace(/\\/g, "/")));
+        }
+      }
+
+      if (model) {
+        MODEL_CACHE.set(path, { model, originalContent: res.content });
+        const ed = editorRef.current;
+        if (ed && ed.getModel() !== model) {
+          ed.setModel(model);
+        }
+      }
+
+      if (!cached) {
+        setContent(res.content);
+        setOriginal(res.content);
+      } else {
+        // If cached and user hasn't modified it, sync if disk content changed
+        if (cached.model.getValue() === cached.originalContent && cached.originalContent !== res.content) {
+          cached.originalContent = res.content;
+          cached.model.setValue(res.content);
+          setContent(res.content);
+          setOriginal(res.content);
+        }
+      }
+
+      // Preload type definitions and local imports asynchronously (non-blocking)
       if (m && cwd) {
-        await loadTypeDefinitions(m, cwd);
-        await preloadLocalImports(m, res.content, path);
+        void loadTypeDefinitions(m, cwd);
+        void preloadLocalImports(m, res.content, path);
       }
       scg2Tracker.updateActivePath(path);
     }
@@ -827,7 +868,7 @@ User Instruction: ${promptText}`;
     return () => {
       cancelled = true;
     };
-  }, [path]);
+  }, [path, cwd]);
 
   const dirty = content !== null && content !== original;
 
@@ -927,7 +968,7 @@ User Instruction: ${promptText}`;
         path={"file://" + path.replace(/\\/g, "/")}
         language={getLanguage(path)}
         value={inlineLoading ? undefined : content}
-        loading={<div className="editor editor--loading">{t("loading")}</div>}
+        loading={<div className="editor" />}
         beforeMount={(m) => {
           monacoInstanceRef.current = m;
           m.editor.defineTheme(monacoThemeName, makeMonacoTheme(themeVars, isDark));
@@ -939,15 +980,9 @@ User Instruction: ${promptText}`;
           editorRef.current = ed;
           monacoInstanceRef.current = m;
 
-          // Inline Vibe keyboard shortcuts — two-layer approach:
-          //
-          // Layer 1: ed.addCommand() overrides Monaco's built-in Ctrl+K binding (which would
-          //   otherwise delete a line). Since addCommand() registers globally (monaco-editor#3345),
-          //   we only use it to BLOCK the default Monaco action and do nothing else here.
-          //   The actual trigger comes from Layer 2.
+          // Inline Vibe keyboard shortcuts
           ed.addCommand(m.KeyMod.CtrlCmd | m.KeyCode.KeyK, () => {
-            // intentionally empty — just overrides Monaco's default Ctrl+K action.
-            // Layer 2 (DOM capture listener) handles the actual trigger.
+            triggerRef.current();
           });
           ed.addCommand(m.KeyMod.CtrlCmd | m.KeyCode.Enter, () => {
             if (inlineSessionRef.current) handleAcceptRef.current();
@@ -965,14 +1000,12 @@ User Instruction: ${promptText}`;
             if (inlineSessionRef.current) handleNavDiffRef.current("prev");
           });
 
-          // Layer 2: DOM capture-phase listener on the editor's own DOM node fires the actual
-          //   trigger. be.code is layout-independent so this works on Russian/German/etc. keyboards.
-          //   stopImmediatePropagation prevents any other listener on this node from also firing.
+          // Layer 2: DOM capture-phase listener on the editor's own DOM node
           const handleInlineVibeKeyDown = (be: KeyboardEvent) => {
             const ctrl = be.ctrlKey || be.metaKey;
 
-            // Ctrl+K — open / focus Inline Vibe
-            if (ctrl && be.code === "KeyK") {
+            // Ctrl+K — open / focus Inline Vibe (supports English & Russian layout)
+            if (ctrl && (be.code === "KeyK" || be.key?.toLowerCase() === "k" || be.key?.toLowerCase() === "л")) {
               be.preventDefault();
               be.stopPropagation();
               be.stopImmediatePropagation();
@@ -1089,19 +1122,22 @@ User Instruction: ${promptText}`;
           }
 
           try {
-            // Ensure type definitions (extraLibs + compiler options) are loaded
-            // before the TS worker processes this file.
-            if (cwd) {
-              await loadTypeDefinitions(m, cwd);
+            const uri = m.Uri.file(path.replace(/\\/g, "/"));
+            let model = m.editor.getModel(uri);
+            if (!model && content !== null) {
+              model = m.editor.createModel(content, getLanguage(path), uri);
+            }
+            if (model) {
+              ed.setModel(model);
+              MODEL_CACHE.set(path, { model, originalContent: original });
             }
 
-            // Preload imported files as Monaco models so the TS worker
-            // can resolve them immediately.
-            await preloadLocalImports(m, content, path);
-
-            const uri = m.Uri.file(path);
-            const model = m.editor.getModel(uri) ?? m.editor.createModel(content, getLanguage(path), uri);
-            MODEL_CACHE.set(path, { model, originalContent: original });
+            if (cwd) {
+              void loadTypeDefinitions(m, cwd);
+            }
+            if (content !== null) {
+              void preloadLocalImports(m, content, path);
+            }
 
             scg2Tracker.attach(ed, path, m);
 

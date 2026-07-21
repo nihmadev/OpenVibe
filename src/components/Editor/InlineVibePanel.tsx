@@ -57,9 +57,11 @@ export function InlinePromptPanel({ onSend, onClose, loading, placeholder }: Inl
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Layout-independent check so shortcuts work on both English and Russian keyboards
-    if ((e.key === "Enter" || e.code === "Enter") && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      handleSubmit();
+    if (e.key === "Enter" || e.code === "Enter") {
+      if (!e.shiftKey) {
+        e.preventDefault();
+        handleSubmit();
+      }
     } else if (e.key === "Escape" || e.code === "Escape") {
       e.preventDefault();
       onClose();

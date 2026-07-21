@@ -11,10 +11,12 @@ import "./EditorArea.css";
 interface EditorAreaProps {
   openFiles: string[];
   activeFile: string | null;
+  previewFile: string | null;
   dirtyFiles: Set<string>;
   onActivate: (path: string) => void;
   onClose: (path: string) => void;
   onDirtyChange: (path: string, dirty: boolean) => void;
+  onPinFile: (path: string) => void;
   /** Root folder of the project, used to make breadcrumb relative */
   cwd: string;
   /** Line number to scroll to when opening from search */
@@ -28,10 +30,12 @@ interface EditorAreaProps {
 export function EditorArea({
   openFiles,
   activeFile,
+  previewFile,
   dirtyFiles,
   onActivate,
   onClose,
   onDirtyChange,
+  onPinFile,
   cwd,
   gotoLine,
   gotoColumn,
@@ -56,6 +60,13 @@ export function EditorArea({
       onClose(path);
     },
     [onClose],
+  );
+
+  const handleDoubleClick = useCallback(
+    (path: string) => {
+      onPinFile(path);
+    },
+    [onPinFile],
   );
 
   // Build relative breadcrumb segments for the active file
@@ -103,11 +114,16 @@ export function EditorArea({
           return (
             <div
               key={path}
-              className={"editor-area__tab" + (active ? " editor-area__tab--active" : "")}
+              className={
+                "editor-area__tab" +
+                (active ? " editor-area__tab--active" : "") +
+                (path === previewFile ? " editor-area__tab--preview" : "")
+              }
               role="tab"
               aria-selected={active}
               title={path}
               onClick={() => onActivate(path)}
+              onDoubleClick={() => handleDoubleClick(path)}
               onMouseUp={(e) => {
                 if (e.button === 1) handleClose(e, path);
               }}
@@ -188,7 +204,6 @@ export function EditorArea({
             <VideoViewer key={activeFile} path={activeFile} />
           ) : (
             <Editor
-              key={activeFile}
               path={activeFile}
               cwd={cwd}
               onDirtyChange={(dirty) => onDirtyChange(activeFile, dirty)}
