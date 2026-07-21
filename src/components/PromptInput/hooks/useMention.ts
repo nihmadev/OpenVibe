@@ -41,7 +41,7 @@ export function useMention(workspace: string) {
         selected: 0,
         loading: true,
       }));
-      window.vibe.fs.find(workspace, query, 30).then((res) => {
+      window.vibe.fs.findAll(workspace, query, 30).then((res) => {
         setMention((prev) => {
           if (!prev.active || prev.start !== i || prev.query !== query) return prev;
           if (!res.ok) return { ...prev, matches: [], loading: false };
