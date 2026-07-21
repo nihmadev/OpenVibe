@@ -8,6 +8,7 @@ export interface MenuItem {
   disabled?: boolean;
   icon?: React.ReactNode;
   checked?: boolean;
+  shortcut?: string;
 }
 
 interface Props {
@@ -96,7 +97,17 @@ export function ContextMenu({ x, y, items, onClose }: Props): React.ReactElement
               <span className="ctxmenu__leading" aria-hidden="true">
                 {item.checked !== undefined ? (
                   <span className={`ctxmenu__check ${item.checked ? "ctxmenu__check--on" : ""}`}>
-                    {item.checked ? "✓" : ""}
+                    {item.checked ? (
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M2.5 6L5 8.5L9.5 3.5"
+                          stroke="currentColor"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    ) : null}
                   </span>
                 ) : item.icon ? (
                   <span className="ctxmenu__icon">{item.icon}</span>
@@ -104,6 +115,7 @@ export function ContextMenu({ x, y, items, onClose }: Props): React.ReactElement
               </span>
             ) : null}
             <span className="ctxmenu__label">{item.label}</span>
+            {item.shortcut ? <span className="ctxmenu__shortcut">{item.shortcut}</span> : null}
           </button>
         );
       })}
