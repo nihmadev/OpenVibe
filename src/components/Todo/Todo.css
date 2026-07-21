@@ -117,7 +117,35 @@
   font-size: 12px;
 }
 
-.todo-card__task--completed .todo-card__task-title,
+.todo-card__task--completed .todo-card__task-title {
+  position: relative;
+  overflow: visible;
+  opacity: 0.68;
+}
+
+.todo-card__task--completed .todo-card__task-title::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--primary);
+  opacity: 0.7;
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: todo-strikethrough 0.35s ease-out forwards;
+}
+
+@keyframes todo-strikethrough {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 .todo-card__task--skipped .todo-card__task-title {
   opacity: 0.68;
 }

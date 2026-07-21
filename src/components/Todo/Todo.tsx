@@ -30,8 +30,6 @@ export function Todo({ tasks }: TodoProps): React.ReactElement | null {
   return (
     <div
       className={`todo-widget${open ? " todo-widget--open" : ""}`}
-      onPointerEnter={(event) => event.pointerType === "mouse" && setHovered(true)}
-      onPointerLeave={(event) => event.pointerType === "mouse" && setHovered(false)}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setHovered(false);
       }}
@@ -66,6 +64,8 @@ export function Todo({ tasks }: TodoProps): React.ReactElement | null {
         className={`todo-widget__button${pinned ? " todo-widget__button--pinned" : ""}`}
         type="button"
         onClick={() => setPinned((value) => !value)}
+        onPointerEnter={(event) => event.pointerType === "mouse" && setHovered(true)}
+        onPointerLeave={(event) => event.pointerType === "mouse" && setHovered(false)}
         onFocus={() => setHovered(true)}
         onKeyDown={(event) => {
           if (event.key !== "Escape") return;
