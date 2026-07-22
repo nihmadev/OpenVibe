@@ -336,33 +336,31 @@ impl Agent {
                 Some(serde_json::Value::String(content_text.clone()))
             };
 
-            // Gemini and reasoning models require thought_signature / <thought> block in assistant messages
-            // when responding with tool_calls. Guarantee that <thought> is present in content_text when stored in history.
+            // If the model produced non-empty reasoning content, format it as a <thought> block in assistant_content
             if !cleaned_tool_calls.is_empty() {
-                let reasoning = turn_result.reasoning_content.as_deref().unwrap_or("");
-                let tag_name = turn_result.reasoning_name.as_deref().unwrap_or("Thinking");
-                let thought_text = if reasoning.trim().is_empty() {
-                    "Analyzing and preparing tool execution."
-                } else {
-                    reasoning.trim()
-                };
-                let thought_block = format!(
-                    "<thought name=\"{}\">\n{}\n</thought>",
-                    tag_name, thought_text
-                );
+                if let Some(ref reasoning) = turn_result.reasoning_content {
+                    let trimmed_reasoning = reasoning.trim();
+                    if !trimmed_reasoning.is_empty() {
+                        let tag_name = turn_result.reasoning_name.as_deref().unwrap_or("Thinking");
+                        let thought_block = format!(
+                            "<thought name=\"{}\">\n{}\n</thought>",
+                            tag_name, trimmed_reasoning
+                        );
 
-                let current_text = match &assistant_content {
-                    Some(serde_json::Value::String(s)) => s.clone(),
-                    _ => String::new(),
-                };
+                        let current_text = match &assistant_content {
+                            Some(serde_json::Value::String(s)) => s.clone(),
+                            _ => String::new(),
+                        };
 
-                if !current_text.contains("<thought") {
-                    let new_text = if current_text.trim().is_empty() {
-                        thought_block
-                    } else {
-                        format!("{}\n{}", thought_block, current_text)
-                    };
-                    assistant_content = Some(serde_json::Value::String(new_text));
+                        if !current_text.contains("<thought") {
+                            let new_text = if current_text.trim().is_empty() {
+                                thought_block
+                            } else {
+                                format!("{}\n{}", thought_block, current_text)
+                            };
+                            assistant_content = Some(serde_json::Value::String(new_text));
+                        }
+                    }
                 }
             }
 

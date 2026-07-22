@@ -109,7 +109,7 @@ pub fn messages_to_api_json(messages: Vec<ChatMessage>) -> Vec<serde_json::Value
             // If assistant message has tool_calls, ensure content includes a <thought> tag.
             // Gemini 2.0 / 3.x models strictly enforce `thought_signature` or <thought> block
             // in functionCall parts when returning assistant turns with tool_calls.
-            if m.role == "assistant" && m.tool_calls.as_ref().map_or(false, |tc| !tc.is_empty()) {
+            if m.role == "assistant" && m.tool_calls.as_ref().is_some_and(|tc| !tc.is_empty()) {
                 let reasoning = m.reasoning_content.as_deref().unwrap_or("");
                 let tag_name = m.reasoning_name.as_deref().unwrap_or("Thinking");
                 let thought_text = if reasoning.trim().is_empty() {
