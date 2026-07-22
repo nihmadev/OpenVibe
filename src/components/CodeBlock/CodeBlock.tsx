@@ -247,6 +247,16 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
 
       const disposable = editor.onDidContentSizeChange(updateHeight);
 
+      const resizeObserver = new ResizeObserver(() => {
+        try {
+          editor.layout();
+          updateHeight();
+        } catch {
+          /* editor disposed */
+        }
+      });
+      resizeObserver.observe(container);
+
       const onWheel = (e: WheelEvent) => {
         const ed = editorRef.current;
         if (!ed) return;
@@ -265,6 +275,7 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
       cleanupRef.current = () => {
         if (rafId !== null) cancelAnimationFrame(rafId);
         container.removeEventListener("wheel", onWheel);
+        resizeObserver.disconnect();
         try {
           disposable.dispose();
         } catch {

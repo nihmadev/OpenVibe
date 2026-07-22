@@ -78,6 +78,12 @@ export const DiffEditor = React.memo(function DiffEditor({
         renderMarginRevertIcon: false,
         enableSplitViewResizing: true,
         renderIndicators: true,
+        hideUnchangedRegions: {
+          enabled: true,
+          revealLineCount: 10,
+          minimumLineCount: 3,
+          contextLineCount: 3,
+        },
       });
 
       diffEditor.setModel({ original: originalModel, modified: modifiedModel });

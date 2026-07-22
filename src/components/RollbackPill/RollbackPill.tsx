@@ -130,7 +130,15 @@ export function RollbackPill({
           )}
           <div className="prompt-input__rollback-text-row">
             <span className="prompt-input__rollback-text">{messageText}</span>
-            <button className="prompt-input__rollback-restore-btn" onClick={onRestore}>
+            <button
+              type="button"
+              className="prompt-input__rollback-restore-btn"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onRestore();
+              }}
+            >
               Восстановить
             </button>
           </div>
