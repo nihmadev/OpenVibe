@@ -95,7 +95,6 @@ function useSpring(target: number, deps: React.DependencyList) {
   return value;
 }
 
-
 export function PromptInput({
   disabled,
   workspace,
@@ -272,7 +271,11 @@ export function PromptInput({
 
     const img = document.createElement("img");
     img.className = "prompt-input__file-pill-icon";
-    const isFolder = isDir || display.endsWith("/") || display.endsWith("\\") || (path ? path.endsWith("/") || path.endsWith("\\") : false);
+    const isFolder =
+      isDir ||
+      display.endsWith("/") ||
+      display.endsWith("\\") ||
+      (path ? path.endsWith("/") || path.endsWith("\\") : false);
     img.src = isFolder ? getFolderIconUrl(display) : getFileIconUrl(display);
     img.alt = "";
     img.setAttribute("aria-hidden", "true");

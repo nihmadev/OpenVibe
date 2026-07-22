@@ -122,7 +122,7 @@ function DiffBlock({ item, file }: { item: HistoryItem; file?: { name: string } 
     const path = getFilePathFromArgs(item.toolArgs);
     const { oldStr, newStr } = getEditStrings(item.toolArgs);
     const info = pickFile(item.toolArgs) || file;
-    const lang = resolveMonacoLang(info?.ext || "plaintext");
+    const lang = resolveMonacoLang((info as any)?.ext || "plaintext");
 
     if (path) {
       window.vibe.fs.read(path).then((r) => {

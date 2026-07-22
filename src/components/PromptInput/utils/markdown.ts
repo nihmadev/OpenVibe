@@ -120,7 +120,10 @@ export function createMarkdownFragment(content: string, options?: MarkdownOption
 
   lines.forEach((line, index) => {
     if (line) {
-      const hasInlineSyntax = /(`[^`\n]+`)|(\*\*[^*]+\*\*|__[^_]+__)|((?:\b|_)\*[^*]+\*|\b_[^_]+_)|(~~[^~]+~~|~[^~]+~)|(\[[^\]]+\]\([^)]+\))/.test(line);
+      const hasInlineSyntax =
+        /(`[^`\n]+`)|(\*\*[^*]+\*\*|__[^_]+__)|((?:\b|_)\*[^*]+\*|\b_[^_]+_)|(~~[^~]+~~|~[^~]+~)|(\[[^\]]+\]\([^)]+\))/.test(
+          line,
+        );
       if (!hasInlineSyntax && !showSyntax) {
         fragment.appendChild(document.createTextNode(line));
       } else {

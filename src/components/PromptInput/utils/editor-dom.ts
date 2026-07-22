@@ -80,7 +80,10 @@ export function readEditorParts(root: HTMLElement): EditorPart[] {
   flush();
 
   const hasFileParts = parts.some((p) => p.type === "file");
-  const textChars = parts.map((p) => p.content).join("").replace(/[\u200B\r\n\s]/g, "");
+  const textChars = parts
+    .map((p) => p.content)
+    .join("")
+    .replace(/[\u200B\r\n\s]/g, "");
   if (!hasFileParts && textChars === "") {
     return [{ type: "text", content: "" }];
   }
