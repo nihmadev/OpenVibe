@@ -434,6 +434,8 @@ export const ru = {
   // Radius settings
   borderRadius: "Скругление углов",
   borderRadiusDesc: "Радиус скругления элементов интерфейса",
+  experimentalExtremeRadius: "Экспериментальное скругление (до 100px)",
+  experimentalExtremeRadiusDesc: "Разрешает ставить радиус скругления интерфейса аж до 100px. Экспериментальный флаг!",
 
   // Zoom settings
   uiZoom: "Масштаб UI",

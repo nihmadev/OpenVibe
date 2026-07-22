@@ -5,6 +5,44 @@ All notable changes to OpenVibe will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.6](https://github.com/nihmadev/OpenVibe/compare/v1.3.5...v1.3.6) (2026-07-22)
+
+This release adds reasoning effort control for AI models, a cross-platform clipboard utility with Wayland (`wl-copy`) support, live Markdown rendering in the prompt editor, security guards for external links and drag-and-drop events, and dark glassmorphism styling for context menus.
+
+### Added
+
+* **Reasoning Effort Control**
+  * Added `ReasoningEffortSelector` control to the prompt input toolbar and Settings modal to set model reasoning intensity (`low`, `medium`, `high`, or disabled).
+  * Added `setReasoningEffort` IPC bridge command and backend state persistence in Tauri.
+  * Added `reasoning_effort` parameter handling to LLM request payloads in `crates/agent` and `src-tauri`.
+  * Added translations for reasoning effort selection in 36 languages.
+
+* **Cross-Platform Clipboard & Wayland Support**
+  * Added `@tauri-apps/plugin-clipboard-manager` dependency and custom `clipboard_write_text` Tauri command with native `wl-copy` process invocation for Linux/Wayland.
+  * Created `writeClipboard` utility (`src/utils/clipboard.ts`) with a multi-level fallback chain (Tauri plugin -> custom command -> `navigator.clipboard`).
+  * Replaced direct `navigator.clipboard` calls in chat message actions, code blocks, streaming Markdown, commit tooltips, and chat history.
+
+* **Prompt Input & Editor Enhancements**
+  * Implemented live Markdown syntax rendering inside the prompt input with a setting to display dimmed ghost formatting characters (`**`, `` ` ``, `#`).
+  * Added recent mention tracking (`recentMentions.ts`) and fuzzy filtering in `MentionPopup`.
+  * Added `RollbackPill` component for user prompt rollback indicators.
+
+* **Webview Security & System Integration**
+  * Added `webviewGuards.ts` to intercept external link clicks and prevent default window drag-and-drop file navigation.
+  * Added low-level stdio transport layer in `crates/mcp` for Model Context Protocol communication.
+  * Added Niri window manager configuration files with Noctalia and Catppuccin themes.
+
+* **UI & Component Polish**
+  * Redesigned `ContextMenu` with dark-mode glassmorphism (`backdrop-filter`), hover highlights, and keyboard arrow navigation.
+  * Added checkmark animations and status transition styling in `Todo` component.
+  * Added token usage metric indicators and activity group animations in `AgentRun` and `AgentToolView`.
+
+### Fixed
+
+* Fixed Rust compiler and TypeScript build errors in CI (`agent.rs`, `llm.rs`, `lib.rs`, `utils.ts`).
+* Updated Markdown sanitizer to allow `target` attributes on external links.
+* Preserved key stability in `StreamingMarkdown` during stream updates.
+
 ## [1.3.5](https://github.com/nihmadev/OpenVibe/compare/v1.3.4...v1.3.5) (2026-07-19)
 
 This release makes agent runs easier to follow and gives the agent safer, more useful project context, while polishing the editor, search, updater, and cross-platform experience.

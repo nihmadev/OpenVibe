@@ -334,6 +334,8 @@ export const en: Partial<Translations> = {
   // Radius settings
   borderRadius: "Border radius",
   borderRadiusDesc: "Corner rounding for UI elements",
+  experimentalExtremeRadius: "Experimental extreme radius (up to 100px)",
+  experimentalExtremeRadiusDesc: "Allows setting the UI border radius up to 100px. Experimental flag!",
 
   // Zoom settings
   uiZoom: "UI Zoom",
