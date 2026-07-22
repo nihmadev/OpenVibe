@@ -98,9 +98,10 @@ fn diff_to_files(diff: &git2::Diff) -> Result<Vec<DiffFile>> {
 
 pub fn get_file_diff_text(path: &str, file_path: &str) -> Result<String> {
     let repo = open(path)?;
+    let relative = crate::status::normalize_relative_path(path, file_path);
     let head_tree = repo.head().ok().and_then(|h| h.peel_to_tree().ok());
     let mut opts = git2::DiffOptions::new();
-    opts.pathspec(file_path);
+    opts.pathspec(&relative);
     let diff = repo.diff_tree_to_workdir(head_tree.as_ref(), Some(&mut opts))?;
     let mut diff_text = String::new();
     diff.print(git2::DiffFormat::Patch, |_delta, _hunk, line| {
@@ -114,12 +115,13 @@ pub fn get_file_diff_text(path: &str, file_path: &str) -> Result<String> {
 
 pub fn get_commit_file_diff_text(path: &str, oid: &str, file_path: &str) -> Result<String> {
     let repo = open(path)?;
+    let relative = crate::status::normalize_relative_path(path, file_path);
     let oid = git2::Oid::from_str(oid).map_err(|e| crate::error::GitError::Other(e.to_string()))?;
     let commit = repo.find_commit(oid)?;
     let commit_tree = commit.tree()?;
     let parent_tree = commit.parent(0).ok().and_then(|p| p.tree().ok());
     let mut opts = git2::DiffOptions::new();
-    opts.pathspec(file_path);
+    opts.pathspec(&relative);
     let diff = repo.diff_tree_to_tree(parent_tree.as_ref(), Some(&commit_tree), Some(&mut opts))?;
     let mut diff_text = String::new();
     diff.print(git2::DiffFormat::Patch, |_delta, _hunk, line| {
