@@ -6,7 +6,7 @@ import { FileIcon } from "../../Icons/file-icons.js";
 import { Tooltip } from "../../Tooltip/Tooltip.js";
 import { DiffEditor } from "../../DiffEditor/DiffEditor.js";
 import { resolveMonacoLang } from "../../CodeBlock/CodeBlock.js";
-import { pickFile, toRelativePath } from "../utils.js";
+import { pickFile, toRelativePath, getFilePathFromArgs, getEditStrings } from "../utils.js";
 import type { HistoryItem } from "../types.js";
 import { ContextMenu } from "../../ContextMenu/ContextMenu.js";
 import { writeClipboard } from "../../../utils/clipboard.js";
@@ -15,42 +15,54 @@ interface FileChangeInfo {
   filePath: string;
   added: number;
   removed: number;
-  item: HistoryItem;
+  items: HistoryItem[];
 }
 
 function getFileChanges(items: HistoryItem[], currentId: string): FileChangeInfo[] {
   const idx = items.findIndex((it) => it.id === currentId);
   if (idx <= 0) return [];
 
-  const result: FileChangeInfo[] = [];
+  const changesMap = new Map<string, FileChangeInfo>();
+
   for (let i = idx - 1; i >= 0; i--) {
     const it = items[i]!;
     if (it.kind === "user") break;
     if (it.kind !== "tool" || it.ok !== true) continue;
-    if (it.toolName === "edit_file") {
-      const args = it.toolArgs as Record<string, unknown> | undefined;
-      if (!args?.path) continue;
-      const oldStr = String(args.old_str ?? "");
-      const newStr = String(args.new_str ?? "");
-      result.push({
-        filePath: String(args.path),
-        added: newStr.split("\n").filter(Boolean).length,
-        removed: oldStr.split("\n").filter(Boolean).length,
-        item: it,
-      });
-    } else if (it.toolName === "write_file") {
-      const args = it.toolArgs as Record<string, unknown> | undefined;
-      if (!args?.path) continue;
-      const content = String(args.content ?? "");
-      result.push({
-        filePath: String(args.path),
-        added: content.split("\n").filter(Boolean).length,
-        removed: 0,
-        item: it,
+
+    const path = getFilePathFromArgs(it.toolArgs);
+    if (!path) continue;
+
+    const { oldStr, newStr } = getEditStrings(it.toolArgs);
+    const isWrite = it.toolName === "write_file" || it.toolName === "write_to_file";
+    const isEdit =
+      it.toolName === "edit_file" ||
+      it.toolName === "replace_file_content" ||
+      it.toolName === "multi_replace_file_content";
+    if (!isWrite && !isEdit && !oldStr && !newStr) continue;
+
+    const added = newStr.split("\n").filter(Boolean).length;
+    const removed = isWrite ? 0 : oldStr.split("\n").filter(Boolean).length;
+
+    const existing = changesMap.get(path);
+    if (existing) {
+      existing.added += added;
+      existing.removed += removed;
+      existing.items.push(it);
+    } else {
+      changesMap.set(path, {
+        filePath: path,
+        added,
+        removed,
+        items: [it],
       });
     }
   }
-  return result.reverse();
+
+  const result = Array.from(changesMap.values()).reverse();
+  for (const change of result) {
+    change.items.reverse();
+  }
+  return result;
 }
 
 function FileChangeRow({ change, cwd }: { change: FileChangeInfo; cwd?: string }) {
@@ -58,40 +70,65 @@ function FileChangeRow({ change, cwd }: { change: FileChangeInfo; cwd?: string }
   const [diffData, setDiffData] = useState<{ original: string; modified: string; lang: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const relPath = toRelativePath(change.filePath, cwd);
-  const info = pickFile(change.item.toolArgs);
+  const lastItem = change.items[change.items.length - 1];
+  const info = pickFile(lastItem?.toolArgs);
 
   useEffect(() => {
     if (!open) return;
     if (diffData !== null) return;
     setLoading(true);
 
-    if (change.item.toolName === "edit_file") {
-      window.vibe.fs.read(change.filePath).then((r) => {
+    const reverseItems = [...change.items].reverse();
+    const absPath =
+      cwd && !change.filePath.startsWith("/") && !change.filePath.includes(":")
+        ? `${cwd.replace(/\\/g, "/").replace(/\/$/, "")}/${change.filePath.replace(/\\/g, "/")}`
+        : change.filePath;
+
+    window.vibe.fs
+      .read(absPath)
+      .then((r) => {
         if (r.ok) {
-          const args = change.item.toolArgs as Record<string, unknown>;
           const modified = r.content;
-          const oldStr = typeof args.old_str === "string" ? args.old_str : "";
-          const newStr = typeof args.new_str === "string" ? args.new_str : "";
-          const pos = newStr ? modified.indexOf(newStr) : -1;
           let original = modified;
-          if (pos !== -1 && oldStr) {
-            original = modified.slice(0, pos) + oldStr + modified.slice(pos + newStr.length);
+
+          for (const item of reverseItems) {
+            const isWrite = item.toolName === "write_file" || item.toolName === "write_to_file";
+            if (isWrite) {
+              original = "";
+            } else {
+              const { oldStr, newStr } = getEditStrings(item.toolArgs);
+              if (newStr) {
+                const pos = original.lastIndexOf(newStr);
+                if (pos !== -1) {
+                  original = original.slice(0, pos) + oldStr + original.slice(pos + newStr.length);
+                } else if (oldStr) {
+                  const firstPos = original.indexOf(newStr);
+                  if (firstPos !== -1) {
+                    original = original.slice(0, firstPos) + oldStr + original.slice(firstPos + newStr.length);
+                  }
+                }
+              }
+            }
           }
+
           const lang = resolveMonacoLang(info?.ext || "plaintext");
           setDiffData({ original, modified, lang });
-        }
-        setLoading(false);
-      });
-    } else if (change.item.toolName === "write_file") {
-      window.vibe.fs.read(change.filePath).then((r) => {
-        if (r.ok) {
+        } else {
+          const last = reverseItems[0];
+          const { oldStr, newStr } = getEditStrings(last?.toolArgs);
           const lang = resolveMonacoLang(info?.ext || "plaintext");
-          setDiffData({ original: "", modified: r.content, lang });
+          setDiffData({ original: oldStr, modified: newStr, lang });
         }
         setLoading(false);
+      })
+      .catch(() => {
+        const last = reverseItems[0];
+        const { oldStr, newStr } = getEditStrings(last?.toolArgs);
+        const lang = resolveMonacoLang(info?.ext || "plaintext");
+        setDiffData({ original: oldStr, modified: newStr, lang });
+        setLoading(false);
       });
-    }
-  }, [open, change.filePath, change.item.toolName, change.item.toolArgs, diffData, info?.ext]);
+  }, [open, change.filePath, change.items, diffData, info?.ext]);
 
   return (
     <div className="changes-pill">
@@ -119,12 +156,14 @@ function FileChangeRow({ change, cwd }: { change: FileChangeInfo; cwd?: string }
           <ChevronRightIcon open={open} />
         </span>
       </div>
-      <div className={`changes-pill__diff${open ? "" : " changes-pill__diff--hidden"}`}>
-        {loading && <div className="tool__diff-loading">Loading diff…</div>}
-        {!loading && diffData && (
-          <DiffEditor original={diffData.original} modified={diffData.modified} language={diffData.lang} />
-        )}
-      </div>
+      {open && (
+        <div className="changes-pill__diff">
+          {loading && <div className="tool__diff-loading">Loading diff…</div>}
+          {!loading && diffData && (
+            <DiffEditor original={diffData.original} modified={diffData.modified} language={diffData.lang} />
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -149,7 +188,7 @@ function FileChangesSummary({ items, currentId, cwd }: { items: HistoryItem[]; c
       </div>
       <div className="changes-table">
         {changes.map((change) => (
-          <FileChangeRow key={change.item.id} change={change} cwd={cwd} />
+          <FileChangeRow key={change.filePath} change={change} cwd={cwd} />
         ))}
       </div>
     </div>

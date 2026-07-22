@@ -28,9 +28,9 @@ export interface MentionState {
   loading: boolean;
 }
 
-/** A part in the contenteditable editor */
 export interface EditorPart {
   type: "text" | "file";
   content: string;
   path?: string;
+  isDir?: boolean;
 }

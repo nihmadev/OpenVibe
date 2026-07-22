@@ -117,116 +117,23 @@ export function createMarkdownFragment(content: string, options?: MarkdownOption
   }
 
   const lines = content.split("\n");
-  let inCodeBlock = false;
-  let codeBlockEl: HTMLSpanElement | null = null;
 
   lines.forEach((line, index) => {
-    const codeBlockMatch = line.match(/^```(\w*)$/);
-
-    if (codeBlockMatch) {
-      if (!inCodeBlock) {
-        inCodeBlock = true;
-        codeBlockEl = document.createElement("span");
-        codeBlockEl.className = "prompt-input__md-codeblock";
-        const lang = codeBlockMatch[1] ?? "";
-        if (showSyntax) codeBlockEl.appendChild(createSyntaxSpan("```" + lang));
-        if (index < lines.length - 1) codeBlockEl.appendChild(document.createElement("br"));
-      } else {
-        inCodeBlock = false;
-        if (codeBlockEl) {
-          if (showSyntax) codeBlockEl.appendChild(createSyntaxSpan("```"));
-          fragment.appendChild(codeBlockEl);
-          codeBlockEl = null;
-        }
-        if (index < lines.length - 1) fragment.appendChild(document.createElement("br"));
-      }
-      return;
-    }
-
-    if (inCodeBlock && codeBlockEl) {
-      codeBlockEl.appendChild(document.createTextNode(line));
-      if (index < lines.length - 1) codeBlockEl.appendChild(document.createElement("br"));
-      return;
-    }
-
-    // Heading check
-    const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
-    if (headingMatch) {
-      const hashes = headingMatch[1]!;
-      const titleText = headingMatch[2]!;
-      const level = hashes.length;
-
-      const span = document.createElement("span");
-      if (level <= 2) {
-        span.className = "prompt-input__md-h-plain";
-      } else {
-        span.className = `prompt-input__md-h${level}`;
-      }
-
-      if (showSyntax) span.appendChild(createSyntaxSpan(hashes + " "));
-      parseInlineMarkdown(titleText, span, options);
-      fragment.appendChild(span);
-
-      if (index < lines.length - 1) fragment.appendChild(document.createElement("br"));
-      return;
-    }
-
-    // Blockquote check
-    const blockquoteMatch = line.match(/^>\s?(.*)$/);
-    if (blockquoteMatch) {
-      const quoteText = blockquoteMatch[1]!;
-      const span = document.createElement("span");
-      span.className = "prompt-input__md-blockquote";
-      if (showSyntax) span.appendChild(createSyntaxSpan("> "));
-      parseInlineMarkdown(quoteText, span, options);
-      fragment.appendChild(span);
-
-      if (index < lines.length - 1) fragment.appendChild(document.createElement("br"));
-      return;
-    }
-
-    // Horizontal rule check
-    if (/^(?:---|\*\*\*|___)\s*$/.test(line)) {
-      const span = document.createElement("span");
-      span.className = "prompt-input__md-hr";
-      if (showSyntax) span.appendChild(createSyntaxSpan(line));
-      fragment.appendChild(span);
-
-      if (index < lines.length - 1) fragment.appendChild(document.createElement("br"));
-      return;
-    }
-
-    // List item check
-    const listMatch = line.match(/^([-*+]|\d+\.)\s+(.*)$/);
-    if (listMatch) {
-      const bullet = listMatch[1]!;
-      const itemText = listMatch[2]!;
-      const span = document.createElement("span");
-      span.className = "prompt-input__md-list-item";
-      span.setAttribute("data-bullet", bullet + " ");
-      if (showSyntax) span.appendChild(createSyntaxSpan(bullet + " "));
-      parseInlineMarkdown(itemText, span, options);
-      fragment.appendChild(span);
-
-      if (index < lines.length - 1) fragment.appendChild(document.createElement("br"));
-      return;
-    }
-
-    // Paragraph line
     if (line) {
-      const span = document.createElement("span");
-      parseInlineMarkdown(line, span, options);
-      fragment.appendChild(span);
+      const hasInlineSyntax = /(`[^`\n]+`)|(\*\*[^*]+\*\*|__[^_]+__)|((?:\b|_)\*[^*]+\*|\b_[^_]+_)|(~~[^~]+~~|~[^~]+~)|(\[[^\]]+\]\([^)]+\))/.test(line);
+      if (!hasInlineSyntax && !showSyntax) {
+        fragment.appendChild(document.createTextNode(line));
+      } else {
+        const span = document.createElement("span");
+        parseInlineMarkdown(line, span, options);
+        fragment.appendChild(span);
+      }
     }
 
     if (index < lines.length - 1) {
       fragment.appendChild(document.createElement("br"));
     }
   });
-
-  if (inCodeBlock && codeBlockEl) {
-    fragment.appendChild(codeBlockEl);
-  }
 
   return fragment;
 }

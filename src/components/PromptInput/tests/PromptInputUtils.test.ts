@@ -68,4 +68,29 @@ describe("readEditorParts", () => {
       },
     ]);
   });
+
+  it("returns empty text content when DOM contains only orphan br or empty spans left by browser backspace", () => {
+    const editor = document.createElement("div");
+    const br = document.createElement("br");
+    editor.appendChild(br);
+
+    expect(readEditorParts(editor)).toEqual([
+      {
+        type: "text",
+        content: "",
+      },
+    ]);
+
+    const emptySpan = document.createElement("span");
+    emptySpan.appendChild(document.createElement("br"));
+    const editor2 = document.createElement("div");
+    editor2.appendChild(emptySpan);
+
+    expect(readEditorParts(editor2)).toEqual([
+      {
+        type: "text",
+        content: "",
+      },
+    ]);
+  });
 });

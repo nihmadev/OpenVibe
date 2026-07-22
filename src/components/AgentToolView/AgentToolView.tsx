@@ -1,6 +1,6 @@
 import React from "react";
 import { HistoryItem } from "../AgentChat/types.js";
-import { describe, pickFile } from "../AgentChat/utils.js";
+import { describe, pickFile, getFilePathFromArgs, getEditStrings } from "../AgentChat/utils.js";
 import { FailIcon } from "../Icons/icons.js";
 import { FileBadge } from "../AgentChat/components/FileBadge.js";
 import { ChevronRightIcon, Loader2Icon, ShowMoreIcon } from "../Icons/icons.js";
@@ -27,8 +27,11 @@ function ToolKindIcon({ name, size = 14 }: { name?: string; size?: number }): Re
     case "run_command":
       return <SquareTerminal {...props} />;
     case "edit_file":
+    case "replace_file_content":
+    case "multi_replace_file_content":
       return <Pencil {...props} />;
     case "write_file":
+    case "write_to_file":
       return <FilePlus2 {...props} />;
     case "list_dir":
       return <FolderOpen {...props} />;
@@ -81,19 +84,12 @@ function StreamingCodeBlock({ toolStream, toolName }: { toolStream: string; tool
   const det = React.useMemo(() => {
     try {
       const parsed = JSON.parse(toolStream);
-      const content =
-        toolName === "edit_file"
-          ? parsed.new_str
-          : toolName === "write_file"
-            ? parsed.content
-            : toolName === "bash"
-              ? parsed.command
-              : null;
+      const { newStr } = getEditStrings(parsed);
+      const content = newStr || (typeof parsed.command === "string" ? parsed.command : null);
       if (typeof content !== "string") return null;
-      const path = typeof parsed.path === "string" ? parsed.path : "";
+      const path = getFilePathFromArgs(parsed) || "";
       const info = path ? pickFile({ path }) : null;
-      const lang =
-        info?.ext || (toolName === "bash" ? "sh" : toolName?.startsWith("edit") ? "typescript" : "plaintext");
+      const lang = info?.ext || (toolName === "bash" || toolName === "run_command" ? "sh" : "typescript");
       return { content, lang };
     } catch {
       /* JSON parse error */
@@ -123,36 +119,42 @@ function DiffBlock({ item, file }: { item: HistoryItem; file?: { name: string } 
       setLoading(false);
       return;
     }
-    const args = item.toolArgs as Record<string, unknown> | undefined;
-    const path = typeof args?.path === "string" ? args.path : typeof args?.file === "string" ? args.file : null;
-    if (!path) {
-      setLoading(false);
-      return;
-    }
-    window.vibe.fs.read(path).then((r) => {
-      if (r.ok) {
-        const modified = r.content;
-        const oldStr = typeof args?.old_str === "string" ? args.old_str : "";
-        const newStr = typeof args?.new_str === "string" ? args.new_str : "";
-        const pos = newStr ? modified.indexOf(newStr) : -1;
-        let original = modified;
-        if (pos !== -1 && oldStr) {
-          original = modified.slice(0, pos) + oldStr + modified.slice(pos + newStr.length);
+    const path = getFilePathFromArgs(item.toolArgs);
+    const { oldStr, newStr } = getEditStrings(item.toolArgs);
+    const info = pickFile(item.toolArgs) || file;
+    const lang = resolveMonacoLang(info?.ext || "plaintext");
+
+    if (path) {
+      window.vibe.fs.read(path).then((r) => {
+        if (r.ok) {
+          const modified = r.content;
+          const pos = newStr ? modified.indexOf(newStr) : -1;
+          let original = modified;
+          if (pos !== -1 && oldStr) {
+            original = modified.slice(0, pos) + oldStr + modified.slice(pos + newStr.length);
+          }
+          setDiffData({ original, modified, lang });
+        } else {
+          setDiffData({ original: oldStr, modified: newStr, lang });
         }
-        const info = pickFile(args);
-        const lang = resolveMonacoLang(info?.ext || "plaintext");
-        setDiffData({ original, modified, lang });
-      }
+        setLoading(false);
+      });
+    } else if (oldStr || newStr) {
+      setDiffData({ original: oldStr, modified: newStr, lang });
       setLoading(false);
-    });
-  }, [item.id, item.ok, item.toolArgs]);
+    } else {
+      setLoading(false);
+    }
+  }, [item.id, item.ok, item.toolArgs, file]);
+
+  const info = pickFile(item.toolArgs) || file;
 
   return (
     <>
       <div className="tool__diff-header">
         <span className="tool__diff-header-left">
-          <FileIcon name={file?.name} />
-          <span className="tool__diff-fname">{file?.name}</span>
+          <FileIcon name={info?.name} />
+          <span className="tool__diff-fname">{info?.name}</span>
         </span>
       </div>
       {loading && <div className="tool__diff-loading">Loading diff…</div>}
@@ -172,20 +174,23 @@ function WriteFileBlock({ item }: { item: HistoryItem }) {
       setLoading(false);
       return;
     }
-    const args = item.toolArgs as Record<string, unknown> | undefined;
-    const path = typeof args?.path === "string" ? args.path : null;
-    if (!path) {
+    const path = getFilePathFromArgs(item.toolArgs);
+    const { newStr } = getEditStrings(item.toolArgs);
+
+    if (path) {
+      window.vibe.fs.read(path).then((r) => {
+        if (r.ok) setContent(r.content);
+        else if (newStr) setContent(newStr);
+        setLoading(false);
+      });
+    } else {
+      if (newStr) setContent(newStr);
       setLoading(false);
-      return;
     }
-    window.vibe.fs.read(path).then((r) => {
-      if (r.ok) setContent(r.content);
-      setLoading(false);
-    });
   }, [item.id, item.ok, item.toolArgs]);
 
   if (loading) return <div className="tool__diff-loading">Loading…</div>;
-  if (!content) return null;
+  if (!content) return <div className="tool__diff-loading">No content preview available.</div>;
   const info = pickFile(item.toolArgs);
   const lang = resolveMonacoLang(info?.ext || "plaintext");
 
@@ -203,9 +208,9 @@ function WriteFileBlock({ item }: { item: HistoryItem }) {
 }
 
 function getToolResultLang(item: HistoryItem): string {
-  if (item.toolName === "bash") return "sh";
+  if (item.toolName === "bash" || item.toolName === "run_command") return "sh";
   if (item.toolName === "list_dir") return "plaintext";
-  if (item.toolName === "read_file") {
+  if (item.toolName === "read_file" || item.toolName === "view_file") {
     const info = pickFile(item.toolArgs);
     return info?.ext || "plaintext";
   }
@@ -276,19 +281,19 @@ export function AgentToolView({
   }, [isStreaming]);
 
   const diffInfo = React.useMemo(() => {
-    if (item.toolName !== "edit_file" && item.toolName !== "write_file") return null;
-    const args = item.toolArgs as Record<string, unknown> | undefined;
-    if (!args) return null;
-    if (item.toolName === "edit_file") {
-      const oldStr = String(args.old_str ?? "");
-      const newStr = String(args.new_str ?? "");
-      return { added: newStr.split("\n").filter(Boolean).length, removed: oldStr.split("\n").filter(Boolean).length };
-    }
-    if (item.toolName === "write_file") {
-      const content = String(args.content ?? "");
-      return { added: content.split("\n").filter(Boolean).length, removed: 0 };
-    }
-    return null;
+    const editTools = new Set([
+      "edit_file",
+      "replace_file_content",
+      "multi_replace_file_content",
+      "write_file",
+      "write_to_file",
+    ]);
+    if (!editTools.has(item.toolName ?? "")) return null;
+    const { oldStr, newStr } = getEditStrings(item.toolArgs);
+    if (!oldStr && !newStr) return null;
+    const added = newStr.split("\n").filter(Boolean).length;
+    const removed = oldStr.split("\n").filter(Boolean).length;
+    return { added, removed };
   }, [item.toolName, item.toolArgs]);
 
   if (isAgent) {
@@ -370,20 +375,20 @@ export function AgentToolView({
           </span>
         ) : null}
       </span>
-      {hasExpandable && (
-        <div
-          className={`tool__diff-block${open ? "" : " tool__diff-block--hidden"}${isListDir ? " tool__diff-block--list" : ""}`}
-        >
+      {hasExpandable && open && (
+        <div className={`tool__diff-block${isListDir ? " tool__diff-block--list" : ""}`}>
           {isStreaming && item.toolStream ? (
             <StreamingCodeBlock toolStream={item.toolStream} toolName={item.toolName} />
-          ) : item.toolName === "edit_file" ? (
+          ) : item.toolName === "edit_file" ||
+            item.toolName === "replace_file_content" ||
+            item.toolName === "multi_replace_file_content" ? (
             <DiffBlock item={item} file={file} />
-          ) : item.toolName === "write_file" ? (
+          ) : item.toolName === "write_file" || item.toolName === "write_to_file" ? (
             <WriteFileBlock item={item} />
           ) : isListDir ? (
             <ListDirBlock item={item} />
           ) : (
-            <CodeBlock language={getToolResultLang(item)} code={item.text} />
+            <CodeBlock language={getToolResultLang(item)} code={item.text || ""} />
           )}
         </div>
       )}

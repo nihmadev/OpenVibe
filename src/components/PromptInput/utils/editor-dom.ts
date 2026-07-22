@@ -20,7 +20,12 @@ export function readEditorParts(root: HTMLElement): EditorPart[] {
     const element = node as HTMLElement;
     if (element.dataset.type === "file") {
       flush();
-      parts.push({ type: "file", content: element.textContent ?? "", path: element.dataset.path });
+      parts.push({
+        type: "file",
+        content: element.textContent ?? "",
+        path: element.dataset.path,
+        isDir: element.dataset.isDir === "true",
+      });
       return;
     }
     if (element.tagName === "BR") {
@@ -40,17 +45,7 @@ export function readEditorParts(root: HTMLElement): EditorPart[] {
             ? "`"
             : cl.contains("prompt-input__md-strike")
               ? "~~"
-              : cl.contains("prompt-input__md-h-plain")
-                ? "# "
-                : cl.contains("prompt-input__md-h3")
-                  ? "### "
-                  : cl.contains("prompt-input__md-h4")
-                    ? "#### "
-                    : cl.contains("prompt-input__md-blockquote")
-                      ? "> "
-                      : cl.contains("prompt-input__md-list-item")
-                        ? (element.dataset.bullet ?? "- ")
-                        : ""
+              : ""
       : "";
 
     const suffix = !hasSyntax
@@ -83,6 +78,13 @@ export function readEditorParts(root: HTMLElement): EditorPart[] {
     if (isBlock && index < children.length - 1) buffer += "\n";
   });
   flush();
+
+  const hasFileParts = parts.some((p) => p.type === "file");
+  const textChars = parts.map((p) => p.content).join("").replace(/[\u200B\r\n\s]/g, "");
+  if (!hasFileParts && textChars === "") {
+    return [{ type: "text", content: "" }];
+  }
+
   if (parts.length === 0) parts.push({ type: "text", content: "" });
   return parts;
 }

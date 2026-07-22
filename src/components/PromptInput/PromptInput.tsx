@@ -29,6 +29,7 @@ import { ModelSelector } from "./components/ModelSelector.js";
 import { ReasoningEffortSelector } from "./components/ReasoningEffortSelector.js";
 import { getReasoningEfforts } from "../../constants.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
+import { RollbackPill } from "../RollbackPill/RollbackPill.js";
 import { getFileIconUrl, getFolderIconUrl } from "../Icons/utils.js";
 import { StopIcon, RefreshCwIcon, ArrowUpIcon, AttachPlusIcon } from "../Icons/icons.js";
 
@@ -94,56 +95,6 @@ function useSpring(target: number, deps: React.DependencyList) {
   return value;
 }
 
-function RollbackPill({
-  messageText,
-  fileCount,
-  filesChanged,
-  messagesRemoved,
-  onRestore,
-}: {
-  messageText: string;
-  fileCount: number;
-  filesChanged: { path: string; content: string | null }[];
-  messagesRemoved: number;
-  onRestore: () => void;
-}) {
-  return (
-    <div
-      className="prompt-input__rollback-pill"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "8px",
-        padding: "6px 12px",
-        background: "var(--surface-2, rgba(255, 255, 255, 0.05))",
-        borderRadius: "6px",
-        fontSize: "12px",
-        margin: "0 8px 6px 8px",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", overflow: "hidden", textOverflow: "ellipsis" }}>
-        <RefreshCwIcon width={13} height={13} />
-        <span>{fileCount > 0 ? `${fileCount} files modified` : "Rollback active"}</span>
-      </div>
-      <button
-        onClick={onRestore}
-        style={{
-          background: "var(--accent-color, #3b82f6)",
-          color: "#ffffff",
-          border: "none",
-          borderRadius: "4px",
-          padding: "3px 10px",
-          cursor: "pointer",
-          fontSize: "11px",
-          fontWeight: 500,
-        }}
-      >
-        Restore
-      </button>
-    </div>
-  );
-}
 
 export function PromptInput({
   disabled,
@@ -312,13 +263,17 @@ export function PromptInput({
     pill.className = "prompt-input__file-pill";
     pill.setAttribute("data-type", "file");
     pill.setAttribute("data-path", path);
+    if (isDir) {
+      pill.setAttribute("data-is-dir", "true");
+    }
     pill.setAttribute("contenteditable", "false");
     pill.style.userSelect = "text";
     pill.style.cursor = "default";
 
     const img = document.createElement("img");
     img.className = "prompt-input__file-pill-icon";
-    img.src = isDir ? getFolderIconUrl(display) : getFileIconUrl(display);
+    const isFolder = isDir || display.endsWith("/") || display.endsWith("\\") || (path ? path.endsWith("/") || path.endsWith("\\") : false);
+    img.src = isFolder ? getFolderIconUrl(display) : getFileIconUrl(display);
     img.alt = "";
     img.setAttribute("aria-hidden", "true");
     img.draggable = false;
@@ -349,7 +304,7 @@ export function PromptInput({
           continue;
         }
         if (part.type === "file") {
-          const pill = createPill(part.path ?? part.content, part.content);
+          const pill = createPill(part.path ?? part.content, part.content, part.isDir);
           el.appendChild(pill);
         }
       }
@@ -454,6 +409,7 @@ export function PromptInput({
     if (!el) return;
     const text = editorText();
     if (!text && attachments.length === 0) {
+      clearEditor();
       setPopover(null);
       setHistoryIndex(-1);
       setSavedText(null);
@@ -592,19 +548,6 @@ export function PromptInput({
       if (a.kind === "image" && a.dataUrl) parts.push({ type: "image_url", image_url: { url: a.dataUrl } });
     }
 
-    const editorParts = parseEditor();
-    const inlineFiles = editorParts.filter((p) => p.type === "file" && p.path).map((p) => p.path!);
-    const fileRefs = Array.from(
-      new Set([...inlineFiles, ...attachments.filter((a) => a.kind === "file" && a.path).map((a) => a.path!)]),
-    );
-
-    if (fileRefs.length > 0) {
-      const existingText = (parts.find((p) => p.type === "text") as { text: string } | undefined)?.text ?? "";
-      const merged = (existingText + "\n\nAttached files:\n" + fileRefs.map((f) => "- " + f).join("\n")).trim();
-      const idx = parts.findIndex((p) => p.type === "text");
-      if (idx >= 0) parts[idx] = { type: "text", text: merged };
-      else parts.unshift({ type: "text", text: merged });
-    }
     setHistoryEntries((prev) => prependHistoryEntry(prev, text, attachments));
     clearEditor();
     setAttachments([]);
@@ -614,7 +557,7 @@ export function PromptInput({
     setMode("normal");
     setPopover(null);
     onSubmit({ parts, display: text, attachments: attachments.slice() });
-  }, [disabled, editorText, parseEditor, attachments, clearEditor, onSubmit, onStop]);
+  }, [disabled, editorText, attachments, clearEditor, onSubmit, onStop]);
 
   // ─── history navigation ─────────────────────────────────
 

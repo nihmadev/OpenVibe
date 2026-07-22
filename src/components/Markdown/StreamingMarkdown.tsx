@@ -22,8 +22,8 @@ const HEADING_RE = /^(#{1,6})\s+(.*)$/m;
 const BLOCKQUOTE_RE = /^>\s?(.*)$/m;
 const HR_RE = /^(?:[-*_]){3,}\s*$/m;
 const TABLE_SEP_RE = /^\|.*---.*\|$/m;
-const UNORDERED_LIST_RE = /^[-*+]\s+(.*)$/m;
-const ORDERED_LIST_RE = /^\d+\.\s+(.*)$/m;
+const UNORDERED_LIST_RE = /^\s*[-*+]\s+(.*)$/m;
+const ORDERED_LIST_RE = /^\s*\d+\.\s+(.*)$/m;
 
 const FILE_EXTENSIONS =
   "tsx|ts|jsx|js|py|css|scss|html|json|md|mdx|yaml|yml|sh|dockerfile|env|toml|sql|png|jpg|jpeg|svg|ico|pdf|doc|docx|rb|go|rs|c|cpp|h|hpp|java|kt|lua|php|xml|txt|lock|exe|bin|patch|diff";

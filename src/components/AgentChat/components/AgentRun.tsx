@@ -31,7 +31,20 @@ function ConsolidatedReasoning({
   const { t } = useI18n();
 
   const reasoningItems = useMemo(
-    () => items.filter((item) => item.kind === "assistant" && (item.reasoning?.trim() || item.reasoningName)),
+    () =>
+      items.filter((item) => {
+        if (item.kind !== "assistant") return false;
+        const body = item.reasoning?.trim();
+        if (!body && !item.reasoningName) return false;
+        if (
+          body === "Analyzing and preparing tool execution." ||
+          body === "Executing tool call." ||
+          body === "Thinking about tool call execution."
+        ) {
+          return false;
+        }
+        return true;
+      }),
     [items],
   );
 
@@ -146,7 +159,7 @@ export function AgentRun({
   const timeLabel = t(isActive ? "agentRunWorkingFor" : "agentRunWorkedFor", { time: duration });
 
   return (
-    <div className="agent-run">
+    <div className={`agent-run${isActive ? " agent-run--active" : " agent-run--completed"}`}>
       <div className="agent-run__summary" aria-live={isActive ? "polite" : "off"}>
         <div className="agent-run__summary-copy">
           <div className={`agent-run__time${isActive ? " agent-run__time--active" : ""}`}>{timeLabel}</div>
@@ -161,7 +174,7 @@ export function AgentRun({
           <ChevronDown className="agent-run__toggle-chevron" aria-hidden="true" />
         </button>
       </div>
-      <div className="agent-run__separator" />
+      <div className={`agent-run__separator${!isActive ? " agent-run__separator--hidden" : ""}`} />
 
       <div className={`agent-run__details${!toolsExpanded ? " agent-run__details--collapsed" : ""}`}>
         {showThinking && <ConsolidatedReasoning items={items} runActive={isActive} />}

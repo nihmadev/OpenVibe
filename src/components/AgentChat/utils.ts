@@ -45,10 +45,59 @@ export const EXT_COLORS: Record<string, string> = {
   sql: "sql",
 };
 
-export function pickFile(args: unknown): FileBadgeInfo | null {
+export function getFilePathFromArgs(args: unknown): string | null {
   if (!args || typeof args !== "object") return null;
   const a = args as Record<string, unknown>;
-  const raw = typeof a.path === "string" ? a.path : typeof a.file === "string" ? a.file : null;
+  const val =
+    a.path ??
+    a.file ??
+    a.filePath ??
+    a.file_path ??
+    a.TargetFile ??
+    a.targetFile ??
+    a.target_file ??
+    a.AbsolutePath ??
+    a.SearchPath;
+  return typeof val === "string" && val.trim() ? val : null;
+}
+
+export function getEditStrings(args: unknown): { oldStr: string; newStr: string } {
+  if (!args || typeof args !== "object") return { oldStr: "", newStr: "" };
+  const a = args as Record<string, unknown>;
+
+  let oldStr =
+    typeof a.old_str === "string"
+      ? a.old_str
+      : typeof a.TargetContent === "string"
+        ? a.TargetContent
+        : typeof a.oldContent === "string"
+          ? a.oldContent
+          : "";
+
+  let newStr =
+    typeof a.new_str === "string"
+      ? a.new_str
+      : typeof a.ReplacementContent === "string"
+        ? a.ReplacementContent
+        : typeof a.content === "string"
+          ? a.content
+          : typeof a.CodeContent === "string"
+            ? a.CodeContent
+            : typeof a.newContent === "string"
+              ? a.newContent
+              : "";
+
+  if (!oldStr && !newStr && Array.isArray(a.ReplacementChunks)) {
+    const chunks = a.ReplacementChunks as Array<Record<string, unknown>>;
+    oldStr = chunks.map((c) => String(c.TargetContent ?? "")).join("\n");
+    newStr = chunks.map((c) => String(c.ReplacementContent ?? "")).join("\n");
+  }
+
+  return { oldStr, newStr };
+}
+
+export function pickFile(args: unknown): FileBadgeInfo | null {
+  const raw = getFilePathFromArgs(args);
   if (!raw) return null;
   const name = basename(raw);
   const dot = name.lastIndexOf(".");
