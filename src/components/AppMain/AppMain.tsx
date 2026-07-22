@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from "react";
+import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { ProjectRail } from "../ProjectRail/ProjectRail.js";
 import { SessionList } from "../SessionList/SessionList.js";
@@ -275,6 +275,10 @@ export function AppMain({
     setRollbackChanged([]);
     setRollbackRemoved(0);
   }, []);
+
+  useEffect(() => {
+    clearRollback();
+  }, [activeChat, activeProject, clearRollback]);
 
   // ── Sub-agent drill-down ──
   const [drillDownId, setDrillDownId] = useState<string | null>(null);

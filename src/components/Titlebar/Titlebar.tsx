@@ -50,7 +50,15 @@ interface TitlebarProps {
 const STORAGE_KEY = "titlebar:hidden";
 
 type BtnId =
-  "sidebar" | "new-session" | "nav-prev" | "nav-next" | "terminal" | "search-in-code" | "file-tree" | "git-panel";
+  | "sidebar"
+  | "new-session"
+  | "nav-prev"
+  | "nav-next"
+  | "terminal"
+  | "search-in-code"
+  | "file-tree"
+  | "git-panel"
+  | "servers";
 
 function loadHidden(): Set<BtnId> {
   try {
@@ -68,7 +76,8 @@ function folderLabel(folder: string | null | undefined): string {
 }
 
 const LEFT_BTNS: BtnId[] = ["sidebar", "new-session", "nav-prev", "nav-next"];
-const RIGHT_BTNS: BtnId[] = ["terminal", "search-in-code", "git-panel", "file-tree"];
+const RIGHT_BTNS: BtnId[] = ["servers", "terminal", "search-in-code", "git-panel", "file-tree"];
+const ALL_BTNS: BtnId[] = [...LEFT_BTNS, ...RIGHT_BTNS];
 
 export function Titlebar({
   chatSideOpen = false,
@@ -102,10 +111,14 @@ export function Titlebar({
   const handleWindowDrag = (event: React.MouseEvent<HTMLElement>) => {
     if (event.button !== 0) return;
     const target = event.target as HTMLElement;
-    // The Servers popover contains div-based tabs (MCP/LSP), so they do not
-    // match the usual interactive-element selector. Do not start a native
-    // window drag from any point inside the popover.
-    if (target.closest("button, input, select, textarea, a, [role=button], .titlebar__mcp-dropdown")) return;
+    if (!target || typeof target.closest !== "function") return;
+    if (
+      target.closest(
+        "button, input, select, textarea, a, [role=button], .titlebar__action-btn, .titlebar__search, .titlebar__btn, .titlebar__mcp-container, .titlebar__mcp-dropdown",
+      )
+    ) {
+      return;
+    }
     void getCurrentWindow()
       .startDragging()
       .catch(() => {});
@@ -227,6 +240,8 @@ export function Titlebar({
         return gitPanelOpen ? "Hide Source Control" : "Show Source Control";
       case "file-tree":
         return fileTreeOpen ? t("hideFileTree") : t("showFileTree");
+      case "servers":
+        return "Servers";
     }
   }
 
@@ -277,7 +292,7 @@ export function Titlebar({
   }
 
   return (
-    <div className="titlebar" onMouseDown={handleWindowDrag}>
+    <div className="titlebar" onMouseDown={handleWindowDrag} onContextMenu={(e) => onSectionCtx(e, ALL_BTNS)}>
       <div className="titlebar__left" onContextMenu={(e) => onSectionCtx(e, LEFT_BTNS)}>
         <Tooltip text={t("menu")} side="bottom">
           <button
@@ -353,35 +368,43 @@ export function Titlebar({
       </div>
 
       <div className="titlebar__right" onContextMenu={(e) => onSectionCtx(e, RIGHT_BTNS)}>
-        <div className="titlebar__mcp-container" ref={mcpContainerRef}>
-          <Tooltip text="Servers" side="bottom">
-            <button
-              className={`titlebar__action-btn titlebar__mcp-btn ${mcpDropdownOpen ? "titlebar__action-btn--active" : ""}`}
-              onClick={() => {
-                fetchMcpServers();
-                setMcpDropdownOpen(!mcpDropdownOpen);
-              }}
-              aria-label="Servers"
-            >
-              <Server size={15} />
-
-              <span className={`titlebar__mcp-badge ${getGlobalDotClass(mcpServers, lspServers)}`} />
-            </button>
-          </Tooltip>
-          {mcpDropdownOpen && (
-            <div className="titlebar__mcp-dropdown">
-              <ServersPanel
-                mcpServers={mcpServers}
-                onToggleMcpServer={handleToggleMcpServer}
-                onOpenSettings={() => {
-                  setMcpDropdownOpen(false);
-                  if (onOpenSettings) onOpenSettings("mcp");
+        {isVisible("servers") && (
+          <div className="titlebar__mcp-container" ref={mcpContainerRef}>
+            <Tooltip text="Servers" side="bottom">
+              <button
+                type="button"
+                className={btnClasses(
+                  "servers",
+                  `titlebar__mcp-btn ${mcpDropdownOpen ? "titlebar__action-btn--active" : ""}`,
+                )}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fetchMcpServers();
+                  setMcpDropdownOpen((prev) => !prev);
                 }}
-                onRefreshMcp={fetchMcpServers}
-              />
-            </div>
-          )}
-        </div>
+                onContextMenu={(e) => onBtnCtx(e, "servers")}
+                aria-label="Servers"
+              >
+                <Server size={15} />
+
+                <span className={`titlebar__mcp-badge ${getGlobalDotClass(mcpServers, lspServers)}`} />
+              </button>
+            </Tooltip>
+            {mcpDropdownOpen && (
+              <div className="titlebar__mcp-dropdown">
+                <ServersPanel
+                  mcpServers={mcpServers}
+                  onToggleMcpServer={handleToggleMcpServer}
+                  onOpenSettings={() => {
+                    setMcpDropdownOpen(false);
+                    if (onOpenSettings) onOpenSettings("mcp");
+                  }}
+                  onRefreshMcp={fetchMcpServers}
+                />
+              </div>
+            )}
+          </div>
+        )}
         {isVisible("terminal") && (
           <Tooltip text={t("toggleTerminal")} side="bottom">
             <button

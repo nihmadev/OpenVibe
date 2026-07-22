@@ -150,6 +150,7 @@ export function Settings({
     useRegionalProxy: true,
     promptMarkdown: true,
     promptMarkdownGhost: false,
+    experimentalExtremeRadius: false,
   };
   type GeneralSettings = typeof defaultGeneral;
   const [general, setGeneral] = useState<GeneralSettings>({ ...defaultGeneral });
@@ -738,8 +739,22 @@ export function Settings({
                         value={general.radius}
                         step={1}
                         min={0}
-                        max={16}
+                        max={general.experimentalExtremeRadius ? 100 : 16}
                         onChange={(v) => updateGeneral("radius", v)}
+                      />
+                    </ControlRow>
+                    <ControlRow label={t("experimentalExtremeRadius")} description={t("experimentalExtremeRadiusDesc")}>
+                      <input
+                        type="checkbox"
+                        className="settings__checkbox"
+                        checked={general.experimentalExtremeRadius}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          updateGeneral("experimentalExtremeRadius", checked);
+                          if (!checked && (parseFloat(general.radius) || 0) > 16) {
+                            updateGeneral("radius", "16");
+                          }
+                        }}
                       />
                     </ControlRow>
                     <ControlRow label={t("borderStyle")} description={t("borderStyleDesc")}>
