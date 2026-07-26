@@ -140,6 +140,7 @@ impl Agent {
             tool_calls: None,
             reasoning_content: None,
             reasoning_name: None,
+            usage: None,
         });
 
         let user_index = self.messages.len() - 1;
@@ -156,7 +157,15 @@ impl Agent {
         client: &reqwest::Client,
         emit: &(dyn for<'a> Fn(&'a str, serde_json::Value) + Send + Sync),
     ) {
-        self.cancel.store(false, Ordering::Relaxed);
+        // Do NOT unconditionally reset the cancel flag here — the user may
+        // have already pressed Stop between agent_send extracting the cancel
+        // token and this point.  Instead, check it and bail out immediately.
+        if self.cancel.load(Ordering::Relaxed) {
+            self.cancel.store(false, Ordering::Relaxed);
+            emit("vibe:agent:stopped", serde_json::Value::Null);
+            emit("vibe:agent:busy", serde_json::json!({"busy": false}));
+            return;
+        }
 
         let tool_defs = executor.definitions();
         let cwd = self.config().cwd.clone();
@@ -164,8 +173,15 @@ impl Agent {
 
         for _turn in 0..MAX_TURNS {
             if self.cancel.load(Ordering::Relaxed) {
+                emit("vibe:agent:stopped", serde_json::Value::Null);
                 break;
             }
+
+            // Proactive context management: when usage crosses the threshold,
+            // compact the middle of the conversation into a structured LLM
+            // summary (main goal / completed / next goals / critical context)
+            // before the request is built.
+            self.maybe_compact_context(client, emit).await;
 
             emit("vibe:agent:assistant-start", serde_json::Value::Null);
 
@@ -312,6 +328,19 @@ impl Agent {
                 if u.prompt_tokens > 0 {
                     self.last_prompt_tokens = Some(u.prompt_tokens);
                 }
+                // Anthropic prompt caching metrics (None on other providers).
+                self.last_cache_creation_tokens = u.cache_creation_input_tokens;
+                self.last_cache_read_tokens = u.cache_read_input_tokens;
+                emit(
+                    "vibe:agent:usage",
+                    serde_json::json!({
+                        "promptTokens": u.prompt_tokens,
+                        "completionTokens": u.completion_tokens,
+                        "totalTokens": u.total_tokens,
+                        "cacheCreationInputTokens": u.cache_creation_input_tokens,
+                        "cacheReadInputTokens": u.cache_read_input_tokens,
+                    }),
+                );
             }
 
             let mut content_text = turn_result.content.trim().to_string();
@@ -330,39 +359,16 @@ impl Agent {
             let cleaned_tool_calls = clean_tool_calls(turn_result.tool_calls);
             emit("vibe:agent:assistant-end", serde_json::Value::Null);
 
-            let mut assistant_content = if content_text.is_empty() {
+            let assistant_content = if content_text.is_empty() {
                 None
             } else {
                 Some(serde_json::Value::String(content_text.clone()))
             };
 
-            // If the model produced non-empty reasoning content, format it as a <thought> block in assistant_content
-            if !cleaned_tool_calls.is_empty() {
-                if let Some(ref reasoning) = turn_result.reasoning_content {
-                    let trimmed_reasoning = reasoning.trim();
-                    if !trimmed_reasoning.is_empty() {
-                        let tag_name = turn_result.reasoning_name.as_deref().unwrap_or("Thinking");
-                        let thought_block = format!(
-                            "<thought name=\"{}\">\n{}\n</thought>",
-                            tag_name, trimmed_reasoning
-                        );
-
-                        let current_text = match &assistant_content {
-                            Some(serde_json::Value::String(s)) => s.clone(),
-                            _ => String::new(),
-                        };
-
-                        if !current_text.contains("<thought") {
-                            let new_text = if current_text.trim().is_empty() {
-                                thought_block
-                            } else {
-                                format!("{}\n{}", thought_block, current_text)
-                            };
-                            assistant_content = Some(serde_json::Value::String(new_text));
-                        }
-                    }
-                }
-            }
+            // Reasoning is stored ONLY in `reasoning_content` and round-tripped
+            // natively by `messages_to_api_json`. Do not re-encode it as a
+            // <thought> text block: that duplicates reasoning in the history
+            // and breaks providers (e.g. DeepSeek) that expect the native field.
 
             self.messages.push(ChatMessage {
                 role: "assistant".to_string(),
@@ -376,6 +382,7 @@ impl Agent {
                 },
                 reasoning_content: turn_result.reasoning_content.clone(),
                 reasoning_name: turn_result.reasoning_name.clone(),
+                usage: turn_result.usage.clone(),
             });
 
             if cleaned_tool_calls.is_empty() {
@@ -428,6 +435,7 @@ impl Agent {
                                     tool_calls: None,
                                     reasoning_content: None,
                                     reasoning_name: None,
+                                    usage: None,
                                 });
                                 continue;
                             }
@@ -469,6 +477,7 @@ impl Agent {
                         tool_calls: None,
                         reasoning_content: None,
                         reasoning_name: None,
+                        usage: None,
                     });
                 }
             } else {
@@ -502,6 +511,7 @@ impl Agent {
                                     tool_calls: None,
                                     reasoning_content: None,
                                     reasoning_name: None,
+                                    usage: None,
                                 });
                                 continue;
                             }
@@ -561,11 +571,14 @@ impl Agent {
                         tool_calls: None,
                         reasoning_content: None,
                         reasoning_name: None,
+                        usage: None,
                     });
                 }
             }
         }
 
+        // Reset cancel flag for the next send cycle
+        self.cancel.store(false, Ordering::Relaxed);
         emit("vibe:agent:busy", serde_json::json!({"busy": false}));
     }
 }

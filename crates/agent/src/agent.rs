@@ -16,6 +16,10 @@ pub struct Agent {
     pub undo_state: Option<UndoState>,
     todo_context: Option<String>,
     pub last_prompt_tokens: Option<usize>,
+    /// Anthropic prompt caching: tokens written to the cache on the last turn.
+    pub last_cache_creation_tokens: Option<usize>,
+    /// Anthropic prompt caching: tokens read from the cache on the last turn.
+    pub last_cache_read_tokens: Option<usize>,
 }
 
 impl Agent {
@@ -30,6 +34,7 @@ impl Agent {
                 tool_calls: None,
                 reasoning_content: None,
                 reasoning_name: None,
+                usage: None,
             }],
             config,
             always_allow: HashSet::new(),
@@ -38,6 +43,8 @@ impl Agent {
             undo_state: None,
             todo_context: None,
             last_prompt_tokens: None,
+            last_cache_creation_tokens: None,
+            last_cache_read_tokens: None,
         }
     }
 
@@ -60,6 +67,7 @@ impl Agent {
                     tool_calls: None,
                     reasoning_content: None,
                     reasoning_name: None,
+                    usage: None,
                 },
             );
         }
@@ -80,6 +88,7 @@ impl Agent {
             tool_calls: None,
             reasoning_content: None,
             reasoning_name: None,
+            usage: None,
         }];
         self.always_allow.clear();
         self.cancel.store(false, Ordering::Relaxed);
@@ -87,6 +96,8 @@ impl Agent {
         self.undo_state = None;
         self.todo_context = None;
         self.last_prompt_tokens = None;
+        self.last_cache_creation_tokens = None;
+        self.last_cache_read_tokens = None;
     }
 
     pub fn set_cwd(&mut self, cwd: String) {
@@ -100,6 +111,7 @@ impl Agent {
             tool_calls: None,
             reasoning_content: None,
             reasoning_name: None,
+            usage: None,
         }];
         self.always_allow.clear();
         self.cancel.store(false, Ordering::Relaxed);
@@ -107,6 +119,8 @@ impl Agent {
         self.undo_state = None;
         self.todo_context = None;
         self.last_prompt_tokens = None;
+        self.last_cache_creation_tokens = None;
+        self.last_cache_read_tokens = None;
     }
 
     pub fn set_messages(&mut self, msgs: Vec<ChatMessage>) {
@@ -124,6 +138,7 @@ impl Agent {
             tool_calls: None,
             reasoning_content: None,
             reasoning_name: None,
+            usage: None,
         }];
         new_msgs.extend_from_slice(rest);
         self.messages = new_msgs;

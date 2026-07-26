@@ -40,6 +40,7 @@ impl Agent {
             tool_calls: None,
             reasoning_content: None,
             reasoning_name: None,
+            usage: None,
         });
 
         let cancel = Arc::new(AtomicBool::new(false));
