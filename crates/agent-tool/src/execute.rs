@@ -1,7 +1,7 @@
 use std::sync::atomic::AtomicBool;
 
 use crate::executor::AgentToolExecutor;
-use crate::{agent_tool, bash, edit, git, list_dir, read, search, todo, write};
+use crate::{agent_tool, edit, git, list_dir, read, run, search, todo, web, write};
 
 pub async fn execute_tool(
     name: &str,
@@ -16,8 +16,10 @@ pub async fn execute_tool(
         "write_file" => write::tool_write_file(cwd, args).await,
         "edit_file" => edit::tool_edit_file(cwd, args).await,
         "list_dir" => list_dir::tool_list_dir(cwd, args).await,
-        "bash" => bash::tool_bash(cwd, args, cancel).await,
+        "run" => run::tool_run(cwd, args, cancel).await,
         "search_codebase" => search::tool_search_codebase(cwd, args).await,
+        "web_search" => web::web_search(args, executor.get_llm_config().as_ref()).await,
+        "fetch_url" => web::fetch_url(args).await,
         "todo" => todo::tool_todo(args).await,
         "agent" => agent_tool::execute(cwd, args, cancel, emit, executor.get_llm_config()).await,
         "git_status" => git::status(cwd, args).await,

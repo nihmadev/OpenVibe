@@ -64,7 +64,7 @@ pub fn build_tool_definitions() -> Vec<ToolDefinition> {
         ToolDefinition {
             type_: "function".to_string(),
             function: agent::ToolDefFunction {
-                name: "bash".to_string(),
+                name: "run".to_string(),
                 description: "Run a shell command in the project directory. Returns stdout + stderr. Use this for running tests, builds, or any CLI commands.".to_string(),
                 parameters: serde_json::json!({
                     "type": "object",
@@ -175,6 +175,35 @@ pub fn build_tool_definitions() -> Vec<ToolDefinition> {
                 }),
             },
         },
+        ToolDefinition {
+            type_: "function".to_string(),
+            function: agent::ToolDefFunction {
+                name: "web_search".to_string(),
+                description: "Performs web search and returns search snippets with titles, URLs, and concise answers. Always check these search snippets first — they usually contain the complete answer. Do NOT call fetch_url if the answer is already clear from the search snippets.".to_string(),
+                parameters: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "query": { "type": "string", "description": "Search prompt or query string" },
+                        "num_results": { "type": "integer", "description": "Max search results to return (default: 5)", "default": 5 }
+                    },
+                    "required": ["query"]
+                }),
+            },
+        },
+        ToolDefinition {
+            type_: "function".to_string(),
+            function: agent::ToolDefFunction {
+                name: "fetch_url".to_string(),
+                description: "Downloads and reads a full webpage. Use ONLY when web_search snippets were insufficient and you explicitly need to inspect a full long article.".to_string(),
+                parameters: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "url": { "type": "string", "description": "Target URL to fetch and read" }
+                    },
+                    "required": ["url"]
+                }),
+            },
+        },
     ];
     definitions.extend(extra_git_tool_definitions());
     definitions
@@ -222,6 +251,35 @@ pub fn build_readonly_tool_definitions() -> Vec<ToolDefinition> {
                         "root": { "type": "string", "description": "Optional directory that bounds the search" }
                     },
                     "required": ["query"]
+                }),
+            },
+        },
+        ToolDefinition {
+            type_: "function".to_string(),
+            function: agent::ToolDefFunction {
+                name: "web_search".to_string(),
+                description: "Performs web queries to find up-to-date documentation, solutions, and code references.".to_string(),
+                parameters: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "query": { "type": "string" },
+                        "num_results": { "type": "integer" }
+                    },
+                    "required": ["query"]
+                }),
+            },
+        },
+        ToolDefinition {
+            type_: "function".to_string(),
+            function: agent::ToolDefFunction {
+                name: "fetch_url".to_string(),
+                description: "Downloads and converts a webpage into clean Markdown for context analysis.".to_string(),
+                parameters: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "url": { "type": "string" }
+                    },
+                    "required": ["url"]
                 }),
             },
         },

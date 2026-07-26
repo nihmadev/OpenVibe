@@ -1,5 +1,4 @@
 pub mod agent_tool;
-pub mod bash;
 pub mod definition;
 pub mod edit;
 pub mod execute;
@@ -7,8 +6,10 @@ pub mod executor;
 pub mod git;
 pub mod list_dir;
 pub mod read;
+pub mod run;
 pub mod search;
 pub mod todo;
+pub mod web;
 pub mod write;
 
 pub use definition::build_tool_definitions;

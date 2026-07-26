@@ -1,5 +1,4 @@
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
 
 use agent::chat::ChatMessage;
 use agent::config::LlmConfig;
@@ -9,7 +8,7 @@ use agent::sub_trace::{store_sub_event, SubTraceEvent};
 use agent::ToolDefinition;
 
 use crate::definition::build_readonly_tool_definitions;
-use crate::{bash, list_dir, read, search};
+use crate::{list_dir, read, run, search};
 
 // A research helper should converge quickly. Long autonomous explorations are
 // especially harmful because every tool result is fed back into its context.
@@ -52,7 +51,6 @@ pub async fn execute(
     let config = llm_config.ok_or_else(|| "Sub-agent: LLM not configured".to_string())?;
 
     let client = get_sub_agent_client();
-    let cancel_sub = Arc::new(AtomicBool::new(false));
     let mut sub_messages: Vec<ChatMessage> = vec![
         ChatMessage {
             role: "system".to_string(),
@@ -62,6 +60,7 @@ pub async fn execute(
             tool_calls: None,
             reasoning_content: None,
             reasoning_name: None,
+            usage: None,
         },
         ChatMessage {
             role: "user".to_string(),
@@ -71,6 +70,7 @@ pub async fn execute(
             tool_calls: None,
             reasoning_content: None,
             reasoning_name: None,
+            usage: None,
         },
     ];
 
@@ -91,7 +91,7 @@ pub async fn execute(
             &config,
             sub_messages.clone(),
             available_tools,
-            &cancel_sub,
+            cancel,
             client,
             &|_| {},
             &|_| {},
@@ -136,39 +136,17 @@ pub async fn execute(
             return Ok(full_result.trim().to_string());
         }
 
-        let mut sub_content = if turn.content.trim().is_empty() {
+        let sub_content = if turn.content.trim().is_empty() {
             None
         } else {
             Some(serde_json::Value::String(turn.content.clone()))
         };
 
-        if !turn.tool_calls.is_empty() {
-            let reasoning = turn.reasoning_content.as_deref().unwrap_or("");
-            let tag_name = turn.reasoning_name.as_deref().unwrap_or("Thinking");
-            let thought_text = if reasoning.trim().is_empty() {
-                "Analyzing and preparing tool execution."
-            } else {
-                reasoning.trim()
-            };
-            let thought_block = format!(
-                "<thought name=\"{}\">\n{}\n</thought>",
-                tag_name, thought_text
-            );
-
-            let current_text = match &sub_content {
-                Some(serde_json::Value::String(s)) => s.clone(),
-                _ => String::new(),
-            };
-
-            if !current_text.contains("<thought") {
-                let new_text = if current_text.trim().is_empty() {
-                    thought_block
-                } else {
-                    format!("{}\n{}", thought_block, current_text)
-                };
-                sub_content = Some(serde_json::Value::String(new_text));
-            }
-        }
+        // Native reasoning is preserved in `reasoning_content` on the message
+        // below and round-tripped by the request serializer. Do not synthesize
+        // placeholder <thought> blocks ("Analyzing and preparing tool
+        // execution.") — fake reasoning pollutes history and breaks providers
+        // that require verbatim `reasoning_content` round-trip.
 
         // Preserve the assistant tool-call message so every following tool
         // result has a valid parent in the provider conversation protocol.
@@ -180,6 +158,7 @@ pub async fn execute(
             tool_calls: Some(turn.tool_calls.clone()),
             reasoning_content: turn.reasoning_content.clone(),
             reasoning_name: turn.reasoning_name.clone(),
+            usage: turn.usage.clone(),
         });
 
         let mut prepared_calls = Vec::new();
@@ -203,6 +182,7 @@ pub async fn execute(
                     tool_calls: None,
                     reasoning_content: None,
                     reasoning_name: None,
+                    usage: None,
                 });
                 continue;
             }
@@ -222,6 +202,7 @@ pub async fn execute(
                             tool_calls: None,
                             reasoning_content: None,
                             reasoning_name: None,
+                            usage: None,
                         });
                         continue;
                     }
@@ -250,7 +231,7 @@ pub async fn execute(
                     "read_file" => read::tool_read_file(cwd, parsed_args).await,
                     "search_codebase" => search::tool_search_codebase(cwd, parsed_args).await,
                     "list_dir" => list_dir::tool_list_dir(cwd, parsed_args).await,
-                    "bash" => bash::tool_bash(cwd, parsed_args, cancel).await,
+                    "run" => run::tool_run(cwd, parsed_args, cancel).await,
                     _ => Err(format!("Unknown tool: {tool_name}")),
                 }
             });
@@ -281,6 +262,7 @@ pub async fn execute(
                 tool_calls: None,
                 reasoning_content: None,
                 reasoning_name: None,
+                usage: None,
             });
         }
     }

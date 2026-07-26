@@ -9,7 +9,7 @@ The `agent-tool` crate defines and implements built-in tool execution capabiliti
 - **File Operations**: Provides `read_file` for inspectable text retrieval and `write_file` for new file creation.
 - **Precise Modifications**: Provides `edit_file` to locate exact string snippets (`old_str`) and swap them with modified content (`new_str`).
 - **Workspace Navigation**: Provides `list_dir` to retrieve directory listings and file metadata across workspace paths.
-- **System Command Execution**: Provides `bash` for executing shell commands with configurable timeouts, capturing standard output and error channels.
+- **System Command Execution**: Provides `run` for executing shell commands with configurable timeouts, capturing standard output and error channels.
 - **Codebase Search Integration**: Exposes `search_codebase` to run structural, regex, or semantic vector queries via the `search` crate engine.
 - **Sub-Agent Invocation**: Provides `agent` to launch isolated sub-agents for dedicated, multi-step investigation tasks.
 - **MCP Extensibility**: Connects tool calls to external Model Context Protocol (MCP) servers.
@@ -28,7 +28,7 @@ The `agent-tool` crate defines and implements built-in tool execution capabiliti
 | `write` ([`src/write.rs`](src/write.rs))                | Handles new file creation logic.                                                                            |
 | `edit` ([`src/edit.rs`](src/edit.rs))                   | Handles precise string replacement in existing files.                                                       |
 | `list_dir` ([`src/list_dir.rs`](src/list_dir.rs))       | Handles directory traversal and entry enumeration.                                                          |
-| `bash` ([`src/bash.rs`](src/bash.rs))                   | Executes asynchronous shell processes with timeouts.                                                        |
+| `run` ([`src/run.rs`](src/run.rs))                      | Executes asynchronous shell processes with timeouts.                                                        |
 | `search` ([`src/search.rs`](src/search.rs))             | Integrates with codebase searching capabilities.                                                            |
 | `agent_tool` ([`src/agent_tool.rs`](src/agent_tool.rs)) | Manages sub-agent lifecycle and execution flows.                                                            |
 
