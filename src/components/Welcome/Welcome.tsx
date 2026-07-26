@@ -15,6 +15,7 @@ interface WelcomeProps {
   handleRemoveProject: (id: string, cb: any) => void;
   onProjectChange: (newFolder: string | null, projectId: string | null) => void;
   setSettingsOpen: (open: boolean) => void;
+  removingIds?: Set<string>;
 }
 
 export function Welcome({
@@ -26,6 +27,7 @@ export function Welcome({
   handleRemoveProject,
   onProjectChange,
   setSettingsOpen,
+  removingIds,
 }: WelcomeProps): React.ReactElement {
   const { t } = useI18n();
   return (
@@ -40,6 +42,7 @@ export function Welcome({
           onClose={handleCloseProject}
           onRemove={(id) => handleRemoveProject(id, onProjectChange)}
           onSettings={() => setSettingsOpen(true)}
+          removingIds={removingIds}
         />
         <div className="welcome__content">
           <section className="welcome__hero" aria-labelledby="welcome-title">

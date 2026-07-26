@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { AppMain } from "../AppMain/AppMain.js";
 import { Welcome } from "../Welcome/Welcome.js";
 import { Settings } from "../Settings/Settings.js";
@@ -69,6 +69,7 @@ export function App(): React.ReactElement {
   const [previewFile, setPreviewFile] = useState<string | null>(null);
   const [hoveredProject, setHoveredProject] = useState<Project | null>(null);
   const [hoveredChats, setHoveredChats] = useState<ChatSummary[]>([]);
+  const hoveredProjectIdRef = useRef<string | null>(null);
 
   const {
     projects,
@@ -77,10 +78,12 @@ export function App(): React.ReactElement {
     setActiveProject,
     folder,
     setFolder,
+    removingIds,
     handlePickProject,
     handleAddProject,
     handleCloseProject,
     handleRemoveProject,
+    validateProjectPaths,
   } = useProjects();
 
   const {
@@ -132,6 +135,7 @@ export function App(): React.ReactElement {
     setChats,
     setActiveChat,
     setItems,
+    validateProjectPaths,
   });
 
   const onProjectChange = useCallback(
@@ -165,6 +169,7 @@ export function App(): React.ReactElement {
 
   const handleHoverProject = useCallback(
     async (id: string | null) => {
+      hoveredProjectIdRef.current = id;
       if (!id) {
         setHoveredProject(null);
         setHoveredChats([]);
@@ -174,6 +179,9 @@ export function App(): React.ReactElement {
       setHoveredProject(proj);
       if (proj) {
         const list = await window.vibe.chats.listForProject(proj.id);
+        // Guard against race condition: only apply the result if the user
+        // is still hovering over the same project that initiated this request.
+        if (hoveredProjectIdRef.current !== id) return;
         setHoveredChats(list);
       }
     },
@@ -516,6 +524,7 @@ export function App(): React.ReactElement {
                 handleRemoveProject={handleRemoveProject}
                 onProjectChange={onProjectChange}
                 setSettingsOpen={setSettingsOpen}
+                removingIds={removingIds}
               />
               <Settings
                 open={settingsOpen}
@@ -587,6 +596,7 @@ export function App(): React.ReactElement {
               revealPath={revealPath}
               projects={projects}
               activeProject={activeProject}
+              removingIds={removingIds}
               chatSideOpen={chatSideOpen}
               setChatSideOpen={setChatSideOpen}
               chatSideSticky={chatSideSticky}

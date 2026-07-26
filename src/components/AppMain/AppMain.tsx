@@ -166,6 +166,7 @@ interface AppMainProps {
   gotoLine?: number;
   gotoColumn?: number;
   gotoMatchLength?: number;
+  removingIds?: Set<string>;
 }
 
 export function AppMain({
@@ -224,6 +225,7 @@ export function AppMain({
   gotoLine,
   gotoColumn,
   gotoMatchLength,
+  removingIds,
 }: AppMainProps) {
   const [sidebarResizing, setSidebarResizing] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -396,6 +398,7 @@ export function AppMain({
           onClose={handleCloseProject}
           onRemove={(id) => handleRemoveProject(id, onProjectChange)}
           onSettings={() => setSettingsOpen(true)}
+          removingIds={removingIds}
         />
         <SessionList
           open={chatSideOpen}
@@ -441,7 +444,7 @@ export function AppMain({
             }
           >
             {drillDownId ? (
-              <SubAgentView items={drillItems} onBack={handleDrillBack} />
+              <SubAgentView items={drillItems} onBack={handleDrillBack} cwd={cwd} />
             ) : (
               <>
                 <AgentChat
