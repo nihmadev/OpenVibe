@@ -5,7 +5,7 @@ use rusqlite::params;
 impl ProjectStore {
     pub fn list_providers(&self) -> Result<Vec<Provider>> {
         let mut stmt = self.conn
-            .prepare("SELECT id, name, description, base_url, api_key, model, added_at, custom_icon, models_url, headers, parameters FROM providers ORDER BY added_at ASC")?;
+            .prepare("SELECT id, name, description, base_url, api_key, model, added_at, custom_icon, models_url, headers, parameters, custom_models FROM providers ORDER BY added_at ASC")?;
 
         let rows = stmt.query_map([], |row| Provider::try_from(row))?;
 
@@ -19,14 +19,15 @@ impl ProjectStore {
     pub fn save_provider(&self, p: &Provider) -> Result<()> {
         self.conn
             .execute(
-                "INSERT INTO providers (id, name, description, base_url, api_key, model, added_at, custom_icon, models_url, headers, parameters)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+                "INSERT INTO providers (id, name, description, base_url, api_key, model, added_at, custom_icon, models_url, headers, parameters, custom_models)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
                  ON CONFLICT(id) DO UPDATE SET
                    name = excluded.name, description = excluded.description,
                    base_url = excluded.base_url, api_key = excluded.api_key,
                    model = excluded.model,
                    custom_icon = excluded.custom_icon, models_url = excluded.models_url,
-                   headers = excluded.headers, parameters = excluded.parameters",
+                   headers = excluded.headers, parameters = excluded.parameters,
+                   custom_models = excluded.custom_models",
                 params![
                     p.id,
                     p.name,
@@ -39,6 +40,7 @@ impl ProjectStore {
                     p.models_url,
                     p.headers,
                     p.parameters,
+                    p.custom_models,
                 ],
             )?;
         Ok(())

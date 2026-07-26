@@ -76,6 +76,12 @@ impl ProjectStore {
             conn.execute_batch("PRAGMA user_version = 2")?;
         }
 
+        if user_version < 3 {
+            let _ = conn
+                .execute_batch("ALTER TABLE providers ADD COLUMN custom_models TEXT DEFAULT NULL");
+            conn.execute_batch("PRAGMA user_version = 3")?;
+        }
+
         Ok(())
     }
 

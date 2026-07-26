@@ -46,6 +46,8 @@ pub struct Provider {
     pub headers: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub custom_models: Option<String>,
 }
 
 impl<'a> TryFrom<&rusqlite::Row<'a>> for Provider {
@@ -64,6 +66,7 @@ impl<'a> TryFrom<&rusqlite::Row<'a>> for Provider {
             models_url: row.get(8)?,
             headers: row.get(9)?,
             parameters: row.get(10)?,
+            custom_models: row.get(11)?,
         })
     }
 }
