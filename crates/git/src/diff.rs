@@ -132,3 +132,35 @@ pub fn get_commit_file_diff_text(path: &str, oid: &str, file_path: &str) -> Resu
     })?;
     Ok(diff_text)
 }
+
+pub fn get_staged_diff_text(path: &str) -> Result<String> {
+    let repo = open(path)?;
+    let head_tree = repo.head().ok().and_then(|h| h.peel_to_tree().ok());
+    let mut index = repo.index()?;
+    let index_tree_oid = index.write_tree_to(&repo)?;
+    let index_tree_obj = repo.find_tree(index_tree_oid)?;
+    let diff = repo.diff_tree_to_tree(head_tree.as_ref(), Some(&index_tree_obj), None)?;
+    let mut diff_text = String::new();
+    diff.print(git2::DiffFormat::Patch, |_delta, _hunk, line| {
+        if let Ok(content) = std::str::from_utf8(line.content()) {
+            diff_text.push_str(content);
+        }
+        true
+    })?;
+
+    if diff_text.trim().is_empty() {
+        let mut opts = git2::DiffOptions::new();
+        opts.ignore_submodules(true);
+        opts.include_untracked(true);
+        opts.recurse_untracked_dirs(true);
+        let workdir_diff = repo.diff_tree_to_workdir(head_tree.as_ref(), Some(&mut opts))?;
+        workdir_diff.print(git2::DiffFormat::Patch, |_delta, _hunk, line| {
+            if let Ok(content) = std::str::from_utf8(line.content()) {
+                diff_text.push_str(content);
+            }
+            true
+        })?;
+    }
+
+    Ok(diff_text)
+}
