@@ -465,9 +465,17 @@ function renderTextBlock(text: string, noFileIcons: boolean, prefix?: string): R
     const bqMatch = line.match(BLOCKQUOTE_RE);
     if (bqMatch) {
       const bqContent = bqMatch[1];
-      const html = inlineToHtml(bqContent);
-      nodes.push(<blockquote key={nextKey()}>{renderInlineHtml(html, noFileIcons)}</blockquote>);
+      const bqLines: string[] = [bqContent];
       i++;
+      while (i < lines.length) {
+        const nextBqMatch = lines[i]!.match(BLOCKQUOTE_RE);
+        if (!nextBqMatch) break;
+        bqLines.push(nextBqMatch[1] || "");
+        i++;
+      }
+      const fullBqContent = bqLines.join("\n");
+      const html = inlineToHtml(fullBqContent);
+      nodes.push(<blockquote key={nextKey()}>{renderInlineHtml(html, noFileIcons)}</blockquote>);
       continue;
     }
 
