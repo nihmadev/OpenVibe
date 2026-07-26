@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use crate::cancel::wait_for_cancel;
 use crate::chat::{AssistantTurn, TokenUsage, ToolCall, ToolCallFunction};
 
 struct ToolCallAcc {
@@ -36,7 +37,15 @@ pub async fn parse_sse_stream(
             return Err("Aborted".to_string());
         }
 
-        match res.chunk().await {
+        let chunk_result = tokio::select! {
+            biased;
+            _ = wait_for_cancel(cancel) => {
+                return Err("Aborted".to_string());
+            }
+            result = res.chunk() => result,
+        };
+
+        match chunk_result {
             Ok(Some(bytes)) => {
                 append_utf8_chunk(&bytes, &mut utf8_tail, &mut buffer);
 
@@ -497,11 +506,31 @@ fn process_sse_line(
             .and_then(|v| v.as_u64())
             .map(|v| v as usize)
             .unwrap_or(prompt + completion);
+        // Anthropic prompt caching metrics. The native fields are forwarded
+        // as-is by Anthropic's OpenAI-compat layer; `prompt_tokens_details.
+        // cached_tokens` is the OpenAI-compat spelling for cache reads.
+        let cache_creation = usage_obj
+            .get("cache_creation_input_tokens")
+            .and_then(|v| v.as_u64())
+            .map(|v| v as usize);
+        let cache_read = usage_obj
+            .get("cache_read_input_tokens")
+            .and_then(|v| v.as_u64())
+            .map(|v| v as usize)
+            .or_else(|| {
+                usage_obj
+                    .get("prompt_tokens_details")
+                    .and_then(|d| d.get("cached_tokens"))
+                    .and_then(|v| v.as_u64())
+                    .map(|v| v as usize)
+            });
         if prompt > 0 || total > 0 {
             *usage = Some(TokenUsage {
                 prompt_tokens: prompt,
                 completion_tokens: completion,
                 total_tokens: total,
+                cache_creation_input_tokens: cache_creation,
+                cache_read_input_tokens: cache_read,
             });
         }
     }

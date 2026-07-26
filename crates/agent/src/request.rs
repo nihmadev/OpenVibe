@@ -1,12 +1,15 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+use crate::cancel::{cancellable_sleep, wait_for_cancel};
 use crate::chat::{AssistantTurn, ChatMessage};
 use crate::config::LlmConfig;
 use crate::definition::ToolDefinition;
 use crate::sse::parse_sse_stream;
+use crate::token::max_context_tokens;
 use crate::transform::{
-    flatten_for_text_only, messages_to_api_json, supports_vision, trim_messages,
+    flatten_for_text_only, messages_to_api_json_with_cache, supports_vision, trim_messages,
+    trim_messages_to_budget,
 };
 
 #[allow(clippy::too_many_arguments)]
@@ -22,11 +25,12 @@ pub async fn stream_chat(
     on_reasoning_end: &(dyn Fn() + Send + Sync),
     on_tool_args: &(dyn Fn(&str, &str) + Send + Sync),
 ) -> Result<AssistantTurn, String> {
-    let mut current_messages = if messages.len() > 20 {
-        trim_messages(messages, 15)
-    } else {
-        messages
-    };
+    // Emergency safety valve: trim by estimated token footprint against the
+    // model's context window (keep ~10% headroom for the response). Proactive
+    // LLM compaction happens earlier in the agent loop; this only guards
+    // against overflowing the provider limit.
+    let token_budget = (max_context_tokens(&config.model) as f64 * 0.9) as usize;
+    let mut current_messages = trim_messages_to_budget(messages, token_budget);
 
     let max_retries = 3;
 
@@ -45,15 +49,14 @@ pub async fn stream_chat(
 
         let mut body = serde_json::json!({
             "model": config.model,
-            "messages": messages_to_api_json(outbound_messages),
+            "messages": messages_to_api_json_with_cache(
+                outbound_messages,
+                supports_prompt_caching(config),
+            ),
             "stream": true,
             "stream_options": { "include_usage": true },
         });
-        if let Some(ref effort) = config.reasoning_effort {
-            if !effort.is_empty() {
-                body["reasoning_effort"] = serde_json::json!(effort);
-            }
-        }
+        apply_reasoning_params(config, &mut body);
         if !tools.is_empty() {
             body["tools"] = serde_json::json!(tools);
             body["tool_choice"] = serde_json::json!("auto");
@@ -61,13 +64,21 @@ pub async fn stream_chat(
 
         let req = client.post(&url).headers(headers).json(&body);
 
-        match req.send().await {
+        let send_result = tokio::select! {
+            biased;
+            _ = wait_for_cancel(cancel) => {
+                return Err("Aborted".to_string());
+            }
+            result = req.send() => result,
+        };
+
+        match send_result {
             Ok(res) => {
                 let status = res.status();
 
                 if status == 429 || status == 413 {
                     let status_val = status.as_u16();
-                    let mut wait_ms: u64 = 5000;
+                    let mut wait_ms: u64 = 1500;
 
                     let retry_after_secs = res
                         .headers()
@@ -83,7 +94,7 @@ pub async fn stream_chat(
                         }
                         if status_val == 413 {
                             current_messages = trim_messages(current_messages, 10);
-                            tokio::time::sleep(Duration::from_millis(1000)).await;
+                            cancellable_sleep(Duration::from_millis(1000), cancel).await?;
                             continue;
                         }
                     }
@@ -93,7 +104,7 @@ pub async fn stream_chat(
                     }
 
                     wait_ms = wait_ms.min(60000);
-                    tokio::time::sleep(Duration::from_millis(wait_ms)).await;
+                    cancellable_sleep(Duration::from_millis(wait_ms), cancel).await?;
                     continue;
                 }
 
@@ -128,12 +139,94 @@ pub async fn stream_chat(
                     .unwrap_or_default()
                     .as_nanos() as u64)
                     % 500;
-                tokio::time::sleep(Duration::from_millis(ms + jitter)).await;
+                cancellable_sleep(Duration::from_millis(ms + jitter), cancel).await?;
             }
         }
     }
 
     Err("Rate limit: too many retries. Try again in a minute.".to_string())
+}
+
+/// Anthropic-only prompt caching gate. Other providers (OpenAI, Google, ...)
+/// either ignore or hard-error on the `cache_control` field, so it is only
+/// set when the request targets Anthropic (directly or through the proxy,
+/// which forwards the body verbatim).
+fn supports_prompt_caching(config: &LlmConfig) -> bool {
+    let pid = config.provider_id.as_deref().unwrap_or("");
+    pid == "anthropic" || config.base_url.to_lowercase().contains("api.anthropic.com")
+}
+
+/// Providers whose OpenAI-compatible chat endpoint accepts the flat
+/// `reasoning_effort` field. Everything else gets no reasoning params rather
+/// than an unsupported field that some providers reject with a hard error.
+fn provider_kind(config: &LlmConfig) -> ReasoningTransport {
+    let base = config.base_url.to_lowercase();
+    let pid = config.provider_id.as_deref().unwrap_or("");
+
+    if pid == "deepseek" || base.contains("api.deepseek.com") {
+        return ReasoningTransport::DeepSeek;
+    }
+    if pid == "openrouter" || base.contains("openrouter.ai") {
+        return ReasoningTransport::OpenRouterReasoningObject;
+    }
+    let effort_providers = [
+        "openai",
+        "groq",
+        "cerebras",
+        "opencode",
+        "github",
+        "together",
+        "fireworks",
+        "mistral",
+        "xai",
+        "deepinfra",
+        "hyperbolic",
+        "nvidia",
+        "sambanova",
+        "siliconcloud",
+    ];
+    if effort_providers.contains(&pid) {
+        return ReasoningTransport::FlatEffort;
+    }
+    // Custom/unknown endpoints: send flat effort only if user explicitly set
+    // one; most OpenAI-compatible servers silently ignore unknown fields, but
+    // we keep the same behavior as known effort providers.
+    ReasoningTransport::FlatEffort
+}
+
+enum ReasoningTransport {
+    /// `reasoning_effort: "high"` (OpenAI-compatible chat completions).
+    FlatEffort,
+    /// DeepSeek thinking mode: `thinking: {type: enabled}` + `reasoning_effort`
+    /// (low/medium are mapped to high server-side; `max` is valid).
+    DeepSeek,
+    /// OpenRouter: `reasoning: { enabled: true, effort: ... }` object.
+    OpenRouterReasoningObject,
+}
+
+fn apply_reasoning_params(config: &LlmConfig, body: &mut serde_json::Value) {
+    let effort = match config.reasoning_effort.as_deref() {
+        Some(e) if !e.is_empty() => e,
+        _ => return,
+    };
+
+    match provider_kind(config) {
+        ReasoningTransport::FlatEffort => {
+            body["reasoning_effort"] = serde_json::json!(effort);
+        }
+        ReasoningTransport::DeepSeek => {
+            // DeepSeek requires the thinking toggle alongside the effort;
+            // effort alone does not enable thinking mode via OpenAI SDK shape.
+            body["thinking"] = serde_json::json!({ "type": "enabled" });
+            body["reasoning_effort"] = serde_json::json!(effort);
+        }
+        ReasoningTransport::OpenRouterReasoningObject => {
+            body["reasoning"] = serde_json::json!({
+                "enabled": true,
+                "effort": effort,
+            });
+        }
+    }
 }
 
 fn safe_header_val(val: &str) -> reqwest::header::HeaderValue {
@@ -263,5 +356,72 @@ fn parse_retry_after_body(text: &str) -> Option<&str> {
         None
     } else {
         Some(num_str)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cfg(provider_id: &str, base_url: &str, effort: Option<&str>) -> LlmConfig {
+        LlmConfig {
+            api_key: "k".to_string(),
+            base_url: base_url.to_string(),
+            model: "m".to_string(),
+            api_url: None,
+            provider_id: if provider_id.is_empty() {
+                None
+            } else {
+                Some(provider_id.to_string())
+            },
+            reasoning_effort: effort.map(|e| e.to_string()),
+        }
+    }
+
+    #[test]
+    fn deepseek_gets_thinking_toggle_and_effort() {
+        let config = cfg("deepseek", "https://api.deepseek.com/v1", Some("high"));
+        let mut body = serde_json::json!({});
+        apply_reasoning_params(&config, &mut body);
+        assert_eq!(body["thinking"]["type"], "enabled");
+        assert_eq!(body["reasoning_effort"], "high");
+    }
+
+    #[test]
+    fn openrouter_gets_reasoning_object() {
+        let config = cfg("openrouter", "https://openrouter.ai/api/v1", Some("medium"));
+        let mut body = serde_json::json!({});
+        apply_reasoning_params(&config, &mut body);
+        assert_eq!(body["reasoning"]["enabled"], true);
+        assert_eq!(body["reasoning"]["effort"], "medium");
+        assert!(body.get("reasoning_effort").is_none());
+    }
+
+    #[test]
+    fn openai_gets_flat_effort() {
+        let config = cfg("openai", "https://api.openai.com/v1", Some("low"));
+        let mut body = serde_json::json!({});
+        apply_reasoning_params(&config, &mut body);
+        assert_eq!(body["reasoning_effort"], "low");
+        assert!(body.get("thinking").is_none());
+        assert!(body.get("reasoning").is_none());
+    }
+
+    #[test]
+    fn no_effort_means_no_reasoning_fields() {
+        let config = cfg("deepseek", "https://api.deepseek.com/v1", None);
+        let mut body = serde_json::json!({});
+        apply_reasoning_params(&config, &mut body);
+        assert!(body.get("thinking").is_none());
+        assert!(body.get("reasoning_effort").is_none());
+    }
+
+    #[test]
+    fn deepseek_detected_by_base_url_without_provider_id() {
+        let config = cfg("", "https://api.deepseek.com/v1", Some("max"));
+        let mut body = serde_json::json!({});
+        apply_reasoning_params(&config, &mut body);
+        assert_eq!(body["thinking"]["type"], "enabled");
+        assert_eq!(body["reasoning_effort"], "max");
     }
 }
