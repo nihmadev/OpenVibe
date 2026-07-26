@@ -16,6 +16,12 @@ export function recordToItems(record: ChatRecord): any[] {
           : Array.isArray(msg.content)
             ? msg.content.map((p) => (p.type === "text" ? p.text : "[image]")).join(" ")
             : "";
+      // Backend injects compaction summaries as user-role messages marked
+      // with [context-compacted]. They are model-facing context, not user
+      // input — skip them in the visible history.
+      if (text.startsWith("[context-compacted]") || text.startsWith("[earlier conversation trimmed")) {
+        continue;
+      }
       out.push({ id: localId(), kind: "user", text, msgIndex: i });
     } else if (msg.role === "assistant") {
       const text =

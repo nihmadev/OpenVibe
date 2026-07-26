@@ -56,5 +56,10 @@ export const gitBridge = {
         () => invoke("git_file_content", { path: cwd, filePath, refName }),
         (r) => ({ data: r }),
       ),
+    generateCommitMessage: (cwd: string) =>
+      wrap(
+        () => invoke("generate_commit_message", { path: cwd }),
+        (r) => ({ data: r }),
+      ),
   },
 };

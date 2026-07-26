@@ -142,6 +142,7 @@ export interface Provider {
   modelsUrl?: string | null;
   headers?: KeyValuePair[] | null;
   parameters?: KeyValuePair[] | null;
+  customModels?: KeyValuePair[] | null;
 }
 
 export interface FileSnapshot {

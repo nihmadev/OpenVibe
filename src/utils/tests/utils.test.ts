@@ -200,7 +200,7 @@ describe("recordToItems", () => {
             {
               id: "tc2",
               type: "function",
-              function: { name: "bash", arguments: "not-json" },
+              function: { name: "run", arguments: "not-json" },
             },
           ],
         },
@@ -224,7 +224,7 @@ describe("recordToItems", () => {
             {
               id: "tc3",
               type: "function",
-              function: { name: "bash", arguments: "{}" },
+              function: { name: "run", arguments: "{}" },
             },
           ],
         },
@@ -288,7 +288,7 @@ describe("recordToItems", () => {
             {
               id: "tc4",
               type: "function",
-              function: { name: "bash", arguments: '{"command":"ls"}' },
+              function: { name: "run", arguments: '{"command":"ls"}' },
             },
           ],
         },
