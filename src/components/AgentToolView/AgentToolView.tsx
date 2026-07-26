@@ -7,8 +7,21 @@ import { ChevronRightIcon, Loader2Icon, ShowMoreIcon } from "../Icons/icons.js";
 import { FileIcon, FolderIcon } from "../Icons/file-icons.js";
 import { CodeBlock, resolveMonacoLang } from "../CodeBlock/CodeBlock.js";
 import { DiffEditor } from "../DiffEditor/DiffEditor.js";
+import { Markdown } from "../Markdown/Markdown.js";
 import { useI18n } from "../../hooks/useI18n.js";
-import { BookOpen, Bot, FilePlus2, FolderOpen, Pencil, Search, Server, SquareTerminal, Wrench } from "lucide-react";
+import {
+  BookOpen,
+  Bot,
+  FilePlus2,
+  FolderOpen,
+  Globe,
+  Link,
+  Pencil,
+  Search,
+  Server,
+  SquareTerminal,
+  Wrench,
+} from "lucide-react";
 import "./Tool.css";
 
 function ToolKindIcon({ name, size = 14 }: { name?: string; size?: number }): React.ReactElement {
@@ -23,6 +36,11 @@ function ToolKindIcon({ name, size = 14 }: { name?: string; size?: number }): Re
     case "search_codebase":
     case "grep_search":
       return <Search {...props} />;
+    case "web_search":
+      return <Globe {...props} />;
+    case "fetch_url":
+      return <Link {...props} />;
+    case "run":
     case "bash":
     case "run_command":
       return <SquareTerminal {...props} />;
@@ -89,7 +107,8 @@ function StreamingCodeBlock({ toolStream, toolName }: { toolStream: string; tool
       if (typeof content !== "string") return null;
       const path = getFilePathFromArgs(parsed) || "";
       const info = path ? pickFile({ path }) : null;
-      const lang = info?.ext || (toolName === "bash" || toolName === "run_command" ? "sh" : "typescript");
+      const lang =
+        info?.ext || (toolName === "run" || toolName === "bash" || toolName === "run_command" ? "sh" : "typescript");
       return { content, lang };
     } catch {
       /* JSON parse error */
@@ -208,13 +227,25 @@ function WriteFileBlock({ item }: { item: HistoryItem }) {
 }
 
 function getToolResultLang(item: HistoryItem): string {
-  if (item.toolName === "bash" || item.toolName === "run_command") return "sh";
+  if (item.toolName === "run" || item.toolName === "bash" || item.toolName === "run_command") return "sh";
+  if (item.toolName === "web_search" || item.toolName === "fetch_url") return "markdown";
   if (item.toolName === "list_dir") return "plaintext";
   if (item.toolName === "read_file" || item.toolName === "view_file") {
     const info = pickFile(item.toolArgs);
     return info?.ext || "plaintext";
   }
   return "plaintext";
+}
+
+function formatToolResultText(text: string, fallbackLang: string): { code: string; lang: string } {
+  const trimmed = text.trim();
+  try {
+    const parsed = JSON.parse(trimmed);
+    return { code: JSON.stringify(parsed, null, 2), lang: "json" };
+  } catch {
+    /* not JSON */
+  }
+  return { code: text, lang: fallbackLang };
 }
 
 function ListDirBlock({ item }: { item: HistoryItem }) {
@@ -274,11 +305,12 @@ export function AgentToolView({
   const isListDir = item.toolName === "list_dir";
   const isSearchCodebase = item.toolName === "search_codebase";
   const isAgent = item.toolName === "agent";
-  const [open, setOpen] = React.useState(false);
+  const isWebTool = item.toolName === "web_search" || item.toolName === "fetch_url";
+  const [open, setOpen] = React.useState(isWebTool || isStreaming);
 
   React.useEffect(() => {
-    if (isStreaming) setOpen(true);
-  }, [isStreaming]);
+    if (isStreaming || isWebTool) setOpen(true);
+  }, [isStreaming, isWebTool]);
 
   const diffInfo = React.useMemo(() => {
     const editTools = new Set([
@@ -295,6 +327,11 @@ export function AgentToolView({
     const removed = oldStr.split("\n").filter(Boolean).length;
     return { added, removed };
   }, [item.toolName, item.toolArgs]);
+
+  const mcpFormatted = React.useMemo(() => {
+    if (!item.text) return null;
+    return formatToolResultText(item.text, getToolResultLang(item));
+  }, [item.text, item.toolName]);
 
   if (isAgent) {
     return (
@@ -327,12 +364,12 @@ export function AgentToolView({
   const isReadFile = item.toolName === "read_file";
   const isGitTool = item.toolName?.startsWith("git_") === true;
   const hasExpandable =
-    (diffInfo !== null || hasResultText || isStreaming) && !isSearchCodebase && !isReadFile && !isGitTool;
+    (diffInfo !== null || hasResultText || isStreaming) && !isSearchCodebase && !isReadFile && !isGitTool && !isWebTool;
 
   return (
     <div className={`tool ${isMcp ? "tool--mcp" : ""} ${stateCls}${hasExpandable ? " tool--has-diff" : ""}`}>
-      <span className="tool__icon">
-        {isPending ? (
+      <span className={`tool__icon${isPending && isWebTool ? " tool__icon--shimmer" : ""}`}>
+        {isPending && !isWebTool ? (
           <Loader2Icon />
         ) : isErr ? (
           <FailIcon />
@@ -388,7 +425,10 @@ export function AgentToolView({
           ) : isListDir ? (
             <ListDirBlock item={item} />
           ) : (
-            <CodeBlock language={getToolResultLang(item)} code={item.text || ""} />
+            <CodeBlock
+              language={mcpFormatted?.lang ?? getToolResultLang(item)}
+              code={mcpFormatted?.code ?? item.text ?? ""}
+            />
           )}
         </div>
       )}

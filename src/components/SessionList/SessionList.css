@@ -116,9 +116,10 @@
 }
 
 .session-list__empty {
-  padding: 8px;
+  padding: 24px 8px;
   color: var(--fg-muted);
   font-size: 12px;
+  text-align: center;
 }
 
 .session-list__row {

@@ -1,5 +1,5 @@
 import type { HistoryItem, TodoTask, TodoCheckpoint } from "./types.js";
-import { basename } from "./utils.js";
+import { basename, getFilePathFromArgs } from "./utils.js";
 
 export type Translate = (key: string, params?: Record<string, string | number | boolean>) => string;
 
@@ -83,6 +83,15 @@ export function toolActivityTitle(item: HistoryItem, t: Translate): string {
   const path = stringArg(item, "path") || stringArg(item, "file");
   const file = path ? basename(path) : "";
 
+  if (item.toolName?.startsWith("git_")) {
+    const gitTool = item.toolName;
+    if (gitTool === "git_status") return t("activityGitStatus");
+    if (gitTool === "git_diff") return t("activityGitDiff");
+    if (gitTool === "git_log") return t("activityGitLog");
+    if (gitTool === "git_branches") return t("activityGitBranches");
+    return t("activityGitCommand", { command: gitTool.replace("git_", "") });
+  }
+
   switch (item.toolName) {
     case "list_dir":
       return path === "." || path === "" ? t("activityProjectStructure") : t("activityInspectFolder", { name: file });
@@ -94,9 +103,18 @@ export function toolActivityTitle(item: HistoryItem, t: Translate): string {
       const query = stringArg(item, "query") || stringArg(item, "pattern");
       return query ? t("activitySearchQuery", { query: cleanTitle(query) }) : t("activitySearchCode");
     }
+    case "web_search": {
+      const query = stringArg(item, "query");
+      return query ? t("activityWebSearch", { query: cleanTitle(query) }) : t("activityWebSearchGeneral");
+    }
+    case "fetch_url": {
+      const url = stringArg(item, "url");
+      return url ? t("activityFetchUrl", { url: cleanTitle(url) }) : t("activityFetchUrlGeneral");
+    }
     case "edit_file":
     case "write_file":
       return file ? t("activityUpdateFile", { name: file }) : t("activityUpdateCode");
+    case "run":
     case "bash":
     case "run_command":
       return t("activityRunCommand");
@@ -110,7 +128,7 @@ export function toolActivityTitle(item: HistoryItem, t: Translate): string {
 }
 
 export type ToolActivityKind =
-  "search" | "read" | "edit" | "command" | "browse" | "agent" | "git" | "todo" | "external" | "tool";
+  "search" | "read" | "edit" | "command" | "browse" | "agent" | "git" | "todo" | "web" | "external" | "tool";
 
 export function toolActivityKind(item: HistoryItem): ToolActivityKind {
   if (item.toolName?.startsWith("git_")) return "git";
@@ -118,12 +136,16 @@ export function toolActivityKind(item: HistoryItem): ToolActivityKind {
     case "search_codebase":
     case "grep_search":
       return "search";
+    case "web_search":
+    case "fetch_url":
+      return "web";
     case "read_file":
     case "view_file":
       return "read";
     case "edit_file":
     case "write_file":
       return "edit";
+    case "run":
     case "bash":
     case "run_command":
       return "command";
@@ -147,52 +169,110 @@ const TOOL_ACTIVITY_LABELS: Record<ToolActivityKind, string> = {
   agent: "activityGroupAgent",
   git: "activityGroupGit",
   todo: "activityGroupTodo",
+  web: "activityGroupWeb",
   external: "activityGroupExternal",
   tool: "activityGroupTools",
 };
 
-export function summarizeToolActivities(items: HistoryItem[], t: Translate): string {
-  const kinds = [...new Set(items.map(toolActivityKind))];
-  const labels = kinds.map((kind) => t(TOOL_ACTIVITY_LABELS[kind]));
-  const last = labels.pop();
-  if (!last) return t("activityGroupTools");
+const TOOL_ACTIVITY_COUNT_LABELS: Record<ToolActivityKind, string> = {
+  search: "activityGroupSearchN",
+  read: "activityGroupReadN",
+  edit: "activityGroupEditN",
+  command: "activityGroupCommandN",
+  browse: "activityGroupBrowseN",
+  agent: "activityGroupAgentN",
+  git: "activityGroupGitN",
+  todo: "activityGroupTodoN",
+  web: "activityGroupWebN",
+  external: "activityGroupExternalN",
+  tool: "activityGroupToolsN",
+};
 
-  const summary = labels.length === 0 ? last : `${labels.join(", ")} ${t("activityGroupAnd")} ${last}`;
-  return summary.charAt(0).toLocaleUpperCase() + summary.slice(1);
+/**
+ * Group header: "Чтение 5 файлов" / "Reading 3 files".
+ * For a single item falls back to the plain kind label without a count.
+ */
+export function toolActivityGroupLabel(kind: ToolActivityKind, count: number, t: Translate): string {
+  if (count > 1) {
+    return t(TOOL_ACTIVITY_COUNT_LABELS[kind], { count });
+  }
+  const label = t(TOOL_ACTIVITY_LABELS[kind]);
+  return label.charAt(0).toLocaleUpperCase() + label.slice(1);
 }
 
-export function isTerminalToolActivity(item: HistoryItem): boolean {
-  return item.kind === "tool" && (item.toolName === "bash" || item.toolName === "run_command");
+const REASONING_BOILERPLATE = new Set([
+  "Analyzing and preparing tool execution.",
+  "Executing tool call.",
+  "Thinking about tool call execution.",
+]);
+
+/** Reasoning worth a visible timeline row: has a name or a body beyond tool-call boilerplate. */
+export function hasMeaningfulReasoning(item: HistoryItem): boolean {
+  if (item.kind !== "assistant") return false;
+  const body = item.reasoning?.trim();
+  if (!body && !item.reasoningName) return false;
+  if (body && REASONING_BOILERPLATE.has(body)) return false;
+  return true;
 }
 
 /**
- * Collect tool calls into activity accordions without letting the assistant's
- * interleaved reasoning split every call into its own group. Terminal calls
- * get their own group so a burst of commands does not fill the timeline.
+ * A single node in the run graph. The whole turn renders as one vertical
+ * timeline (VS Code Copilot style): tool calls carry an activity icon, while
+ * reasoning and narration sit on the same line as small dots.
  */
-export function groupToolActivities(items: HistoryItem[]): HistoryItem[][] {
-  const groups: HistoryItem[][] = [];
-  let group: HistoryItem[] = [];
-  let groupIsTerminal = false;
+export type RunTimelineNode =
+  | { type: "tool"; id: string; kind: ToolActivityKind; items: HistoryItem[] }
+  | { type: "reasoning"; id: string; item: HistoryItem }
+  | { type: "narration"; id: string; item: HistoryItem }
+  | { type: "info"; id: string; item: HistoryItem }
+  | { type: "error"; id: string; item: HistoryItem };
 
-  const flush = () => {
-    if (group.length === 0) return;
-    groups.push(group);
-    group = [];
-  };
+function isReadTool(item: HistoryItem): boolean {
+  return item.toolName === "read_file" || item.toolName === "view_file";
+}
+
+/**
+ * Lay the whole run out as one chronological graph. Every event is its own
+ * node so the timeline reads top-to-bottom like a commit graph. Consecutive
+ * reads of the same file collapse into a single node with a ×N badge.
+ */
+export function buildRunTimeline(items: HistoryItem[], finalItemId?: string): RunTimelineNode[] {
+  const nodes: RunTimelineNode[] = [];
 
   for (const item of items) {
-    if (item.kind !== "tool" || item.toolName === "todo") continue;
-    const isTerminal = isTerminalToolActivity(item);
-    if (group.length > 0 && isTerminal !== groupIsTerminal) {
-      flush();
+    if (item.kind === "tool") {
+      // Task-list updates are rendered once above the prompt input.
+      if (item.toolName === "todo") continue;
+      const prev = nodes[nodes.length - 1];
+      if (prev && prev.type === "tool" && isReadTool(item)) {
+        const prevItem = prev.items[prev.items.length - 1]!;
+        const path = getFilePathFromArgs(item.toolArgs);
+        if (path && isReadTool(prevItem) && getFilePathFromArgs(prevItem.toolArgs) === path) {
+          prev.items.push(item);
+          continue;
+        }
+      }
+      nodes.push({ type: "tool", id: item.id, kind: toolActivityKind(item), items: [item] });
+      continue;
     }
-    groupIsTerminal = isTerminal;
-    group.push(item);
+    if (item.kind === "assistant") {
+      if (hasMeaningfulReasoning(item)) {
+        nodes.push({ type: "reasoning", id: item.id, item });
+      }
+      if (item.id !== finalItemId && item.text.trim().length > 0) {
+        nodes.push({ type: "narration", id: item.id, item });
+      }
+      continue;
+    }
+    if (item.kind === "error") {
+      nodes.push({ type: "error", id: item.id, item });
+      continue;
+    }
+    if (item.kind === "info") {
+      nodes.push({ type: "info", id: item.id, item });
+    }
   }
-  flush();
-
-  return groups;
+  return nodes;
 }
 
 export function getRunTiming(
@@ -232,10 +312,7 @@ export function getRunTiming(
 export function countRunActions(items: HistoryItem[], finalItemId?: string): number {
   return items.reduce((count, item) => {
     if (item.kind === "tool") return item.toolName === "todo" ? count : count + 1;
-    if (
-      item.kind === "assistant" &&
-      (item.reasoning || item.reasoningName || (item.id !== finalItemId && item.text.trim()))
-    ) {
+    if (item.kind === "assistant" && (hasMeaningfulReasoning(item) || (item.id !== finalItemId && item.text.trim()))) {
       return count + 1;
     }
     if (item.kind === "error") return count + 1;

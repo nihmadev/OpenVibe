@@ -708,459 +708,263 @@
 .agent-run__summary {
   display: flex;
   align-items: center;
-  gap: 6px;
   min-height: 20px;
-  padding: 2px 0;
-  transition: margin-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .agent-run--completed .agent-run__summary {
   margin-bottom: 2px;
 }
 
-.agent-run__summary-copy {
-  min-width: 0;
-}
-
-.agent-run__toggle {
+/* ── Run header (the "Worked for …" toggle that collapses the whole graph) ── */
+.agent-run__head {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--fg-muted);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
-  transition: color 0.15s;
-}
-
-.agent-run__toggle:hover {
-  color: var(--fg);
-}
-
-.agent-run__toggle-chevron {
-  width: 14px;
-  height: 14px;
-  transition: transform 0.15s ease;
-}
-
-.agent-run__toggle--collapsed .agent-run__toggle-chevron {
-  transform: rotate(-90deg);
-}
-
-.agent-run__details--collapsed {
-  display: none;
-}
-
-.agent-run__details {
-  margin: 0;
-}
-
-.agent-run__reasoning,
-.agent-run__narration,
-.agent-run__tool,
-.agent-run__notice {
-  margin: 2px 0;
-}
-
-.agent-run__reasoning {
-  margin: 4px 0 6px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.agent-run__reasoning:has(+ .activity-group),
-.agent-run__reasoning:has(+ .agent-run__tool) {
-  margin-bottom: 0;
-}
-
-.agent-run__reasoning + .activity-group,
-.agent-run__reasoning + .agent-run__tool {
-  margin-top: 0;
-}
-
-.activity-group:has(+ .agent-run__reasoning),
-.agent-run__tool:has(+ .agent-run__reasoning) {
-  margin-bottom: 0;
-}
-
-.activity-group + .agent-run__reasoning,
-.agent-run__tool + .agent-run__reasoning {
-  margin-top: 0;
-}
-
-/* Standalone terminal activities belong to the same compact activity stream
-   as grouped tools, so crossing the group boundary adds no artificial gap. */
-.activity-group:has(+ .agent-run__tool),
-.agent-run__tool:has(+ .activity-group),
-.agent-run__tool:has(+ .agent-run__tool) {
-  margin-bottom: 0;
-}
-
-.activity-group + .agent-run__tool,
-.agent-run__tool + .activity-group,
-.agent-run__tool + .agent-run__tool {
-  margin-top: 0;
-}
-
-.agent-run__activity-line {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 20px;
-  color: var(--fg-dim);
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.agent-run__thinking {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
+  gap: 6px;
   min-height: 20px;
   padding: 2px 0;
   border: 0;
   background: transparent;
-  color: var(--fg-dim);
   font: inherit;
-  font-size: 13px;
-  line-height: 20px;
+  color: var(--fg-dim);
   cursor: pointer;
-  width: 100%;
 }
 
-.agent-run__thinking:disabled {
+.agent-run__head:disabled {
   cursor: default;
 }
 
-.agent-run__thinking:not(:disabled):hover {
+.agent-run__head:not(:disabled):hover {
   color: var(--fg);
 }
 
-.agent-run__thinking-icon {
-  display: inline-flex;
-  flex: 0 0 14px;
-}
-
-.agent-run__thinking-icon svg {
-  width: 14px;
-  height: 14px;
-  stroke-width: 1.7;
-}
-
-.agent-run__thinking-chevron {
-  width: 12px;
-  height: 12px;
-  flex: 0 0 12px;
+.agent-run__head-chevron {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 13px;
+  color: var(--fg-muted);
   transition: transform 0.15s ease;
 }
 
-.agent-run__thinking[aria-expanded="false"] .agent-run__thinking-chevron {
+.agent-run__head--collapsed .agent-run__head-chevron {
   transform: rotate(-90deg);
 }
 
-.agent-run__thinking--active .agent-run__thinking-title {
-  background-image:
-    linear-gradient(90deg, transparent 0px, transparent 20px, var(--fg) 60px, transparent 100px, transparent 160px),
-    linear-gradient(var(--fg-dim), var(--fg-dim));
-  background-size:
-    160px 100%,
-    100% 100%;
-  background-repeat: no-repeat, no-repeat;
-  background-position:
-    -160px center,
-    0 0;
-  -webkit-background-clip: text, text;
-  background-clip: text, text;
-  -webkit-text-fill-color: transparent;
-  animation: tool-shimmer 3.5s linear infinite;
-}
-
-.agent-run__thinking-content {
-  max-height: 520px;
-  margin: 6px 0 0 10px;
-  width: calc(100% - 10px);
-  box-sizing: border-box;
-  padding: 8px 8px 8px 0;
-  overflow-y: auto;
-  color: var(--fg-dim);
-  font-size: 13px;
-  line-height: 1.5;
-  scrollbar-width: thin;
-  mask-image: linear-gradient(to bottom, transparent 0px, black 28px, black calc(100% - 28px), transparent 100%);
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0px,
-    black 28px,
-    black calc(100% - 28px),
-    transparent 100%
-  );
-}
-
-.agent-run__thinking-content .markdown-body p {
-  margin: 0 0 6px;
-}
-
-.agent-run__thinking-content .markdown-body > :last-child {
-  margin-bottom: 0;
-}
-
-.agent-run__thinking-steps {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 4px 0 0 0;
-}
-
-.agent-run__thinking-step {
-  display: flex;
-  align-items: stretch;
-  gap: 10px;
-  width: 100%;
-  box-sizing: border-box;
+/* ═══ Run graph ═══════════════════════════════════════════════════════════ */
+/* One continuous vertical line runs down through every node marker. At the
+   very top the line enters with a single soft └ curve from the header; after
+   that it's just a straight trunk (VS Code Copilot style). */
+.agent-graph {
   position: relative;
+  margin: 14px 0 4px;
+  /* Roomy left gutter so tool rows aren't cramped against the timeline. */
+  padding-left: 30px;
+  /* A thin graph line that stays visible across themes (incl. borderless,
+     where --line is fully transparent). */
+  --graph-line: color-mix(in srgb, var(--fg) 16%, transparent);
+  /* Trunk x — node markers are centered on this. */
+  --graph-x: 14px;
+  /* Where the entry curve starts — well left of the trunk for a wide, smooth arc. */
+  --graph-entry-x: 2px;
 }
 
-.agent-run__thinking-step-marker {
+/* The main trunk line, running straight down through every marker. It starts
+   below the first marker so the entry curve connects to it from the left. */
+.agent-graph::before {
+  content: "";
+  position: absolute;
+  left: var(--graph-x);
+  top: 20px;
+  bottom: 14px;
+  width: 1px;
+  background: var(--graph-line);
+  z-index: 0;
+}
+
+/* Entry curve: drops down from the header then sweeps right into the first
+   marker with a generous radius — a smooth ╰ arc, not a sharp corner. */
+.agent-graph::after {
+  content: "";
+  position: absolute;
+  left: var(--graph-entry-x);
+  top: -16px;
+  width: calc(var(--graph-x) - var(--graph-entry-x));
+  height: 31px;
+  border-left: 1px solid var(--graph-line);
+  border-bottom: 1px solid var(--graph-line);
+  border-bottom-left-radius: 12px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.agent-graph__node {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 0 0 10px;
-  padding-top: 5px;
-  align-self: stretch;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 30px;
+  padding: 5px 0;
 }
 
-.agent-run__thinking-step-dot {
+/* Marker sits centered on the trunk line (center lands exactly on --graph-x). */
+.agent-graph__marker {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 20px;
+  /* padding-left(30) - margin brings marker's left edge to (graph-x - 8). */
+  margin-left: calc(var(--graph-x) - 8px - 30px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-dim);
+}
+
+.agent-graph__marker--icon svg,
+.agent-graph__marker--icon img {
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.7;
+  /* Punch the node icon out of the trunk line so it reads as a graph node. */
+  background: var(--bg);
+  box-shadow: 0 0 0 3px var(--bg);
+  border-radius: 3px;
+}
+
+.agent-graph__marker--dot::before {
+  content: "";
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: var(--fg-dim);
-  opacity: 0.65;
-  flex: 0 0 6px;
+  background: var(--fg-dim);
+  box-shadow: 0 0 0 3px var(--bg);
 }
 
-.agent-run__thinking-step-dot--active {
-  background-color: var(--fg);
-  opacity: 1;
-  box-shadow: 0 0 6px var(--fg-dim);
+.agent-graph__marker--active::before {
+  background: var(--fg);
+  box-shadow:
+    0 0 0 3px var(--bg),
+    0 0 6px var(--fg-dim);
 }
 
-.agent-run__thinking-step-line {
-  width: 1px;
-  flex: 1 1 100%;
-  background-color: var(--border, rgba(255, 255, 255, 0.15));
-  margin-top: 4px;
-  min-height: 16px;
+.agent-graph__marker--err::before {
+  background: var(--red);
 }
 
-.agent-run__thinking-step-body {
+.agent-graph__body {
   flex: 1;
   min-width: 0;
-  width: 100%;
-  padding-bottom: 14px;
 }
 
-.agent-run__thinking-step:last-child .agent-run__thinking-step-body {
-  padding-bottom: 2px;
-}
-
-.agent-run__thinking-step-title {
-  font-weight: 500;
-  color: var(--fg);
-  font-size: 13px;
-  margin-bottom: 3px;
-}
-
-.agent-run__thinking-step-text {
-  color: var(--fg-dim);
-  width: 100%;
-}
-
-.agent-run__activity-line svg {
-  width: 14px;
-  height: 14px;
-  flex: 0 0 14px;
-  stroke-width: 1.7;
-}
-
-.agent-run__narration {
-  margin: 0 0 14px;
-  color: var(--fg);
-  font-size: 14px;
-  line-height: 1.55;
-}
-
-.agent-run__narration .markdown-body p {
-  margin: 0 0 6px;
-}
-
-.agent-run__details .tool {
-  margin-top: 0;
-  padding: 2px 0;
-  font-size: 13px;
-}
-
-.agent-run__tool--terminal .tool {
-  width: 100%;
-}
-
-.activity-group {
-  margin: 10px 0 14px;
-}
-
-.activity-group + .activity-group {
-  margin-top: -8px;
-}
-
-.activity-group__header {
-  width: 100%;
-  min-width: 0;
+/* ── Tool node: reuse AgentToolView but hide its own icon (the graph marker
+      already carries the activity icon). ── */
+.agent-graph__tool {
   display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 2px 0;
-  border: 0;
-  background: transparent;
-  /* The accordion label is intentionally quieter than the tools it contains. */
-  color: var(--fg-dim);
-  font: inherit;
-  font-size: 13px;
-  line-height: 20px;
-  text-align: left;
-  cursor: pointer;
+  align-items: flex-start;
+  gap: 6px;
 }
 
-.activity-group__header:hover {
-  color: var(--fg);
-}
-
-.activity-group__icon {
-  display: inline-flex;
-  flex: 0 0 14px;
-  color: var(--fg-dim);
-}
-
-.activity-group__title {
+.agent-graph__tool .tool {
+  flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.activity-group__chevron {
-  width: 12px;
-  height: 12px;
-  flex: 0 0 12px;
-  transition: transform 0.15s ease;
-  color: var(--fg-dim);
-}
-
-.activity-group__header[aria-expanded="false"] .activity-group__chevron {
-  transform: rotate(-90deg);
-}
-
-.activity-group__header--pending .activity-group__title {
-  background-image:
-    linear-gradient(90deg, transparent 0px, transparent 20px, var(--fg) 60px, transparent 100px, transparent 160px),
-    linear-gradient(var(--fg-dim), var(--fg-dim));
-  background-size:
-    160px 100%,
-    100% 100%;
-  background-repeat: no-repeat, no-repeat;
-  background-position:
-    -160px center,
-    0 0;
-  -webkit-background-clip: text, text;
-  background-clip: text, text;
-  -webkit-text-fill-color: transparent;
-  animation: tool-shimmer 3.5s linear infinite;
-}
-
-.activity-group__items {
-  margin-top: 3px;
-  /* Keep the rows visually independent from the subdued accordion label. */
-  padding-left: 1px;
-}
-
-@keyframes activity-item-enter {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.activity-group__item-enter {
-  animation: activity-item-enter 220ms ease-out both;
-  animation-delay: calc(var(--activity-index, 0) * 18ms);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .activity-group__item-enter {
-    animation: none;
-  }
-}
-
-/* Tool rows in an activity accordion use the regular interface contrast. The
-   surrounding group remains muted, while icons and labels stay readable. */
-.activity-group__items .tool {
-  min-height: 24px;
   margin: 0;
-  padding: 3px 6px;
-  border-radius: var(--radius-xs);
+  padding: 0;
+  font-size: 13px;
   color: var(--fg);
 }
 
-.activity-group__items .tool__icon,
-.activity-group__items .tool--pending .tool__icon,
-.activity-group__items .tool--ok .tool__icon {
-  color: var(--fg-dim);
-}
-
-.activity-group__items .tool--err .tool__icon {
-  color: var(--red);
-}
-
-.activity-group__items .tool__verb,
-.activity-group__items .tool__suffix {
-  color: var(--fg);
-}
-
-.activity-group__items .tool__suffix {
-  color: var(--fg-dim);
-}
-
-.agent-run__details .fbadge img {
+.agent-graph__tool .tool__icon {
   display: none;
 }
 
-.agent-run__details .fbadge__name {
+.agent-graph__tool .tool__verb {
+  color: var(--fg);
+}
+
+.agent-graph__tool .tool__suffix {
+  color: var(--fg-dim);
+}
+
+.agent-graph__repeat {
+  flex-shrink: 0;
+  align-self: center;
+  padding: 0 5px;
+  border-radius: var(--radius-xs);
+  background: var(--bg-3);
+  color: var(--fg-muted);
+  font-size: 11px;
+  line-height: 18px;
+  font-family: var(--mono);
+  user-select: none;
+}
+
+.agent-graph__tool .fbadge img {
+  display: none;
+}
+
+.agent-graph__tool .fbadge__name {
   text-decoration: underline;
   text-decoration-color: var(--line-strong);
   text-decoration-style: dotted;
   text-underline-offset: 2px;
 }
 
-.agent-run__details .tool--agent {
+.agent-graph__tool .tool--agent {
   width: 100%;
   max-width: none;
-  margin-top: 3px;
-  padding: 4px 0;
+  margin: 0;
+  padding: 0;
   border: 0;
   background: transparent;
 }
 
-.agent-run__details .tool--agent:hover {
+.agent-graph__tool .tool--agent:hover {
   border-color: transparent;
   background: transparent;
+}
+
+/* ── Reasoning node: dot + full text on the same line (no accordion). ── */
+.agent-graph__node--reasoning {
+  align-items: baseline;
+}
+
+.agent-graph__node--reasoning .agent-graph__marker {
+  align-self: flex-start;
+  height: 22px;
+}
+
+.agent-graph__reasoning {
+  color: var(--fg-dim);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.agent-graph__reasoning-title {
+  color: var(--fg);
+  font-weight: 500;
+  margin-right: 6px;
+}
+
+.agent-graph__reasoning .markdown-body,
+.agent-graph__reasoning .markdown-body p {
+  display: inline;
+  margin: 0;
+  color: var(--fg-dim);
+}
+
+/* ── Narration node ── */
+.agent-graph__narration {
+  color: var(--fg);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.agent-graph__narration .markdown-body p {
+  margin: 0 0 6px;
+}
+
+.agent-graph__narration .markdown-body > :last-child {
+  margin-bottom: 0;
 }
 
 .agent-run__notice {

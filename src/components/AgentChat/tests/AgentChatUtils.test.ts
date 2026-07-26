@@ -144,14 +144,20 @@ suite("describe", () => {
     expect(d.verb).toBe("Search in codebase");
   });
 
-  it("describes bash (pending)", () => {
-    const item = { toolName: "bash", toolArgs: { command: "ls -la" } } as HistoryItem;
+  it("describes run (pending)", () => {
+    const item = { toolName: "run", toolArgs: { command: "ls -la" } } as HistoryItem;
     const d = describeItem(item);
     expect(d.verb).toBe("Running");
     expect(d.suffix).toBe("ls -la");
   });
 
-  it("describes bash (done)", () => {
+  it("describes run (done)", () => {
+    const item = { toolName: "run", toolArgs: { command: "ls -la" }, ok: true } as HistoryItem;
+    const d = describeItem(item);
+    expect(d.verb).toBe("Ran");
+  });
+
+  it("describes legacy bash tool name (done)", () => {
     const item = { toolName: "bash", toolArgs: { command: "ls -la" }, ok: true } as HistoryItem;
     const d = describeItem(item);
     expect(d.verb).toBe("Ran");

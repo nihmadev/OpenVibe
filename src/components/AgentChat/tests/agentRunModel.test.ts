@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import type { HistoryItem } from "../types";
 import {
   buildChatEntries,
+  buildRunTimeline,
   countRunActions,
   currentTodoTasks,
   formatRunDuration,
   getRunTiming,
-  groupToolActivities,
-  isTerminalToolActivity,
-  summarizeToolActivities,
+  hasMeaningfulReasoning,
+  toolActivityGroupLabel,
   toolActivityTitle,
 } from "../agentRunModel";
 
@@ -36,6 +36,10 @@ const t = (key: string, params?: Record<string, string | number | boolean>) => {
     activityGroupExternal: "external tools",
     activityGroupTools: "actions",
     activityGroupAnd: "and",
+    activityGroupReadN_one: `Reading ${params?.count} file`,
+    activityGroupReadN: `Reading ${params?.count} files`,
+    activityGroupGitN_one: `Git — ${params?.count} operation`,
+    activityGroupGitN: `Git — ${params?.count} operations`,
     tool: "Tool",
   };
   return labels[key] ?? key;
@@ -67,7 +71,7 @@ describe("buildChatEntries", () => {
   it("uses only the last assistant text as the final answer", () => {
     const entries = buildChatEntries([
       item({ id: "a1", kind: "assistant", text: "intermediate" }),
-      item({ id: "t1", kind: "tool", toolName: "bash" }),
+      item({ id: "t1", kind: "tool", toolName: "run" }),
       item({ id: "a2", kind: "assistant", text: "final" }),
     ]);
     expect(entries[0]).toMatchObject({ kind: "run", finalItem: { id: "a2" } });
@@ -102,55 +106,53 @@ describe("agent run presentation", () => {
     ).toBe(1);
   });
 
-  it("summarizes adjacent tool activity as a compact readable block", () => {
-    expect(
-      summarizeToolActivities(
-        [
-          item({ id: "t1", kind: "tool", toolName: "search_codebase" }),
-          item({ id: "t2", kind: "tool", toolName: "read_file" }),
-          item({ id: "t3", kind: "tool", toolName: "read_file" }),
-        ],
-        t,
-      ),
-    ).toBe("Search and reading files");
+  it("labels a group with its kind and call count", () => {
+    expect(toolActivityGroupLabel("read", 3, t)).toBe("Reading 3 files");
+    expect(toolActivityGroupLabel("git", 1, t)).toBe("Git operations");
   });
 
-  it("keeps regular tools in one group across interleaved reasoning", () => {
-    const groups = groupToolActivities([
-      item({ id: "t1", kind: "tool", toolName: "search_codebase" }),
-      item({ id: "a1", kind: "assistant", reasoningName: "Inspecting matches" }),
-      item({ id: "t2", kind: "tool", toolName: "read_file" }),
-      item({ id: "a2", kind: "assistant", reasoningName: "Checking implementation" }),
-      item({ id: "t3", kind: "tool", toolName: "edit_file" }),
-    ]);
-
-    expect(groups.map((group) => group.map((activity) => activity.id))).toEqual([["t1", "t2", "t3"]]);
-  });
-
-  it("groups terminal commands separately from regular activity", () => {
-    const command = item({ id: "cmd", kind: "tool", toolName: "bash" });
-    const secondCommand = item({ id: "cmd-2", kind: "tool", toolName: "run_command" });
-    const groups = groupToolActivities([
-      item({ id: "t1", kind: "tool", toolName: "read_file" }),
-      command,
-      secondCommand,
-      item({ id: "t2", kind: "tool", toolName: "git_status" }),
-      item({ id: "todo", kind: "tool", toolName: "todo" }),
-      item({ id: "t3", kind: "tool", toolName: "write_file" }),
-    ]);
-
-    expect(isTerminalToolActivity(command)).toBe(true);
-    expect(groups.map((group) => group.map((activity) => activity.id))).toEqual([
-      ["t1"],
-      ["cmd", "cmd-2"],
-      ["t2", "t3"],
-    ]);
-  });
-
-  it("gives Git tools their own activity heading", () => {
-    expect(summarizeToolActivities([item({ id: "git", kind: "tool", toolName: "git_status" })], t)).toBe(
-      "Git operations",
+  it("lays the run out as one chronological graph, one node per event", () => {
+    const nodes = buildRunTimeline(
+      [
+        item({ id: "a1", kind: "assistant", reasoningName: "Inspecting matches" }),
+        item({ id: "t1", kind: "tool", toolName: "read_file", toolArgs: { path: "/app/a.ts" } }),
+        item({ id: "t2", kind: "tool", toolName: "read_file", toolArgs: { path: "/app/b.ts" } }),
+        item({ id: "t3", kind: "tool", toolName: "edit_file" }),
+        item({ id: "a2", kind: "assistant", text: "Now running tests." }),
+        item({ id: "cmd", kind: "tool", toolName: "run" }),
+        item({ id: "todo", kind: "tool", toolName: "todo" }),
+        item({ id: "final", kind: "assistant", text: "Done." }),
+      ],
+      "final",
     );
+
+    expect(nodes.map((node) => (node.type === "tool" ? `tool:${node.kind}` : node.type))).toEqual([
+      "reasoning",
+      "tool:read",
+      "tool:read",
+      "tool:edit",
+      "narration",
+      "tool:command",
+    ]);
+  });
+
+  it("collapses consecutive reads of the same file into one graph node", () => {
+    const nodes = buildRunTimeline([
+      item({ id: "t1", kind: "tool", toolName: "read_file", toolArgs: { path: "/app/auth.ts" } }),
+      item({ id: "t2", kind: "tool", toolName: "read_file", toolArgs: { path: "/app/auth.ts" } }),
+      item({ id: "t3", kind: "tool", toolName: "read_file", toolArgs: { path: "/app/db.ts" } }),
+    ]);
+    expect(nodes.map((node) => (node.type === "tool" ? node.items.map((it) => it.id) : node.type))).toEqual([
+      ["t1", "t2"],
+      ["t3"],
+    ]);
+  });
+
+  it("ignores boilerplate reasoning in the timeline", () => {
+    expect(hasMeaningfulReasoning(item({ id: "a1", kind: "assistant", reasoning: "Executing tool call." }))).toBe(
+      false,
+    );
+    expect(hasMeaningfulReasoning(item({ id: "a2", kind: "assistant", reasoning: "Deep analysis" }))).toBe(true);
   });
 
   it("uses persisted timing boundaries", () => {

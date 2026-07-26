@@ -110,7 +110,7 @@ export function toRelativePath(filePath: string, cwd?: string): string {
   const np = filePath.replace(/\\/g, "/").replace(/\/$/, "");
   const nc = cwd.replace(/\\/g, "/").replace(/\/$/, "");
   if (np.startsWith(nc + "/")) return np.slice(nc.length + 1);
-  if (np === nc) return ".";
+  if (np === nc) return basename(nc) || filePath;
   return filePath;
 }
 
@@ -189,9 +189,11 @@ export function describe(
     case "list_dir": {
       const args = item.toolArgs as { path?: string } | undefined;
       const path = args?.path ?? ".";
+      const relPath = cwd ? toRelativePath(path, cwd) : path;
+      const displayName = relPath === "." ? basename(path) || path : basename(relPath) || relPath;
       return {
         verb: pending ? label("listing", "Listing") : label("listed", "Listed"),
-        file: { name: basename(path) || path, ext: "", cls: "dir", rawPath: path },
+        file: { name: displayName, ext: "", cls: "dir", rawPath: relPath },
         suffix: "",
       };
     }
@@ -206,6 +208,25 @@ export function describe(
         suffix: text ? `"${text}"` : "",
       };
     }
+    case "web_search": {
+      const args = item.toolArgs as { query?: string } | undefined;
+      const text = args?.query ?? "";
+      return {
+        verb: pending ? label("searchingWeb", "Searching web") : label("searchedWeb", "Searched web"),
+        file: null,
+        suffix: text ? `"${text}"` : "",
+      };
+    }
+    case "fetch_url": {
+      const args = item.toolArgs as { url?: string } | undefined;
+      const targetUrl = args?.url ?? "";
+      return {
+        verb: pending ? label("fetchingUrl", "Fetching URL") : label("fetchedUrl", "Fetched URL"),
+        file: null,
+        suffix: targetUrl,
+      };
+    }
+    case "run":
     case "bash": {
       const args = item.toolArgs as { command?: string } | undefined;
       return {

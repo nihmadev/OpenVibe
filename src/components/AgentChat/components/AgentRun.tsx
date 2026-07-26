@@ -1,12 +1,22 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Bot,
+  BookOpen,
+  ChevronDown,
+  FolderOpen,
+  Globe,
+  Pencil,
+  Search,
+  Server,
+  SquareTerminal,
+  Wrench,
+} from "lucide-react";
 import { Markdown } from "../../Markdown/Markdown.js";
 import { useI18n } from "../../../hooks/useI18n.js";
 import { MessageFooter } from "./MessageFooter.js";
 import type { HistoryItem } from "../types.js";
-import { formatRunDurationLabel, getRunTiming, groupToolActivities } from "../agentRunModel.js";
-import { Brain, ChevronDown } from "lucide-react";
+import { buildRunTimeline, formatRunDurationLabel, getRunTiming, type ToolActivityKind } from "../agentRunModel.js";
 import { AgentToolView } from "../../AgentToolView/AgentToolView.js";
-import { ActivityGroup } from "./ActivityGroup.js";
 import { ErrorNotice } from "./ErrorNotice.js";
 
 interface AgentRunProps {
@@ -21,100 +31,55 @@ interface AgentRunProps {
   onDrillDown?: (id: string) => void;
 }
 
-function ConsolidatedReasoning({
-  items,
-  runActive,
-}: {
-  items: HistoryItem[];
-  runActive: boolean;
-}): React.ReactElement | null {
-  const { t } = useI18n();
+function ToolKindMarker({ kind }: { kind: ToolActivityKind }): React.ReactElement {
+  const props = { size: 14, strokeWidth: 1.7, "aria-hidden": true } as const;
+  switch (kind) {
+    case "git":
+      return <img src="/icons/providers/github.svg" width={14} height={14} alt="" aria-hidden="true" />;
+    case "search":
+      return <Search {...props} />;
+    case "web":
+      return <Globe {...props} />;
+    case "read":
+      return <BookOpen {...props} />;
+    case "edit":
+      return <Pencil {...props} />;
+    case "command":
+      return <SquareTerminal {...props} />;
+    case "browse":
+      return <FolderOpen {...props} />;
+    case "agent":
+      return <Bot {...props} />;
+    case "external":
+      return <Server {...props} />;
+    default:
+      return <Wrench {...props} />;
+  }
+}
 
-  const reasoningItems = useMemo(
-    () =>
-      items.filter((item) => {
-        if (item.kind !== "assistant") return false;
-        const body = item.reasoning?.trim();
-        if (!body && !item.reasoningName) return false;
-        if (
-          body === "Analyzing and preparing tool execution." ||
-          body === "Executing tool call." ||
-          body === "Thinking about tool call execution."
-        ) {
-          return false;
-        }
-        return true;
-      }),
-    [items],
-  );
-
-  const isDone =
-    !runActive ||
-    (reasoningItems.length > 0 &&
-      reasoningItems.every((it) => it.reasoningDone === true || it.completedAt !== undefined));
-  const hasContent = reasoningItems.some((it) => it.reasoning?.trim() || it.reasoningName);
-  const [open, setOpen] = useState(hasContent && !isDone);
-  const wasDone = useRef(isDone);
-
-  useEffect(() => {
-    if (isDone && !wasDone.current) setOpen(false);
-    wasDone.current = isDone;
-  }, [isDone]);
-
-  if (reasoningItems.length === 0) return null;
-
-  const latestActiveItem = reasoningItems[reasoningItems.length - 1];
-  const activeTitle = latestActiveItem?.reasoningName || t("thinkingInProgress");
-  const titleText = !isDone
-    ? activeTitle
-    : reasoningItems.length > 1
-      ? `${t("thinkingComplete")} (${reasoningItems.length})`
-      : t("thinkingComplete");
+/**
+ * Reasoning shown as a graph node: a small dot on the timeline with the full
+ * thought text right beside it (no accordion), matching the Copilot layout.
+ */
+function ReasoningNode({ item, runActive }: { item: HistoryItem; runActive: boolean }): React.ReactElement {
+  const isDone = !runActive || item.reasoningDone === true || item.completedAt !== undefined;
+  const body = item.reasoning?.trim() ?? "";
+  const title = item.reasoningName?.trim() ?? "";
 
   return (
-    <div className="agent-run__reasoning">
-      <button
-        className={`agent-run__thinking${!isDone ? " agent-run__thinking--active" : ""}`}
-        type="button"
-        onClick={() => hasContent && setOpen((value) => !value)}
-        aria-expanded={hasContent ? open : undefined}
-        disabled={!hasContent}
-      >
-        <span className="agent-run__thinking-icon">
-          <Brain aria-hidden="true" />
-        </span>
-        <span className="agent-run__thinking-title">{titleText}</span>
-        {hasContent && <ChevronDown className="agent-run__thinking-chevron" aria-hidden="true" />}
-      </button>
-      {hasContent && open && (
-        <div className="agent-run__thinking-content">
-          <div className="agent-run__thinking-steps">
-            {reasoningItems.map((item, idx) => {
-              const title = item.reasoningName;
-              const body = item.reasoning?.trim();
-              const itemDone = item.reasoningDone === true || item.completedAt !== undefined || !runActive;
-              return (
-                <div key={item.id || idx} className="agent-run__thinking-step">
-                  <div className="agent-run__thinking-step-marker">
-                    <span
-                      className={`agent-run__thinking-step-dot${!itemDone ? " agent-run__thinking-step-dot--active" : ""}`}
-                    />
-                    <span className="agent-run__thinking-step-line" />
-                  </div>
-                  <div className="agent-run__thinking-step-body">
-                    {title && <div className="agent-run__thinking-step-title">{title}</div>}
-                    {body && (
-                      <div className="agent-run__thinking-step-text">
-                        <Markdown content={body} isAssistant={true} noFileIcons={true} isStreaming={!itemDone} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+    <div className="agent-graph__node agent-graph__node--reasoning">
+      <span
+        className={`agent-graph__marker agent-graph__marker--dot${!isDone ? " agent-graph__marker--active" : ""}`}
+        aria-hidden="true"
+      />
+      <div className="agent-graph__body agent-graph__reasoning">
+        {title && <span className="agent-graph__reasoning-title">{title}</span>}
+        {body && (
+          <span className="agent-graph__reasoning-text">
+            <Markdown content={body} isAssistant={true} noFileIcons={true} isStreaming={!isDone} />
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -134,17 +99,9 @@ export function AgentRun({
   const [now, setNow] = useState(() => Date.now());
   const mountedAt = useRef(now);
   const timing = useMemo(() => getRunTiming(items, allItems), [items, allItems]);
-  const toolActivityGroups = useMemo(() => groupToolActivities(items), [items]);
-  const toolGroupByFirstId = useMemo(
-    () => new Map(toolActivityGroups.map((group) => [group[0]!.id, group])),
-    [toolActivityGroups],
-  );
-  const groupedToolIds = useMemo(
-    () => new Set(toolActivityGroups.flatMap((group) => group.map((item) => item.id))),
-    [toolActivityGroups],
-  );
+  const nodes = useMemo(() => buildRunTimeline(items, finalItem?.id), [items, finalItem?.id]);
   const wasStopped = items.some((item) => item.kind === "stopped");
-  const [toolsExpanded, setToolsExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(true);
 
   useEffect(() => {
     if (!isActive) return;
@@ -155,82 +112,92 @@ export function AgentRun({
   const start = timing.startedAt ?? mountedAt.current;
   const end = isActive ? now : (timing.completedAt ?? now);
   const duration = formatRunDurationLabel(Math.max(0, end - start), t);
-
   const timeLabel = t(isActive ? "agentRunWorkingFor" : "agentRunWorkedFor", { time: duration });
+
+  const visibleNodes = useMemo(
+    () => (showThinking ? nodes : nodes.filter((node) => node.type !== "reasoning")),
+    [nodes, showThinking],
+  );
+  const hasNodes = visibleNodes.length > 0;
 
   return (
     <div className={`agent-run${isActive ? " agent-run--active" : " agent-run--completed"}`}>
       <div className="agent-run__summary" aria-live={isActive ? "polite" : "off"}>
-        <div className="agent-run__summary-copy">
-          <div className={`agent-run__time${isActive ? " agent-run__time--active" : ""}`}>{timeLabel}</div>
-        </div>
         <button
-          className={`agent-run__toggle${!toolsExpanded ? " agent-run__toggle--collapsed" : ""}`}
+          className={`agent-run__head${!expanded ? " agent-run__head--collapsed" : ""}`}
           type="button"
-          onClick={() => setToolsExpanded((v) => !v)}
-          aria-expanded={toolsExpanded}
-          aria-label={toolsExpanded ? t("hideToolCalls") : t("showToolCalls")}
+          onClick={() => hasNodes && setExpanded((v) => !v)}
+          aria-expanded={hasNodes ? expanded : undefined}
+          disabled={!hasNodes}
+          aria-label={expanded ? t("hideToolCalls") : t("showToolCalls")}
         >
-          <ChevronDown className="agent-run__toggle-chevron" aria-hidden="true" />
+          <span className={`agent-run__time${isActive ? " agent-run__time--active" : ""}`}>{timeLabel}</span>
+          {hasNodes && <ChevronDown className="agent-run__head-chevron" aria-hidden="true" />}
         </button>
       </div>
-      <div className={`agent-run__separator${!isActive ? " agent-run__separator--hidden" : ""}`} />
 
-      <div className={`agent-run__details${!toolsExpanded ? " agent-run__details--collapsed" : ""}`}>
-        {showThinking && <ConsolidatedReasoning items={items} runActive={isActive} />}
-        {(() => {
-          const content: React.ReactNode[] = [];
-          items.forEach((item) => {
-            if (item.kind === "tool") {
-              // Task-list updates are rendered once above the prompt input.
-              // Keep them out of the activity/tool feed to avoid duplication.
-              if (item.toolName === "todo") return;
-
-              const group = toolGroupByFirstId.get(item.id);
-              if (group) {
-                content.push(
-                  <ActivityGroup key={`tools-${item.id}`} items={group} cwd={cwd} onDrillDown={onDrillDown} />,
+      {hasNodes && expanded && (
+        <div className="agent-graph">
+          {visibleNodes.map((node) => {
+            switch (node.type) {
+              case "reasoning":
+                return <ReasoningNode key={`reasoning-${node.id}`} item={node.item} runActive={isActive} />;
+              case "narration":
+                return (
+                  <div className="agent-graph__node agent-graph__node--narration" key={`narration-${node.id}`}>
+                    <span className="agent-graph__marker agent-graph__marker--dot" aria-hidden="true" />
+                    <div className="agent-graph__body agent-graph__narration">
+                      <Markdown content={node.item.text} isAssistant={true} noFileIcons={true} />
+                    </div>
+                  </div>
                 );
-              } else if (!groupedToolIds.has(item.id)) {
-                content.push(
-                  <div className="agent-run__tool" key={item.id}>
-                    <AgentToolView item={item} cwd={cwd} onDrillDown={onDrillDown} />
-                  </div>,
+              case "tool": {
+                const displayItem = node.items[node.items.length - 1]!;
+                const repeats = node.items.length;
+                return (
+                  <div className="agent-graph__node agent-graph__node--tool" key={`tool-${node.id}`}>
+                    <span className="agent-graph__marker agent-graph__marker--icon" aria-hidden="true">
+                      <ToolKindMarker kind={node.kind} />
+                    </span>
+                    <div className="agent-graph__body agent-graph__tool">
+                      <AgentToolView item={displayItem} cwd={cwd} onDrillDown={onDrillDown} />
+                      {repeats > 1 && (
+                        <span className="agent-graph__repeat" title={t("activityRepeatedCalls", { count: repeats })}>
+                          ×{repeats}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 );
               }
-              return;
-            }
-            if (item.kind === "assistant") {
-              const hasNarration = item.id !== finalItem?.id && item.text.trim().length > 0;
-              if (!hasNarration) return;
-              content.push(
-                <div className="agent-run__narration" key={item.id}>
-                  <Markdown content={item.text} isAssistant={true} noFileIcons={true} />
-                </div>,
-              );
-              return;
-            }
-            if (item.kind === "error" || item.kind === "info") {
-              if (item.kind === "error") {
-                content.push(
-                  <ErrorNotice
-                    key={item.id}
-                    text={item.text}
-                    onRetry={onRegenerate && finalItem ? () => onRegenerate(finalItem.id) : undefined}
-                  />,
+              case "error":
+                return (
+                  <div className="agent-graph__node agent-graph__node--error" key={`error-${node.id}`}>
+                    <span
+                      className="agent-graph__marker agent-graph__marker--dot agent-graph__marker--err"
+                      aria-hidden="true"
+                    />
+                    <div className="agent-graph__body">
+                      <ErrorNotice
+                        text={node.item.text}
+                        onRetry={onRegenerate && finalItem ? () => onRegenerate(finalItem.id) : undefined}
+                      />
+                    </div>
+                  </div>
                 );
-                return;
-              }
-              content.push(
-                <div className={`agent-run__notice agent-run__notice--${item.kind}`} key={item.id}>
-                  {item.text}
-                </div>,
-              );
+              case "info":
+                return (
+                  <div className="agent-graph__node agent-graph__node--info" key={`info-${node.id}`}>
+                    <span className="agent-graph__marker agent-graph__marker--dot" aria-hidden="true" />
+                    <div className="agent-graph__body agent-run__notice agent-run__notice--info">{node.item.text}</div>
+                  </div>
+                );
+              default:
+                return null;
             }
-          });
-          return content;
-        })()}
-      </div>
+          })}
+        </div>
+      )}
 
       {wasStopped && (
         <div className="msg msg--info msg--stopped">

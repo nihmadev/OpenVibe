@@ -6,9 +6,10 @@ import "./SubAgentView.css";
 interface Props {
   items: HistoryItem[];
   onBack: () => void;
+  cwd?: string;
 }
 
-export function SubAgentView({ items, onBack }: Props): React.ReactElement {
+export function SubAgentView({ items, onBack, cwd }: Props): React.ReactElement {
   const ref = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
@@ -22,7 +23,7 @@ export function SubAgentView({ items, onBack }: Props): React.ReactElement {
       <div className="subagent-view__body" ref={ref}>
         {items.map((item) => {
           if (item.kind === "tool") {
-            return <AgentToolView key={item.id} item={item} />;
+            return <AgentToolView key={item.id} item={item} cwd={cwd} />;
           }
           if (item.kind === "assistant") {
             return (

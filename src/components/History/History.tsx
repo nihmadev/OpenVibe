@@ -188,6 +188,7 @@ function describe(item: HistoryItem): { verb: string; file: FileBadgeInfo | null
         suffix: text ? `"${text}"` : "",
       };
     }
+    case "run":
     case "bash": {
       const args = item.toolArgs as { command?: string } | undefined;
       return {
