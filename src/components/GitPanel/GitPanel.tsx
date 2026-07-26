@@ -75,6 +75,8 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
   const [graphNodes, setGraphNodes] = useState<CommitGraphNode[]>([]);
   const [loading, setLoading] = useState(false);
   const [commitMessage, setCommitMessage] = useState("");
+  const [isGeneratingCommitMsg, setIsGeneratingCommitMsg] = useState(false);
+
   const [viewMode, setViewMode] = useState<"list" | "tree">("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCommit, setSelectedCommit] = useState<CommitInfo | null>(null);
@@ -327,8 +329,35 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
   }, [files, searchQuery]);
 
   const stagedFiles = useMemo(() => {
-    return filteredFiles.filter((f) => f.indexStatus !== " " && f.indexStatus !== "?");
+    return filteredFiles.filter((f) => f.staged || (f.indexStatus && f.indexStatus !== " " && f.indexStatus !== "?"));
   }, [filteredFiles]);
+
+  const handleGenerateCommitMessage = async () => {
+    if (!cwd || files.length === 0 || isGeneratingCommitMsg) return;
+    setIsGeneratingCommitMsg(true);
+    try {
+      const res = await vibe.git.generateCommitMessage(cwd);
+      if (res && res.data) {
+        setCommitMessage(res.data);
+      } else if (res && (res as any).error) {
+        const errStr = String((res as any).error);
+        console.error("Failed to generate commit message:", errStr);
+        setCommitMessage(`[Error: ${errStr}]`);
+      } else {
+        setCommitMessage("[Error: Unknown error generated]");
+      }
+    } catch (e) {
+      const errStr = String(e);
+      console.error("Failed to generate commit message:", errStr);
+      setCommitMessage(`[Error: ${errStr}]`);
+    } finally {
+      setIsGeneratingCommitMsg(false);
+    }
+  };
+
+  const isCommitDisabled = !commitMessage.trim();
+  const isWandDisabled = files.length === 0 || isGeneratingCommitMsg;
+  const isContainerDisabled = isCommitDisabled && isWandDisabled;
 
   const changesFiles = useMemo(() => {
     return filteredFiles.filter((f) => f.worktreeStatus !== " ");
@@ -489,16 +518,31 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                 </div>
               </div>
 
-              {/* Commit Action Button */}
-              <button
-                className={`scm-action-button ${!commitMessage.trim() ? "disabled" : ""}`}
-                onClick={() => {
-                  if (commitMessage.trim()) handleCommit();
-                }}
-                disabled={!commitMessage.trim()}
-              >
-                <i className="codicon codicon-check"></i> {t("commitBtn")}
-              </button>
+              {/* Split Commit Action Button */}
+              <div className={`scm-split-button-container ${isContainerDisabled ? "disabled" : ""}`}>
+                <button
+                  className={`scm-split-button-main ${isCommitDisabled ? "disabled" : ""}`}
+                  onClick={() => {
+                    if (commitMessage.trim()) handleCommit();
+                  }}
+                  disabled={isCommitDisabled}
+                >
+                  <i className="codicon codicon-check"></i> {t("commitBtn")}
+                </button>
+                <div className="scm-split-button-separator" />
+                <button
+                  className={`scm-split-button-wand ${isWandDisabled ? "disabled" : ""}`}
+                  onClick={handleGenerateCommitMessage}
+                  disabled={isWandDisabled}
+                  title={t("generateCommitMessage")}
+                >
+                  {isGeneratingCommitMsg ? (
+                    <i className="codicon codicon-loading codicon-modifier-spin spin" />
+                  ) : (
+                    <i className="codicon codicon-wand" />
+                  )}
+                </button>
+              </div>
 
               {/* Quick Filter Input */}
               {files.length > 3 && (
