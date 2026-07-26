@@ -11,6 +11,10 @@ interface UseAppInitProps {
   setChats: (chats: any[]) => void;
   setActiveChat: (id: string | null) => void;
   setItems: React.Dispatch<React.SetStateAction<any[]>>;
+  validateProjectPaths: (
+    projects: Project[],
+    onProjectChange?: (folder: string | null, projectId: string | null) => Promise<void>,
+  ) => Promise<void>;
 }
 
 export function useAppInit({
@@ -22,6 +26,7 @@ export function useAppInit({
   setChats,
   setActiveChat,
   setItems,
+  validateProjectPaths,
 }: UseAppInitProps) {
   useEffect(() => {
     let cancelled = false;
@@ -53,6 +58,12 @@ export function useAppInit({
       }
 
       setProjects(projectList);
+
+      // Validate project paths in the background — remove any whose folders no longer exist
+      if (projectList.length > 0) {
+        validateProjectPaths(projectList);
+      }
+
       if (!activeProject) return;
 
       setActiveProject(activeProject.id);
