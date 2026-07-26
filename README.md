@@ -34,7 +34,7 @@ The core functionality of Openvibe is divided into 11 specialized Rust crates in
 
 - **`crates/scg2`**: Smart Context Generation 2 (SCG2) engine. Performs background AST symbol parsing via Tree-Sitter (TypeScript, JavaScript, Rust, Python), builds graph dependency maps (`petgraph`), tracks recency decay metrics, boosts symbol relevance on editor hover/cursor telemetry, synchronizes compiler diagnostic errors/warnings, and formats context snippets for LLM prompts.
 - **`crates/agent`**: Async LLM streaming engine (`reqwest` + `tokio`). Handles Server-Sent Events (SSE) parsing, prompt assembly, token history truncation, thinking/reasoning stream extraction, request cancellation, and multi-turn execution loops.
-- **`crates/agent-tool`**: System tool executor (`read_file`, `write_file`, `edit_file`, `list_dir`, `bash`, `search_codebase`, `agent` subagent) and dynamic bridge for Model Context Protocol tools (`mcp__<server>__<tool>`). Enforces explicit confirmation prompts for shell execution.
+- **`crates/agent-tool`**: System tool executor (`read_file`, `write_file`, `edit_file`, `list_dir`, `run`, `search_codebase`, `agent` subagent) and dynamic bridge for Model Context Protocol tools (`mcp__<server>__<tool>`). Enforces explicit confirmation prompts for shell execution.
 - **`crates/mcp`**: Stdio transport MCP client (JSON-RPC 2.0). Controls MCP server process lifecycles, configuration parsing (`openvibe.toml`), tool discovery (`tools/list`), execution dispatch (`tools/call`), connection health tracking, and process recovery.
 - **`crates/search`**: Multithreaded codebase search with `.gitignore` parsing, regex and exact matching, line tokenization, syntax highlighting, and local code vector embeddings via `fastembed`.
 - **`crates/git`**: Native Git integration powered by `git2` (libgit2 Rust bindings). Manages workspace repository status, diff generation, staging index mutations, commit execution, and branch inspection.
@@ -59,7 +59,7 @@ Smart Context Generation 2 runs an asynchronous background worker that aggregate
 ### Agent Loop & Tool Calling
 
 - **Execution Engine**: Supports single and multi-step agent execution cycles.
-- **Built-in Tools**: `read_file`, `write_file`, `edit_file`, `list_dir`, `bash`, `search_codebase`, and `agent` (subagent for multi-step codebase research).
+- **Built-in Tools**: `read_file`, `write_file`, `edit_file`, `list_dir`, `run`, `search_codebase`, and `agent` (subagent for multi-step codebase research).
 - **Command Security**: Destructive actions and terminal operations require explicit user approval.
 - **Context Boundaries**: Automatic sliding window token truncation to stay within model limits, combined with `@` file references and image attachment support for vision models.
 

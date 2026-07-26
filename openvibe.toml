@@ -1,2 +1,10 @@
-[mcp]
-servers = []
+[[mcp.servers]]
+name = "filesystem"
+command = "fs-mcp-rs"
+args = [
+    "--stdio",
+    'C:\Users\nihmadev\Desktop\OpenVibe',
+]
+enabled = false
+
+[mcp.servers.env]

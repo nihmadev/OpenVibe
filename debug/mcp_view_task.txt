@@ -1,0 +1,1764 @@
+## Assistant message: l58
+
+<thinking>
+The user wants a detailed explanation of how the `mcp` crate is structured in the project. Let me explore the crate thoroughly.
+</thinking>
+
+---
+
+## Tool call: list_dir
+id: call_00_FyWtZRjWN8VWuk3gjMvS9478
+status: ok
+arguments:
+```json
+{
+  "path": "crates\\mcp\\src"
+}
+```
+result:
+bin/
+config.rs
+lib.rs
+manager.rs
+path.rs
+process.rs
+server.rs
+transport.rs
+types.rs
+
+---
+
+## Tool call: read_file
+id: call_01_5sM9JIb1Rfu7aABtifjQ4395
+status: ok
+arguments:
+```json
+{
+  "path": "crates\\mcp\\Cargo.toml"
+}
+```
+result:
+[package]
+name = "mcp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+
+
+---
+
+## Assistant message: l59
+
+<thinking>
+Let me read all the source files in the mcp crate to understand its structure.
+</thinking>
+
+---
+
+## Tool call: read_file
+id: call_00_zSyXfjsDj6JmjSEqZSMj1660
+status: ok
+arguments:
+```json
+{
+  "path": "crates\\mcp\\src\\lib.rs"
+}
+```
+result:
+pub mod config;
+pub mod manager;
+pub mod path;
+pub mod process;
+pub mod server;
+pub mod types;
+
+pub use config::{
+    load_mcp_config, resolve_config_path, save_mcp_config, McpConfig, McpServerConfig,
+};
+
+pub use manager::McpManager;
+pub use path::build_augmented_path;
+pub use process::McpServerProcess;
+pub use types::{McpServerStatus, McpStatus};
+
+
+---
+
+## Tool call: read_file
+id: call_01_sHOEMnbPOOOF9o53TU0v8681
+status: ok
+arguments:
+```json
+{
+  "path": "crates\\mcp\\src\\types.rs"
+}
+```
+result:
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(tag = "type", content = "message", rename_all = "camelCase")]
+pub enum McpStatus {
+    Starting,
+    Running,
+    Stopped,
+    Error(String),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct McpServerStatus {
+    pub name: String,
+    pub status: McpStatus,
+    pub enabled: bool,
+    pub error: Option<String>,
+}
+
+
+---
+
+## Tool call: read_file
+id: call_02_PWTjfC8Vx5k3AXjXBwpq2226
+status: ok
+arguments:
+```json
+{
+  "path": "crates\\mcp\\src\\config.rs"
+}
+```
+result:
+use serde::{Deserialize, Deserializer, Serialize};
+use std::collections::HashMap;
+use std::fs;
+use std::path::Path;
+use tracing::{info, warn};
+
+fn default_true() -> bool {
+    true
+}
+
+fn deserialize_args<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum ArgsHelper {
+        Vec(Vec<String>),
+        Str(String),
+    }
+
+    match Option::<ArgsHelper>::deserialize(deserializer)? {
+        Some(ArgsHelper::Vec(v)) => Ok(v),
+        Some(ArgsHelper::Str(s)) => Ok(s.split_whitespace().map(|item| item.to_string()).collect()),
+        None => Ok(Vec::new()),
+    }
+}
+
+fn deserialize_enabled<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum EnabledHelper {
+        Bool(bool),
+        Str(String),
+        Int(i64),
+    }
+
+    match Option::<EnabledHelper>::deserialize(deserializer)? {
+        Some(EnabledHelper::Bool(b)) => Ok(b),
+        Some(EnabledHelper::Str(s)) => {
+            let lower = s.trim().to_lowercase();
+            Ok(matches!(
+                lower.as_str(),
+                "true" | "yes" | "1" | "on" | "enabled"
+            ))
+        }
+        Some(EnabledHelper::Int(i)) => Ok(i != 0),
+        None => Ok(true),
+    }
+}
+
+fn deserialize_env<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum EnvHelper {
+        Map(HashMap<String, String>),
+        List(Vec<String>),
+    }
+
+    match Option::<EnvHelper>::deserialize(deserializer)? {
+        Some(EnvHelper::Map(map)) => Ok(map),
+        Some(EnvHelper::List(list)) => {
+            let mut map = HashMap::new();
+            for item in list {
+                if let Some((k, v)) = item.split_once('=') {
+                    map.insert(k.trim().to_string(), v.trim().to_string());
+                }
+            }
+            Ok(map)
+        }
+        None => Ok(HashMap::new()),
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct McpServerConfig {
+    pub name: String,
+    pub command: String,
+    #[serde(default, deserialize_with = "deserialize_args")]
+    pub args: Vec<String>,
+    #[serde(default, deserialize_with = "deserialize_env")]
+    pub env: HashMap<String, String>,
+    #[serde(default = "default_true", deserialize_with = "deserialize_enabled")]
+    pub enabled: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct McpConfig {
+    #[serde(default, alias = "server", alias = "servers")]
+    pub servers: Vec<McpServerConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct RootConfig {
+    #[serde(default)]
+    pub mcp: McpConfig,
+    #[serde(default, alias = "server")]
+    pub servers: Option<Vec<McpServerConfig>>,
+}
+
+pub fn resolve_config_path<P: AsRef<Path>>(
+    cwd_path: P,
+    global_config_dir: P,
+) -> std::path::PathBuf {
+    let project_config = cwd_path.as_ref().join("openvibe.toml");
+    if project_config.exists() {
+        return project_config;
+    }
+    let global_config = global_config_dir.as_ref().join("openvibe.toml");
+    if global_config.exists() {
+        return global_config;
+    }
+    global_config
+}
+
+pub fn load_mcp_config<P: AsRef<Path>>(path: P) -> Result<McpConfig, String> {
+    let path = path.as_ref();
+    if !path.exists() {
+        let default_config = RootConfig::default();
+        if let Ok(toml_str) = toml::to_string_pretty(&default_config) {
+            let _ = fs::write(path, toml_str);
+        }
+        return Ok(McpConfig::default());
+    }
+
+    let content = fs::read_to_string(path).map_err(|e| format!("Failed to read config: {e}"))?;
+
+    // Try strict parse
+    if let Ok(mut root) = toml::from_str::<RootConfig>(&content) {
+        if root.mcp.servers.is_empty() {
+            if let Some(top_servers) = root.servers.take() {
+                root.mcp.servers = top_servers;
+            }
+        }
+        // Save back if normalized format differs
+        let normalized = save_mcp_config(path, &root.mcp);
+        if let Err(e) = normalized {
+            warn!("Failed to normalize config: {e}");
+        }
+        return Ok(root.mcp);
+    }
+
+    warn!(
+        "TOML parsing failed for {}, attempting auto-recovery...",
+        path.display()
+    );
+
+    // Auto-recovery attempt via dynamic value parsing
+    let mut recovered_servers = Vec::new();
+    if let Ok(val) = content.parse::<toml::Value>() {
+        // Look for servers in mcp.server, mcp.servers, servers, server
+        let candidates = vec![
+            val.get("mcp").and_then(|m| m.get("server")),
+            val.get("mcp").and_then(|m| m.get("servers")),
+            val.get("servers"),
+            val.get("server"),
+        ];
+
+        for cand in candidates {
+            if let Some(array) = cand.and_then(|c| c.as_array()) {
+                for item in array {
+                    if let Ok(cfg) = item.clone().try_into::<McpServerConfig>() {
+                        if !cfg.name.is_empty()
+                            && !cfg.command.is_empty()
+                            && !recovered_servers
+                                .iter()
+                                .any(|s: &McpServerConfig| s.name == cfg.name)
+                        {
+                            recovered_servers.push(cfg);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Backup invalid file
+    let backup_path = path.with_extension("toml.bak");
+    let _ = fs::write(&backup_path, &content);
+    info!("Backed up invalid MCP config to {}", backup_path.display());
+
+    let fixed_config = McpConfig {
+        servers: recovered_servers,
+    };
+
+    let _ = save_mcp_config(path, &fixed_config);
+    info!(
+        "Auto-repaired and saved MCP config with {} servers",
+        fixed_config.servers.len()
+    );
+
+    Ok(fixed_config)
+}
+
+pub fn save_mcp_config<P: AsRef<Path>>(path: P, config: &McpConfig) -> Result<(), String> {
+    let root = RootConfig {
+        mcp: config.clone(),
+        servers: None,
+    };
+    let content =
+        toml::to_string_pretty(&root).map_err(|e| format!("Failed to serialize config: {e}"))?;
+    fs::write(path, content).map_err(|e| format!("Failed to write config file: {e}"))?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_toml_standard() {
+        let toml_content = r#"
+[mcp]
+
+[[mcp.server]]
+name = "filesystem"
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+enabled = true
+
+[[mcp.server]]
+name = "github"
+command = "uvx"
+args = ["mcp-server-github"]
+env = { GITHUB_TOKEN = "ghp_xxx" }
+enabled = false
+"#;
+        let root: RootConfig = toml::from_str(toml_content).unwrap();
+        assert_eq!(root.mcp.servers.len(), 2);
+        assert_eq!(root.mcp.servers[0].name, "filesystem");
+        assert_eq!(root.mcp.servers[0].command, "npx");
+        assert!(root.mcp.servers[0].enabled);
+        assert_eq!(root.mcp.servers[1].name, "github");
+        assert!(!root.mcp.servers[1].enabled);
+        assert_eq!(
+            root.mcp.servers[1].env.get("GITHUB_TOKEN").unwrap(),
+            "ghp_xxx"
+        );
+    }
+
+    #[test]
+    fn test_flexible_parsing() {
+        let toml_content = r#"
+[mcp]
+
+[[mcp.server]]
+name = "loose"
+command = "node"
+args = "index.js --port 8080"
+enabled = "yes"
+env = ["PORT=8080", "MODE=test"]
+"#;
+        let root: RootConfig = toml::from_str(toml_content).unwrap();
+        assert_eq!(root.mcp.servers.len(), 1);
+        let s = &root.mcp.servers[0];
+        assert_eq!(s.args, vec!["index.js", "--port", "8080"]);
+        assert!(s.enabled);
+        assert_eq!(s.env.get("PORT").unwrap(), "8080");
+        assert_eq!(s.env.get("MODE").unwrap(), "test");
+    }
+
+    #[test]
+    fn test_auto_recovery() {
+        let dir = std::env::temp_dir().join("openvibe_mcp_test");
+        let _ = fs::create_dir_all(&dir);
+        let config_path = dir.join("openvibe.toml");
+
+        let bad_toml = r#"
+[[servers]]
+name = "recovered"
+command = "uvx"
+args = "mcp-server"
+enabled = "1"
+"#;
+        let _ = fs::write(&config_path, bad_toml);
+
+        let cfg = load_mcp_config(&config_path).unwrap();
+        assert_eq!(cfg.servers.len(), 1);
+        assert_eq!(cfg.servers[0].name, "recovered");
+        assert_eq!(cfg.servers[0].command, "uvx");
+        assert!(cfg.servers[0].enabled);
+
+        let _ = fs::remove_dir_all(&dir);
+    }
+}
+
+
+---
+
+## Tool call: read_file
+id: call_03_p9yvrHM2EcX6gSYuS7Dl0371
+status: ok
+arguments:
+```json
+{
+  "path": "crates\\mcp\\src\\manager.rs"
+}
+```
+result:
+use serde_json::Value;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use tokio::sync::RwLock;
+
+use crate::config::{load_mcp_config, save_mcp_config, McpConfig};
+use crate::process::McpServerProcess;
+use crate::types::{McpServerStatus, McpStatus};
+
+pub struct McpManager {
+    config_path: PathBuf,
+    servers: Arc<RwLock<HashMap<String, Arc<McpServerProcess>>>>,
+}
+
+impl McpManager {
+    pub fn new<P: AsRef<Path>>(config_path: P) -> Self {
+        Self {
+            config_path: config_path.as_ref().to_path_buf(),
+            servers: Arc::new(RwLock::new(HashMap::new())),
+        }
+    }
+
+    pub async fn init_and_autostart(&self) {
+        self.stop_all().await;
+
+        let cfg = load_mcp_config(&self.config_path).unwrap_or_default();
+        let mut servers_guard = self.servers.write().await;
+        servers_guard.clear();
+
+        for server_cfg in cfg.servers {
+            let proc = Arc::new(McpServerProcess::new(server_cfg.clone()));
+            servers_guard.insert(server_cfg.name.clone(), proc.clone());
+
+            if server_cfg.enabled {
+                let proc_clone = proc.clone();
+                tokio::spawn(async move {
+                    let _ = proc_clone.start().await;
+                });
+            }
+        }
+    }
+
+    pub async fn persist_current_config(&self) -> Result<(), String> {
+        let servers_guard = self.servers.read().await;
+        let mut server_configs = Vec::new();
+        for proc in servers_guard.values() {
+            let cfg = proc.config.read().await;
+            server_configs.push(cfg.clone());
+        }
+        server_configs.sort_by(|a, b| a.name.cmp(&b.name));
+        save_mcp_config(
+            &self.config_path,
+            &McpConfig {
+                servers: server_configs,
+            },
+        )
+    }
+
+    pub async fn get_servers(&self) -> Vec<McpServerStatus> {
+        let servers_guard = self.servers.read().await;
+        let mut list = Vec::new();
+
+        for (name, proc) in servers_guard.iter() {
+            let status = proc.status.lock().await.clone();
+            let enabled = proc.config.read().await.enabled;
+            let error = match &status {
+                McpStatus::Error(msg) => Some(msg.clone()),
+                _ => None,
+            };
+
+            list.push(McpServerStatus {
+                name: name.clone(),
+                status,
+                enabled,
+                error,
+            });
+        }
+
+        list.sort_by(|a, b| a.name.cmp(&b.name));
+        list
+    }
+
+    pub async fn start_server(&self, name: &str) -> Result<(), String> {
+        let proc = {
+            let servers_guard = self.servers.read().await;
+            servers_guard
+                .get(name)
+                .cloned()
+                .ok_or_else(|| format!("Server '{name}' not found"))?
+        };
+        {
+            let mut cfg = proc.config.write().await;
+            cfg.enabled = true;
+        }
+        let _ = self.persist_current_config().await;
+        proc.start().await
+    }
+
+    pub async fn stop_server(&self, name: &str) -> Result<(), String> {
+        let proc = {
+            let servers_guard = self.servers.read().await;
+            servers_guard
+                .get(name)
+                .cloned()
+                .ok_or_else(|| format!("Server '{name}' not found"))?
+        };
+        {
+            let mut cfg = proc.config.write().await;
+            cfg.enabled = false;
+        }
+        let _ = self.persist_current_config().await;
+        proc.stop().await
+    }
+
+    pub async fn restart_server(&self, name: &str) -> Result<(), String> {
+        self.stop_server(name).await?;
+        self.start_server(name).await
+    }
+
+    pub async fn get_status(&self, name: &str) -> Result<McpStatus, String> {
+        let servers_guard = self.servers.read().await;
+        let proc = servers_guard
+            .get(name)
+            .ok_or_else(|| format!("Server '{name}' not found"))?;
+        let status = proc.status.lock().await.clone();
+        Ok(status)
+    }
+
+    pub fn get_config(&self) -> Result<McpConfig, String> {
+        load_mcp_config(&self.config_path)
+    }
+
+    pub async fn save_config(&self, config: McpConfig) -> Result<(), String> {
+        save_mcp_config(&self.config_path, &config)?;
+        self.init_and_autostart().await;
+        Ok(())
+    }
+
+    pub async fn list_tools(&self, name: &str) -> Result<Vec<String>, String> {
+        let servers_guard = self.servers.read().await;
+        let proc = servers_guard
+            .get(name)
+            .ok_or_else(|| format!("Server '{name}' not found"))?;
+        let tool_vals = proc.list_tools().await?;
+        let tool_names = tool_vals
+            .into_iter()
+            .filter_map(|v| v["name"].as_str().map(|s| s.to_string()))
+            .collect();
+        Ok(tool_names)
+    }
+
+    pub fn get_cached_tools(&self) -> Vec<(String, Value)> {
+        let Ok(servers_guard) = self.servers.try_read() else {
+            return Vec::new();
+        };
+        let mut all_tools = Vec::new();
+        for (server_name, proc) in servers_guard.iter() {
+            let tools = proc.get_cached_tools_sync();
+            for tool in tools {
+                all_tools.push((server_name.clone(), tool));
+            }
+        }
+        all_tools
+    }
+
+    pub async fn list_all_tools(&self) -> Vec<(String, Value)> {
+        let servers_guard = self.servers.read().await;
+        let mut all_tools = Vec::new();
+
+        for (server_name, proc) in servers_guard.iter() {
+            let status = proc.status.lock().await.clone();
+            let enabled = proc.config.read().await.enabled;
+            if enabled && matches!(status, McpStatus::Running) {
+                if let Ok(tools) = proc.list_tools().await {
+                    for tool in tools {
+                        all_tools.push((server_name.clone(), tool));
+                    }
+                }
+            }
+        }
+        all_tools
+    }
+
+    pub async fn call_tool(
+        &self,
+        server_name: &str,
+        tool_name: &str,
+        args: &Value,
+    ) -> Result<String, String> {
+        let servers_guard = self.servers.read().await;
+        let proc = servers_guard
+            .get(server_name)
+            .ok_or_else(|| format!("MCP Server '{server_name}' not found"))?;
+        proc.call_tool(tool_name, args).await
+    }
+
+    pub async fn stop_all(&self) {
+        let servers_guard = self.servers.read().await;
+        for proc in servers_guard.values() {
+            let _ = proc.stop().await;
+        }
+    }
+}
+
+
+---
+
+## Tool call: read_file
+id: call_04_apmRRhZ1IoN853O1kav67104
+status: ok
+arguments:
+```json
+{
+  "path": "crates\\mcp\\src\\path.rs"
+}
+```
+result:
+use std::path::PathBuf;
+
+pub fn build_augmented_path() -> String {
+    let mut paths = Vec::new();
+    if let Ok(current_path) = std::env::var("PATH") {
+        paths.push(current_path);
+    }
+
+    if let Ok(home) = std::env::var("HOME") {
+        let home_p = PathBuf::from(&home);
+        let common_dirs = vec![
+            home_p.join(".cargo").join("bin"),
+            home_p.join(".local").join("bin"),
+            home_p.join(".bun").join("bin"),
+            home_p.join(".yarn").join("bin"),
+            home_p.join(".deno").join("bin"),
+            PathBuf::from("/usr/local/bin"),
+            PathBuf::from("/opt/homebrew/bin"),
+        ];
+        for d in common_dirs {
+            if d.exists() {
+                paths.push(d.to_string_lossy().to_string());
+            }
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(user_profile) = std::env::var("USERPROFILE") {
+            let up = PathBuf::from(user_profile);
+            let win_dirs = vec![
+                up.join(".cargo").join("bin"),
+                up.join("AppData").join("Roaming").join("npm"),
+            ];
+            for d in win_dirs {
+                if d.exists() {
+                    paths.push(d.to_string_lossy().to_string());
+                }
+            }
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    let sep = ";";
+    #[cfg(not(target_os = "windows"))]
+    let sep = ":";
+
+    paths.join(sep)
+}
+
+
+---
+
+## Tool call: read_file
+id: call_05_sxRgXi5KekmbJ7P6GYma8533
+status: ok
+arguments:
+```json
+{
+  "path": "crates\\mcp\\src\\process.rs"
+}
+```
+result:
+use serde_json::{json, Value};
+use std::collections::HashMap;
+use std::process::Stdio;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::process::{Child, ChildStdin};
+use tokio::sync::{oneshot, Mutex, RwLock};
+use tokio::time::{timeout, Duration};
+use tracing::{info, warn};
+
+use crate::config::McpServerConfig;
+use crate::path::build_augmented_path;
+use crate::types::McpStatus;
+
+pub struct McpServerProcess {
+    pub config: RwLock<McpServerConfig>,
+    pub status: Arc<Mutex<McpStatus>>,
+    child: Arc<Mutex<Option<Child>>>,
+    stdin: Arc<Mutex<Option<ChildStdin>>>,
+    pending_requests: Arc<Mutex<HashMap<u64, oneshot::Sender<Value>>>>,
+    stderr_logs: Arc<Mutex<Vec<String>>>,
+    tools_cache: Arc<std::sync::Mutex<Vec<Value>>>,
+    request_id: AtomicU64,
+}
+
+impl McpServerProcess {
+    pub fn new(config: McpServerConfig) -> Self {
+        Self {
+            config: RwLock::new(config),
+            status: Arc::new(Mutex::new(McpStatus::Stopped)),
+            child: Arc::new(Mutex::new(None)),
+            stdin: Arc::new(Mutex::new(None)),
+            pending_requests: Arc::new(Mutex::new(HashMap::new())),
+            stderr_logs: Arc::new(Mutex::new(Vec::new())),
+            tools_cache: Arc::new(std::sync::Mutex::new(Vec::new())),
+            request_id: AtomicU64::new(1),
+        }
+    }
+
+    async fn get_stderr_snippet(&self) -> String {
+        let logs = self.stderr_logs.lock().await;
+        if logs.is_empty() {
+            String::new()
+        } else {
+            let snippet = logs
+                .iter()
+                .rev()
+                .take(3)
+                .rev()
+                .cloned()
+                .collect::<Vec<_>>()
+                .join("; ");
+            format!("Stderr: {}", snippet)
+        }
+    }
+
+    pub async fn start(&self) -> Result<(), String> {
+        {
+            let status = self.status.lock().await;
+            if matches!(*status, McpStatus::Running) {
+                return Ok(());
+            }
+        }
+
+        let _ = self.stop().await;
+
+        *self.status.lock().await = McpStatus::Starting;
+
+        let mut attempts = 0;
+        let max_attempts = 3;
+        let mut last_err = String::new();
+        let server_name = self.config.read().await.name.clone();
+
+        while attempts < max_attempts {
+            attempts += 1;
+            match self.spawn_and_init().await {
+                Ok(_) => {
+                    *self.status.lock().await = McpStatus::Running;
+                    info!(server = %server_name, "MCP server started successfully");
+                    return Ok(());
+                }
+                Err(e) => {
+                    last_err = e;
+                    warn!(server = %server_name, attempt = attempts, err = %last_err, "Failed to start MCP server");
+                    if attempts < max_attempts {
+                        tokio::time::sleep(Duration::from_secs(1)).await;
+                    }
+                }
+            }
+        }
+
+        *self.status.lock().await = McpStatus::Error(last_err.clone());
+        Err(last_err)
+    }
+
+    async fn spawn_and_init(&self) -> Result<(), String> {
+        self.stderr_logs.lock().await.clear();
+        let (cmd_path, args, env, server_name) = {
+            let cfg = self.config.read().await;
+            (
+                cfg.command.clone(),
+                cfg.args.clone(),
+                cfg.env.clone(),
+                cfg.name.clone(),
+            )
+        };
+
+        let mut cmd = tokio::process::Command::new(&cmd_path);
+        cmd.args(&args);
+        cmd.envs(&env);
+        cmd.env("PATH", build_augmented_path());
+
+        // Fast-path for npx: avoid network checks to massively speed up concurrent starts
+        // This prevents the 5-6s lock contention delay when starting multiple MCP servers
+        let is_npx = cmd_path == "npx"
+            || cmd_path.ends_with("/npx")
+            || cmd_path.ends_with("\\npx")
+            || cmd_path.ends_with("npx.cmd")
+            || cmd_path.ends_with("npx.exe");
+        if is_npx {
+            cmd.env("npm_config_update_notifier", "false");
+            cmd.env("npm_config_fund", "false");
+            cmd.env("npm_config_audit", "false");
+            cmd.env("npm_config_prefer_offline", "true");
+            cmd.env("npm_config_yes", "true");
+        }
+
+        cmd.stdin(Stdio::piped());
+        cmd.stdout(Stdio::piped());
+        cmd.stderr(Stdio::piped());
+
+        let mut child = cmd
+            .spawn()
+            .map_err(|e| format!("Failed to spawn process '{cmd_path}': {e}"))?;
+
+        let stdin = child.stdin.take().ok_or("Failed to open stdin")?;
+        let stdout = child.stdout.take().ok_or("Failed to open stdout")?;
+        let stderr = child.stderr.take();
+
+        let stderr_logs = self.stderr_logs.clone();
+        if let Some(stderr) = stderr {
+            tokio::spawn(async move {
+                let mut reader = BufReader::new(stderr).lines();
+                while let Ok(Some(line)) = reader.next_line().await {
+                    warn!(server = %server_name, "MCP stderr: {}", line);
+                    let mut logs = stderr_logs.lock().await;
+                    logs.push(line);
+                    if logs.len() > 20 {
+                        logs.remove(0);
+                    }
+                }
+            });
+        }
+
+        let pending = self.pending_requests.clone();
+        tokio::spawn(async move {
+            let mut reader = BufReader::new(stdout).lines();
+            while let Ok(Some(line)) = reader.next_line().await {
+                let line_str = line.trim();
+                if line_str.is_empty() {
+                    continue;
+                }
+                if let Ok(val) = serde_json::from_str::<Value>(line_str) {
+                    if let Some(id_val) = val.get("id") {
+                        if let Some(id) = id_val.as_u64() {
+                            let mut guard = pending.lock().await;
+                            if let Some(tx) = guard.remove(&id) {
+                                let _ = tx.send(val);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        *self.stdin.lock().await = Some(stdin);
+        *self.child.lock().await = Some(child);
+
+        let init_req_id = self.request_id.fetch_add(1, Ordering::SeqCst);
+        let init_msg = json!({
+            "jsonrpc": "2.0",
+            "id": init_req_id,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": {
+                    "name": "OpenVibe",
+                    "version": "1.2.0"
+                }
+            }
+        });
+
+        let resp = self
+            .send_request_internal(init_req_id, &init_msg, Duration::from_secs(10))
+            .await?;
+        if resp.get("error").is_some() {
+            let err_msg = resp["error"]["message"]
+                .as_str()
+                .unwrap_or("Initialize failed");
+            let snippet = self.get_stderr_snippet().await;
+            if !snippet.is_empty() {
+                return Err(format!("{err_msg}. {snippet}"));
+            } else {
+                return Err(err_msg.to_string());
+            }
+        }
+
+        let init_notif = json!({
+            "jsonrpc": "2.0",
+            "method": "notifications/initialized"
+        });
+        self.send_notification_internal(&init_notif).await?;
+
+        let req_id = self.request_id.fetch_add(1, Ordering::SeqCst);
+        let list_msg = json!({
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "method": "tools/list",
+            "params": {}
+        });
+
+        if let Ok(resp) = self
+            .send_request_internal(req_id, &list_msg, Duration::from_secs(5))
+            .await
+        {
+            if let Some(tools) = resp
+                .get("result")
+                .and_then(|r| r.get("tools"))
+                .and_then(|t| t.as_array())
+            {
+                if let Ok(mut cache) = self.tools_cache.lock() {
+                    *cache = tools.clone();
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn get_cached_tools_sync(&self) -> Vec<Value> {
+        self.tools_cache
+            .lock()
+            .map(|cache| cache.clone())
+            .unwrap_or_default()
+    }
+
+    async fn send_notification_internal(&self, msg: &Value) -> Result<(), String> {
+        let mut stdin_guard = self.stdin.lock().await;
+        let stdin = stdin_guard.as_mut().ok_or("Server stdin not available")?;
+        let mut line = serde_json::to_string(msg).map_err(|e| e.to_string())?;
+        line.push('\n');
+        stdin
+            .write_all(line.as_bytes())
+            .await
+            .map_err(|e| format!("Failed to write stdin: {e}"))?;
+        stdin
+            .flush()
+            .await
+            .map_err(|e| format!("Failed to flush stdin: {e}"))?;
+        Ok(())
+    }
+
+    async fn send_request_internal(
+        &self,
+        req_id: u64,
+        msg: &Value,
+        timeout_dur: Duration,
+    ) -> Result<Value, String> {
+        let (tx, rx) = oneshot::channel();
+        {
+            let mut guard = self.pending_requests.lock().await;
+            guard.insert(req_id, tx);
+        }
+
+        if let Err(e) = self.send_notification_internal(msg).await {
+            let mut guard = self.pending_requests.lock().await;
+            guard.remove(&req_id);
+            return Err(e);
+        }
+
+        match timeout(timeout_dur, rx).await {
+            Ok(Ok(val)) => Ok(val),
+            Ok(Err(_)) => {
+                let mut guard = self.pending_requests.lock().await;
+                guard.remove(&req_id);
+                let snippet = self.get_stderr_snippet().await;
+                if !snippet.is_empty() {
+                    Err(format!("Response channel closed. {snippet}"))
+                } else {
+                    Err("Response channel closed before receiving data".to_string())
+                }
+            }
+            Err(_) => {
+                let mut guard = self.pending_requests.lock().await;
+                guard.remove(&req_id);
+                let snippet = self.get_stderr_snippet().await;
+                if !snippet.is_empty() {
+                    Err(format!("Request timed out. {snippet}"))
+                } else {
+                    Err("Request timed out".to_string())
+                }
+            }
+        }
+    }
+
+    pub async fn stop(&self) -> Result<(), String> {
+        let mut status = self.status.lock().await;
+        if let Some(mut child) = self.child.lock().await.take() {
+            let _ = child.kill().await;
+        }
+        *self.stdin.lock().await = None;
+        self.pending_requests.lock().await.clear();
+        if let Ok(mut cache) = self.tools_cache.lock() {
+            cache.clear();
+        }
+        *status = McpStatus::Stopped;
+        Ok(())
+    }
+
+    pub async fn list_tools(&self) -> Result<Vec<Value>, String> {
+        let status = self.status.lock().await.clone();
+        if !matches!(status, McpStatus::Running) {
+            return Err("Server is not running".to_string());
+        }
+
+        let req_id = self.request_id.fetch_add(1, Ordering::SeqCst);
+        let msg = json!({
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "method": "tools/list",
+            "params": {}
+        });
+
+        let resp = self
+            .send_request_internal(req_id, &msg, Duration::from_secs(5))
+            .await?;
+        if let Some(error) = resp.get("error") {
+            let msg = error["message"].as_str().unwrap_or("Failed to list tools");
+            return Err(msg.to_string());
+        }
+
+        let tools = resp["result"]["tools"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default();
+        if let Ok(mut cache) = self.tools_cache.lock() {
+            *cache = tools.clone();
+        }
+        Ok(tools)
+    }
+
+    pub async fn call_tool(&self, tool_name: &str, args: &Value) -> Result<String, String> {
+        let status = self.status.lock().await.clone();
+        if !matches!(status, McpStatus::Running) {
+            return Err("Server is not running".to_string());
+        }
+
+        let req_id = self.request_id.fetch_add(1, Ordering::SeqCst);
+        let msg = json!({
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "method": "tools/call",
+            "params": {
+                "name": tool_name,
+                "arguments": args
+            }
+        });
+
+        let resp = self
+            .send_request_internal(req_id, &msg, Duration::from_secs(60))
+            .await?;
+
+        if let Some(error) = resp.get("error") {
+            let msg = error["message"].as_str().unwrap_or("Failed to call tool");
+            return Err(msg.to_string());
+        }
+
+        let result = &resp["result"];
+        if let Some(content_arr) = result.get("content").and_then(|c| c.as_array()) {
+            let mut out = String::new();
+            for item in content_arr {
+                if let Some(text) = item.get("text").and_then(|t| t.as_str()) {
+                    if !out.is_empty() {
+                        out.push('\n');
+                    }
+                    out.push_str(text);
+                } else {
+                    out.push_str(&item.to_string());
+                }
+            }
+            if out.is_empty() {
+                Ok(serde_json::to_string_pretty(result).unwrap_or_default())
+            } else {
+                Ok(out)
+            }
+        } else {
+            Ok(serde_json::to_string_pretty(result).unwrap_or_default())
+        }
+    }
+}
+
+
+---
+
+## Tool call: read_file
+id: call_06_M0ztSVZ1tOfaGmgu9hh15778
+status: ok
+arguments:
+```json
+{
+  "path": "crates\\mcp\\src\\server.rs"
+}
+```
+result:
+pub use crate::manager::McpManager;
+pub use crate::path::build_augmented_path;
+pub use crate::process::McpServerProcess;
+pub use crate::types::{McpServerStatus, McpStatus};
+
+
+---
+
+## Tool call: read_file
+id: call_07_8GvIGR18hrbQbEtQmvwM9956
+status: ok
+arguments:
+```json
+{
+  "path": "crates\\mcp\\src\\transport.rs"
+}
+```
+result:
+use std::process::Stdio;
+use std::sync::Arc;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::process::{Child, ChildStdin};
+use tokio::sync::Mutex;
+use tracing::{info, warn};
+
+use crate::config::McpServerConfig;
+use crate::path::build_augmented_path;
+
+/// Low-level transport layer for MCP stdio communication.
+/// Handles process spawning, stdin/stdout management, and stderr logging.
+pub struct McpTransport {
+    child: Arc<Mutex<Option<Child>>>,
+    stdin: Arc<Mutex<Option<ChildStdin>>>,
+    stderr_logs: Arc<Mutex<Vec<String>>>,
+}
+
+impl McpTransport {
+    pub fn new() -> Self {
+        Self {
+            child: Arc::new(Mutex::new(None)),
+            stdin: Arc::new(Mutex::new(None)),
+            stderr_logs: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+
+    /// Spawn the MCP server process and set up stdio pipes.
+    pub async fn spawn(&self, config: &McpServerConfig) -> Result<(), String> {
+        self.kill_child().await;
+        self.stderr_logs.lock().await.clear();
+
+        let mut cmd = tokio::process::Command::new(&config.command);
+        cmd.args(&config.args);
+        cmd.envs(&config.env);
+        cmd.env("PATH", build_augmented_path());
+
+        // Fast-path for npx: avoid network checks to speed up concurrent starts
+        let is_npx = config.command == "npx"
+            || config.command.ends_with("/npx")
+            || config.command.ends_with("\\npx")
+            || config.command.ends_with("npx.cmd")
+            || config.command.ends_with("npx.exe");
+        if is_npx {
+            cmd.env("npm_config_update_notifier", "false");
+            cmd.env("npm_config_fund", "false");
+            cmd.env("npm_config_audit", "false");
+            cmd.env("npm_config_prefer_offline", "true");
+            cmd.env("npm_config_yes", "true");
+        }
+
+        cmd.stdin(Stdio::piped());
+        cmd.stdout(Stdio::piped());
+        cmd.stderr(Stdio::piped());
+
+        let mut child = cmd
+            .spawn()
+            .map_err(|e| format!("Failed to spawn '{}': {e}", config.command))?;
+
+        let stdin = child.stdin.take().ok_or("Failed to open stdin")?;
+        let stdout = child.stdout.take().ok_or("Failed to open stdout")?;
+        let stderr = child.stderr.take();
+
+        // Spawn stderr reader
+        let stderr_logs = self.stderr_logs.clone();
+        let server_name = config.name.clone();
+        if let Some(stderr) = stderr {
+            tokio::spawn(async move {
+                let mut reader = BufReader::new(stderr).lines();
+                while let Ok(Some(line)) = reader.next_line().await {
+                    warn!(server = %server_name, "MCP stderr: {}", line);
+                    let mut logs = stderr_logs.lock().await;
+                    logs.push(line);
+                    if logs.len() > 20 {
+                        logs.remove(0);
+                    }
+                }
+            });
+        }
+
+        *self.stdin.lock().await = Some(stdin);
+        *self.child.lock().await = Some(child);
+
+        // Spawn stdout reader (returns reader handle for caller)
+        // NOTE: caller must consume stdout via a separate mechanism
+        // For now, we store the child and let the protocol layer handle it
+        Ok(())
+    }
+
+    /// Write a message to the server's stdin.
+    pub async fn write_message(&self, msg: &str) -> Result<(), String> {
+        let mut stdin_guard = self.stdin.lock().await;
+        let stdin = stdin_guard.as_mut().ok_or("Server stdin not available")?;
+        let mut line = msg.to_string();
+        line.push('\n');
+        stdin
+            .write_all(line.as_bytes())
+            .await
+            .map_err(|e| format!("Failed to write stdin: {e}"))?;
+        stdin
+            .flush()
+            .await
+            .map_err(|e| format!("Failed to flush stdin: {e}"))?;
+        Ok(())
+    }
+
+    /// Get the last N stderr log lines for error reporting.
+    pub async fn get_stderr_snippet(&self) -> String {
+        let logs = self.stderr_logs.lock().await;
+        if logs.is_empty() {
+            String::new()
+        } else {
+            let snippet = logs
+                .iter()
+                .rev()
+                .take(3)
+                .rev()
+                .cloned()
+                .collect::<Vec<_>>()
+                .join("; ");
+            format!("Stderr: {}", snippet)
+        }
+    }
+
+    /// Kill the child process and clean up resources.
+    pub async fn kill_child(&self) {
+        if let Some(mut child) = self.child.lock().await.take() {
+            let _ = child.kill().await;
+        }
+        *self.stdin.lock().await = None;
+    }
+
+    /// Check if the process is still running.
+    pub async fn is_process_alive(&self) -> bool {
+        let mut guard = self.child.lock().await;
+        if let Some(child) = guard.as_mut() {
+            matches!(child.try_wait(), Ok(None))
+        } else {
+            false
+        }
+    }
+
+    /// Take stdout for reading (returns tokio ChildStdout).
+    pub async fn take_stdout(&self) -> Option<tokio::process::ChildStdout> {
+        let mut guard = self.child.lock().await;
+        guard.as_mut().and_then(|c| c.stdout.take())
+    }
+}
+
+impl Default for McpTransport {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+
+---
+
+## Assistant message: l60
+
+<thinking>
+Now let me also look at the binary in the `bin` directory:
+</thinking>
+
+---
+
+## Tool call: list_dir
+id: call_00_RsyknsqTlLCk2QyvgJmg3324
+status: ok
+arguments:
+```json
+{
+  "path": "crates\\mcp\\src\\bin"
+}
+```
+result:
+parse_test.rs
+test_manager.rs
+
+---
+
+## Assistant message: l61
+
+<thinking>
+Let me also check how the mcp crate is used from the main Tauri app.
+</thinking>
+
+---
+
+## Tool call: read_file
+id: call_00_PIMPhI6JZOHzMwlZZINr5550
+status: ok
+arguments:
+```json
+{
+  "path": "crates\\mcp\\src\\bin\\parse_test.rs"
+}
+```
+result:
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct McpServerConfig {
+    pub name: String,
+    pub command: String,
+    pub args: Vec<String>,
+    pub env: HashMap<String, String>,
+    pub enabled: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct McpConfig {
+    #[serde(default, alias = "server", alias = "servers")]
+    pub servers: Vec<McpServerConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct RootConfig {
+    #[serde(default)]
+    pub mcp: McpConfig,
+    #[serde(default, alias = "server")]
+    pub servers: Option<Vec<McpServerConfig>>,
+}
+
+fn main() {
+    let content = r#"
+[[mcp.servers]]
+name = "godot"
+command = "npx"
+args = [
+    "-y",
+    "@coding-solo/godot-mcp",
+]
+enabled = true
+
+[mcp.servers.env]
+"#;
+
+    let res: Result<RootConfig, _> = toml::from_str(content);
+    println!("Strict Parse: {:?}", res);
+    if let Err(e) = res {
+        println!("Error: {}", e);
+    }
+}
+
+
+---
+
+## Tool call: read_file
+id: call_01_ja3bZo38K0vHPCqqob4l0471
+status: ok
+arguments:
+```json
+{
+  "path": "crates\\mcp\\src\\bin\\test_manager.rs"
+}
+```
+result:
+use mcp::McpManager;
+use std::path::PathBuf;
+
+#[tokio::main]
+async fn main() {
+    let config_path = PathBuf::from("/home/nihmadev/OpenVibe/openvibe.toml");
+    let manager = McpManager::new(&config_path);
+
+    println!("Loading config...");
+    let config = manager.get_config().unwrap();
+    println!("Config servers: {:?}", config.servers);
+
+    println!("Init and autostart...");
+    manager.init_and_autostart().await;
+
+    println!("Getting servers...");
+    let servers = manager.get_servers().await;
+    println!("Servers in memory: {:?}", servers);
+}
+
+
+---
+
+## Assistant message: l62
+
+<thinking>
+Now I have a thorough understanding of the `mcp` crate. Let me also check how it's used in the main app — look for references to the mcp crate in src-tauri.
+</thinking>
+
+---
+
+## Tool call: search_codebase
+id: call_00_LoLGImmA2l8nZwvSyg519482
+status: ok
+arguments:
+```json
+{
+  "query": "use mcp::",
+  "root": "src-tauri"
+}
+```
+result:
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:1: use mcp::{McpConfig, McpServerStatus, McpStatus};
+[note: 5 file(s) over 256 KB were skipped]
+
+---
+
+## Tool call: search_codebase
+id: call_01_LHcC6UwplAZgg0dngZXP8569
+status: ok
+arguments:
+```json
+{
+  "query": "mcp",
+  "root": "src-tauri"
+}
+```
+result:
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\Cargo.toml:42: mcp = { path = "../crates/mcp" }
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\openvibe.toml:1: [mcp]
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:30:     pub mcp_manager: Arc<mcp::McpManager>,
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:226:             // MCP Manager
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:227:             let mcp_config_path = mcp::resolve_config_path(&initial_cwd, &app_dir_str);
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:229:             let mcp_manager = Arc::new(mcp::McpManager::new(mcp_config_path));
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:230:             let mcp_clone = mcp_manager.clone();
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:232:                 mcp_clone.init_and_autostart().await;
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:269:                 mcp_manager,
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:400:             // MCP commands
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:401:             commands::mcp::mcp_get_servers,
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:402:             commands::mcp::mcp_start_server,
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:403:             commands::mcp::mcp_stop_server,
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:404:             commands::mcp::mcp_restart_server,
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:405:             commands::mcp::mcp_get_status,
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:406:             commands::mcp::mcp_get_config,
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:407:             commands::mcp::mcp_save_config,
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\lib.rs:408:             commands::mcp::mcp_list_tools,
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\agent.rs:89:     let executor = agent_tool::AgentToolExecutor::with_mcp(state.mcp_manager.clone());
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:1: use mcp::{McpConfig, McpServerStatus, McpStatus};
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:5: pub async fn mcp_get_servers(state: State<'_, crate::AppState>) -> Result<Vec<McpServerStatus>, String> {
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:6:     let servers = state.mcp_manager.get_servers().await;
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:11: pub async fn mcp_start_server(state: State<'_, crate::AppState>, name: String) -> Result<(), String> {
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:12:     state.mcp_manager.start_server(&name).await
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:16: pub async fn mcp_stop_server(state: State<'_, crate::AppState>, name: String) -> Result<(), String> {
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:17:     state.mcp_manager.stop_server(&name).await
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:21: pub async fn mcp_restart_server(state: State<'_, crate::AppState>, name: String) -> Result<(), String> {
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:22:     state.mcp_manager.restart_server(&name).await
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:26: pub async fn mcp_get_status(state: State<'_, crate::AppState>, name: String) -> Result<McpStatus, String> {
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:27:     state.mcp_manager.get_status(&name).await
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:31: pub async fn mcp_get_config(state: State<'_, crate::AppState>) -> Result<McpConfig, String> {
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:32:     state.mcp_manager.get_config()
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:36: pub async fn mcp_save_config(state: State<'_, crate::AppState>, config: McpConfig) -> Result<(), String> {
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:37:     state.mcp_manager.save_config(config).await
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:41: pub async fn mcp_list_tools(state: State<'_, crate::AppState>, server_name: String) -> Result<Vec<String>, String> {
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mcp.rs:42:     state.mcp_manager.list_tools(&server_name).await
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\mod.rs:9: pub mod mcp;
+C:\Users\nihmadev\Desktop\OpenVibe\src-tauri\src\commands\tools.rs:21:     let executor = agent_tool::AgentToolExecutor::with_mcp(state.mcp_manager.clone());
+[note: 5 file(s) over 256 KB were skipped]
+
+---
+
+## Assistant message: l63
+
+<thinking>
+Now I have a very complete picture of the `mcp` crate. Let me compose a thorough explanation in Russian.
+</thinking>
+
+Вот подробное описание архитектуры крейта `mcp` в проекте OpenVibe.
+
+---
+
+## Обзор
+
+Крейт `mcp` (расположен в `crates/mcp/`) — это библиотека для управления **MCP-серверами** (Model Context Protocol). Она отвечает за весь жизненный цикл таких серверов: запуск, остановку, коммуникацию через JSON-RPC 2.0 по `stdio`, кэширование инструментов и персистентность конфигурации.
+
+**Тип:** библиотечный крейт (не исполняемый), публично экспортируется в `src-tauri/Cargo.toml` как `mcp = { path = "../crates/mcp" }`.
+
+### Структура файлов
+
+```tree
+crates/mcp/
+├── Cargo.toml       # Зависимости: serde, serde_json, toml, tokio, tracing
+└── src/
+    ├── lib.rs       # Точка входа, реэкспорты публичных символов
+    ├── types.rs     # Перечисления статусов (McpStatus, McpServerStatus)
+    ├── config.rs    # Загрузка/сохранение/парсинг openvibe.toml
+    ├── manager.rs   # Главный оркестратор (McpManager)
+    ├── process.rs   # Управление процессом и JSON-RPC (McpServerProcess)
+    ├── transport.rs # Низкоуровневый слой stdio (McpTransport)
+    ├── path.rs      # Построение расширенного PATH
+    └── bin/         # Вспомогательные исполняемые тесты (не публикуются)
+        ├── parse_test.rs
+        └── test_manager.rs
+```
+
+---
+
+## 1. `types.rs` — Типы статусов
+
+Два ключевых типа, помеченных `Serialize/Deserialize` для передачи через Tauri IPC:
+
+```rust
+pub enum McpStatus {
+    Starting,
+    Running,
+    Stopped,
+    Error(String),
+}
+
+pub struct McpServerStatus {
+    pub name: String,
+    pub status: McpStatus,
+    pub enabled: bool,
+    pub error: Option<String>,
+}
+```
+
+Сериализация — `tag = "type", content = "message", rename_all = "camelCase"`, то есть в JSON на фронтенд это приходит как `{ "type": "running", "message": null }`.
+
+---
+
+## 2. `config.rs` — Конфигурация серверов
+
+Отвечает за **чтение, валидацию, авто-восстановление и запись** файла `openvibe.toml`.
+
+### Основные структуры
+
+```rust
+pub struct McpServerConfig {
+    pub name: String,
+    pub command: String,
+    pub args: Vec<String>,
+    pub env: HashMap<String, String>,
+    pub enabled: bool,
+}
+pub struct McpConfig { pub servers: Vec<McpServerConfig> }
+struct RootConfig { pub mcp: McpConfig, pub servers: Option<Vec<McpServerConfig>> }
+```
+
+### Ключевые функции
+
+- **`resolve_config_path(cwd_path, global_config_dir)`** — ищет `openvibe.toml`: сначала в проекте (`cwd`), потом в глобальной директории, возвращает путь.
+- **`load_mcp_config(path)`** — загружает TOML, пытается строгий парсинг в `RootConfig`. Если не удаётся — запускает **авто-восстановление**: динамически парсит `toml::Value`, ищет секции `mcp.server`, `mcp.servers`, `servers`, `server`, собирает все валидные `McpServerConfig`. Повреждённый файл сохраняется как `openvibe.toml.bak`.
+- **`save_mcp_config(path, config)`** — сериализует в `[mcp]` → `[[mcp.server]]` и пишет на диск.
+
+### Гибкий десериализатор
+
+Поля `args`, `env` и `enabled` используют кастомные десериализаторы, допускающие **множество форматов**:
+- `args`: `"index.js --port 8080"` (строка, разбивается по пробелам) или `["index.js", "--port", "8080"]`.
+- `enabled`: `true`, `"yes"`, `"1"`, `"on"`, `"enabled"` — все считаются `true`.
+- `env`: `{ KEY = "val" }` (map) **или** `["PORT=8080", "MODE=test"]` (список строк).
+
+---
+
+## 3. `manager.rs` — Оркестратор (`McpManager`)
+
+Главный публичный интерфейс крейта. Хранит `HashMap<String, Arc<McpServerProcess>>` под `RwLock`.
+
+### Основные методы (полный lifecycle):
+
+| Метод | Действие |
+|---|---|
+| `init_and_autostart()` | Останавливает все, загружает конфиг, создаёт процессы, запускает `enabled = true` |
+| `start_server(name)` | Включает в конфиге и запускает |
+| `stop_server(name)` | Отключает в конфиге и останавливает |
+| `restart_server(name)` | stop + start |
+| `stop_all()` | Останавливает все процессы |
+| `get_servers()` | Возвращает `Vec<McpServerStatus>` для UI |
+| `get_status(name)` | Текущий статус конкретного сервера |
+| `list_tools(name)` | JSON-RPC `tools/list` |
+| `get_cached_tools()` | Синхронная выборка из кэша (для agent, без `await`) |
+| `list_all_tools()` | По всем запущенным серверам `tools/list` |
+| `call_tool(server, tool, args)` | JSON-RPC `tools/call` |
+| `get_config() / save_config()` | Чтение/запись конфига + автостарт |
+
+### Связь с Tauri
+
+В `src-tauri/src/lib.rs` создаётся `Arc<McpManager>`, сохраняется в `AppState`, и регистрируются Tauri-команды из `src-tauri/src/commands/mcp.rs`:
+
+```rust
+// src-tauri/src/lib.rs
+let mcp_manager = Arc::new(mcp::McpManager::new(mcp_config_path));
+mcp_clone.init_and_autostart().await;  // на старте приложения
+```
+
+Команды Tauri — тонкая обёртка над `McpManager`.
+
+---
+
+## 4. `process.rs` — Управление процессом и JSON-RPC (`McpServerProcess`)
+
+Самый сложный модуль. Каждый MCP-сервер — это отдельный дочерний процесс с JSON-RPC 2.0 по `stdin/stdout`.
+
+### Внутреннее состояние
+
+```rust
+pub struct McpServerProcess {
+    pub config: RwLock<McpServerConfig>,
+    pub status: Arc<Mutex<McpStatus>>,
+    child: Arc<Mutex<Option<Child>>>,          // tokio::process::Child
+    stdin: Arc<Mutex<Option<ChildStdin>>>,
+    pending_requests: Arc<Mutex<HashMap<u64, oneshot::Sender<Value>>>>,
+    stderr_logs: Arc<Mutex<Vec<String>>>,
+    tools_cache: Arc<std::sync::Mutex<Vec<Value>>>,
+    request_id: AtomicU64,
+}
+```
+
+### Жизненный цикл
+
+1. **`start()`** — до 3 попыток с задержкой. Выставляет `Starting`, вызывает `spawn_and_init()`.
+2. **`spawn_and_init()`** — самое важное:
+   - Создаёт `tokio::process::Command` с расширенным `PATH` и дополнительными env-опциями для npx (отключение обновлений, аудита и т.д. — оптимизация скорости).
+   - Запускает процесс, берёт `stdin/stdout/stderr`.
+   - Запускает **фоновый tokio-таск** чтения `stdout` — получает строки, парсит JSON, находит `id`, отправляет ответ в `oneshot::Sender` из `pending_requests`.
+   - Запускает фоновый таск чтения `stderr` — логи через `tracing::warn!`, хранит последние 20 строк.
+   - Отправляет JSON-RPC `initialize` (таймаут 10 с), получает ответ.
+   - Отправляет уведомление `notifications/initialized`.
+   - Отправляет `tools/list`, кэширует результат.
+   - Выставляет статус `Running`.
+3. **`stop()`** — `kill()` процесс, очищает `pending_requests`, чистит кэш, статус `Stopped`.
+
+### JSON-RPC 2.0
+
+- `send_request_internal(req_id, msg, timeout)` — регистрирует `oneshot::Sender`, отправляет через `send_notification_internal()`, ждёт ответ или таймаут. При ошибке возвращает snippet из stderr.
+- `send_notification_internal(msg)` — просто пишет JSON + `\n` в stdin.
+- `call_tool()` — `tools/call` с таймаутом 60 с, собирает `content[].text` в строку.
+- `list_tools()` — `tools/list` с таймаутом 5 с, обновляет кэш.
+
+### Оптимизация npx
+
+Для команды `npx` устанавливаются env-флаги:
+```
+npm_config_update_notifier=false
+npm_config_fund=false
+npm_config_audit=false
+npm_config_prefer_offline=true
+npm_config_yes=true
+```
+Это предотвращает проверки сети и диалоги, ускоряя **конкурентный запуск нескольких MCP-серверов** (иначе они блокировали бы друг друга на 5–6 секунд).
+
+---
+
+## 5. `transport.rs` — Низкоуровневый stdio (`McpTransport`)
+
+Отдельный примитив для коммуникации с процессом. На данный момент **используется только частично** — в `McpServerProcess` дублируется логика spawn/stdin/stderr. `McpTransport` предоставляет:
+
+- `spawn(config)` — запуск процесса, настройка stdin/stdout/stderr, stderr-reader.
+- `write_message(msg)` — запись строки в stdin.
+- `get_stderr_snippet()` — последние 3 строки stderr для диагностики.
+- `kill_child()` — убить процесс.
+- `is_process_alive()` — проверка, жив ли процесс.
+- `take_stdout()` — чтобы отдать stdout внешнему ридеру.
+
+Похоже, что `McpTransport` — это **выделенный транспортный слой, который пока не полностью интегрирован**; `McpServerProcess` делает то же самое напрямую.
+
+---
+
+## 6. `path.rs` — Расширенный PATH
+
+Функция `build_augmented_path()` собирает переменную окружения `PATH` для дочерних процессов, добавляя типовые директории бинарников:
+
+- Unix: `~/.cargo/bin`, `~/.local/bin`, `~/.bun/bin`, `~/.yarn/bin`, `~/.deno/bin`, `/usr/local/bin`, `/opt/homebrew/bin`.
+- Windows: `~\.cargo\bin`, `~\AppData\Roaming\npm`.
+
+Это гарантирует, что MCP-серверы (npx, uvx, node и пр.) будут найдены независимо от того, как настроен PATH в окружении Tauri-приложения.
+
+---
+
+## 7. `bin/` — Тестовые исполняемые файлы
+
+- **`parse_test.rs`** — ручной тест парсинга TOML (проверяет строгий парсинг на сломанном `[[mcp.servers]]`).
+- **`test_manager.rs`** — запускает `McpManager::new()`, загружает конфиг, инициализирует серверы и выводит статусы.
+
+Они не публикуются, используются только для ручного тестирования.
+
+---
+
+## Схема взаимодействия
+
+```text
+Фронтенд (React/TypeScript)
+    │  invoke("mcp_get_servers", ...)  ← через tauri-bridge.ts
+    ▼
+Tauri IPC  ←──  commands/mcp.rs (тонкие обёртки)
+    │
+    ▼
+McpManager (manager.rs)
+    │  хранит HashMap<name, Arc<McpServerProcess>>
+    │  читает/пишет openvibe.toml
+    │
+    ├── McpServerProcess #1 (process.rs)
+    │     ├── tokio::process::Child (npx / uvx / node ...)
+    │     ├── JSON-RPC 2.0 (stdin/stdout)
+    │     └── tools_cache (Vec<Value>)
+    │
+    └── McpServerProcess #2 ...
+```
+
+---
+
+## Резюме
+
+Крейт `mcp` — это полностью автономный менеджер MCP-серверов, который:
+
+- **загружает** конфигурацию из TOML с гибким парсингом и авто-восстановлением;
+- **запускает** дочерние процессы через `tokio::process::Command` с оптимизированным PATH;
+- **общается** с ними по JSON-RPC 2.0 через stdin/stdout;
+- **кэширует** список инструментов для быстрого доступа;
+- **предоставляет** API для Tauri-команд: запуск/остановка/статус/вызов инструментов;
+- **поддерживает** конфигурацию на уровне проекта и глобально, а также автоматический старт включённых серверов при запуске приложения.
