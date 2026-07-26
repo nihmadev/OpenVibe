@@ -253,6 +253,15 @@ export function Settings({
         const customHeaders = p.headers
           ?.filter((h: any) => h.key?.trim())
           .map((h: any) => [h.key.trim(), h.value.trim()] as [string, string]);
+        // Add user-defined custom models first (always included)
+        if (p.customModels && p.customModels.length > 0) {
+          for (const cm of p.customModels) {
+            const modelId = (cm as any).key?.trim();
+            if (!modelId) continue;
+            const displayName = (cm as any).value?.trim() || modelId;
+            results.push({ id: modelId, name: displayName, providerId, providerName, providerIcon });
+          }
+        }
         const res = await window.vibe.models.fetch(
           p.baseUrl,
           p.apiKey,
@@ -264,8 +273,12 @@ export function Settings({
           console.error("Failed to fetch models for", providerName, res.error);
           return;
         }
+        // Collect IDs of custom models to avoid duplicates
+        const customModelIds = new Set((p.customModels ?? []).map((cm: any) => cm.key?.trim()).filter(Boolean));
         for (const m of res.models) {
-          results.push({ id: m.id, name: m.name, providerId, providerName, providerIcon });
+          if (!customModelIds.has(m.id)) {
+            results.push({ id: m.id, name: m.name, providerId, providerName, providerIcon });
+          }
         }
       }),
     );
@@ -351,7 +364,10 @@ export function Settings({
   }
 
   function startEdit(p: Provider): void {
-    setEditing({ template: null, custom: true, editId: p.id });
+    const template = PROVIDER_TEMPLATES.find(
+      (t) => t.baseUrl === p.baseUrl || p.baseUrl.startsWith(t.baseUrl.replace(/\/+$/, "")),
+    );
+    setEditing({ template: template || null, custom: !template, editId: p.id });
   }
 
   async function disconnect(id: string): Promise<void> {
@@ -1237,6 +1253,7 @@ export function Settings({
                       modelsUrl: formData.modelsUrl || null,
                       headers: formData.headers.length > 0 ? formData.headers : null,
                       parameters: formData.parameters.length > 0 ? formData.parameters : null,
+                      customModels: formData.customModels.length > 0 ? formData.customModels : null,
                     }
                   : p,
               );
@@ -1259,6 +1276,7 @@ export function Settings({
                 modelsUrl: formData.modelsUrl || null,
                 headers: formData.headers.length > 0 ? formData.headers : null,
                 parameters: formData.parameters.length > 0 ? formData.parameters : null,
+                customModels: formData.customModels.length > 0 ? formData.customModels : null,
               };
               await window.vibe.providers.save(newP);
               await save([...providers, newP]);

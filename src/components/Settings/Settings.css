@@ -841,43 +841,30 @@
   transition: border-color 0.15s;
 }
 
-.connect-popup__input--key {
-  padding-right: 34px;
-}
-
-.connect-popup__input--key::-ms-reveal,
-.connect-popup__input--key::-ms-clear {
-  display: none;
-}
-
-.connect-popup__input--key::-webkit-credentials-auto-fill-button {
-  display: none !important;
-}
-
 .connect-popup__input:focus {
   border-color: var(--fg-dim);
 }
 
 .connect-popup__eye {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
   background: transparent;
   border: 0;
-  color: var(--fg-muted);
+  color: var(--fg-dim, var(--vscode-input-placeholderForeground, #858585));
   cursor: pointer;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-xs, 3px);
+  transition:
+    color 0.15s,
+    background-color 0.15s;
 }
 
 .connect-popup__eye:hover {
-  color: var(--fg);
-  background: var(--line);
+  color: var(--fg, #ffffff);
+  background: var(--line, rgba(255, 255, 255, 0.1));
 }
 
 .connect-popup__icon-row {

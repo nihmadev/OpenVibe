@@ -28,6 +28,7 @@ interface ConnectPopupProps {
     modelsUrl: string;
     headers: KeyValuePair[];
     parameters: KeyValuePair[];
+    customModels: KeyValuePair[];
   }) => Promise<void>;
   onClose: () => void;
 }
@@ -37,24 +38,32 @@ function PairEditor({
   keyPlaceholder,
   valuePlaceholder,
   onUpdate,
+  addLabel,
+  minRows = 0,
 }: {
   pairs: KeyValuePair[];
   keyPlaceholder: string;
   valuePlaceholder: string;
   onUpdate: (pairs: KeyValuePair[]) => void;
+  addLabel?: string;
+  minRows?: number;
 }) {
+  const visiblePairs =
+    pairs.length >= minRows
+      ? pairs
+      : [...pairs, ...Array.from({ length: minRows - pairs.length }, () => ({ key: "", value: "" }))];
   function add() {
-    onUpdate([...pairs, { key: "", value: "" }]);
+    onUpdate([...visiblePairs, { key: "", value: "" }]);
   }
   function remove(i: number) {
-    onUpdate(pairs.filter((_, idx) => idx !== i));
+    onUpdate(visiblePairs.filter((_, idx) => idx !== i));
   }
   function change(i: number, field: "key" | "value", val: string) {
-    onUpdate(pairs.map((p, idx) => (idx === i ? { ...p, [field]: val } : p)));
+    onUpdate(visiblePairs.map((p, idx) => (idx === i ? { ...p, [field]: val } : p)));
   }
   return (
     <div className="connect-popup__pairs">
-      {pairs.map((p, i) => (
+      {visiblePairs.map((p, i) => (
         <div key={i} className="connect-popup__pair-row">
           <Input
             containerClassName="connect-popup__input connect-popup__pair-key"
@@ -75,7 +84,7 @@ function PairEditor({
       ))}
       <button className="connect-popup__add-pair-btn" type="button" onClick={add}>
         <PlusIcon />
-        Add
+        {addLabel ?? "Add"}
       </button>
     </div>
   );
@@ -100,6 +109,7 @@ export function ConnectPopup({
     modelsUrl: editProvider?.modelsUrl ?? template?.modelsUrl ?? "",
     headers: editProvider?.headers ?? ([] as KeyValuePair[]),
     parameters: editProvider?.parameters ?? ([] as KeyValuePair[]),
+    customModels: editProvider?.customModels ?? ([] as KeyValuePair[]),
   });
   const [busy, setBusy] = useState(false);
   const [showKey, setShowKey] = useState(false);
@@ -126,7 +136,11 @@ export function ConnectPopup({
   }, []);
 
   const editIcon =
-    editId && editProvider ? PROVIDER_TEMPLATES.find((t) => t.baseUrl === editProvider.baseUrl)?.icon : null;
+    editId && editProvider
+      ? PROVIDER_TEMPLATES.find(
+          (t) => t.baseUrl === editProvider.baseUrl || editProvider.baseUrl.startsWith(t.baseUrl.replace(/\/+$/, "")),
+        )?.icon
+      : null;
 
   const hasCustomIcon = !!(form.customIcon && form.customIcon.startsWith("data:"));
   const isEditing = !!(editId || editProvider);
@@ -138,13 +152,13 @@ export function ConnectPopup({
           <div className="connect-popup__icon-wrap">
             {hasCustomIcon ? (
               <img src={form.customIcon} className="connect-popup__icon" alt="" />
-            ) : editIcon && isEditing ? (
+            ) : editIcon ? (
               <img
                 src={getProviderIconPath(editIcon, resolvedScheme === "light")}
                 className="connect-popup__icon"
                 alt=""
               />
-            ) : template && !isEditing ? (
+            ) : template ? (
               <img
                 src={getProviderIconPath(template.icon, resolvedScheme === "light")}
                 className="connect-popup__icon"
@@ -166,7 +180,7 @@ export function ConnectPopup({
         </div>
 
         <div className="connect-popup__body">
-          {(custom || isEditing) && (
+          {custom && (
             <div className="connect-popup__section">
               <Input
                 containerClassName="connect-popup__input"
@@ -197,13 +211,6 @@ export function ConnectPopup({
                   tabIndex={-1}
                   type="button"
                   aria-label={showKey ? t("hideKey") : t("showKey")}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    display: "flex",
-                    color: "var(--vscode-input-placeholderForeground)",
-                  }}
                 >
                   {showKey ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
@@ -211,7 +218,7 @@ export function ConnectPopup({
             />
           </div>
 
-          {(custom || isEditing) && (
+          {custom && (
             <>
               <div className="connect-popup__section">
                 <label className="connect-popup__label">{t("customIcon")}</label>
@@ -245,6 +252,20 @@ export function ConnectPopup({
                   value={form.modelsUrl}
                   onChange={(e) => setForm({ ...form, modelsUrl: e.target.value })}
                   placeholder={t("modelsUrlPlaceholder")}
+                />
+              </div>
+
+              <div className="connect-popup__section">
+                <div className="connect-popup__section-header">
+                  <label className="connect-popup__label">{t("customModelsLabel")}</label>
+                </div>
+                <PairEditor
+                  pairs={form.customModels}
+                  keyPlaceholder={t("modelIdPlaceholder")}
+                  valuePlaceholder={t("modelDisplayName")}
+                  onUpdate={(pairs) => setForm({ ...form, customModels: pairs })}
+                  addLabel={t("addModel")}
+                  minRows={1}
                 />
               </div>
 
