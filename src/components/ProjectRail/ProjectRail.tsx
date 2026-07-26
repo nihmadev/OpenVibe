@@ -17,6 +17,8 @@ interface Props {
   onToggleExpanded: () => void;
   onHover: (id: string | null) => void;
   onSettings: () => void;
+  /** IDs of projects currently being animated out (folder missing). */
+  removingIds?: Set<string>;
 }
 
 interface Ctx {
@@ -43,6 +45,7 @@ export function ProjectRail({
   onRemove,
   onHover,
   onSettings,
+  removingIds,
 }: Omit<Props, "expanded" | "onToggleExpanded">): React.ReactElement {
   const { t } = useI18n();
   const [ctx, setCtx] = useState<Ctx | null>(null);
@@ -80,17 +83,23 @@ export function ProjectRail({
       <div className="project-rail__list">
         {projects.map((p, i) => {
           const isActive = p.id === activeId;
+          const isRemoving = removingIds?.has(p.id) ?? false;
           return (
             <button
               key={p.id}
-              className={"project-rail__tile" + (isActive ? " project-rail__tile--active" : "")}
-              onClick={() => onPick(p.id)}
-              onMouseEnter={() => onHover(p.id)}
+              className={
+                "project-rail__tile" +
+                (isActive ? " project-rail__tile--active" : "") +
+                (isRemoving ? " project-rail__tile--removing" : "")
+              }
+              onClick={() => !isRemoving && onPick(p.id)}
+              onMouseEnter={() => !isRemoving && onHover(p.id)}
               onContextMenu={(e) => {
                 e.preventDefault();
-                setCtx({ x: e.clientX, y: e.clientY, project: p });
+                if (!isRemoving) setCtx({ x: e.clientX, y: e.clientY, project: p });
               }}
               style={isActive ? ({ "--tile-color": p.color } as React.CSSProperties) : undefined}
+              disabled={isRemoving}
             >
               <span className="project-rail__avatar" style={{ "--avatar-bg": p.color } as React.CSSProperties}>
                 {p.photo ? <img src={p.photo} alt="" className="project-rail__avatar-img" /> : avatarDisplay(p, i)}
