@@ -371,8 +371,34 @@ export function Settings({
   }
 
   async function disconnect(id: string): Promise<void> {
+    const deletedProvider = providers.find((p) => p.id === id);
     await window.vibe.providers.delete(id);
-    await save(providers.filter((p) => p.id !== id));
+    const remaining = providers.filter((p) => p.id !== id);
+    await save(remaining);
+
+    // If the deleted provider was the active one, switch to another provider
+    // so the backend doesn't keep stale base_url/api_key/provider_id.
+    // We read the live config from the bridge state to check.
+    const { currentConfig } = await import("../../bridge/state.js");
+    const activeProviderId = currentConfig?.providerId;
+    const wasActive =
+      activeProviderId === id ||
+      // Also match when the active base_url belongs to the deleted provider
+      // (covers cases where provider_id in config is a template id but the
+      // DB record uses a generated id).
+      (deletedProvider && currentConfig?.baseUrl === deletedProvider.baseUrl);
+
+    if (wasActive) {
+      const nextProvider = remaining.find((p) => p.apiKey);
+      if (nextProvider) {
+        window.vibe.setProvider(nextProvider.apiKey, nextProvider.baseUrl, nextProvider.model, nextProvider.id);
+        onProviderChanged?.(nextProvider.model, nextProvider.baseUrl);
+      } else {
+        // No providers left — clear the active config
+        window.vibe.setProvider("", "", "", undefined);
+        onProviderChanged?.("", "");
+      }
+    }
   }
 
   if (!open) return null;
@@ -1005,33 +1031,6 @@ export function Settings({
 
                 <div className="settings__section">
                   <div className="settings__providers-list">
-                    {PROVIDER_TEMPLATES.map((tmpl) => (
-                      <div key={tmpl.id} className="settings__provider-row">
-                        <div className="settings__provider-info">
-                          <img
-                            src={getProviderIconPath(tmpl.icon, resolvedScheme === "light")}
-                            className="settings__provider-icon"
-                            alt=""
-                          />
-                          <div className="settings__provider-name">{tmpl.name}</div>
-                        </div>
-                        <button className="settings__connect-btn" onClick={() => startConnect(tmpl)}>
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                          >
-                            <line x1="12" y1="5" x2="12" y2="19" />
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                          </svg>
-                          {t("connect")}
-                        </button>
-                      </div>
-                    ))}
                     <div className="settings__provider-row">
                       <div className="settings__provider-info">
                         <div className="settings__provider-icon-placeholder">
@@ -1064,6 +1063,33 @@ export function Settings({
                         {t("connect")}
                       </button>
                     </div>
+                    {PROVIDER_TEMPLATES.map((tmpl) => (
+                      <div key={tmpl.id} className="settings__provider-row">
+                        <div className="settings__provider-info">
+                          <img
+                            src={getProviderIconPath(tmpl.icon, resolvedScheme === "light")}
+                            className="settings__provider-icon"
+                            alt=""
+                          />
+                          <div className="settings__provider-name">{tmpl.name}</div>
+                        </div>
+                        <button className="settings__connect-btn" onClick={() => startConnect(tmpl)}>
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                          >
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                          </svg>
+                          {t("connect")}
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </>

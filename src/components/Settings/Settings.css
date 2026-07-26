@@ -1057,7 +1057,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  max-height: 2000px;
+  max-height: 99999px;
   opacity: 1;
   transition:
     max-height 0.35s ease,

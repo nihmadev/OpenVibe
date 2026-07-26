@@ -23,7 +23,6 @@ export const ru = {
     "Маршрутизировать API-запросы через быстрый прокси-сервер в Европе для обхода региональных ограничений",
 
   // Appearance
-  appearance: "Внешний вид",
   theme: "Тема",
   themeDesc: "Выберите тему оформления приложения",
   colorScheme: "Цветовая схема",
@@ -104,8 +103,6 @@ export const ru = {
   apiKeyPlaceholder: "API-ключ",
   showKey: "Показать ключ",
   save: "Сохранить",
-  showAdvanced: "Дополнительно",
-  hideAdvanced: "Скрыть доп. настройки",
   customIcon: "Своя иконка (URL или загрузка)",
   modelsUrl: "URL списка моделей (опционально)",
   headers: "Заголовки",
@@ -144,16 +141,12 @@ export const ru = {
   hideButton: "Скрыть",
   showButton: "Показать",
   restoreButtons: "Восстановить кнопки",
-  nothingHidden: "Ничего не скрыто",
-  minimize: "Свернуть",
-  maximize: "Развернуть",
   close: "Закрыть",
   minimizeLabel: "Свернуть",
   maximizeLabel: "Развернуть",
   closeLabel: "Закрыть",
 
   // Welcome
-  welcomeTitle: "vibe",
   welcomeSubtitle: "Нет открытого проекта. Выберите папку, чтобы начать сессию.",
   openProject: "Открыть проект",
 
@@ -162,10 +155,6 @@ export const ru = {
   fatalErrorHint: "Установите VIBE_API_KEY в .env рядом с vibe, в ~/.vibe/config или как переменную окружения.",
 
   // Confirm
-  confirmTitle: "Подтвердить вызов инструмента:",
-  yesRun: "Да, выполнить",
-  alwaysAllow: "Всегда разрешать этот инструмент",
-  noSkip: "Нет, пропустить",
 
   // Loading
   loadingText: "Openvibe загружается…",
@@ -187,7 +176,6 @@ export const ru = {
   todoProgress: "Выполнено задач: {completed} из {count}",
   todoPin: "Закрепить список задач",
   todoUnpin: "Открепить список задач",
-  todoNext: "Далее:",
   todoCreated: "Создал план задач",
   todoCompleted: "Завершил задачу",
   todoBlocked: "Заблокирован на задаче",
@@ -197,41 +185,11 @@ export const ru = {
   filesChanged_one: "{count} файл изменён",
   filesChanged_few: "{count} файла изменено",
   regenerate: "Перегенерировать",
-  thinking: "Размышляет",
-  thought: "Размышления",
 
   // Vibing loader phrases
-  vibing: "Вайблю...",
-  catchingFlow: "Ловлю поток...",
-  brewingCode: "Варю код...",
-  feelingLogic: "Чувствую логику...",
-  chillingBits: "Играюсь с битами...",
-  surfingSyntax: "Сёрфлю по синтаксису...",
 
   // Tool group / analysis
-  analysis: "Анализ",
   changes: "Изменения",
-  analysisRead: "{count} чтений",
-  analysisRead_one: "{count} чтение",
-  analysisRead_few: "{count} чтения",
-  analysisSearch: "{count} поисков",
-  analysisSearch_one: "{count} поиск",
-  analysisSearch_few: "{count} поиска",
-  analysisWrite: "{count} записей",
-  analysisWrite_one: "{count} запись",
-  analysisWrite_few: "{count} записи",
-  analysisEdit: "{count} редактирований",
-  analysisEdit_one: "{count} редактирование",
-  analysisEdit_few: "{count} редактирования",
-  analysisBash: "{count} запусков",
-  analysisBash_one: "{count} запуск",
-  analysisBash_few: "{count} запуска",
-  analysisList: "{count} листингов",
-  analysisList_one: "{count} листинг",
-  analysisList_few: "{count} листинга",
-  analysisAgent: "{count} исследований",
-  analysisAgent_one: "{count} исследование",
-  analysisAgent_few: "{count} исследования",
 
   // Tool verbs (chat-history/utils)
   reading: "Чтение",
@@ -287,7 +245,6 @@ export const ru = {
   openProjectMenuItem: "Открыть проект",
   revealExplorer: "Показать в проводнике",
   removeFromList: "Убрать из списка",
-  projectFolderMissing: "Папка проекта не найдена",
   openFolder: "Открыть папку",
   settings: "Настройки",
   editProject: "Редактировать",
@@ -326,7 +283,6 @@ export const ru = {
 
   // TerminalCodeBlock
   terminal: "Терминал",
-  insertTerminal: "Вставить в терминал",
 
   // Terminals
   terminalTab: "Терминал {num}",
@@ -389,35 +345,20 @@ export const ru = {
   project: "Проект",
   editor: "Редактор",
   noHotkeys: "Горячие клавиши не загружены",
-  hotkeysNotConfigurable: "Горячие клавиши пока нельзя изменить",
 
   // Settings remaining strings
   openSettingsHotkey: "Открыть настройки",
-  newChatHotkey: "Новый чат",
-  prevChatHotkey: "Предыдущий чат",
-  nextChatHotkey: "Следующий чат",
   clearChatHotkey: "Очистить чат",
-  focusInputHotkey: "Фокус ввода",
-  openSearchHotkey: "Быстрый поиск",
-  toggleChatSideHotkey: "Боковая панель чатов",
-  toggleFileTreeHotkey: "Дерево файлов",
-  toggleTerminalHotkey: "Терминал",
   newProjectHotkey: "Новый проект",
   closeProjectHotkey: "Закрыть проект",
   closeFileHotkey: "Закрыть файл",
-  nextFileHotkey: "Следующий файл",
-  prevFileHotkey: "Предыдущий файл",
   appName: "OpenVibe Desktop",
   appVersion: "v1.3.6",
   manuallyStopped: "Остановлено пользователем",
-  back: "Назад",
-  recordingNotSupported: "Запись не поддерживается",
 
   // Design / Animation settings
   design: "Дизайн",
-  designDesc: "Настройте анимации и переходы интерфейса",
   animations: "Анимации",
-  animationsDesc: "Выберите стиль анимаций для каждого элемента",
   animStyleFade: "Fade",
   animStyleSlide: "Slide",
   animStyleScale: "Scale",
@@ -435,9 +376,6 @@ export const ru = {
   animButtonsDesc: "Интерактивные элементы при наведении",
   animPanelAppear: "Панели и модалки",
   animPanelAppearDesc: "Появление настроек, всплывающих окон",
-  preview: "Превью",
-  animPreviewTitle: "Превью анимации",
-  animPreviewClose: "Закрыть",
   animMultiplier: "Плавность анимаций",
   animMultiplierDesc:
     "Множитель плавности анимаций. 0 = отключено, 0.5 = быстро, 1 = нормально, 2 = плавно, 5 = ультра плавно",
@@ -465,7 +403,6 @@ export const ru = {
 
   // MCP
   edit: "Редактировать",
-  mcpCall: "MCP Вызов",
   mcpServers: "Серверы MCP",
 
   mcpServersCount: "Серверы MCP ({count})",
@@ -478,19 +415,10 @@ export const ru = {
   mcpExport: "Экспорт",
   mcpImport: "Импорт",
   mcpSaveTomlConfig: "Сохранить TOML конфиг",
-  mcpNoServersConfiguredYet: "MCP серверы ещё не настроены.",
-  mcpAddServerDesc: "Добавьте сервер для расширения возможностей OpenVibe.",
-  mcpDisabled: "Отключен",
-  mcpRunning: "Работает",
-  mcpStopped: "Остановлен",
-  mcpErrorStatus: "Ошибка",
-  mcpErrorPrefix: "Ошибка: {error}",
   mcpEnableServer: "Включить сервер",
   mcpDisableServer: "Отключить сервер",
   mcpStartServer: "Запустить сервер",
   mcpStopServer: "Остановить сервер",
-  mcpCommandLabel: "Команда:",
-  mcpEnvLabel: "Переменные:",
   mcpAddServerTitle: "Добавить MCP сервер",
   mcpEditServerTitle: "Редактировать MCP сервер",
   mcpServerName: "Имя сервера",
@@ -538,8 +466,6 @@ export const ru = {
   inlineNextDiff: "Следующее изменение",
 
   // Agent run
-  agentRunWorking: "Работаю",
-  agentRunInProgress: "Выполняется",
   agentRunWorkingFor: "Работаю {time}",
   agentRunWorkedFor: "Работал на протяжении {time}",
   showToolCalls: "Показать вызовы инструментов",
@@ -549,11 +475,7 @@ export const ru = {
   agentRunSeconds: "{count} секунд",
   agentRunMinutesShort: "{count}м",
   agentRunSecondsShort: "{count} с",
-  agentRunActions_one: "{count} действие",
-  agentRunActions_few: "{count} действия",
-  agentRunActions: "{count} действий",
   activityRepeatedCalls: "Вызовов: {count}",
-  agentRunReasoning: "Анализирую следующий шаг",
   activityProjectStructure: "Изучаю структуру проекта",
   activityInspectFolder: "Изучаю папку {name}",
   activityReadFile: "Изучаю {name}",
@@ -590,7 +512,6 @@ export const ru = {
   activityGroupGit: "операции Git",
   activityGroupExternal: "внешние инструменты",
   activityGroupTools: "действия",
-  activityGroupAnd: "и",
 
   // Group labels with count (accordion headers)
   activityGroupSearchN_one: "Поиск — {count} запрос",
@@ -628,10 +549,6 @@ export const ru = {
   activityGroupTodoN: "Планирование — {count} задач",
 
   // Legacy thinking block
-  thinkingInProgress: "Думаю...",
-  thinkingComplete: "Думал",
-  thoughtFor: "думал {duration}",
-  thoughtForPrefix: "Думал {duration}",
 
   // VideoViewer
   videoPlay: "Воспроизведение (Space)",
@@ -734,10 +651,6 @@ export const ru = {
   rerunOnboardingDesc: "Заново пройти приветственный экран и быструю настройку",
   animationSpeed: "Скорость анимаций",
   animationSpeedDesc: "Плавность интерфейсных переходов и эффектов",
-  animSmooth: "Плавные (1x)",
-  animSnappy: "Быстрые (0.5x)",
-  animUltraSmooth: "Ультра плавные (2x)",
-  animDisabled: "Отключены (0x)",
   promptMarkdown: "Markdown в поле ввода",
   promptMarkdownDesc: "Отрисовка форматирования Markdown при вводе промптов",
   promptMarkdownGhost: "Показывать символы синтаксиса (**)",
