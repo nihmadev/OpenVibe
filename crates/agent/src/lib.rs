@@ -1,5 +1,7 @@
 pub mod agent;
+pub mod cancel;
 pub mod chat;
+pub mod compact;
 pub mod config;
 pub mod definition;
 pub mod events;

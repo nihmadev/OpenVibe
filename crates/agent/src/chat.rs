@@ -15,6 +15,12 @@ pub struct ChatMessage {
     pub reasoning_content: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reasoning_name: Option<String>,
+    /// Provider-reported token usage for the turn that produced this message
+    /// (assistant messages only). Includes Anthropic prompt-cache metrics.
+    /// Never serialized into outbound API requests (`messages_to_api_json`
+    /// builds request JSON field-by-field and ignores this field).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub usage: Option<TokenUsage>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -42,6 +48,15 @@ pub struct TokenUsage {
     pub prompt_tokens: usize,
     pub completion_tokens: usize,
     pub total_tokens: usize,
+    /// Anthropic prompt caching: tokens written to the cache this turn
+    /// (billed at 1.25x input price). `None` for providers without caching.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cache_creation_input_tokens: Option<usize>,
+    /// Anthropic prompt caching: tokens served from the cache this turn
+    /// (billed at 0.1x input price). Also populated from the OpenAI-compat
+    /// `prompt_tokens_details.cached_tokens` field when present.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cache_read_input_tokens: Option<usize>,
 }
 
 #[derive(Debug, Clone, Serialize)]

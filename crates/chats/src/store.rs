@@ -121,6 +121,7 @@ impl ChatStore {
                         tool_calls,
                         reasoning_content: reasoning,
                         reasoning_name,
+                        usage: None,
                     }
                 },
             )
