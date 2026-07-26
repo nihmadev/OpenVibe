@@ -164,3 +164,104 @@ pub fn git_file_content(path: String, file_path: String, ref_name: String) -> Re
     }
     git::status::get_file_content_at_ref(&path, &file_path, &ref_name).map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub async fn generate_commit_message(state: tauri::State<'_, crate::AppState>, path: String) -> Result<String, String> {
+    if path.is_empty() {
+        return Err("No project open".into());
+    }
+
+    let diff_text = git::diff::get_staged_diff_text(&path).map_err(|e| e.to_string())?;
+    if diff_text.trim().is_empty() {
+        return Err("No staged changes found".into());
+    }
+
+    let mut cfg = {
+        let config_lock = state.config.lock().map_err(|e| e.to_string())?;
+        config_lock.as_ref().cloned().unwrap_or_else(|| config::Config {
+            api_key: String::new(),
+            base_url: "https://api.openai.com/v1".to_string(),
+            model: "gpt-4o-mini".to_string(),
+            cwd: path.clone(),
+            auto_approve: false,
+            provider_id: None,
+            api_url: Some("https://api.nihmadev.fun".to_string()),
+            reasoning_effort: None,
+        })
+    };
+
+    let use_proxy = state
+        .projects
+        .lock()
+        .map_err(|e| e.to_string())
+        .and_then(|p| p.get_state("settings:useRegionalProxy").map_err(|e| e.to_string()))
+        .unwrap_or(Some("true".to_string()))
+        .unwrap_or_else(|| "true".to_string());
+
+    if use_proxy != "true" {
+        cfg.api_url = None;
+    }
+
+    let llm_config = cfg.to_agent_config().llm_config();
+    let cancel = std::sync::atomic::AtomicBool::new(false);
+    let client = reqwest::Client::new();
+
+    let system_prompt = "You are an expert Git commit message generator. Analyze the provided git diff of staged changes and generate a concise conventional commit message (e.g. feat(scope): message, fix(scope): message, docs: message, etc.).\nRULES:\n1. Return ONLY the raw commit message text.\n2. Do NOT wrap in markdown backticks or code blocks.\n3. Do NOT add explanation, greetings, or conversation.\n4. Keep the title line concise (under 72 chars).";
+
+    // Truncate diff_text if extremely long to avoid context overflow
+    let max_diff_len = 15000;
+    let truncated_diff = if diff_text.len() > max_diff_len {
+        format!("{}\n...[diff truncated]", &diff_text[..max_diff_len])
+    } else {
+        diff_text
+    };
+
+    let messages = vec![
+        agent::ChatMessage {
+            role: "system".to_string(),
+            content: Some(serde_json::Value::String(system_prompt.to_string())),
+            name: None,
+            tool_call_id: None,
+            tool_calls: None,
+            reasoning_content: None,
+            reasoning_name: None,
+            usage: None,
+        },
+        agent::ChatMessage {
+            role: "user".to_string(),
+            content: Some(serde_json::Value::String(format!("Here is the git diff:\n\n{}", truncated_diff))),
+            name: None,
+            tool_call_id: None,
+            tool_calls: None,
+            reasoning_content: None,
+            reasoning_name: None,
+            usage: None,
+        },
+    ];
+
+    let turn = agent::request::stream_chat(
+        &llm_config,
+        messages,
+        Vec::new(),
+        &cancel,
+        &client,
+        &|_| {},
+        &|_| {},
+        &|_| {},
+        &|| {},
+        &|_, _| {},
+    )
+    .await?;
+
+    let mut message = turn.content.trim().to_string();
+    if message.starts_with("```") {
+        message =
+            message.trim_start_matches("```").trim_start_matches("text").trim_start_matches("markdown").to_string();
+        if let Some(idx) = message.rfind("```") {
+            message = message[..idx].to_string();
+        }
+        message = message.trim().to_string();
+    }
+
+    Ok(message)
+}

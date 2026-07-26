@@ -365,6 +365,7 @@ pub fn run() {
             commands::git::git_checkout_branch,
             commands::git::git_create_branch,
             commands::git::git_file_content,
+            commands::git::generate_commit_message,
             // Terminal commands
             commands::terminals::term_start,
             commands::terminals::term_write,

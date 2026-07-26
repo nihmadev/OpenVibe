@@ -127,8 +127,11 @@ pub async fn agent_send(
         }
     }
 
-    // 4. Await SCG2 result & update system prompt before LLM call
-    let scg2_context = scg2_handle.await.map_err(|e| e.to_string())?;
+    // 4. Await SCG2 result with a 500ms timeout & update system prompt before LLM call
+    let scg2_context = match tokio::time::timeout(std::time::Duration::from_millis(500), scg2_handle).await {
+        Ok(Ok(ctx)) => ctx,
+        _ => String::new(),
+    };
     if !scg2_context.trim().is_empty() {
         agent.update_system_prompt(Some(&scg2_context));
     }
@@ -213,17 +216,17 @@ pub async fn agent_send(
 
 #[tauri::command]
 pub async fn agent_stop(state: State<'_, AppState>) -> Result<(), String> {
-    // Try the agent first (it's in state when not currently sending)
-    if let Ok(agent_lock) = state.agent.lock() {
-        if let Some(ref agent) = *agent_lock {
-            agent.stop();
-            return Ok(());
-        }
-    }
-    // Agent was taken out by agent_send — use the cancel token instead
+    // Always set the cancel token first — during active generation the agent is
+    // taken out of state, so only the stashed cancel Arc is reachable.
     if let Ok(cancel_lock) = state.agent_cancel.lock() {
         if let Some(ref cancel) = *cancel_lock {
             cancel.store(true, Ordering::Relaxed);
+        }
+    }
+    // Also try the agent directly (covers the case when it is idle in state)
+    if let Ok(agent_lock) = state.agent.lock() {
+        if let Some(ref agent) = *agent_lock {
+            agent.stop();
         }
     }
     Ok(())
