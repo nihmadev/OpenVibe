@@ -94,7 +94,7 @@ export function GitDiffViewer({ path, cwd }: GitDiffViewerProps) {
 
   if (error) {
     return (
-      <div className="editor-area__empty-hint" style={{ color: "var(--vscode-errorForeground)" }}>
+      <div className="editor-area__empty-hint" style={{ color: "var(--red)" }}>
         {error}
       </div>
     );

@@ -3,7 +3,7 @@
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
   overflow: hidden;
-  margin: 8px 0;
+  margin: var(--space-4) 0;
   contain: content;
 }
 
@@ -20,9 +20,9 @@
   z-index: 10;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-2);
   opacity: 0;
-  transition: opacity 0.15s;
+  transition: opacity var(--duration-fast);
 }
 
 .code-block:hover .code-block__actions {
@@ -42,22 +42,22 @@
   align-items: center;
   justify-content: center;
   transition:
-    color 0.2s,
-    background 0.2s;
+    color var(--duration-normal),
+    background var(--duration-normal);
   cursor: pointer;
 }
 
 .code-block__action-btn:hover,
 .code-block__copy:hover {
   color: var(--fg);
-  background: var(--bg-1);
+  background: var(--bg-3);
 }
 
 .code-block__pre {
   margin: 0;
-  padding: 6px 10px;
+  padding: var(--space-3) var(--space-5);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--text-sm);
   line-height: 18px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -77,7 +77,7 @@
 
 .code-block__code {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--text-sm);
   line-height: 18px;
   color: var(--fg);
   white-space: pre-wrap;
@@ -113,7 +113,7 @@
 }
 
 .code-block__container .monaco-editor .lines-content {
-  padding-left: 10px !important;
+  padding-left: var(--space-5) !important;
 }
 
 .code-block__container .monaco-editor .decorationsOverviewRuler,

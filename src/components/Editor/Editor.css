@@ -13,7 +13,7 @@
   align-items: center;
   justify-content: center;
   color: var(--fg-muted);
-  font-size: 12px;
+  font-size: var(--text-sm);
   background: var(--bg);
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -23,21 +23,21 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: var(--space-6);
   background: var(--bg);
   text-align: center;
-  padding: 20px;
+  padding: var(--space-8);
 }
 
 .editor__error-title {
   color: var(--red);
-  font-size: 14px;
+  font-size: var(--text-lg);
   font-weight: 500;
 }
 
 .editor__error-msg {
   color: var(--fg-dim);
-  font-size: 12px;
+  font-size: var(--text-sm);
   max-width: 300px;
 }
 
@@ -45,10 +45,10 @@
   border: 1px solid var(--line);
   background: transparent;
   color: var(--fg-dim);
-  padding: 6px 12px;
+  padding: var(--space-3) var(--space-6);
   border-radius: var(--radius-sm);
-  font-size: 12px;
-  transition: all 0.2s;
+  font-size: var(--text-sm);
+  transition: all var(--duration-normal);
 }
 
 .editor__retry:hover {
@@ -62,7 +62,7 @@
   top: 6px;
   right: 10px;
   z-index: 10;
-  font-size: 10px;
+  font-size: var(--text-2xs);
   color: var(--fg);
   pointer-events: none;
   user-select: none;
@@ -73,7 +73,7 @@
   top: 6px;
   right: 10px;
   z-index: 10;
-  font-size: 10px;
+  font-size: var(--text-2xs);
   color: var(--green);
   pointer-events: none;
   user-select: none;
@@ -126,7 +126,7 @@
   justify-content: center;
   background: transparent !important;
   border: none !important;
-  padding: 8px 16px;
+  padding: var(--space-4) var(--space-7);
   margin: 0 !important;
   box-shadow: none !important;
   border-radius: 0 !important;
@@ -146,7 +146,7 @@
 .inline-vibe-portal-root {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-4);
   width: 100%;
   animation-name: var(--anim-panel-appear-keyframes, anim-fade-slide);
   animation-duration: calc(var(--anim-panel-appear-duration, 0.22s) * var(--anim-panel-appear-enabled, 1));
@@ -162,11 +162,11 @@
 .inline-vibe-input-wrapper {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: var(--space-4);
   background: var(--bg-3);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  padding: 4px 8px;
+  padding: var(--space-2) var(--space-4);
   width: 100%;
   max-width: 800px;
   transition:
@@ -195,7 +195,7 @@
   box-shadow: none !important;
   color: var(--fg);
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: var(--text-md);
   resize: none;
   height: 26px;
   min-height: 26px;
@@ -271,7 +271,7 @@
 }
 
 .inline-vibe-send-btn:disabled {
-  opacity: 0.3;
+  opacity: var(--disabled-opacity);
   background: var(--line-strong);
   color: var(--fg-muted);
   cursor: not-allowed;
@@ -303,13 +303,13 @@
 .inline-vibe-action-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-3);
   background: transparent;
   border: none;
   padding: 0;
   box-shadow: none !important;
   font-family: var(--sans);
-  font-size: 12px;
+  font-size: var(--text-sm);
   flex-wrap: wrap;
   animation-name: var(--anim-panel-appear-keyframes, anim-fade-slide);
   animation-duration: calc(var(--anim-panel-appear-duration, 0.22s) * var(--anim-panel-appear-enabled, 1));
@@ -319,11 +319,11 @@
 .inline-vibe-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-3);
   background: var(--bg-3);
   border: 1px solid var(--line);
   color: var(--fg);
-  padding: 4px 10px;
+  padding: var(--space-2) var(--space-5);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition:
@@ -340,7 +340,7 @@
 
 .inline-vibe-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: var(--bg-4);
+  background: var(--bg-3);
   border-color: var(--line-strong);
 }
 
@@ -352,12 +352,12 @@
   width: 1px;
   height: 16px;
   background: var(--line);
-  margin: 0 4px;
+  margin: 0 var(--space-2);
 }
 
 .inline-vibe-btn--nav {
   color: var(--fg-dim);
-  padding: 4px 8px;
+  padding: var(--space-2) var(--space-4);
 }
 
 .inline-vibe-btn--nav:hover {
@@ -371,7 +371,7 @@
   color: var(--fg-muted) !important;
   opacity: 0.55 !important;
   font-family: var(--sans) !important;
-  font-size: 12px !important;
+  font-size: var(--text-sm) !important;
   font-style: italic !important;
   pointer-events: none !important;
   user-select: none !important;

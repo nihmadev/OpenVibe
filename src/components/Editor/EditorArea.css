@@ -17,7 +17,7 @@
 
 .editor-area__empty-hint {
   color: var(--fg-dim);
-  font-size: 12px;
+  font-size: var(--text-sm);
   user-select: none;
 }
 
@@ -31,31 +31,16 @@
   overflow-y: hidden;
   background: var(--bg-2);
   border-bottom: 1px solid var(--line);
-  scrollbar-width: none !important;
+  /* Scrollbar hidden globally via scrollbar.css */
 }
 
-.editor-area__tabs::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-.editor-area__tabs::-webkit-scrollbar-thumb {
-  display: none !important;
-  background: transparent !important;
-}
-
-.editor-area__tabs::-webkit-scrollbar-track {
-  display: none !important;
-  background: transparent !important;
-}
 .editor-area__tab {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 0 8px 0 10px;
+  gap: var(--space-2);
+  padding: 0 var(--space-4) 0 var(--space-5);
   height: 35px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--fg-muted);
   background: transparent;
   border-right: 1px solid var(--line);
@@ -65,8 +50,8 @@
   flex-shrink: 0;
   user-select: none;
   transition:
-    color 0.1s,
-    background 0.1s;
+    color var(--duration-fast),
+    background var(--duration-fast);
 }
 
 .editor-area__tab--preview .editor-area__tab-name {
@@ -111,15 +96,15 @@
   border: none;
   background: transparent;
   color: transparent;
-  font-size: 14px;
+  font-size: var(--text-lg);
   border-radius: var(--radius-xs);
   cursor: pointer;
   flex-shrink: 0;
   padding: 0;
   line-height: 1;
   transition:
-    background 0.1s,
-    color 0.1s;
+    background var(--duration-fast),
+    color var(--duration-fast);
 }
 
 .editor-area__tab:hover .editor-area__tab-close,
@@ -152,7 +137,7 @@
   height: 8px;
   border-radius: 50%;
   background: var(--fg-muted);
-  transition: background 0.1s;
+  transition: background var(--duration-fast);
 }
 
 .editor-area__tab--active .editor-area__tab-dirty::after {
@@ -165,8 +150,8 @@
 
 /* ── Pill tabs ── */
 .theme-tab-pills .editor-area__tabs {
-  padding: 4px 6px;
-  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  gap: var(--space-1);
   border-bottom: 1px solid var(--line);
   background: transparent;
 }
@@ -174,7 +159,7 @@
 .theme-tab-pills .editor-area__tab {
   border-right: none;
   border-bottom: none;
-  padding: 0 10px;
+  padding: 0 var(--space-5);
   height: 28px;
   border-radius: var(--radius);
   box-shadow: inset 0 0 0 0.3px var(--fg-muted);
@@ -218,32 +203,16 @@
   flex-shrink: 0;
   min-width: 0;
   height: 26px;
-  padding: 0 10px;
+  padding: 0 var(--space-5);
   background: transparent;
   border-bottom: none;
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--fg);
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
   gap: 1px;
-  scrollbar-width: none !important;
-}
-
-.editor-area__breadcrumb::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-.editor-area__breadcrumb::-webkit-scrollbar-thumb {
-  display: none !important;
-  background: transparent !important;
-}
-
-.editor-area__breadcrumb::-webkit-scrollbar-track {
-  display: none !important;
-  background: transparent !important;
+  /* Scrollbar hidden globally via scrollbar.css */
 }
 
 .editor-area__breadcrumb-sep {
@@ -257,9 +226,9 @@
 .editor-area__breadcrumb-seg {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-2);
   color: var(--fg);
-  padding: 0 2px;
+  padding: 0 var(--space-1);
   border-radius: var(--radius-xs);
 }
 
