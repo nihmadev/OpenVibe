@@ -351,7 +351,7 @@ export const ar: Partial<Translations> = {
   zoomDefault: "التكبير الافتراضي",
   zoomDefaultDesc: "مستوى التكبير عند الضغط على Ctrl+0",
   appName: "سطح المكتب المفتوح فايب",
-  appVersion: "v1.3.6",
+  appVersion: "v1.3.7",
   langRussian: "الروسية",
   langEnglish: "إنجليزي",
   langChinese: "中文 (繁體)",

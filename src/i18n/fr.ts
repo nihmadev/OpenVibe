@@ -354,7 +354,7 @@ export const fr: Partial<Translations> = {
   zoomDefaultDesc: "Niveau de zoom en appuyant sur Ctrl+0",
   terminalShell: "Coque de terminal",
   appName: "Bureau OpenVibe",
-  appVersion: "v1.3.6",
+  appVersion: "v1.3.7",
   shell: "Coquille",
   langRussian: "russe",
   langEnglish: "Anglais",

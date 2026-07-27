@@ -5,6 +5,51 @@ All notable changes to OpenVibe will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.7](https://github.com/nihmadev/OpenVibe/compare/v1.3.6...v1.3.7) (2026-07-27)
+
+This release makes long-running agent sessions more capable and efficient with automatic context compaction, native reasoning round-trips, prompt caching, web research tools, and token usage tracking. It also expands theme and provider customization, redesigns the agent and Git workflows, and introduces a shared design-token and icon foundation across the interface.
+
+### Added
+
+* **Agent Context, Reasoning & Usage**
+  * Added automatic LLM-powered context compaction at high context usage, preserving the original task, recent messages, file snapshots, and a structured handoff summary.
+  * Added native reasoning round-trips across supported provider formats so reasoning content and signatures survive multi-turn tool workflows without being duplicated in visible messages.
+  * Added Anthropic prompt caching support and cache creation/read metrics alongside per-message input, output, reasoning, and total token usage tracking.
+  * Added shared cancellation state and improved controls for stopping active agent work.
+
+* **Web Research & Agent Tools**
+  * Added `web_search` and `fetch_url` tools backed by Jina Search and Reader, with request timeouts, reusable connections, output limits, and Markdown-formatted results.
+  * Renamed the agent's `bash` tool to the clearer cross-platform `run` tool.
+  * Expanded code search with richer filters, context controls, pagination, ignored-file handling, and bounded output.
+
+* **Themes, Design System & Icons**
+  * Added 22 themes: AMOLED, Aura, Catppuccin, Catppuccin Frappe, Catppuccin Macchiato, Cobalt2, Dracula, Lucent Orng, Material, Matrix, Mercury, Night Owl, One Dark Pro, OpenCode, Orng, Osaka Jade, Palenight, Rose Pine, Shades of Purple, Solarized, SynthWave '84, and Tokyo Night.
+  * Added shared spacing, typography, motion, elevation, icon-button, and scrollbar design tokens and migrated the application UI to them.
+  * Added a custom SVG icon system with more than 30 icons and replaced the remaining Lucide icon dependencies across agent, settings, and titlebar surfaces.
+
+* **Git & Provider Workflows**
+  * Added AI-generated Git commit messages from staged or working-tree diffs and redesigned the commit action as a split button.
+  * Added staged diff extraction and optimized co-committed file history queries.
+  * Added persistent custom model IDs and display names for custom providers, with a tabbed General/Advanced connection editor for models, headers, and parameters.
+
+* **Project & Agent UI**
+  * Redesigned agent runs as a chronological, collapsible timeline for reasoning, narration, web activity, Git actions, tool calls, notices, and errors.
+  * Added automatic validation of saved project paths, periodic polling, and animated removal of projects whose folders no longer exist.
+  * Added translations for web tools, Git activity, diff/restore actions, and the updated agent timeline.
+
+### Fixed
+
+* Fixed model enablement collisions by using provider/model composite keys and improved raw model ID parsing and display-name formatting.
+* Fixed Monaco theme generation for short hex colors and moved the default theme to the same JSON-driven pipeline as other themes.
+* Fixed staged-file detection used by Git actions and commit message generation.
+* Prevented stale project entries from remaining active after their folders are removed.
+
+### Changed
+
+* Replaced the Session List's bespoke dropdown with the shared `ContextMenu` component and standardized buttons, scrollbars, colors, spacing, and motion across the UI.
+* Cleaned up unused translation keys, Settings UI code, documentation, configuration, and debug artifacts.
+* Bumped the application, desktop package, Tauri manifest, LSP client metadata, and localized version labels to `1.3.7`.
+
 ## [1.3.6](https://github.com/nihmadev/OpenVibe/compare/v1.3.5...v1.3.6) (2026-07-22)
 
 This release adds reasoning effort control for AI models, a cross-platform clipboard utility with Wayland (`wl-copy`) support, live Markdown rendering in the prompt editor, security guards for external links and drag-and-drop events, and dark glassmorphism styling for context menus.

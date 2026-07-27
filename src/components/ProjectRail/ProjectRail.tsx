@@ -107,12 +107,12 @@ export function ProjectRail({
             </button>
           );
         })}
-        <Tooltip text={t("openFolder")} side="right">
-          <button className="project-rail__add" onClick={onAdd} aria-label={t("openFolder")}>
-            +
-          </button>
-        </Tooltip>
       </div>
+      <Tooltip text={t("openFolder")} side="right">
+        <button className="project-rail__add" onClick={onAdd} aria-label={t("openFolder")}>
+          +
+        </button>
+      </Tooltip>
 
       <div className="project-rail__bottom">
         <Tooltip text={t("settings")} side="right">

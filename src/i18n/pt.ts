@@ -350,7 +350,7 @@ export const pt: Partial<Translations> = {
   zoomDefaultDesc: "Nível de zoom ao pressionar Ctrl+0",
   terminalShell: "Concha terminal",
   appName: "Área de trabalho OpenVibe",
-  appVersion: "v1.3.6",
+  appVersion: "v1.3.7",
   shell: "Concha",
   langRussian: "russo",
   langEnglish: "Inglês",

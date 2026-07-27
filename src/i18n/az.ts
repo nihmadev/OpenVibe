@@ -152,7 +152,7 @@ export const az: Partial<Translations> = {
   openSettingsHotkey: "Ayarları aç",
   clearChatHotkey: "Söhbəti təmizlə",
   appName: "OpenVibe Desktop",
-  appVersion: "v1.3.6",
+  appVersion: "v1.3.7",
   manuallyStopped: "İstifadəçi tərəfindən dayandırıldı",
 
   // MCP

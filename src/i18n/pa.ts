@@ -153,7 +153,7 @@ export const pa: Partial<Translations> = {
   openSettingsHotkey: "ਸੈਟਿੰਗਾਂ ਖੋਲ੍ਹੋ",
   clearChatHotkey: "ਗੱਲਬਾਤ ਸਾਫ਼ ਕਰੋ",
   appName: "OpenVibe Desktop",
-  appVersion: "v1.3.6",
+  appVersion: "v1.3.7",
   manuallyStopped: "ਉਪਭੋਗਤਾ ਦੁਆਰਾ ਰੋਕਿਆ ਗਿਆ",
 
   // MCP

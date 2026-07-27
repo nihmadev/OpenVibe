@@ -350,7 +350,7 @@ export const hi: Partial<Translations> = {
   zoomDefault: "डिफ़ॉल्ट ज़ूम",
   zoomDefaultDesc: "Ctrl+0 दबाने पर ज़ूम स्तर",
   appName: "ओपनवाइब डेस्कटॉप",
-  appVersion: "v1.3.6",
+  appVersion: "v1.3.7",
   langRussian: "रूसी",
   langEnglish: "अंग्रेज़ी",
   langChinese: "中文 (繁體)",

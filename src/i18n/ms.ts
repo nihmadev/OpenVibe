@@ -350,7 +350,7 @@ export const ms: Partial<Translations> = {
   zoomDefault: "Zum lalai",
   zoomDefaultDesc: "Tahap zum apabila menekan Ctrl+0",
   appName: "Desktop OpenVibe",
-  appVersion: "v1.3.6",
+  appVersion: "v1.3.7",
   shell: "Shell",
   langRussian: "bahasa Rusia",
   langEnglish: "Inggeris",

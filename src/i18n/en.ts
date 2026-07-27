@@ -501,7 +501,7 @@ export const en: Partial<Translations> = {
   // Keys missing from en.ts (present in ru.ts)
   terminalShell: "Terminal Shell",
   appName: "OpenVibe Desktop",
-  appVersion: "v1.3.6",
+  appVersion: "v1.3.7",
   shell: "Shell",
 
   // Language names

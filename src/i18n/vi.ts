@@ -350,7 +350,7 @@ export const vi: Partial<Translations> = {
   zoomDefaultDesc: "Mức thu phóng khi nhấn Ctrl+0",
   terminalShell: "Vỏ thiết bị đầu cuối",
   appName: "Máy tính để bàn OpenVibe",
-  appVersion: "v1.3.6",
+  appVersion: "v1.3.7",
   shell: "Vỏ bọc",
   langRussian: "tiếng Nga",
   langEnglish: "Tiếng Anh",
