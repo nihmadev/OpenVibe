@@ -21,11 +21,12 @@ interface DiscoveredModel {
   id: string;
   name: string;
   providerId: string;
+  providerDbId: string;
   providerName: string;
   providerIcon: string;
 }
 
-import { Server, Code, Upload, Download } from "lucide-react";
+import { ServerIcon, CodeIcon, UploadStrokeIcon, DownloadIcon } from "../Icons/icons.js";
 
 import { McpSettingsPanel } from "./McpSettingsPanel.js";
 
@@ -253,13 +254,14 @@ export function Settings({
         const customHeaders = p.headers
           ?.filter((h: any) => h.key?.trim())
           .map((h: any) => [h.key.trim(), h.value.trim()] as [string, string]);
+        const providerDbId = p.id;
         // Add user-defined custom models first (always included)
         if (p.customModels && p.customModels.length > 0) {
           for (const cm of p.customModels) {
             const modelId = (cm as any).key?.trim();
             if (!modelId) continue;
             const displayName = (cm as any).value?.trim() || modelId;
-            results.push({ id: modelId, name: displayName, providerId, providerName, providerIcon });
+            results.push({ id: modelId, name: displayName, providerId, providerDbId, providerName, providerIcon });
           }
         }
         const res = await window.vibe.models.fetch(
@@ -277,7 +279,7 @@ export function Settings({
         const customModelIds = new Set((p.customModels ?? []).map((cm: any) => cm.key?.trim()).filter(Boolean));
         for (const m of res.models) {
           if (!customModelIds.has(m.id)) {
-            results.push({ id: m.id, name: m.name, providerId, providerName, providerIcon });
+            results.push({ id: m.id, name: m.name, providerId, providerDbId, providerName, providerIcon });
           }
         }
       }),
@@ -286,15 +288,37 @@ export function Settings({
     setModelsLoading(false);
   }
 
-  function toggleModel(modelId: string): void {
-    window.vibe.models.toggleEnabled(modelId).then((nowEnabled) => {
+  function toggleModel(providerDbId: string, modelId: string): void {
+    const compositeKey = `${providerDbId}::${modelId}`;
+    const isCurrentlyEnabled = enabledModels.has(compositeKey) || enabledModels.has(modelId);
+
+    if (isCurrentlyEnabled) {
+      // Disable: remove composite key entry
+      if (enabledModels.has(compositeKey)) {
+        window.vibe.models.toggleEnabled(compositeKey);
+      }
+      // Also remove legacy plain modelId entry if present
+      if (enabledModels.has(modelId)) {
+        window.vibe.models.toggleEnabled(modelId);
+      }
       setEnabledModels((prev) => {
         const next = new Set(prev);
-        if (nowEnabled) next.add(modelId);
-        else next.delete(modelId);
+        next.delete(compositeKey);
+        next.delete(modelId);
         return next;
       });
-    });
+    } else {
+      // Enable: always use composite key
+      window.vibe.models.toggleEnabled(compositeKey).then((nowEnabled) => {
+        if (nowEnabled) {
+          setEnabledModels((prev) => {
+            const next = new Set(prev);
+            next.add(compositeKey);
+            return next;
+          });
+        }
+      });
+    }
   }
 
   function toggleProviderCollapse(providerId: string): void {
@@ -461,7 +485,7 @@ export function Settings({
                 <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
               </svg>,
             )}
-            {renderSidebarItem("code", t("codeTab"), <Code size={14} />)}
+            {renderSidebarItem("code", t("codeTab"), <CodeIcon size={14} />)}
             {renderSidebarItem(
               "hotkeys",
               t("hotkeys"),
@@ -527,7 +551,7 @@ export function Settings({
                 <line x1="12" y1="22.08" x2="12" y2="12" />
               </svg>,
             )}
-            {renderSidebarItem("mcp", t("mcpServers"), <Server size={14} />)}
+            {renderSidebarItem("mcp", t("mcpServers"), <ServerIcon size={14} />)}
           </div>
 
           <div className="settings__sidebar-footer">
@@ -721,7 +745,7 @@ export function Settings({
                             input.click();
                           }}
                         >
-                          <Upload size={14} style={{ marginRight: 6 }} /> {t("importTheme")}
+                          <UploadStrokeIcon size={14} style={{ marginRight: 6 }} /> {t("importTheme")}
                         </button>
                         <button
                           className="settings__connect-btn"
@@ -738,7 +762,7 @@ export function Settings({
                             dlAnchorElem.click();
                           }}
                         >
-                          <Download size={14} style={{ marginRight: 6 }} /> {t("exportTheme")}
+                          <DownloadIcon size={14} style={{ marginRight: 6 }} /> {t("exportTheme")}
                         </button>
                       </div>
                     </ControlRow>
@@ -1133,23 +1157,25 @@ export function Settings({
                       : discoveredModels;
                     const groups = new Map<string, DiscoveredModel[]>();
                     for (const m of filtered) {
-                      const existing = groups.get(m.providerId) ?? [];
+                      const groupKey = m.providerDbId;
+                      const existing = groups.get(groupKey) ?? [];
                       existing.push(m);
-                      groups.set(m.providerId, existing);
+                      groups.set(groupKey, existing);
                     }
                     const groupsArray = Array.from(groups.entries());
                     return (
                       <div className="settings__models-table">
-                        {groupsArray.map(([providerId, models]) => {
-                          const template = PROVIDER_TEMPLATES.find((t) => t.id === providerId);
-                          const icon = template?.icon ?? "";
-                          const name = template?.name ?? models[0]?.providerName ?? providerId;
-                          const isCollapsed = !!collapsedProviders[providerId];
+                        {groupsArray.map(([providerDbId, models]) => {
+                          const first = models[0]!;
+                          const template = PROVIDER_TEMPLATES.find((t) => t.id === first.providerId);
+                          const icon = template?.icon ?? first.providerIcon ?? "";
+                          const name = template?.name ?? first.providerName ?? providerDbId;
+                          const isCollapsed = !!collapsedProviders[providerDbId];
                           return (
-                            <div key={providerId} className="settings__models-group">
+                            <div key={providerDbId} className="settings__models-group">
                               <div
                                 className="settings__models-group-header"
-                                onClick={() => toggleProviderCollapse(providerId)}
+                                onClick={() => toggleProviderCollapse(providerDbId)}
                               >
                                 <ChevronRightIcon open={!isCollapsed} />
                                 {icon && (
@@ -1164,19 +1190,22 @@ export function Settings({
                               <div
                                 className={`settings__models-list ${isCollapsed ? "settings__models-list--collapsed" : ""}`}
                               >
-                                {models.map((m) => (
-                                  <div key={m.id} className="settings__model-row">
-                                    <div className="settings__model-info">
-                                      <span className="settings__model-name">{m.name}</span>
+                                {models.map((m) => {
+                                  const compositeKey = `${m.providerDbId}::${m.id}`;
+                                  return (
+                                    <div key={compositeKey} className="settings__model-row">
+                                      <div className="settings__model-info">
+                                        <span className="settings__model-name">{m.name}</span>
+                                      </div>
+                                      <input
+                                        type="checkbox"
+                                        className="settings__checkbox"
+                                        checked={enabledModels.has(compositeKey) || enabledModels.has(m.id)}
+                                        onChange={() => toggleModel(m.providerDbId, m.id)}
+                                      />
                                     </div>
-                                    <input
-                                      type="checkbox"
-                                      className="settings__checkbox"
-                                      checked={enabledModels.has(m.id)}
-                                      onChange={() => toggleModel(m.id)}
-                                    />
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </div>
                           );

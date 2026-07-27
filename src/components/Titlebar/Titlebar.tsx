@@ -19,8 +19,8 @@ import {
   MaximizeIcon,
   CloseIcon,
   GitBranchIcon,
+  ServerIcon,
 } from "../Icons/index.js";
-import { Server } from "lucide-react";
 
 import { ServersPanel } from "../ServersPanel/ServersPanel.js";
 import { mcpGetServers, mcpStartServer, mcpStopServer } from "../../tauri-bridge.js";
@@ -252,7 +252,7 @@ export function Titlebar({
   }
 
   function btnClasses(id: BtnId, extra = ""): string {
-    let cls = "titlebar__action-btn";
+    let cls = "ui-icon-btn ui-icon-btn--lg titlebar__action-btn";
     if (extra) cls += " " + extra;
     if (hiding.has(id)) cls += " titlebar__action-btn--hiding";
     if (showing.has(id)) cls += " titlebar__action-btn--showing";
@@ -296,7 +296,7 @@ export function Titlebar({
       <div className="titlebar__left" onContextMenu={(e) => onSectionCtx(e, LEFT_BTNS)}>
         <Tooltip text={t("menu")} side="bottom">
           <button
-            className="titlebar__action-btn"
+            className="ui-icon-btn ui-icon-btn--lg titlebar__action-btn"
             aria-label={t("menu")}
             onContextMenu={(e) => {
               e.preventDefault();
@@ -385,7 +385,7 @@ export function Titlebar({
                 onContextMenu={(e) => onBtnCtx(e, "servers")}
                 aria-label="Servers"
               >
-                <Server size={15} />
+                <ServerIcon size={15} />
 
                 <span className={`titlebar__mcp-badge ${getGlobalDotClass(mcpServers, lspServers)}`} />
               </button>
