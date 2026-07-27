@@ -6,15 +6,24 @@ import { useTheme } from "../../../hooks/useTheme.js";
 import { ChevronDownIcon, SearchMiniIcon, AttachPlusIcon, FilterIcon, CheckIcon } from "../../Icons/icons.js";
 import { Input, List, ListGroup, ListItem } from "../../ui/index.js";
 
+interface ModelEntry {
+  id: string;
+  name: string;
+  providerDbId: string;
+}
+
 interface ModelGroup {
+  providerDbId: string;
   providerId: string;
   providerName: string;
-  models: Array<{ id: string; name: string }>;
+  providerApiKey: string;
+  providerBaseUrl: string;
+  models: ModelEntry[];
 }
 
 interface ModelSelectorProps {
   currentModel: string;
-  onPickModel: (id: string) => void;
+  onPickModel: (id: string, providerDbId?: string) => void;
   onOpenSettings: (tab?: string) => void;
 }
 
@@ -85,6 +94,7 @@ function useModelGroups() {
           );
           const providerId = template?.id ?? p.id;
           const providerName = template?.name ?? p.name;
+          const providerDbId = p.id;
           const cacheKey = `${providerId}:${p.baseUrl}`;
 
           let models: { id: string; name: string }[];
@@ -100,9 +110,19 @@ function useModelGroups() {
             saveCache(cacheKey, models, expires);
           }
 
-          const enabledModels = models.filter((m) => enabled.has(m.id));
+          // Filter to only show models enabled for THIS specific provider
+          const enabledModels: ModelEntry[] = models
+            .filter((m) => enabled.has(`${providerDbId}::${m.id}`) || enabled.has(m.id))
+            .map((m) => ({ ...m, providerDbId }));
           if (enabledModels.length > 0) {
-            results.push({ providerId, providerName, models: enabledModels });
+            results.push({
+              providerDbId,
+              providerId,
+              providerName,
+              providerApiKey: p.apiKey,
+              providerBaseUrl: p.baseUrl,
+              models: enabledModels,
+            });
           }
         }),
       );
@@ -170,8 +190,8 @@ export function ModelSelector({ currentModel, onPickModel, onOpenSettings }: Mod
       .filter((g) => g.models.length > 0);
   }, [groups, search]);
 
-  function toggleGroupCollapse(providerId: string): void {
-    setCollapsedGroups((prev) => ({ ...prev, [providerId]: !prev[providerId] }));
+  function toggleGroupCollapse(key: string): void {
+    setCollapsedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
   const activeModelName = useMemo(() => {
@@ -233,8 +253,8 @@ export function ModelSelector({ currentModel, onPickModel, onOpenSettings }: Mod
               <div className="model-selector__empty">{search ? t("noModelsFound") : t("noModelsEnabled")}</div>
             ) : (
               <List>
-                {filtered.map((group, i) => {
-                  const isCollapsed = !!collapsedGroups[group.providerId];
+                {filtered.map((group) => {
+                  const isCollapsed = !!collapsedGroups[group.providerDbId];
                   const tmpl = PROVIDER_TEMPLATES.find((t) => t.id === group.providerId);
                   const groupIcon = tmpl ? (
                     <img
@@ -246,18 +266,18 @@ export function ModelSelector({ currentModel, onPickModel, onOpenSettings }: Mod
 
                   return (
                     <ListGroup
-                      key={group.providerId}
+                      key={group.providerDbId}
                       title={group.providerName}
                       icon={groupIcon}
                       expanded={!isCollapsed}
-                      onToggle={() => toggleGroupCollapse(group.providerId)}
+                      onToggle={() => toggleGroupCollapse(group.providerDbId)}
                     >
                       {group.models.map((m) => (
                         <ListItem
-                          key={m.id}
+                          key={`${group.providerDbId}::${m.id}`}
                           active={m.id === currentModel}
                           onClick={() => {
-                            onPickModel(m.id);
+                            onPickModel(m.id, group.providerDbId);
                             setOpen(false);
                           }}
                           rightIcon={m.id === currentModel ? <CheckIcon /> : undefined}

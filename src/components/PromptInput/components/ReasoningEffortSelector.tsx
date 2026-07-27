@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Lightbulb } from "lucide-react";
+import { LightbulbIcon } from "../../Icons/icons.js";
 import { useI18n } from "../../../hooks/useI18n.js";
 
 interface EffortOption {
@@ -46,7 +46,7 @@ export function ReasoningEffortSelector({ currentEffort, onChange, effortOptions
   return (
     <div className="reasoning-effort-selector" ref={selRef}>
       <button type="button" className="reasoning-effort-selector__trigger" onClick={() => setOpen((v) => !v)}>
-        <Lightbulb size={14} />
+        <LightbulbIcon size={14} />
         <span className="reasoning-effort-selector__trigger-name">{activeText}</span>
         <svg
           width="10"

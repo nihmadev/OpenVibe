@@ -1,6 +1,7 @@
 import React from "react";
 import type { Attachment } from "../types.js";
 import { Tooltip } from "../../Tooltip/Tooltip.js";
+import { FileIcon } from "../../Icons/file-icons.js";
 
 interface AttachmentChipsProps {
   attachments: Attachment[];
@@ -18,7 +19,9 @@ export function AttachmentChips({ attachments, onRemove }: AttachmentChipsProps)
             {a.kind === "image" ? (
               <img className="chip__img" src={a.dataUrl} alt="" />
             ) : (
-              <span className="chip__icon">⌘</span>
+              <span className="chip__icon">
+                <FileIcon name={a.name} />
+              </span>
             )}
             <span className="chip__name">{a.name}</span>
             <button className="chip__close" onClick={() => onRemove(a.id)} aria-label="Remove">

@@ -42,7 +42,7 @@ interface Props {
   onStop: () => void;
   models: Array<{ id: string; name: string }>;
   currentModel: string;
-  onPickModel: (id: string) => void;
+  onPickModel: (id: string, providerDbId?: string) => void;
   onOpenSettings?: (tab?: string) => void;
   initialText?: string;
   rollbackActive?: boolean;
