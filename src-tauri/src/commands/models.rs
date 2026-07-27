@@ -38,26 +38,98 @@ const PROVIDER_TEMPLATE_IDS: &[&str] = &[
 ];
 
 fn parse_model_name(model_id: &str) -> String {
-    let mut name = model_id.to_string();
-    if let Some(idx) = name.find('/') {
-        name = name[idx + 1..].to_string();
+    let id = match model_id.find('/') {
+        Some(idx) => &model_id[idx + 1..],
+        None => model_id,
+    };
+    if id.is_empty() {
+        return id.to_string();
     }
-    if name.is_empty() {
-        return name;
+
+    let parts: Vec<&str> = id.split('-').collect();
+
+    let all_caps: &[&str] = &["gpt", "glm"];
+    let mixed_case: &[(&str, &str)] = &[("deepseek", "DeepSeek")];
+
+    let mut words: Vec<String> = Vec::new();
+    let mut num_buf: Vec<&str> = Vec::new();
+
+    let flush_nums = |words: &mut Vec<String>, num_buf: &mut Vec<&str>| {
+        if !num_buf.is_empty() {
+            words.push(num_buf.join("."));
+            num_buf.clear();
+        }
+    };
+
+    for part in &parts {
+        if part.is_empty() {
+            continue;
+        }
+        let lower = part.to_lowercase();
+
+        if all_caps.contains(&lower.as_str()) {
+            flush_nums(&mut words, &mut num_buf);
+            words.push(part.to_uppercase());
+            continue;
+        }
+
+        if let Some(&(_, mapped)) = mixed_case.iter().find(|&&(k, _)| k == lower) {
+            flush_nums(&mut words, &mut num_buf);
+            words.push(mapped.to_string());
+            continue;
+        }
+
+        if is_numeric(part) {
+            num_buf.push(part);
+            continue;
+        }
+
+        flush_nums(&mut words, &mut num_buf);
+
+        let mut chars = part.chars();
+        if let Some(first) = chars.next() {
+            if first.is_alphabetic() {
+                let rest: String = chars.collect();
+                if !rest.is_empty() && is_numeric_like(&rest) {
+                    // Letter followed by numeric-like (e.g. "o1", "v2.5")
+                    words.push(format!("{}{}", first.to_uppercase().collect::<String>(), rest));
+                } else {
+                    // Normal word: capitalize first, lowercase rest
+                    words.push(format!("{}{}", first.to_uppercase().collect::<String>(), rest.to_lowercase()));
+                }
+                continue;
+            }
+        }
+
+        words.push(part.to_string());
     }
-    name.split('-')
-        .map(|part| {
-            if part.is_empty() {
-                return part.to_string();
-            }
-            let mut chars = part.chars();
-            match chars.next() {
-                Some(c) => c.to_uppercase().collect::<String>() + chars.as_str(),
-                None => part.to_string(),
-            }
-        })
-        .collect::<Vec<_>>()
-        .join(" ")
+
+    flush_nums(&mut words, &mut num_buf);
+
+    words.join(" ")
+}
+
+/// Returns true if every character is a digit.
+fn is_numeric(s: &str) -> bool {
+    !s.is_empty() && s.chars().all(|c| c.is_ascii_digit())
+}
+
+/// Returns true if the string looks like a numeric literal (digits and dots,
+/// but not starting with a dot).
+fn is_numeric_like(s: &str) -> bool {
+    if s.is_empty() {
+        return false;
+    }
+    let mut chars = s.chars();
+    if let Some(first) = chars.next() {
+        if first == '.' {
+            return false;
+        }
+        if !first.is_ascii_digit() && first != '.' {
+            return false;
+        }
+    }
+    chars.all(|c| c.is_ascii_digit() || c == '.')
 }
 
 #[tauri::command]
