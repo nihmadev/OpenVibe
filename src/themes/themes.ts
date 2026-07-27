@@ -14,6 +14,29 @@ import github from "./github.json";
 import kanagawa from "./kanagawa.json";
 import ayu from "./Ayu.json";
 import nord from "./nord.json";
+import amoled from "./amoled.json";
+import aura from "./aura.json";
+import catppuccin from "./catppuccin.json";
+import catppuccinFrappe from "./catppuccin-frappe.json";
+import catppuccinMacchiato from "./catppuccin-macchiato.json";
+import cobalt2 from "./cobalt2.json";
+import dracula from "./dracula.json";
+import lucentOrng from "./lucent-orng.json";
+import material from "./material.json";
+import matrix from "./matrix.json";
+import mercury from "./mercury.json";
+import nightowl from "./nightowl.json";
+import oc2 from "./oc-2.json";
+import onedarkpro from "./onedarkpro.json";
+import opencode from "./opencode.json";
+import orng from "./orng.json";
+import osakaJade from "./osaka-jade.json";
+import palenight from "./palenight.json";
+import rosepine from "./rosepine.json";
+import shadesofpurple from "./shadesofpurple.json";
+import solarized from "./solarized.json";
+import synthwave84 from "./synthwave84.json";
+import tokyonight from "./tokyonight.json";
 
 interface ThemeJson {
   $schema?: string;
@@ -255,6 +278,29 @@ export const themes: ThemeDef[] = [
   fromJson(github as ThemeJson),
   fromJson(kanagawa as ThemeJson),
   fromJson(nord as ThemeJson),
+  fromJson(amoled as ThemeJson),
+  fromJson(aura as ThemeJson),
+  fromJson(catppuccin as ThemeJson),
+  fromJson(catppuccinFrappe as ThemeJson),
+  fromJson(catppuccinMacchiato as ThemeJson),
+  fromJson(cobalt2 as ThemeJson),
+  fromJson(dracula as ThemeJson),
+  fromJson(lucentOrng as ThemeJson),
+  fromJson(material as ThemeJson),
+  fromJson(matrix as ThemeJson),
+  fromJson(mercury as ThemeJson),
+  fromJson(nightowl as ThemeJson),
+  fromJson(oc2 as ThemeJson),
+  fromJson(onedarkpro as ThemeJson),
+  fromJson(opencode as ThemeJson),
+  fromJson(orng as ThemeJson),
+  fromJson(osakaJade as ThemeJson),
+  fromJson(palenight as ThemeJson),
+  fromJson(rosepine as ThemeJson),
+  fromJson(shadesofpurple as ThemeJson),
+  fromJson(solarized as ThemeJson),
+  fromJson(synthwave84 as ThemeJson),
+  fromJson(tokyonight as ThemeJson),
 ];
 
 export function applyThemeVars(vars: ThemeVars): void {

@@ -9,14 +9,14 @@
   flex-direction: column;
   gap: 0;
   background: var(--bg-2);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   position: relative;
   transition: border-color var(--duration-fast);
 }
 
 .prompt-input:focus-within {
-  border-color: var(--fg-dim);
+  border-color: color-mix(in srgb, var(--line) 70%, var(--fg-dim) 30%);
 }
 
 .prompt-input--drag {
