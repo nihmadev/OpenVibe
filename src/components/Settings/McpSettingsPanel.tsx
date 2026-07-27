@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from "react";
 import type { McpConfig, McpServerConfig, McpServerStatus } from "../../types.js";
 import { mcpGetConfig, mcpSaveConfig, mcpGetServers, mcpStartServer, mcpStopServer } from "../../tauri-bridge.js";
-import { Server, Plus, Edit2, Trash2, Download, Upload, AlertCircle } from "lucide-react";
-import { TrashIcon, PlusIcon } from "../Icons/icons.js";
+import {
+  ServerIcon,
+  PlusStrokeIcon,
+  Edit2Icon,
+  Trash2Icon,
+  DownloadIcon,
+  UploadStrokeIcon,
+  AlertCircleIcon,
+  TrashIcon,
+  PlusIcon,
+} from "../Icons/icons.js";
 import { Toggle, Input } from "../ui/index.js";
 
 import { useTranslate } from "../../hooks/useI18n.js";
@@ -257,11 +266,11 @@ export function McpSettingsPanel(): React.ReactElement {
             </div>
             <div style={{ display: "flex", gap: "8px" }}>
               <button className="settings__edit-btn" onClick={handleExport}>
-                <Download size={12} style={{ marginRight: 4 }} />
+                <DownloadIcon size={12} style={{ marginRight: 4 }} />
                 {t("mcpExport")}
               </button>
               <label className="settings__edit-btn" style={{ cursor: "pointer", margin: 0 }}>
-                <Upload size={12} style={{ marginRight: 4 }} />
+                <UploadStrokeIcon size={12} style={{ marginRight: 4 }} />
                 {t("mcpImport")}
                 <input type="file" accept=".json" onChange={handleImport} hidden />
               </label>
@@ -303,7 +312,7 @@ enabled = true`}
               <div key={server.name} className="settings__provider-row">
                 <div className="settings__provider-info">
                   <span className={`mcp-dot ${getStatusDotClass(server.name)}`} />
-                  <Server size={14} style={{ opacity: 0.8 }} />
+                  <ServerIcon size={14} style={{ opacity: 0.8 }} />
                   <div className="settings__provider-name">{server.name}</div>
                 </div>
                 <div className="settings__provider-actions">
@@ -313,14 +322,14 @@ enabled = true`}
                     title={server.enabled ? t("mcpDisableServer") : t("mcpEnableServer")}
                   />
                   <button className="settings__edit-btn" onClick={() => openEditModal(server)} title={t("edit")}>
-                    <Edit2 size={12} />
+                    <Edit2Icon size={12} />
                   </button>
                   <button
                     className="settings__disconnect-btn"
                     onClick={() => handleDeleteServer(server.name)}
                     title={t("delete")}
                   >
-                    <Trash2 size={12} />
+                    <Trash2Icon size={12} />
                   </button>
                 </div>
               </div>
@@ -329,12 +338,12 @@ enabled = true`}
             <div className="settings__provider-row">
               <div className="settings__provider-info">
                 <div className="settings__provider-icon-placeholder">
-                  <Plus size={16} />
+                  <PlusStrokeIcon size={16} />
                 </div>
                 <div className="settings__provider-name">{t("mcpAddServer")}</div>
               </div>
               <button className="settings__connect-btn" onClick={openAddModal}>
-                <Plus size={12} />
+                <PlusStrokeIcon size={12} />
                 {t("mcpAddServer")}
               </button>
             </div>
@@ -349,7 +358,7 @@ enabled = true`}
             <div className="connect-popup__header">
               <div className="connect-popup__icon-wrap">
                 <div className="connect-popup__icon-placeholder">
-                  <Server size={20} />
+                  <ServerIcon size={20} />
                 </div>
               </div>
               <h2 className="connect-popup__title">
@@ -372,7 +381,7 @@ enabled = true`}
                     gap: 6,
                   }}
                 >
-                  <AlertCircle size={14} />
+                  <AlertCircleIcon size={14} />
                   <span>{formError}</span>
                 </div>
               )}
@@ -462,10 +471,10 @@ enabled = true`}
             </div>
 
             <div className="connect-popup__footer">
-              <button className="connect-popup__btn connect-popup__btn--primary" onClick={handleSaveForm}>
+              <button className="ui-button ui-button--primary" onClick={handleSaveForm}>
                 {t("mcpSaveServer")}
               </button>
-              <button className="connect-popup__btn" onClick={() => setIsAdding(false)}>
+              <button className="ui-button ui-button--outline" onClick={() => setIsAdding(false)}>
                 {t("cancel")}
               </button>
             </div>
