@@ -84,6 +84,7 @@ export function App(): React.ReactElement {
     handleCloseProject,
     handleRemoveProject,
     validateProjectPaths,
+    setOnProjectChange,
   } = useProjects();
 
   const {
@@ -166,6 +167,13 @@ export function App(): React.ReactElement {
     },
     [setFolder, setChats, setActiveChat, setItems],
   );
+
+  // Keep the periodic folder-existence check in useProjects aware of the
+  // current onProjectChange so it can switch the active project when a
+  // folder is deleted while the app is open.
+  useEffect(() => {
+    setOnProjectChange(onProjectChange);
+  }, [onProjectChange, setOnProjectChange]);
 
   const handleHoverProject = useCallback(
     async (id: string | null) => {

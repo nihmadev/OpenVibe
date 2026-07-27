@@ -298,13 +298,13 @@ export function ConnectPopup({
 
         <div className="connect-popup__footer">
           <button
-            className="connect-popup__btn connect-popup__btn--primary"
+            className="ui-button ui-button--primary"
             onClick={handleConnect}
             disabled={!form.apiKey.trim() || busy}
           >
             {busy ? "..." : isEditing ? t("save") : t("connect")}
           </button>
-          <button className="connect-popup__btn" onClick={onClose}>
+          <button className="ui-button ui-button--outline" onClick={onClose}>
             {t("cancel")}
           </button>
         </div>

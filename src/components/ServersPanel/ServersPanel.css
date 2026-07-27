@@ -5,13 +5,13 @@
 }
 
 .servers-panel__tabs {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-4);
 }
 
 .servers-panel__content {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-4);
 }
 
 .servers-panel,
@@ -37,7 +37,7 @@
 .servers-panel__lsp {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-4);
 }
 
 .titlebar__mcp-header.installing {

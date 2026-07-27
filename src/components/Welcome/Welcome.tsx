@@ -1,5 +1,5 @@
 import React from "react";
-import { FolderOpen } from "lucide-react";
+import { FolderOpenStrokeIcon } from "../Icons/icons.js";
 import { ProjectRail } from "../ProjectRail/ProjectRail.js";
 import { Button } from "../ui/Button.js";
 import type { Project } from "../../types.js";
@@ -60,7 +60,7 @@ export function Welcome({
             <Button
               className="welcome__action"
               variant="primary"
-              icon={<FolderOpen size={16} strokeWidth={1.7} aria-hidden="true" />}
+              icon={<FolderOpenStrokeIcon size={16} strokeWidth={1.7} aria-hidden="true" />}
               onClick={() => handleAddProject(onProjectChange)}
             >
               {t("openFolder")}

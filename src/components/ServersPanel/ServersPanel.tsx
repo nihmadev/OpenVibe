@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Server, RefreshCw, Settings as SettingsIcon } from "lucide-react";
+import { ServerIcon, RefreshCwStrokeIcon, SettingsIcon } from "../Icons/icons.js";
 import { useTranslate } from "../../hooks/useI18n.js";
 import { Toggle } from "../ui/index.js";
 import type { McpServerStatus } from "../../types.js";
@@ -54,15 +54,15 @@ export function ServersPanel({
           <div className="servers-panel__mcp">
             <div className="titlebar__mcp-header">
               <div className="titlebar__mcp-header-title">
-                <Server size={14} />
+                <ServerIcon size={14} />
                 <span>{t("mcpServersCount", { count: String(mcpServers.length) })}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
                 <button className="titlebar__mcp-refresh-btn" onClick={onOpenSettings} title={t("mcpOpenSettings")}>
-                  <SettingsIcon size={14} />
+                  <SettingsIcon size={14} strokeWidth={2} />
                 </button>
                 <button className="titlebar__mcp-refresh-btn" onClick={onRefreshMcp} title={t("mcpRefreshStatuses")}>
-                  <RefreshCw size={14} />
+                  <RefreshCwStrokeIcon size={14} />
                 </button>
               </div>
             </div>

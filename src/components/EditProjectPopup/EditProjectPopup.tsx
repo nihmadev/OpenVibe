@@ -163,10 +163,10 @@ export function EditProjectPopup({ project, onSave, onClose }: Props): React.Rea
         </div>
 
         <div className="edit-project__actions">
-          <button className="edit-project__btn edit-project__btn--primary" onClick={handleSave}>
+          <button className="ui-button ui-button--primary" onClick={handleSave}>
             {t("save")}
           </button>
-          <button className="edit-project__btn" onClick={onClose}>
+          <button className="ui-button ui-button--outline" onClick={onClose}>
             {t("cancel")}
           </button>
         </div>

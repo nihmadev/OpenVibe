@@ -1,6 +1,7 @@
 import React from "react";
 import type { HistoryItem } from "../AgentChat/types.js";
 import { AgentToolView } from "../AgentToolView/AgentToolView.js";
+import { useI18n } from "../../hooks/useI18n.js";
 import "./SubAgentView.css";
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function SubAgentView({ items, onBack, cwd }: Props): React.ReactElement {
+  const { t } = useI18n();
   const ref = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
@@ -45,9 +47,9 @@ export function SubAgentView({ items, onBack, cwd }: Props): React.ReactElement 
 
       <div className="subagent-view__footer">
         <div className="subagent-view__bar">
-          <span className="subagent-view__bar-text">Запись не поддерживается.</span>
+          <span className="subagent-view__bar-text">{t("subagentReadOnly")}</span>
           <button className="subagent-view__bar-link" onClick={onBack}>
-            Вернуться
+            {t("goBack")}
           </button>
         </div>
       </div>

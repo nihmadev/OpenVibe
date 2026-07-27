@@ -138,7 +138,7 @@ interface AppMainProps {
   items: any[];
   streamingNow: string | null;
   busy: boolean;
-  handlePickModel: (model: string) => void;
+  handlePickModel: (model: string, providerDbId?: string) => void;
   handleSubmit: (payload: any) => void;
   onStop: () => void;
   reasoningEffort?: string;
