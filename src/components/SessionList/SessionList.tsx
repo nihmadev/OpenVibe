@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { KebabMenuIcon, PlusSmallIcon } from "../Icons/icons.js";
 import type { ChatSummary, Project } from "../../types.js";
 import { SessionListItem } from "./SessionListItem.js";
+import { ContextMenu } from "../ContextMenu/ContextMenu.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import "./SessionList.css";
 
@@ -44,8 +45,7 @@ export function SessionList({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [localWidth, setLocalWidth] = useState(width);
   const [isResizing, setIsResizing] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
 
   // Sync local width with prop width when not resizing
   useEffect(() => {
@@ -115,26 +115,9 @@ export function SessionList({
 
   const handleMenuToggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    setMenuOpen((prev) => !prev);
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMenuPos((prev) => (prev ? null : { x: rect.right, y: rect.bottom + 4 }));
   }, []);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    function onDown(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setMenuOpen(false);
-    }
-    window.addEventListener("mousedown", onDown);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("mousedown", onDown);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [menuOpen]);
 
   return (
     <div
@@ -164,30 +147,23 @@ export function SessionList({
             </div>
             {project ? (
               <div style={{ position: "relative", flexShrink: 0 }}>
-                <button className="session-list__menu-btn" onClick={handleMenuToggle} aria-label="Project menu">
+                <button
+                  className="ui-icon-btn ui-icon-btn--sm session-list__menu-btn"
+                  onClick={handleMenuToggle}
+                  aria-label="Project menu"
+                >
                   <KebabMenuIcon />
                 </button>
-                {menuOpen ? (
-                  <div className="session-list__dropdown" ref={menuRef}>
-                    <button
-                      className="session-list__dropdown-item"
-                      onClick={() => {
-                        onProjectEdit?.(project);
-                        setMenuOpen(false);
-                      }}
-                    >
-                      {t("editProject")}
-                    </button>
-                    <button
-                      className="session-list__dropdown-item session-list__dropdown-item--danger"
-                      onClick={() => {
-                        onProjectRemove?.(project.id);
-                        setMenuOpen(false);
-                      }}
-                    >
-                      {t("closeFromList")}
-                    </button>
-                  </div>
+                {menuPos ? (
+                  <ContextMenu
+                    x={menuPos.x}
+                    y={menuPos.y}
+                    onClose={() => setMenuPos(null)}
+                    items={[
+                      { label: t("editProject"), onClick: () => onProjectEdit?.(project) },
+                      { label: t("closeFromList"), danger: true, onClick: () => onProjectRemove?.(project.id) },
+                    ]}
+                  />
                 ) : null}
               </div>
             ) : null}
