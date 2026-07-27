@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useI18n } from "../../../hooks/useI18n.js";
-import { CheckCircleIcon, DiffIcon, CircularProgress, ChevronRightIcon } from "../../Icons/icons.js";
+import { CheckCircleIcon, DiffIcon, CircularProgress, ChevronRightIcon, CopyCheckIcon } from "../../Icons/icons.js";
 import { FileIcon } from "../../Icons/file-icons.js";
 import { Tooltip } from "../../Tooltip/Tooltip.js";
 import { DiffEditor } from "../../DiffEditor/DiffEditor.js";
@@ -66,6 +66,7 @@ function getFileChanges(items: HistoryItem[], currentId: string): FileChangeInfo
 }
 
 function FileChangeRow({ change, cwd }: { change: FileChangeInfo; cwd?: string }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [diffData, setDiffData] = useState<{ original: string; modified: string; lang: string } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -158,7 +159,7 @@ function FileChangeRow({ change, cwd }: { change: FileChangeInfo; cwd?: string }
       </div>
       {open && (
         <div className="changes-pill__diff">
-          {loading && <div className="tool__diff-loading">Loading diff…</div>}
+          {loading && <div className="tool__diff-loading">{t("loadingDiff")}</div>}
           {!loading && diffData && (
             <DiffEditor original={diffData.original} modified={diffData.modified} language={diffData.lang} />
           )}
@@ -350,44 +351,17 @@ export function MessageFooter({
         <div className="msg__footer-right">
           <Tooltip text={t("copy")}>
             <button
-              className="msg__footer-btn"
+              className="ui-icon-btn ui-icon-btn--md msg__footer-btn"
               onClick={openCopyMenu}
               aria-label={t("copy")}
               aria-haspopup="menu"
               aria-expanded={copyMenu !== null}
             >
-              {copied ? (
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="var(--green)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              ) : (
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-              )}
+              <CopyCheckIcon copied={copied} />
             </button>
           </Tooltip>
           <Tooltip text={t("regenerate")}>
-            <button className="msg__footer-btn" onClick={() => onRegenerate?.(item.id)}>
+            <button className="ui-icon-btn ui-icon-btn--md msg__footer-btn" onClick={() => onRegenerate?.(item.id)}>
               <svg
                 width="14"
                 height="14"

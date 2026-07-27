@@ -1,16 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Bot,
-  BookOpen,
-  ChevronDown,
-  FolderOpen,
-  Globe,
-  Pencil,
-  Search,
-  Server,
-  SquareTerminal,
-  Wrench,
-} from "lucide-react";
+  BotIcon,
+  BookOpenIcon,
+  ChevronDownStrokeIcon,
+  FolderOpenStrokeIcon,
+  GlobeIcon,
+  PencilIcon,
+  SearchStrokeIcon,
+  ServerIcon,
+  SquareTerminalIcon,
+  WrenchIcon,
+} from "../../Icons/icons.js";
 import { Markdown } from "../../Markdown/Markdown.js";
 import { useI18n } from "../../../hooks/useI18n.js";
 import { MessageFooter } from "./MessageFooter.js";
@@ -37,23 +37,23 @@ function ToolKindMarker({ kind }: { kind: ToolActivityKind }): React.ReactElemen
     case "git":
       return <img src="/icons/providers/github.svg" width={14} height={14} alt="" aria-hidden="true" />;
     case "search":
-      return <Search {...props} />;
+      return <SearchStrokeIcon {...props} />;
     case "web":
-      return <Globe {...props} />;
+      return <GlobeIcon {...props} />;
     case "read":
-      return <BookOpen {...props} />;
+      return <BookOpenIcon {...props} />;
     case "edit":
-      return <Pencil {...props} />;
+      return <PencilIcon {...props} />;
     case "command":
-      return <SquareTerminal {...props} />;
+      return <SquareTerminalIcon {...props} />;
     case "browse":
-      return <FolderOpen {...props} />;
+      return <FolderOpenStrokeIcon {...props} />;
     case "agent":
-      return <Bot {...props} />;
+      return <BotIcon {...props} />;
     case "external":
-      return <Server {...props} />;
+      return <ServerIcon {...props} />;
     default:
-      return <Wrench {...props} />;
+      return <WrenchIcon {...props} />;
   }
 }
 
@@ -132,7 +132,7 @@ export function AgentRun({
           aria-label={expanded ? t("hideToolCalls") : t("showToolCalls")}
         >
           <span className={`agent-run__time${isActive ? " agent-run__time--active" : ""}`}>{timeLabel}</span>
-          {hasNodes && <ChevronDown className="agent-run__head-chevron" aria-hidden="true" />}
+          {hasNodes && <ChevronDownStrokeIcon className="agent-run__head-chevron" aria-hidden="true" />}
         </button>
       </div>
 

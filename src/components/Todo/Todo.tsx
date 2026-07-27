@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ArrowRight, Check, Circle } from "lucide-react";
+import { ArrowRightStrokeIcon, CheckStrokeIcon, CircleStrokeIcon } from "../Icons/icons.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import type { TodoTask } from "../AgentChat/types.js";
 import "./Todo.css";
@@ -10,9 +10,9 @@ interface TodoProps {
 
 function StatusIcon({ status }: { status: TodoTask["status"] }): React.ReactElement {
   const props = { size: 14, strokeWidth: 2, "aria-hidden": true } as const;
-  if (status === "completed") return <Check {...props} />;
-  if (status === "in_progress") return <ArrowRight {...props} />;
-  return <Circle {...props} />;
+  if (status === "completed") return <CheckStrokeIcon {...props} />;
+  if (status === "in_progress") return <ArrowRightStrokeIcon {...props} />;
+  return <CircleStrokeIcon {...props} />;
 }
 
 export function Todo({ tasks }: TodoProps): React.ReactElement | null {

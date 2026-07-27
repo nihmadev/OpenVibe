@@ -13,17 +13,17 @@
 
 .tool {
   position: relative;
-  margin-top: 12px;
+  margin-top: var(--space-6);
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  font-size: 14px;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+  font-size: var(--text-lg);
   color: var(--fg-dim);
 }
 
 .tool + .tool {
-  margin-top: 2px;
+  margin-top: var(--space-1);
 }
 
 .tool__icon {
@@ -49,7 +49,7 @@
   );
   mask-size: 200% 100%;
   -webkit-mask-size: 200% 100%;
-  animation: tool-shimmer-sweep 2s linear infinite;
+  animation: tool-shimmer-sweep var(--shimmer-duration, 3s) linear infinite;
 }
 
 @keyframes tool-shimmer-sweep {
@@ -82,7 +82,7 @@
      flex row lets a long, unbroken shell command use its min-content width
      and push the whole chat layout horizontally. */
   flex-wrap: nowrap;
-  gap: 4px;
+  gap: var(--space-2);
 }
 
 .tool__verb {
@@ -104,13 +104,13 @@
   -webkit-background-clip: text, text;
   background-clip: text, text;
   -webkit-text-fill-color: transparent;
-  animation: tool-shimmer 3.5s linear infinite;
+  animation: tool-shimmer var(--shimmer-duration, 3s) linear infinite;
 }
 
 .tool__suffix {
   color: var(--fg-dim);
   font-family: inherit;
-  font-size: 14px;
+  font-size: var(--text-lg);
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
@@ -138,17 +138,17 @@
 .tool--agent {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-5);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
   background: var(--bg-2);
-  margin-top: 12px;
+  margin-top: var(--space-6);
   max-width: 50%;
   cursor: pointer;
   transition:
-    border-color 0.15s,
-    background 0.15s;
+    border-color var(--duration-fast),
+    background var(--duration-fast);
 }
 
 .tool--agent:hover {
@@ -174,7 +174,7 @@
 
 .tool--agent .tool__agent-task {
   color: var(--fg-dim);
-  font-size: 13px;
+  font-size: var(--text-md);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -187,7 +187,7 @@
   margin-left: auto;
   color: var(--fg-muted);
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--duration-fast) ease;
 }
 
 .tool--agent:hover .tool__agent-open,
@@ -203,15 +203,15 @@
 
 .tool--has-diff {
   flex-wrap: wrap;
-  row-gap: 2px;
+  row-gap: var(--space-1);
 }
 
 .tool__diff-stats {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--space-1);
   margin: 0 1px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-family: var(--mono);
   font-weight: 700;
   user-select: none;
@@ -240,8 +240,8 @@
   border-radius: var(--radius-xs);
   flex-shrink: 0;
   transition:
-    color 0.15s,
-    background 0.15s;
+    color var(--duration-fast),
+    background var(--duration-fast);
 }
 
 .tool__chevron:hover {
@@ -253,7 +253,7 @@
 
 .tool__diff-block {
   width: 100%;
-  margin-top: 4px;
+  margin-top: var(--space-2);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -278,8 +278,8 @@
 
 .tool__diff-loading {
   width: 100%;
-  padding: 12px 16px;
-  font-size: 12px;
+  padding: var(--space-6) var(--space-7);
+  font-size: var(--text-sm);
   color: var(--fg-muted);
   font-family: var(--mono);
 }
@@ -288,7 +288,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 10px;
+  padding: var(--space-2) var(--space-5);
   background: var(--bg-3);
   border-bottom: 1px solid var(--line-strong);
   user-select: none;
@@ -297,12 +297,12 @@
 .tool__diff-header-left {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-3);
   min-width: 0;
 }
 
 .tool__diff-fname {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--fg);
   white-space: nowrap;
   overflow: hidden;
@@ -312,9 +312,9 @@
 .tool__diff-header-right {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-3);
   font-weight: 600;
-  font-size: 12px;
+  font-size: var(--text-sm);
   flex-shrink: 0;
 }
 
@@ -335,12 +335,12 @@
   display: flex;
   width: 100%;
   align-items: center;
-  gap: 6px;
-  padding: 2px 0;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
   border: none;
   background: transparent;
   box-shadow: none;
-  font-size: 14px;
+  font-size: var(--text-lg);
 }
 
 .tool--mcp.tool--pending .tool__verb {
@@ -358,7 +358,7 @@
   -webkit-background-clip: text, text;
   background-clip: text, text;
   -webkit-text-fill-color: transparent;
-  animation: tool-shimmer 2.5s linear infinite;
+  animation: tool-shimmer var(--shimmer-duration, 3s) linear infinite;
 }
 
 .tool--mcp .tool__verb {
@@ -370,23 +370,23 @@
 .tool__diff-block--list {
   border: none;
   background: transparent;
-  padding-left: 20px;
+  padding-left: var(--space-8);
   border-radius: 0;
 }
 
 .list-dir-block {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-1);
   padding-top: 0;
-  padding-bottom: 2px;
+  padding-bottom: var(--space-1);
 }
 
 .list-dir-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  gap: var(--space-3);
+  font-size: var(--text-md);
   color: var(--fg);
   animation: list-dir-row-in 180ms ease-out both;
 }
@@ -423,19 +423,19 @@
 .list-dir-more {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-2);
   align-self: flex-start;
-  margin: 3px 0 0;
+  margin: var(--space-1) 0 0;
   min-height: 16px;
   padding: 0;
   border: 0;
   background: transparent;
   color: var(--fg-dim);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--text-md);
   line-height: 16px;
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition: color var(--duration-fast) ease;
 }
 
 .list-dir-more:hover {
@@ -445,26 +445,26 @@
 /* ── Web Tool Block ── */
 .tool__web-block {
   width: 100%;
-  margin-top: 6px;
-  padding: 10px 12px;
+  margin-top: var(--space-3);
+  padding: var(--space-5) var(--space-6);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
   background: var(--bg);
   color: var(--fg);
-  font-size: 13px;
+  font-size: var(--text-md);
   line-height: 1.6;
 }
 
 .tool__web-block a {
-  color: var(--accent, #3b82f6);
+  color: var(--markdown-link, var(--fg));
   text-decoration: underline;
   text-underline-offset: 3px;
   font-weight: 500;
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition: color var(--duration-fast) ease;
 }
 
 .tool__web-block a:hover {
-  color: var(--accent-hover, #60a5fa);
+  color: var(--markdown-link-text, var(--fg-dim));
   text-decoration: underline;
 }

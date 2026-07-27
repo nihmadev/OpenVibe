@@ -1,8 +1,8 @@
 .fbadge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 13px;
+  gap: var(--space-2);
+  font-size: var(--text-md);
   color: var(--fg-dim);
   font-family: var(--mono);
 }
@@ -16,11 +16,11 @@
 }
 
 .fbadge__dir {
-  font-size: 13px;
+  font-size: var(--text-md);
   line-height: 1;
   opacity: 0.75;
 }
 
 .fbadge__name {
-  font-size: 13px;
+  font-size: var(--text-md);
 }

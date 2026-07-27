@@ -8,9 +8,10 @@ import { AgentRun } from "./components/AgentRun.js";
 import { Markdown } from "../Markdown/Markdown.js";
 import { HistoryItem } from "./types.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
+import { FileIcon } from "../Icons/file-icons.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { buildChatEntries } from "./agentRunModel.js";
-import { Check } from "lucide-react";
+import { CheckStrokeIcon } from "../Icons/icons.js";
 import { ErrorNotice } from "./components/ErrorNotice.js";
 
 // Re-export types for backward compatibility
@@ -41,7 +42,7 @@ const StandaloneItem = React.memo(
               <span className="modelpicker__name">{m.name}</span>
               <span className="modelpicker__id">{m.id}</span>
               <span className="modelpicker__check">
-                <Check size={14} aria-hidden="true" />
+                <CheckStrokeIcon size={14} aria-hidden="true" />
               </span>
             </button>
           ))}
@@ -66,7 +67,9 @@ const StandaloneItem = React.memo(
                 ) : (
                   <Tooltip key={a.id} text={a.path ?? a.name}>
                     <span className="msg__file">
-                      <span className="msg__file-icon">⌘</span>
+                      <span className="msg__file-icon">
+                        <FileIcon name={a.name} />
+                      </span>
                       {a.name}
                     </span>
                   </Tooltip>

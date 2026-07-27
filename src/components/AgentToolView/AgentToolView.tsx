@@ -3,25 +3,27 @@ import { HistoryItem } from "../AgentChat/types.js";
 import { describe, pickFile, getFilePathFromArgs, getEditStrings } from "../AgentChat/utils.js";
 import { FailIcon } from "../Icons/icons.js";
 import { FileBadge } from "../AgentChat/components/FileBadge.js";
-import { ChevronRightIcon, Loader2Icon, ShowMoreIcon } from "../Icons/icons.js";
+import {
+  ChevronRightIcon,
+  Loader2Icon,
+  ShowMoreIcon,
+  BookOpenIcon,
+  BotIcon,
+  FilePlus2Icon,
+  FolderOpenStrokeIcon,
+  GlobeIcon,
+  LinkIcon,
+  PencilIcon,
+  SearchStrokeIcon,
+  ServerIcon,
+  SquareTerminalIcon,
+  WrenchIcon,
+} from "../Icons/icons.js";
 import { FileIcon, FolderIcon } from "../Icons/file-icons.js";
 import { CodeBlock, resolveMonacoLang } from "../CodeBlock/CodeBlock.js";
 import { DiffEditor } from "../DiffEditor/DiffEditor.js";
 import { Markdown } from "../Markdown/Markdown.js";
 import { useI18n } from "../../hooks/useI18n.js";
-import {
-  BookOpen,
-  Bot,
-  FilePlus2,
-  FolderOpen,
-  Globe,
-  Link,
-  Pencil,
-  Search,
-  Server,
-  SquareTerminal,
-  Wrench,
-} from "lucide-react";
 import "./Tool.css";
 
 function ToolKindIcon({ name, size = 14 }: { name?: string; size?: number }): React.ReactElement {
@@ -32,31 +34,31 @@ function ToolKindIcon({ name, size = 14 }: { name?: string; size?: number }): Re
   switch (name) {
     case "read_file":
     case "view_file":
-      return <BookOpen {...props} />;
+      return <BookOpenIcon {...props} />;
     case "search_codebase":
     case "grep_search":
-      return <Search {...props} />;
+      return <SearchStrokeIcon {...props} />;
     case "web_search":
-      return <Globe {...props} />;
+      return <GlobeIcon {...props} />;
     case "fetch_url":
-      return <Link {...props} />;
+      return <LinkIcon {...props} />;
     case "run":
     case "bash":
     case "run_command":
-      return <SquareTerminal {...props} />;
+      return <SquareTerminalIcon {...props} />;
     case "edit_file":
     case "replace_file_content":
     case "multi_replace_file_content":
-      return <Pencil {...props} />;
+      return <PencilIcon {...props} />;
     case "write_file":
     case "write_to_file":
-      return <FilePlus2 {...props} />;
+      return <FilePlus2Icon {...props} />;
     case "list_dir":
-      return <FolderOpen {...props} />;
+      return <FolderOpenStrokeIcon {...props} />;
     case "agent":
-      return <Bot {...props} />;
+      return <BotIcon {...props} />;
     default:
-      return <Wrench {...props} />;
+      return <WrenchIcon {...props} />;
   }
 }
 
@@ -130,6 +132,7 @@ function StreamingCodeBlock({ toolStream, toolName }: { toolStream: string; tool
 }
 
 function DiffBlock({ item, file }: { item: HistoryItem; file?: { name: string } | null }) {
+  const { t } = useI18n();
   const [diffData, setDiffData] = React.useState<{ original: string; modified: string; lang: string } | null>(null);
   const [loading, setLoading] = React.useState(true);
 
@@ -176,7 +179,7 @@ function DiffBlock({ item, file }: { item: HistoryItem; file?: { name: string } 
           <span className="tool__diff-fname">{info?.name}</span>
         </span>
       </div>
-      {loading && <div className="tool__diff-loading">Loading diff…</div>}
+      {loading && <div className="tool__diff-loading">{t("loadingDiff")}</div>}
       {!loading && diffData && (
         <DiffEditor original={diffData.original} modified={diffData.modified} language={diffData.lang} />
       )}
@@ -249,6 +252,7 @@ function formatToolResultText(text: string, fallbackLang: string): { code: strin
 }
 
 function ListDirBlock({ item }: { item: HistoryItem }) {
+  const { t } = useI18n();
   const pageSize = 10;
   const [visibleCount, setVisibleCount] = React.useState(pageSize);
   const content = item.text || "";
@@ -258,7 +262,7 @@ function ListDirBlock({ item }: { item: HistoryItem }) {
     .filter(Boolean);
 
   if (lines.length === 0 || (lines.length === 1 && lines[0] === "(empty)")) {
-    return <div className="tool__diff-loading">Empty directory.</div>;
+    return <div className="tool__diff-loading">{t("emptyDirectory")}</div>;
   }
 
   const visibleLines = lines.slice(0, visibleCount);
@@ -281,7 +285,7 @@ function ListDirBlock({ item }: { item: HistoryItem }) {
       {hasMore && (
         <button className="list-dir-more" onClick={() => setVisibleCount((count) => count + pageSize)}>
           <ShowMoreIcon />
-          Show more...
+          {t("showMore")}
         </button>
       )}
     </div>
@@ -374,7 +378,7 @@ export function AgentToolView({
         ) : isErr ? (
           <FailIcon />
         ) : isMcp ? (
-          <Server size={14} strokeWidth={1.7} aria-hidden="true" />
+          <ServerIcon size={14} strokeWidth={1.7} aria-hidden="true" />
         ) : (
           <ToolKindIcon name={item.toolName} />
         )}

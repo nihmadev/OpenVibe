@@ -110,7 +110,7 @@ export function toRelativePath(filePath: string, cwd?: string): string {
   const np = filePath.replace(/\\/g, "/").replace(/\/$/, "");
   const nc = cwd.replace(/\\/g, "/").replace(/\/$/, "");
   if (np.startsWith(nc + "/")) return np.slice(nc.length + 1);
-  if (np === nc) return basename(nc) || filePath;
+  if (np === nc) return ".";
   return filePath;
 }
 

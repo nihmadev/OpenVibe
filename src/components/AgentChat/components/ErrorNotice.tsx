@@ -1,5 +1,13 @@
 import React, { useMemo } from "react";
-import { AlertTriangle, ChevronDown, Gauge, RotateCcw, ShieldAlert, WifiOff, type LucideIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  ChevronDownStrokeIcon,
+  GaugeIcon,
+  RotateCcwIcon,
+  ShieldAlertIcon,
+  WifiOffIcon,
+  type IconComponent,
+} from "../../Icons/icons.js";
 import { useI18n } from "../../../hooks/useI18n.js";
 import "./ErrorNotice.css";
 
@@ -15,11 +23,11 @@ function classifyError(message: string): ErrorKind {
   return "provider";
 }
 
-const iconFor: Record<ErrorKind, LucideIcon> = {
-  network: WifiOff,
-  quota: Gauge,
-  blocked: ShieldAlert,
-  provider: AlertTriangle,
+const iconFor: Record<ErrorKind, IconComponent> = {
+  network: WifiOffIcon,
+  quota: GaugeIcon,
+  blocked: ShieldAlertIcon,
+  provider: AlertTriangleIcon,
 };
 
 export function ErrorNotice({ text, onRetry }: { text: string; onRetry?: () => void }): React.ReactElement {
@@ -37,14 +45,14 @@ export function ErrorNotice({ text, onRetry }: { text: string; onRetry?: () => v
         <details className="error-notice__details">
           <summary>
             <span className="error-notice__title">{title}</span>
-            <ChevronDown className="error-notice__chevron" size={14} aria-hidden="true" />
+            <ChevronDownStrokeIcon className="error-notice__chevron" size={14} aria-hidden="true" />
           </summary>
           <div className="error-notice__message">{text}</div>
         </details>
       </div>
       {onRetry && (
         <button className="error-notice__retry" type="button" onClick={onRetry}>
-          <RotateCcw size={14} aria-hidden={true} /> {t("retry")}
+          <RotateCcwIcon size={14} aria-hidden={true} /> {t("retry")}
         </button>
       )}
     </section>
