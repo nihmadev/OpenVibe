@@ -27,6 +27,64 @@
 
   /* Backdrop blur — controlled via settings */
   --blur-amount: 0px;
+
+  /* ── Spacing scale (2px micro-grid below 12, 4px grid above) ──
+     All paddings/margins/gaps in components should use these tokens. */
+  --space-0: 0px;
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 10px;
+  --space-6: 12px;
+  --space-7: 16px;
+  --space-8: 20px;
+  --space-9: 24px;
+  --space-10: 32px;
+  --space-11: 40px;
+  --space-12: 48px;
+  --space-13: 64px;
+
+  /* ── Typography scale ──
+     Component font sizes should come from this scale only. */
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px; /* base */
+  --text-lg: 14px;
+  --text-xl: 15px;
+  --text-2xl: 18px;
+  --text-3xl: 20px;
+
+  /* ── Motion tokens ──
+     Scaled by the user-facing animation multiplier (Settings → Animations),
+     so every tokenized transition respects the global speed preference. */
+  --duration-instant: calc(0.07s * var(--anim-multiplier, 1));
+  --duration-fast: calc(0.12s * var(--anim-multiplier, 1));
+  --duration-normal: calc(0.2s * var(--anim-multiplier, 1));
+  --duration-slow: calc(0.35s * var(--anim-multiplier, 1));
+  --ease-standard: cubic-bezier(0.2, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --shimmer-duration: 3s;
+
+  /* ── Elevation scale ── */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.45);
+
+  /* ── Interaction states ── */
+  --disabled-opacity: 0.4;
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--fg-dim);
+
+  /* ── Semantic status colors ──
+     Prefer these over the raw --green/--yellow/--red/--cyan hues so intent
+     stays readable and theming can evolve independently. */
+  --color-success: var(--green);
+  --color-warning: var(--yellow);
+  --color-error: var(--red);
+  --color-info: var(--cyan);
 }
 
 html.theme-borderless {
@@ -59,7 +117,7 @@ body,
   background: var(--bg);
   color: var(--fg);
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: var(--text-md);
   line-height: 1.55;
   overflow: hidden;
   /* The application is primarily a control surface rather than a document.
@@ -97,6 +155,24 @@ textarea,
 button {
   font: inherit;
   color: inherit;
+}
+
+/* ── Keyboard focus ──
+   Every interactive element gets a visible focus ring on keyboard
+   navigation. Pointer interaction stays clean (:focus-visible only).
+   High specificity + !important intentionally beat per-component
+   `outline: none` resets. */
+button:focus-visible,
+[role="button"]:focus-visible,
+[role="menuitem"]:focus-visible,
+[tabindex]:focus-visible,
+a:focus-visible,
+select:focus-visible,
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible,
+input[type="range"]:focus-visible {
+  outline: 2px solid var(--fg-dim) !important;
+  outline-offset: 1px;
 }
 
 code {
@@ -247,4 +323,17 @@ code {
   background: linear-gradient(90deg, var(--bg-3) 25%, var(--line) 37%, var(--bg-3) 63%);
   background-size: 200% 100%;
   animation: skeleton-shimmer-anim 1.5s infinite linear;
+}
+
+/* ── Reduced motion ──
+   Collapse every tokenized duration so users who ask the OS for less
+   motion get near-instant transitions app-wide. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0.01s;
+    --duration-fast: 0.01s;
+    --duration-normal: 0.01s;
+    --duration-slow: 0.01s;
+    --shimmer-duration: 10s;
+  }
 }
