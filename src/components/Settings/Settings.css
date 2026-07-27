@@ -715,6 +715,11 @@
   overflow: hidden;
 }
 
+.connect-popup--custom {
+  width: 440px;
+  height: min(560px, 85vh);
+}
+
 .connect-popup__header {
   display: flex;
   flex-direction: column;
@@ -800,6 +805,53 @@
 
 .connect-popup__body::-webkit-scrollbar {
   display: none;
+}
+
+.connect-popup__tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+  margin: var(--space-7) var(--space-9) 0;
+  padding: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg-2);
+}
+
+.connect-popup__tab {
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color var(--duration-fast),
+    background-color var(--duration-fast);
+}
+
+.connect-popup__tab:hover {
+  color: var(--fg);
+}
+
+.connect-popup__tab--active {
+  background: var(--bg-3);
+  color: var(--fg);
+}
+
+.connect-popup__tab:focus-visible {
+  outline: 1px solid var(--fg-dim);
+  outline-offset: 1px;
+}
+
+.connect-popup--custom .connect-popup__body {
+  flex: 1;
+  min-height: 0;
+  padding-top: var(--space-6);
 }
 
 .connect-popup__section {
@@ -964,6 +1016,16 @@
   justify-content: flex-end;
   padding: var(--space-6) var(--space-9) var(--space-8);
   border-top: 1px solid var(--line);
+}
+
+@media (max-width: 520px) {
+  .connect-popup {
+    width: calc(100vw - 32px);
+  }
+
+  .connect-popup--custom {
+    height: min(560px, calc(100vh - 32px));
+  }
 }
 
 /* Models tab */

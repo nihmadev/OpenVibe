@@ -33,6 +33,8 @@ interface ConnectPopupProps {
   onClose: () => void;
 }
 
+type CustomProviderTab = "general" | "advanced";
+
 function PairEditor({
   pairs,
   keyPlaceholder,
@@ -113,6 +115,7 @@ export function ConnectPopup({
   });
   const [busy, setBusy] = useState(false);
   const [showKey, setShowKey] = useState(false);
+  const [activeTab, setActiveTab] = useState<CustomProviderTab>("general");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleConnect(): Promise<void> {
@@ -145,9 +148,17 @@ export function ConnectPopup({
   const hasCustomIcon = !!(form.customIcon && form.customIcon.startsWith("data:"));
   const isEditing = !!(editId || editProvider);
 
+  function handleTabKeyDown(e: React.KeyboardEvent<HTMLButtonElement>, currentTab: CustomProviderTab): void {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault();
+    const nextTab = currentTab === "general" ? "advanced" : "general";
+    setActiveTab(nextTab);
+    document.getElementById(`connect-popup-${nextTab}-tab`)?.focus();
+  }
+
   return (
     <div className="connect-popup__overlay" onClick={onClose}>
-      <div className="connect-popup" onClick={(e) => e.stopPropagation()}>
+      <div className={`connect-popup${custom ? " connect-popup--custom" : ""}`} onClick={(e) => e.stopPropagation()}>
         <div className="connect-popup__header">
           <div className="connect-popup__icon-wrap">
             {hasCustomIcon ? (
@@ -179,82 +190,123 @@ export function ConnectPopup({
           </button>
         </div>
 
-        <div className="connect-popup__body">
-          {custom && (
-            <div className="connect-popup__section">
-              <Input
-                containerClassName="connect-popup__input"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder={t("name")}
-              />
-              <Input
-                containerClassName="connect-popup__input"
-                value={form.baseUrl}
-                onChange={(e) => setForm({ ...form, baseUrl: e.target.value })}
-                placeholder={t("baseUrlPlaceholder")}
-              />
-            </div>
-          )}
-
-          <div className="connect-popup__section">
-            <Input
-              containerClassName="connect-popup__input"
-              type={showKey ? "text" : "password"}
-              value={form.apiKey}
-              onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
-              placeholder={t("apiKeyPlaceholder")}
-              rightElement={
-                <button
-                  className="connect-popup__eye"
-                  onClick={() => setShowKey((v) => !v)}
-                  tabIndex={-1}
-                  type="button"
-                  aria-label={showKey ? t("hideKey") : t("showKey")}
-                >
-                  {showKey ? <EyeOffIcon /> : <EyeIcon />}
-                </button>
-              }
-            />
+        {custom && (
+          <div className="connect-popup__tabs" role="tablist" aria-label={t("providerSettingsTabs")}>
+            {(["general", "advanced"] as const).map((tab) => (
+              <button
+                key={tab}
+                id={`connect-popup-${tab}-tab`}
+                className={`connect-popup__tab${activeTab === tab ? " connect-popup__tab--active" : ""}`}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab}
+                aria-controls={`connect-popup-${tab}-panel`}
+                tabIndex={activeTab === tab ? 0 : -1}
+                onClick={() => setActiveTab(tab)}
+                onKeyDown={(e) => handleTabKeyDown(e, tab)}
+              >
+                {t(tab === "general" ? "providerGeneralTab" : "providerAdvancedTab")}
+              </button>
+            ))}
           </div>
+        )}
 
-          {custom && (
+        <div
+          className="connect-popup__body"
+          role={custom ? "tabpanel" : undefined}
+          id={custom ? `connect-popup-${activeTab}-panel` : undefined}
+          aria-labelledby={custom ? `connect-popup-${activeTab}-tab` : undefined}
+        >
+          {(!custom || activeTab === "general") && (
             <>
-              <div className="connect-popup__section">
-                <label className="connect-popup__label">{t("customIcon")}</label>
-                <div className="connect-popup__icon-row">
+              {custom && (
+                <div className="connect-popup__section">
                   <Input
                     containerClassName="connect-popup__input"
-                    value={form.customIcon && !form.customIcon.startsWith("data:") ? form.customIcon : ""}
-                    onChange={(e) => setForm({ ...form, customIcon: e.target.value })}
-                    placeholder={t("iconUrlPlaceholder")}
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder={t("name")}
                   />
-                  <button
-                    className="connect-popup__icon-btn"
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    title={t("uploadIcon")}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
-                  </button>
-                  <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleIconFile} />
+                  <Input
+                    containerClassName="connect-popup__input"
+                    value={form.baseUrl}
+                    onChange={(e) => setForm({ ...form, baseUrl: e.target.value })}
+                    placeholder={t("baseUrlPlaceholder")}
+                  />
                 </div>
-              </div>
+              )}
 
               <div className="connect-popup__section">
-                <label className="connect-popup__label">{t("modelsUrl")}</label>
                 <Input
                   containerClassName="connect-popup__input"
-                  value={form.modelsUrl}
-                  onChange={(e) => setForm({ ...form, modelsUrl: e.target.value })}
-                  placeholder={t("modelsUrlPlaceholder")}
+                  type={showKey ? "text" : "password"}
+                  value={form.apiKey}
+                  onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
+                  placeholder={t("apiKeyPlaceholder")}
+                  rightElement={
+                    <button
+                      className="connect-popup__eye"
+                      onClick={() => setShowKey((v) => !v)}
+                      tabIndex={-1}
+                      type="button"
+                      aria-label={showKey ? t("hideKey") : t("showKey")}
+                    >
+                      {showKey ? <EyeOffIcon /> : <EyeIcon />}
+                    </button>
+                  }
                 />
               </div>
 
+              {custom && (
+                <>
+                  <div className="connect-popup__section">
+                    <label className="connect-popup__label">{t("customIcon")}</label>
+                    <div className="connect-popup__icon-row">
+                      <Input
+                        containerClassName="connect-popup__input"
+                        value={form.customIcon && !form.customIcon.startsWith("data:") ? form.customIcon : ""}
+                        onChange={(e) => setForm({ ...form, customIcon: e.target.value })}
+                        placeholder={t("iconUrlPlaceholder")}
+                      />
+                      <button
+                        className="connect-popup__icon-btn"
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        title={t("uploadIcon")}
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="17 8 12 3 7 8" />
+                          <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                      </button>
+                      <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleIconFile} />
+                    </div>
+                  </div>
+
+                  <div className="connect-popup__section">
+                    <label className="connect-popup__label">{t("modelsUrl")}</label>
+                    <Input
+                      containerClassName="connect-popup__input"
+                      value={form.modelsUrl}
+                      onChange={(e) => setForm({ ...form, modelsUrl: e.target.value })}
+                      placeholder={t("modelsUrlPlaceholder")}
+                    />
+                  </div>
+                </>
+              )}
+            </>
+          )}
+
+          {custom && activeTab === "advanced" && (
+            <>
               <div className="connect-popup__section">
                 <div className="connect-popup__section-header">
                   <label className="connect-popup__label">{t("customModelsLabel")}</label>

@@ -98,6 +98,9 @@ export const ru = {
   // ConnectPopup
   editProvider: "Редактировать провайдера",
   customProviderTitle: "Свой провайдер",
+  providerSettingsTabs: "Настройки провайдера",
+  providerGeneralTab: "Основные",
+  providerAdvancedTab: "Расширенные",
   name: "Название",
   hideKey: "Скрыть ключ",
   apiKeyPlaceholder: "API-ключ",
