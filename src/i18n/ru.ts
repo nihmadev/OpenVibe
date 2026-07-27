@@ -185,6 +185,15 @@ export const ru = {
   filesChanged_one: "{count} файл изменён",
   filesChanged_few: "{count} файла изменено",
   regenerate: "Перегенерировать",
+  messagesReverted: "{count} сообщ. возвращено",
+  messagesReverted_one: "{count} сообщ. возвращено",
+  changedFilesTitle: "Изменённые файлы",
+  restore: "Восстановить",
+  subagentReadOnly: "Запись не поддерживается.",
+  goBack: "Вернуться",
+  loadingDiff: "Загрузка изменений:",
+  showMore: "Показать ещё...",
+  emptyDirectory: "Пустая папка.",
 
   // Vibing loader phrases
 
