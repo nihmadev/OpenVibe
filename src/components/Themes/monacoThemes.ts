@@ -12,8 +12,12 @@ function hexToArgb(hex: string, alpha: number): string {
   return "#" + [r, g, b, a].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
 
-function stripHash(c: string): string {
-  return c.replace("#", "");
+function toMonacoColor(color: string): string {
+  const value = color.replace(/^#/, "");
+  if (value.length === 3 || value.length === 4) {
+    return [...value].map((character) => character.repeat(2)).join("");
+  }
+  return value;
 }
 
 export function makeMonacoTheme(vars: ThemeVars, isDark: boolean): monaco.editor.IStandaloneThemeData {
@@ -24,25 +28,25 @@ export function makeMonacoTheme(vars: ThemeVars, isDark: boolean): monaco.editor
   const lineStrong = vars["--line-strong"];
   const accent = vars["--accent"];
 
-  const comment = stripHash(vars["--syntax-comment"]);
-  const keyword = stripHash(vars["--syntax-keyword"]);
-  const string_ = stripHash(vars["--syntax-string"]);
-  const primitive = stripHash(vars["--syntax-primitive"]);
-  const variable = stripHash(vars["--syntax-variable"]);
-  const property = stripHash(vars["--syntax-property"]);
-  const type = stripHash(vars["--syntax-type"]);
-  const constant = stripHash(vars["--syntax-constant"]);
-  const operator = stripHash(vars["--syntax-operator"]);
-  const punctuation = stripHash(vars["--syntax-punctuation"]);
-  const object = stripHash(vars["--syntax-object"]);
-  const green = stripHash(vars["--green"]);
-  const red = stripHash(vars["--red"]);
+  const comment = toMonacoColor(vars["--syntax-comment"]);
+  const keyword = toMonacoColor(vars["--syntax-keyword"]);
+  const string_ = toMonacoColor(vars["--syntax-string"]);
+  const primitive = toMonacoColor(vars["--syntax-primitive"]);
+  const variable = toMonacoColor(vars["--syntax-variable"]);
+  const property = toMonacoColor(vars["--syntax-property"]);
+  const type = toMonacoColor(vars["--syntax-type"]);
+  const constant = toMonacoColor(vars["--syntax-constant"]);
+  const operator = toMonacoColor(vars["--syntax-operator"]);
+  const punctuation = toMonacoColor(vars["--syntax-punctuation"]);
+  const object = toMonacoColor(vars["--syntax-object"]);
+  const green = toMonacoColor(vars["--green"]);
+  const red = toMonacoColor(vars["--red"]);
 
   return {
     base: isDark ? "vs-dark" : "vs",
     inherit: true,
     rules: [
-      { token: "", foreground: punctuation, background: stripHash(bg) },
+      { token: "", foreground: punctuation, background: toMonacoColor(bg) },
       { token: "invalid", foreground: red, fontStyle: "italic" },
       { token: "emphasis", fontStyle: "italic" },
       { token: "strong", fontStyle: "bold" },

@@ -26,7 +26,7 @@ import material from "./material.json";
 import matrix from "./matrix.json";
 import mercury from "./mercury.json";
 import nightowl from "./nightowl.json";
-import oc2 from "./oc-2.json";
+import defaultTheme from "./default.json";
 import onedarkpro from "./onedarkpro.json";
 import opencode from "./opencode.json";
 import orng from "./orng.json";
@@ -138,7 +138,7 @@ function deriveVars(
 
   const textWeak = overrides?.["text-weak"];
   const o = overrides || {};
-  const accent = palette.accent || "#888";
+  const accent = palette.accent || "#888888";
   const success = palette.success || "#86efac";
   const warning = palette.warning || "#fbbf24";
   const error = palette.error || "#f87171";
@@ -190,78 +190,8 @@ function fromJson(j: ThemeJson): ThemeDef {
   };
 }
 
-const defaultDark: ThemeVars = {
-  "--bg": "#161616",
-  "--bg-2": "#1c1c1c",
-  "--bg-3": "#222222",
-  "--line": "#2a2a2a",
-  "--line-strong": "#3a3a3a",
-  "--fg": "#e6e6e6",
-  "--fg-dim": "rgba(230,230,230,0.6)",
-  "--fg-muted": "rgba(230,230,230,0.3)",
-  "--accent": "#e3e2e2",
-  "--cyan": "#67e8f9",
-  "--green": "#86efac",
-  "--yellow": "#fbbf24",
-  "--red": "#f87171",
-  "--avatar-bg": "#7c6af7",
-  "--white": "#ffffff",
-  "--knob": "#e6e6e6",
-  "--knob-bg": "#555555",
-  "--toggle-checked": "#999999",
-  "--primary": "#7c6af7",
-  "--syntax-comment": "#888888",
-  "--syntax-keyword": "#e3e2e2",
-  "--syntax-string": "#86efac",
-  "--syntax-primitive": "#7c6af7",
-  "--syntax-variable": "#e6e6e6",
-  "--syntax-property": "#67e8f9",
-  "--syntax-type": "#fbbf24",
-  "--syntax-constant": "#fbbf24",
-  "--syntax-operator": "#e3e2e2",
-  "--syntax-punctuation": "#e6e6e6",
-  "--syntax-object": "#f87171",
-  "--markdown-link": "#67e8f9",
-  "--markdown-link-text": "#67e8f9",
-};
-
-const defaultLight: ThemeVars = {
-  "--bg": "#f2f2f2",
-  "--bg-2": "#ededed",
-  "--bg-3": "#e8e8e8",
-  "--line": "#e1e1e1",
-  "--line-strong": "#d5d5d5",
-  "--fg": "#1a1a1a",
-  "--fg-dim": "rgba(26,26,26,0.6)",
-  "--fg-muted": "rgba(26,26,26,0.3)",
-  "--accent": "#7c6af7",
-  "--cyan": "#0284c7",
-  "--green": "#16a34a",
-  "--yellow": "#ca8a04",
-  "--red": "#dc2626",
-  "--avatar-bg": "#7c6af7",
-  "--white": "#ffffff",
-  "--knob": "#1a1a1a",
-  "--knob-bg": "#aaaaaa",
-  "--toggle-checked": "#666666",
-  "--primary": "#7c6af7",
-  "--syntax-comment": "#888888",
-  "--syntax-keyword": "#7c6af7",
-  "--syntax-string": "#16a34a",
-  "--syntax-primitive": "#7c6af7",
-  "--syntax-variable": "#1a1a1a",
-  "--syntax-property": "#0284c7",
-  "--syntax-type": "#ca8a04",
-  "--syntax-constant": "#ca8a04",
-  "--syntax-operator": "#7c6af7",
-  "--syntax-punctuation": "#1a1a1a",
-  "--syntax-object": "#dc2626",
-  "--markdown-link": "#0284c7",
-  "--markdown-link-text": "#0284c7",
-};
-
 export const themes: ThemeDef[] = [
-  { id: "default", name: "Default", darkVars: defaultDark, lightVars: defaultLight },
+  fromJson(defaultTheme as ThemeJson),
   fromJson(monokai as ThemeJson),
   fromJson(carbonfox as ThemeJson),
   fromJson(gruvbox as ThemeJson),
@@ -290,7 +220,6 @@ export const themes: ThemeDef[] = [
   fromJson(matrix as ThemeJson),
   fromJson(mercury as ThemeJson),
   fromJson(nightowl as ThemeJson),
-  fromJson(oc2 as ThemeJson),
   fromJson(onedarkpro as ThemeJson),
   fromJson(opencode as ThemeJson),
   fromJson(orng as ThemeJson),
