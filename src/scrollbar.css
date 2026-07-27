@@ -1,109 +1,56 @@
-/* None scrollbar for Electron/Chromium */
+/* ── Application scrollbars ──
+   Thin, theme-aware scrollbars. The thumb color derives from --fg via
+   color-mix so it stays visible in both dark and light themes. */
 
-/* Global styles for all elements */
 ::-webkit-scrollbar {
-  width: 6px !important;
-  height: 6px !important;
-  background: transparent !important;
+  width: 6px;
+  height: 6px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent !important;
-  border: none !important;
-  margin: 0 !important;
+  background: transparent;
+  border: none;
+  margin: 0;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-radius: 100px !important;
-  border: none !important;
-  min-height: 30px !important;
+  background: color-mix(in srgb, var(--fg, #e6e6e6) 20%, transparent);
+  border-radius: 100px;
+  border: none;
+  min-height: 30px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
+  background: color-mix(in srgb, var(--fg, #e6e6e6) 30%, transparent);
 }
 
 ::-webkit-scrollbar-thumb:active {
-  background: rgba(255, 255, 255, 0.4) !important;
+  background: color-mix(in srgb, var(--fg, #e6e6e6) 40%, transparent);
 }
 
 ::-webkit-scrollbar-corner {
-  background: transparent !important;
-  display: none !important;
+  background: transparent;
+  display: none;
 }
 
-/* Full hide scrollbar buttons */
 ::-webkit-scrollbar-button {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  background: transparent !important;
-}
-
-::-webkit-scrollbar-button:start:decrement,
-::-webkit-scrollbar-button:end:increment {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
 }
 
 /* Firefox */
 * {
-  scrollbar-width: thin !important;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--fg, #e6e6e6) 20%, transparent) transparent;
 }
 
-/* Apply to all possible elements */
-html::-webkit-scrollbar,
-body::-webkit-scrollbar,
-div::-webkit-scrollbar,
-section::-webkit-scrollbar,
-article::-webkit-scrollbar,
-aside::-webkit-scrollbar,
-main::-webkit-scrollbar,
-nav::-webkit-scrollbar,
-ul::-webkit-scrollbar,
-ol::-webkit-scrollbar,
-pre::-webkit-scrollbar,
-code::-webkit-scrollbar {
-  width: 6px !important;
-  height: 6px !important;
-}
-
-html::-webkit-scrollbar-thumb,
-body::-webkit-scrollbar-thumb,
-div::-webkit-scrollbar-thumb,
-section::-webkit-scrollbar-thumb,
-article::-webkit-scrollbar-thumb,
-aside::-webkit-scrollbar-thumb,
-main::-webkit-scrollbar-thumb,
-nav::-webkit-scrollbar-thumb,
-ul::-webkit-scrollbar-thumb,
-ol::-webkit-scrollbar-thumb,
-pre::-webkit-scrollbar-thumb,
-code::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-radius: 100px !important;
-  border: none !important;
-}
-
-html::-webkit-scrollbar-button,
-body::-webkit-scrollbar-button,
-div::-webkit-scrollbar-button,
-section::-webkit-scrollbar-button,
-article::-webkit-scrollbar-button,
-aside::-webkit-scrollbar-button,
-main::-webkit-scrollbar-button,
-nav::-webkit-scrollbar-button,
-ul::-webkit-scrollbar-button,
-ol::-webkit-scrollbar-button,
-pre::-webkit-scrollbar-button,
-code::-webkit-scrollbar-button {
-  display: none !important;
-}
-
-/* Elements without scrollbar */
+/* ── .no-scrollbar utility ──
+   Scrolls without a visible scrollbar. Prefer adding this class in TSX
+   over duplicating hide rules in component CSS. */
+.no-scrollbar,
 .editor-area__tabs,
 .editor-area__breadcrumb,
 .search-popup__body,
@@ -120,45 +67,20 @@ code::-webkit-scrollbar-button {
   scrollbar-width: none !important;
 }
 
+.no-scrollbar::-webkit-scrollbar,
 .editor-area__tabs::-webkit-scrollbar,
-.editor-area__tabs::-webkit-scrollbar-thumb,
-.editor-area__tabs::-webkit-scrollbar-track,
 .editor-area__breadcrumb::-webkit-scrollbar,
-.editor-area__breadcrumb::-webkit-scrollbar-thumb,
-.editor-area__breadcrumb::-webkit-scrollbar-track,
 .search-popup__body::-webkit-scrollbar,
-.search-popup__body::-webkit-scrollbar-thumb,
-.search-popup__body::-webkit-scrollbar-track,
 .settings__content-body::-webkit-scrollbar,
-.settings__content-body::-webkit-scrollbar-thumb,
-.settings__content-body::-webkit-scrollbar-track,
 .settings__custom-select-dropdown-body::-webkit-scrollbar,
-.settings__custom-select-dropdown-body::-webkit-scrollbar-thumb,
-.settings__custom-select-dropdown-body::-webkit-scrollbar-track,
 .project-rail__list::-webkit-scrollbar,
-.project-rail__list::-webkit-scrollbar-thumb,
-.project-rail__list::-webkit-scrollbar-track,
 .session-list__list::-webkit-scrollbar,
-.session-list__list::-webkit-scrollbar-thumb,
-.session-list__list::-webkit-scrollbar-track,
 .sc-results::-webkit-scrollbar,
-.sc-results::-webkit-scrollbar-thumb,
-.sc-results::-webkit-scrollbar-track,
 .inline-vibe-textarea::-webkit-scrollbar,
-.inline-vibe-textarea::-webkit-scrollbar-thumb,
-.inline-vibe-textarea::-webkit-scrollbar-track,
 .inline-vibe-zone-container::-webkit-scrollbar,
-.inline-vibe-zone-container::-webkit-scrollbar-thumb,
-.inline-vibe-zone-container::-webkit-scrollbar-track,
 .inline-vibe-portal-root::-webkit-scrollbar,
-.inline-vibe-portal-root::-webkit-scrollbar-thumb,
-.inline-vibe-portal-root::-webkit-scrollbar-track,
 .inline-vibe-zone-content::-webkit-scrollbar,
-.inline-vibe-zone-content::-webkit-scrollbar-thumb,
-.inline-vibe-zone-content::-webkit-scrollbar-track,
-.inline-vibe-input-wrapper::-webkit-scrollbar,
-.inline-vibe-input-wrapper::-webkit-scrollbar-thumb,
-.inline-vibe-input-wrapper::-webkit-scrollbar-track {
+.inline-vibe-input-wrapper::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
