@@ -82,6 +82,10 @@ impl ProjectStore {
             conn.execute_batch("PRAGMA user_version = 3")?;
         }
 
+        // Note: migration v4 is intentionally skipped — old enabled_models entries
+        // (plain model_id without "::") are handled gracefully by the frontend.
+        // New entries use composite key "providerDbId::modelId".
+
         Ok(())
     }
 

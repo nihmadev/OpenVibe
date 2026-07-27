@@ -48,6 +48,7 @@ impl ProjectStore {
         Ok(models)
     }
 
+    /// Toggle an enabled model using composite key "provider_id::model_id".
     pub fn toggle_enabled_model(&self, model_id: &str) -> Result<bool> {
         let exists: bool = self
             .conn
