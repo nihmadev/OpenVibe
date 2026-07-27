@@ -1,4 +1,5 @@
 export * from "./Button.js";
+export * from "./IconButton.js";
 export * from "./Toggle.js";
 export * from "./ControlRow.js";
 export * from "./Input.js";
