@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useState, useEffect } from "react";
-import type { VibeConfig } from "../types.js";
+import type { VibeConfig, Provider } from "../types.js";
 
 export function useModels(
   config: VibeConfig | null,
@@ -19,11 +19,32 @@ export function useModels(
   }, [config?.model, settingsOpen]);
 
   const connectedModels = useMemo(() => {
-    return Array.from(enabledModels).map((id) => ({ id, name: id }));
+    // Enabled models now use composite key "providerDbId::modelId".
+    // Extract just the model id for display purposes.
+    return Array.from(enabledModels).map((compositeKey) => {
+      const sep = compositeKey.indexOf("::");
+      const modelId = sep >= 0 ? compositeKey.slice(sep + 2) : compositeKey;
+      return { id: modelId, name: modelId, compositeKey };
+    });
   }, [enabledModels]);
 
   const handlePickModel = useCallback(
-    (id: string) => {
+    async (id: string, providerDbId?: string) => {
+      // When a providerDbId is provided, switch the active provider first
+      // so requests go to the correct backend.
+      if (providerDbId) {
+        try {
+          const providers: Provider[] = await window.vibe.providers.list();
+          const provider = providers.find((p) => p.id === providerDbId);
+          if (provider) {
+            await window.vibe.setProvider(provider.apiKey, provider.baseUrl, id, provider.id);
+            if (config) setConfig({ ...config, model: id, baseUrl: provider.baseUrl });
+            return;
+          }
+        } catch {
+          // Fall through to basic setModel
+        }
+      }
       window.vibe.setModel(id);
       if (config) setConfig({ ...config, model: id });
     },

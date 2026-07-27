@@ -1,8 +1,11 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import type { Project } from "../types.js";
 
 /** Duration of the fade-out animation for removed project tiles (ms). */
 const REMOVE_ANIM_MS = 350;
+
+/** How often to check whether project folders still exist (ms). */
+const POLL_INTERVAL_MS = 3_000;
 
 export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -12,6 +15,11 @@ export function useProjects() {
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   /** Guard against concurrent validateProjectPaths calls. */
   const validating = useRef(false);
+  /**
+   * Stable ref to the onProjectChange callback so the polling effect
+   * can use it without re-creating the interval on every render.
+   */
+  const onProjectChangeRef = useRef<((folder: string | null, projectId: string | null) => Promise<void>) | null>(null);
 
   /** Check whether a project folder still exists on disk. */
   const pathExists = useCallback(async (path: string): Promise<boolean> => {
@@ -123,7 +131,7 @@ export function useProjects() {
 
   /**
    * Validate all project paths and auto-remove any whose folders no longer exist.
-   * Called once on app init.
+   * Called on app init and periodically via the polling effect.
    */
   const validateProjectPaths = useCallback(
     async (
@@ -179,6 +187,26 @@ export function useProjects() {
     [activeProject, pathExists],
   );
 
+  /**
+   * Store the onProjectChange callback so periodic validation can use it.
+   * Must be called once from the consuming component (App.tsx).
+   */
+  const setOnProjectChange = useCallback((cb: (folder: string | null, projectId: string | null) => Promise<void>) => {
+    onProjectChangeRef.current = cb;
+  }, []);
+
+  // ── Periodic polling: auto-remove projects whose folders no longer exist ──
+  useEffect(() => {
+    if (projects.length === 0) return;
+
+    const id = setInterval(() => {
+      if (validating.current) return;
+      validateProjectPaths(projects, onProjectChangeRef.current ?? undefined);
+    }, POLL_INTERVAL_MS);
+
+    return () => clearInterval(id);
+  }, [projects, validateProjectPaths]);
+
   return {
     projects,
     setProjects,
@@ -192,5 +220,6 @@ export function useProjects() {
     handleCloseProject,
     handleRemoveProject,
     validateProjectPaths,
+    setOnProjectChange,
   };
 }
