@@ -13,9 +13,9 @@
 .video-viewer--loading,
 .video-viewer--error {
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-4);
   color: var(--fg-dim);
-  font-size: 13px;
+  font-size: var(--text-md);
   background: var(--bg);
 }
 
@@ -26,7 +26,7 @@
 
 .video-viewer__error-msg {
   color: var(--fg-dim);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 .video-viewer__container {
@@ -57,10 +57,10 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 6px 8px;
+  padding: var(--space-3) var(--space-4);
   background: linear-gradient(transparent, var(--bg));
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--duration-normal);
   user-select: none;
 }
 
@@ -73,8 +73,8 @@
 
 .video-viewer__progress {
   cursor: pointer;
-  padding: 6px 0;
-  margin: -6px 0;
+  padding: var(--space-3) 0;
+  margin: calc(-1 * var(--space-3)) 0;
   position: relative;
 }
 
@@ -84,7 +84,7 @@
   background: rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-xs);
   overflow: visible;
-  transition: height 0.15s;
+  transition: height var(--duration-fast);
 }
 
 .video-viewer__progress:hover .video-viewer__progress-track {
@@ -96,7 +96,7 @@
   top: 0;
   left: 0;
   height: 100%;
-  background: var(--fg, #fff);
+  background: var(--fg);
   border-radius: var(--radius-xs);
   pointer-events: none;
 }
@@ -107,10 +107,10 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--fg, #fff);
+  background: var(--fg);
   transform: translate(-50%, -50%) scale(0);
   pointer-events: none;
-  transition: transform 0.15s;
+  transition: transform var(--duration-fast);
 }
 
 .video-viewer__progress:hover .video-viewer__progress-thumb {
@@ -122,8 +122,8 @@
 .video-viewer__controls-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding-top: 4px;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
 }
 
 /* ── Buttons ── */
@@ -140,7 +140,7 @@
   cursor: pointer;
   border-radius: var(--radius-sm);
   padding: 0;
-  transition: background 0.15s;
+  transition: background var(--duration-fast);
 }
 
 .video-viewer__btn:hover {
@@ -154,7 +154,7 @@
 /* ── Time display ── */
 
 .video-viewer__time {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: rgba(255, 255, 255, 0.8);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -213,10 +213,10 @@
 }
 
 .video-viewer__speed-btn {
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
   width: auto;
-  padding: 0 6px;
+  padding: 0 var(--space-3);
 }
 
 .video-viewer__speed-menu {
@@ -226,11 +226,11 @@
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 4px;
+  gap: var(--space-1);
+  padding: var(--space-2);
   background: #222;
   border-radius: var(--radius-md);
-  margin-bottom: 6px;
+  margin-bottom: var(--space-3);
   white-space: nowrap;
   z-index: 10;
 }
@@ -238,17 +238,17 @@
 .video-viewer__speed-opt {
   display: block;
   width: 100%;
-  padding: 4px 12px;
+  padding: var(--space-2) var(--space-6);
   border: none;
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
-  font-size: 12px;
+  font-size: var(--text-sm);
   cursor: pointer;
   border-radius: var(--radius-xs);
   text-align: center;
   transition:
-    background 0.1s,
-    color 0.1s;
+    background var(--duration-fast),
+    color var(--duration-fast);
 }
 
 .video-viewer__speed-opt:hover {
@@ -257,6 +257,6 @@
 }
 
 .video-viewer__speed-opt--active {
-  color: var(--fg, #fff);
+  color: var(--fg);
   font-weight: 600;
 }

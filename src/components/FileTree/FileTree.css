@@ -2,16 +2,16 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 .ftree__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
+  padding: var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--line);
-  gap: 8px;
+  gap: var(--space-4);
 }
 
 .ftree__root {
@@ -25,33 +25,13 @@
 .ftree__actions {
   display: flex;
   align-items: center;
-  gap: 2px;
-}
-
-.ftree__action {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: 0;
-  padding: 0;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  color: var(--fg-muted);
-  background: transparent;
-  transition: all 0.2s;
-}
-
-.ftree__action:hover {
-  color: var(--bg);
-  background: var(--fg);
+  gap: var(--space-1);
 }
 
 .ftree__body {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 0;
+  padding: var(--space-2) 0;
   scrollbar-width: none !important;
 }
 
@@ -63,12 +43,12 @@
 
 .ftree__error {
   color: var(--red);
-  padding: 8px;
+  padding: var(--space-4);
 }
 
 .ftree__loading {
   color: var(--fg-muted);
-  padding: 8px;
+  padding: var(--space-4);
   font-style: italic;
   animation: pulse 2s infinite;
 }
@@ -76,15 +56,15 @@
 .ftree__row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 8px;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-4);
   cursor: pointer;
   user-select: none;
   color: var(--fg-dim);
   white-space: nowrap;
   transition:
-    background 0.1s,
-    color 0.1s;
+    background var(--duration-fast),
+    color var(--duration-fast);
   position: relative;
 }
 
@@ -141,10 +121,10 @@
 }
 .ftree__rename-wrap {
   min-width: 0;
-  padding: 1px 4px;
+  padding: 1px var(--space-2);
   border-radius: 2px;
-  background: var(--bg-2, #1e1e1e);
-  border-color: var(--line-strong, #3c3c3c);
+  background: var(--bg-2);
+  border-color: var(--line-strong);
 }
 .ftree__rename-wrap .ui-input-icon {
   flex-shrink: 0;

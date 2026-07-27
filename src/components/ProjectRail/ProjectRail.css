@@ -6,8 +6,8 @@
   flex-direction: column;
   align-items: center;
   align-self: stretch;
-  padding: 10px 0;
-  gap: 6px;
+  padding: var(--space-5) 0;
+  gap: var(--space-3);
   background: var(--bg);
   z-index: 80;
 }
@@ -23,7 +23,7 @@
   color: var(--fg-muted);
   border-radius: var(--radius-md);
   padding: 0;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-2);
   transition:
     color calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1)) var(--anim-buttons-easing, ease),
     background calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1))
@@ -44,7 +44,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-3);
   width: 100%;
   overflow-y: auto;
   scrollbar-width: none;
@@ -75,7 +75,7 @@
 
 .project-rail__tile:active {
   transform: scale(0.93);
-  transition-duration: 0.08s;
+  transition-duration: var(--duration-instant);
 }
 
 .project-rail__tile::before {
@@ -116,7 +116,7 @@
   border-radius: var(--radius-md);
   background: var(--avatar-bg);
   color: color-mix(in srgb, var(--avatar-bg) 35%, white 65%);
-  font-size: 15px;
+  font-size: var(--text-xl);
   font-weight: 600;
   letter-spacing: 0.2px;
   transition:
@@ -129,7 +129,7 @@
 
 .project-rail__tile:hover .project-rail__avatar {
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-md);
 }
 
 .project-rail__tile--active .project-rail__avatar {
@@ -165,7 +165,7 @@
   background: transparent;
   color: var(--fg-muted);
   border-radius: var(--radius-md);
-  font-size: 18px;
+  font-size: var(--text-2xl);
   transition:
     border-color calc(var(--anim-project-hover-duration, 0.2s) * var(--anim-project-hover-enabled, 1))
       var(--anim-project-hover-easing, ease),
@@ -190,7 +190,7 @@
 
 .project-rail__bottom {
   margin-top: auto;
-  padding-bottom: 4px;
+  padding-bottom: var(--space-2);
 }
 
 .project-rail__settings {
@@ -234,7 +234,7 @@
     opacity: 0;
     transform: scale(0.5);
     max-height: 0;
-    margin-bottom: -6px;
+    margin-bottom: calc(-1 * var(--space-3));
   }
 }
 

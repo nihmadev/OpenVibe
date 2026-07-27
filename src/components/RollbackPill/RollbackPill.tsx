@@ -1,4 +1,6 @@
 import React, { useRef } from "react";
+import { PenIcon, TrashIcon } from "../Icons/icons.js";
+import { useI18n } from "../../hooks/useI18n.js";
 import "./RollbackPill.css";
 
 interface RollbackPillProps {
@@ -9,6 +11,23 @@ interface RollbackPillProps {
   onRestore: () => void;
 }
 
+function ChevronIcon(): React.ReactElement {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
 export function RollbackPill({
   messageText,
   fileCount,
@@ -16,6 +35,7 @@ export function RollbackPill({
   messagesRemoved,
   onRestore,
 }: RollbackPillProps): React.ReactElement {
+  const { t } = useI18n();
   const [expanded, setExpanded] = React.useState(false);
   const [filesOpen, setFilesOpen] = React.useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -31,14 +51,8 @@ export function RollbackPill({
 
   const truncated = messageText.length > 100 ? messageText.slice(0, 100) + "…" : messageText;
 
-  const fileLabel =
-    fileCount === 1
-      ? "1 файл изменён"
-      : fileCount >= 2 && fileCount <= 4
-        ? `${fileCount} файла изменено`
-        : `${fileCount} файлов изменено`;
-
-  const msgLabel = messagesRemoved === 1 ? "1 сообщ. возвращено" : `${messagesRemoved} сообщ. возвращено`;
+  const fileLabel = t("filesChanged", { count: fileCount });
+  const msgLabel = t("messagesReverted", { count: messagesRemoved });
 
   return (
     <div className="prompt-input__rollback">
@@ -61,18 +75,7 @@ export function RollbackPill({
           {!expanded && <span className="prompt-input__rollback-preview">{truncated}</span>}
         </span>
         <span className={`prompt-input__rollback-chevron${expanded ? " prompt-input__rollback-chevron--open" : ""}`}>
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
+          <ChevronIcon />
         </span>
       </div>
 
@@ -95,22 +98,11 @@ export function RollbackPill({
                   }
                 }}
               >
-                <span>Изменённые файлы</span>
+                <span>{t("changedFilesTitle")}</span>
                 <span
                   className={`prompt-input__rollback-files-chevron${filesOpen ? " prompt-input__rollback-files-chevron--open" : ""}`}
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
+                  <ChevronIcon />
                 </span>
               </div>
               {filesOpen && (
@@ -119,7 +111,9 @@ export function RollbackPill({
                     const name = f.path.split(/[\\/]/).pop() ?? f.path;
                     return (
                       <div key={i} className="prompt-input__rollback-file-item">
-                        <span className="prompt-input__rollback-file-icon">{f.content === null ? "🗑" : "📝"}</span>
+                        <span className="prompt-input__rollback-file-icon">
+                          {f.content === null ? <TrashIcon /> : <PenIcon />}
+                        </span>
                         <span className="prompt-input__rollback-file-name">{name}</span>
                       </div>
                     );
@@ -139,7 +133,7 @@ export function RollbackPill({
                 onRestore();
               }}
             >
-              Восстановить
+              {t("restore")}
             </button>
           </div>
         </div>

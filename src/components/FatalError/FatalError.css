@@ -8,17 +8,17 @@
 .fatal-error__body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-6);
   align-items: center;
   justify-content: center;
   height: 100%;
   text-align: center;
-  padding: 20px;
+  padding: var(--space-8);
 }
 
 .fatal-error__title {
   color: var(--fg);
-  font-size: 14px;
+  font-size: var(--text-lg);
   font-weight: 500;
 }
 
@@ -26,17 +26,17 @@
   color: var(--fg-dim);
   max-width: 540px;
   white-space: pre-wrap;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 .fatal-error__hint {
   color: var(--fg-muted);
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 
 .fatal-error__code {
   color: var(--fg);
   border: 1px solid var(--line);
-  padding: 0 5px;
+  padding: 0 var(--space-2);
   border-radius: var(--radius-xs);
 }

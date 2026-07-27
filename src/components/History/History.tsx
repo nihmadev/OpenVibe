@@ -20,6 +20,7 @@ import {
 } from "../Icons/icons.js";
 import { ErrorNotice } from "../AgentChat/components/ErrorNotice.js";
 import { Markdown } from "../Markdown/Markdown.js";
+import { FileIcon } from "../Icons/file-icons.js";
 
 export interface AttachmentView {
   id: string;
@@ -428,7 +429,7 @@ function MessageFooter({
           </div>
         </div>
         <div className="msg__footer-right">
-          <button className="msg__footer-btn" onClick={onCopy} title={t("copyMessage")}>
+          <button className="ui-icon-btn ui-icon-btn--md msg__footer-btn" onClick={onCopy} title={t("copyMessage")}>
             {copied ? (
               <span style={{ color: "var(--green)" }}>
                 <CheckIcon />
@@ -437,7 +438,11 @@ function MessageFooter({
               <CopyIcon />
             )}
           </button>
-          <button className="msg__footer-btn" onClick={() => onRegenerate?.(item.id)} title={t("regenerateMessage")}>
+          <button
+            className="ui-icon-btn ui-icon-btn--md msg__footer-btn"
+            onClick={() => onRegenerate?.(item.id)}
+            title={t("regenerateMessage")}
+          >
             <RefreshIcon2 />
           </button>
         </div>
@@ -550,7 +555,9 @@ export function History({ items, onPickModel, onRegenerate, streamingId, busy }:
                       <img key={a.id} className="msg__image" src={a.dataUrl} alt={a.name} title={a.name} />
                     ) : (
                       <span key={a.id} className="msg__file" title={a.path ?? a.name}>
-                        <span className="msg__file-icon">⌘</span>
+                        <span className="msg__file-icon">
+                          <FileIcon name={a.name} />
+                        </span>
                         {a.name}
                       </span>
                     ),
