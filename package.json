@@ -101,6 +101,7 @@
     "remark-math": "^6.0.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.5",
     "@eslint/js": "^9.22.0",
     "@tauri-apps/cli": "^2.11.4",
     "@testing-library/jest-dom": "^6.9.1",
@@ -115,24 +116,20 @@
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
     "lint-staged": "^17.0.8",
-    "prettier": "^3.9.5",
+
     "typescript": "^6.0.0",
     "typescript-eslint": "^8.63.0",
     "vite": "^8.1.4",
     "vitest": "^4.1.10"
   },
-  "lint-staged": {
-    "*.{ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{js,json,md,css}": [
-      "prettier --write"
-    ],
-    "*.rs": [
-      "rustfmt --edition 2021"
-    ]
-  },
+    "lint-staged": {
+      "*.{ts,tsx,js,json,md,css}": [
+        "biome check --write --no-errors-on-unmatched"
+      ],
+      "*.rs": [
+        "rustfmt --edition 2021"
+      ]
+    },
   "keywords": [
     "agent",
     "ai",

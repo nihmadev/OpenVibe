@@ -27,7 +27,7 @@
   transition:
     color calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1)) var(--anim-buttons-easing, ease),
     background calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1))
-      var(--anim-buttons-easing, ease);
+    var(--anim-buttons-easing, ease);
 }
 
 .project-rail__top:hover {
@@ -101,9 +101,9 @@
   height: 24px;
   transition:
     transform calc(var(--anim-project-hover-duration, 0.22s) * var(--anim-project-hover-enabled, 1))
-      var(--anim-project-hover-easing, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    var(--anim-project-hover-easing, cubic-bezier(0.34, 1.56, 0.64, 1)),
     height calc(var(--anim-project-hover-duration, 0.22s) * var(--anim-project-hover-enabled, 1))
-      var(--anim-project-hover-easing, cubic-bezier(0.34, 1.56, 0.64, 1));
+    var(--anim-project-hover-easing, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
 
 .project-rail__avatar {
@@ -121,7 +121,7 @@
   letter-spacing: 0.2px;
   transition:
     border-radius calc(var(--anim-project-hover-duration, 0.18s) * var(--anim-project-hover-enabled, 1))
-      var(--anim-project-hover-easing, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    var(--anim-project-hover-easing, cubic-bezier(0.34, 1.56, 0.64, 1)),
     border-color calc(var(--anim-project-hover-duration, 0.18s) * var(--anim-project-hover-enabled, 1)) ease,
     box-shadow calc(var(--anim-project-hover-duration, 0.18s) * var(--anim-project-hover-enabled, 1)) ease;
   border: 2px solid transparent;
@@ -168,13 +168,13 @@
   font-size: var(--text-2xl);
   transition:
     border-color calc(var(--anim-project-hover-duration, 0.2s) * var(--anim-project-hover-enabled, 1))
-      var(--anim-project-hover-easing, ease),
+    var(--anim-project-hover-easing, ease),
     color calc(var(--anim-project-hover-duration, 0.2s) * var(--anim-project-hover-enabled, 1))
-      var(--anim-project-hover-easing, ease),
+    var(--anim-project-hover-easing, ease),
     background calc(var(--anim-project-hover-duration, 0.2s) * var(--anim-project-hover-enabled, 1))
-      var(--anim-project-hover-easing, ease),
+    var(--anim-project-hover-easing, ease),
     transform calc(var(--anim-project-hover-duration, 0.15s) * var(--anim-project-hover-enabled, 1))
-      var(--anim-project-hover-easing, cubic-bezier(0.34, 1.56, 0.64, 1));
+    var(--anim-project-hover-easing, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
 
 .project-rail__add:hover {
@@ -207,7 +207,7 @@
   transition:
     color calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1)) var(--anim-buttons-easing, ease),
     background calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1))
-      var(--anim-buttons-easing, ease);
+    var(--anim-buttons-easing, ease);
 }
 
 .project-rail__settings:hover {

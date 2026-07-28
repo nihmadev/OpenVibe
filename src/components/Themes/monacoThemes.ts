@@ -1,5 +1,5 @@
-import type { ThemeVars } from "../../themes/themes.js";
 import type * as monaco from "monaco-editor";
+import type { ThemeVars } from "../../themes/themes.js";
 
 function hexToRgb(hex: string): [number, number, number] {
   const c = hex.replace("#", "");
@@ -9,7 +9,7 @@ function hexToRgb(hex: string): [number, number, number] {
 function hexToArgb(hex: string, alpha: number): string {
   const [r, g, b] = hexToRgb(hex);
   const a = Math.max(0, Math.min(255, Math.round(alpha * 255)));
-  return "#" + [r, g, b, a].map((x) => x.toString(16).padStart(2, "0")).join("");
+  return `#${[r, g, b, a].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 }
 
 function toMonacoColor(color: string): string {
@@ -38,7 +38,7 @@ export function makeMonacoTheme(vars: ThemeVars, isDark: boolean): monaco.editor
   const constant = toMonacoColor(vars["--syntax-constant"]);
   const operator = toMonacoColor(vars["--syntax-operator"]);
   const punctuation = toMonacoColor(vars["--syntax-punctuation"]);
-  const object = toMonacoColor(vars["--syntax-object"]);
+  const _object = toMonacoColor(vars["--syntax-object"]);
   const green = toMonacoColor(vars["--green"]);
   const red = toMonacoColor(vars["--red"]);
 

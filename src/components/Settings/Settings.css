@@ -2147,7 +2147,7 @@
 
 /* Horizontal rail for projectHover */
 .apm-rail--row {
-  flex-direction: row !important;
+  flex-direction: row;
   width: calc(100% - 16px);
   padding: var(--space-3) var(--space-4);
   gap: var(--space-2);
@@ -2262,8 +2262,8 @@
   display: block;
   background: var(--line-strong);
   border-radius: var(--radius-xs);
-  font-size: 0 !important;
-  line-height: 0 !important;
+  font-size: 0;
+  line-height: 0;
   flex-shrink: 0;
   flex-grow: 0;
 }

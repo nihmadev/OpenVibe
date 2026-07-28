@@ -225,13 +225,13 @@
 .ui-input[type="password"]::-ms-clear,
 .ui-input[type="password"]::-webkit-contacts-auto-fill-button,
 .ui-input[type="password"]::-webkit-credentials-auto-fill-button {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  position: absolute !important;
-  right: 0 !important;
-  width: 0 !important;
-  height: 0 !important;
+  display: none;
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  width: 0;
+  height: 0;
 }
 .ui-input::placeholder {
   color: var(--fg-muted);
@@ -296,13 +296,13 @@
   z-index: 100;
   max-height: 200px;
   overflow-y: auto;
-  scrollbar-width: none !important; /* Firefox */
+  scrollbar-width: none; /* Firefox */
 }
 .ui-select-dropdown::-webkit-scrollbar,
 .ui-select-dropdown *::-webkit-scrollbar {
-  display: none !important; /* Safari and Chrome */
-  width: 0 !important;
-  height: 0 !important;
+  display: none; /* Safari and Chrome */
+  width: 0;
+  height: 0;
 }
 .ui-select-dropdown--portal {
   position: fixed;

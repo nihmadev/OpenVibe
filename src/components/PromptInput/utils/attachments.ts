@@ -1,5 +1,5 @@
-import { IMAGE_RE, fileToDataUrl } from "../utils.js";
 import type { Attachment } from "../types.js";
+import { fileToDataUrl } from "../utils.js";
 
 const ACCEPTED_IMAGE_TYPES = new Set([
   "image/png",

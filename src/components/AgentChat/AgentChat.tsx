@@ -1,18 +1,18 @@
-import React, { useRef, useState, useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./AgentChat.css";
 import "./FBadge.css";
 
-import { Props } from "./types.js";
-import { UserMessageActions } from "./components/UserMessageActions.js";
-import { AgentRun } from "./components/AgentRun.js";
-import { Markdown } from "../Markdown/Markdown.js";
-import { HistoryItem } from "./types.js";
-import { Tooltip } from "../Tooltip/Tooltip.js";
-import { FileIcon } from "../Icons/file-icons.js";
 import { useI18n } from "../../hooks/useI18n.js";
-import { buildChatEntries } from "./agentRunModel.js";
+import { FileIcon } from "../Icons/file-icons.js";
 import { CheckStrokeIcon } from "../Icons/icons.js";
+import { Markdown } from "../Markdown/Markdown.js";
+import { Tooltip } from "../Tooltip/Tooltip.js";
+import { buildChatEntries } from "./agentRunModel.js";
+import { AgentRun } from "./components/AgentRun.js";
 import { ErrorNotice } from "./components/ErrorNotice.js";
+import { UserMessageActions } from "./components/UserMessageActions.js";
+import { UserMessageContent } from "./components/UserMessageContent.js";
+import type { HistoryItem, Props } from "./types.js";
 
 // Re-export types for backward compatibility
 export type { AttachmentView, HistoryItem, Props } from "./types.js";
@@ -36,7 +36,7 @@ const StandaloneItem = React.memo(
           {item.models.map((m) => (
             <button
               key={m.id}
-              className={"modelpicker__item" + (m.id === item.currentModel ? " modelpicker__item--active" : "")}
+              className={`modelpicker__item${m.id === item.currentModel ? " modelpicker__item--active" : ""}`}
               onClick={() => onPickModel?.(m.id)}
             >
               <span className="modelpicker__name">{m.name}</span>
@@ -54,7 +54,7 @@ const StandaloneItem = React.memo(
       return (
         <div className="msg msg--user-wrap">
           <div className="msg msg--user">
-            <Markdown content={item.text} isAssistant={false} />
+            <UserMessageContent text={item.text} mentions={item.mentions} />
           </div>
           <UserMessageActions item={item} onRevert={onRevert} />
           {item.attachments && item.attachments.length > 0 ? (
@@ -89,6 +89,7 @@ const StandaloneItem = React.memo(
     if (prev.onRevert !== next.onRevert) return false;
     if (prev.item.text !== next.item.text) return false;
     if (prev.item.attachments !== next.item.attachments) return false;
+    if (prev.item.mentions !== next.item.mentions) return false;
     if (prev.item.models !== next.item.models) return false;
     if (prev.item.currentModel !== next.item.currentModel) return false;
     return true;
@@ -170,7 +171,7 @@ export function AgentChat({
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      const ease = progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+      const ease = progress < 0.5 ? 4 * progress * progress * progress : 1 - (-2 * progress + 2) ** 3 / 2;
 
       const currentTarget = currentEl.scrollHeight - currentEl.clientHeight;
       currentEl.scrollTop = startScrollTop + (currentTarget - startScrollTop) * ease;
@@ -200,7 +201,7 @@ export function AgentChat({
     const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 150;
     if (nearBottom) el.scrollTop = el.scrollHeight;
     handleScroll();
-  }, [items, busy, handleScroll]);
+  }, [handleScroll]);
 
   return (
     <div className="chathistory-wrapper">

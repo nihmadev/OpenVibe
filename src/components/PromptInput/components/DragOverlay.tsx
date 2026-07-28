@@ -1,5 +1,3 @@
-import React from "react";
-
 interface PromptDragOverlayProps {
   type: "image" | null;
   label: string;

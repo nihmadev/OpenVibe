@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import type { HistoryItem } from "../types";
 import {
   buildChatEntries,
   buildRunTimeline,
@@ -11,6 +10,7 @@ import {
   toolActivityGroupLabel,
   toolActivityTitle,
 } from "../agentRunModel";
+import type { HistoryItem } from "../types";
 
 const t = (key: string, params?: Record<string, string | number | boolean>) => {
   const labels: Record<string, string> = {

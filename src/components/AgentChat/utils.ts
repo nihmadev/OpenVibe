@@ -1,5 +1,6 @@
-import { HistoryItem, TodoTask } from "./types.js";
 import { basename } from "../../utils/paths.js";
+import type { HistoryItem, TodoTask } from "./types.js";
+
 export { basename };
 
 export interface FileBadgeInfo {
@@ -109,7 +110,7 @@ export function toRelativePath(filePath: string, cwd?: string): string {
   if (!cwd) return filePath;
   const np = filePath.replace(/\\/g, "/").replace(/\/$/, "");
   const nc = cwd.replace(/\\/g, "/").replace(/\/$/, "");
-  if (np.startsWith(nc + "/")) return np.slice(nc.length + 1);
+  if (np.startsWith(`${nc}/`)) return np.slice(nc.length + 1);
   if (np === nc) return ".";
   return filePath;
 }
@@ -333,7 +334,7 @@ export const ICON_MAP_HISTORY: Record<string, string> = {
 export function formatArgs(args: unknown): string {
   try {
     const s = JSON.stringify(args);
-    return s.length > 200 ? s.slice(0, 200) + "…" : s;
+    return s.length > 200 ? `${s.slice(0, 200)}…` : s;
   } catch {
     return "";
   }

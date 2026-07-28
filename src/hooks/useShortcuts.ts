@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /** Functional categorizations for application keyboard shortcut keybindings. */
 export type ShortcutCategory = "navigation" | "chat" | "workspace" | "project" | "editor" | "terminal" | "search";
@@ -118,7 +118,7 @@ function matchCombo(e: KeyboardEvent, combo: KeyCombo): boolean {
   return e.code === combo.code;
 }
 
-const MODIFIER_CODES = new Set([
+const _MODIFIER_CODES = new Set([
   "ControlLeft",
   "ControlRight",
   "ShiftLeft",
@@ -463,7 +463,7 @@ export function useShortcuts(actions: ShortcutActions) {
       const map = new Map<string, KeyCombo>();
       for (const b of DEFAULT_BINDINGS) {
         try {
-          const stored = await window.vibe.state.get("shortcut:" + b.id);
+          const stored = await window.vibe.state.get(`shortcut:${b.id}`);
           if (stored) {
             const parsed = JSON.parse(stored) as KeyCombo;
             if (parsed && typeof parsed.code === "string") {
@@ -511,7 +511,7 @@ export function useShortcuts(actions: ShortcutActions) {
   const updateBinding = useCallback(
     async (id: string, combo: KeyCombo) => {
       const def = DEFAULT_BINDINGS.find((b) => b.id === id);
-      if (!def) throw new Error("Unknown shortcut: " + id);
+      if (!def) throw new Error(`Unknown shortcut: ${id}`);
 
       for (const b of DEFAULT_BINDINGS) {
         if (b.id === id) continue;
@@ -530,7 +530,7 @@ export function useShortcuts(actions: ShortcutActions) {
       const next = new Map(customCombos);
       next.set(id, combo);
       setCustomCombos(next);
-      await window.vibe.state.set("shortcut:" + id, JSON.stringify(combo));
+      await window.vibe.state.set(`shortcut:${id}`, JSON.stringify(combo));
     },
     [customCombos],
   );
@@ -540,7 +540,7 @@ export function useShortcuts(actions: ShortcutActions) {
       const next = new Map(customCombos);
       next.delete(id);
       setCustomCombos(next);
-      await window.vibe.state.set("shortcut:" + id, "");
+      await window.vibe.state.set(`shortcut:${id}`, "");
     },
     [customCombos],
   );

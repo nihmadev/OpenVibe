@@ -1,10 +1,10 @@
 import React, { useCallback, useRef } from "react";
-import { Editor } from "./Editor.js";
-import { ImageViewer, isImageFile } from "../ImageViewer/ImageViewer.js";
-import { VideoViewer, isVideoFile } from "../ImageViewer/VideoViewer.js";
-import { FileIcon, FolderIcon } from "../Icons/index.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { basename } from "../../utils/paths.js";
+import { FileIcon, FolderIcon } from "../Icons/index.js";
+import { ImageViewer, isImageFile } from "../ImageViewer/ImageViewer.js";
+import { isVideoFile, VideoViewer } from "../ImageViewer/VideoViewer.js";
+import { Editor } from "./Editor.js";
 import { GitDiffViewer } from "./GitDiffViewer.js";
 import "./EditorArea.css";
 
@@ -82,7 +82,7 @@ export function EditorArea({
     }
     const cwdNorm = cwd.replace(/\\/g, "/");
     fileNorm = fileNorm.replace(/\\/g, "/");
-    const rel = fileNorm.startsWith(cwdNorm + "/") ? fileNorm.slice(cwdNorm.length + 1) : fileNorm;
+    const rel = fileNorm.startsWith(`${cwdNorm}/`) ? fileNorm.slice(cwdNorm.length + 1) : fileNorm;
     return rel.split("/").filter(Boolean);
   }, [activeFile, cwd]);
 
@@ -181,7 +181,7 @@ export function EditorArea({
                     </svg>
                   </span>
                 )}
-                <span className={"editor-area__breadcrumb-seg" + (isLast ? " editor-area__breadcrumb-seg--file" : "")}>
+                <span className={`editor-area__breadcrumb-seg${isLast ? " editor-area__breadcrumb-seg--file" : ""}`}>
                   <span className="editor-area__breadcrumb-icon">
                     {isLast ? <FileIcon name={seg} /> : <FolderIcon open={false} name={seg} />}
                   </span>

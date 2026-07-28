@@ -12,7 +12,9 @@ export const lspStore = {
   getServers: () => servers,
   setServers: (newServers: LspServerItem[]) => {
     servers = newServers;
-    listeners.forEach((l) => l(servers));
+    listeners.forEach((l) => {
+      l(servers);
+    });
   },
   subscribe: (listener: (servers: LspServerItem[]) => void) => {
     listeners.push(listener);

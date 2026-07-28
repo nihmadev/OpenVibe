@@ -2,13 +2,13 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import {
   activeChatId,
-  currentConfig,
-  setCurrentConfig,
-  cleanupTauriListeners,
-  addTauriUnlistenFn,
-  emitEvent,
-  emitBusy,
   addBeforeUnloadCleanup,
+  addTauriUnlistenFn,
+  cleanupTauriListeners,
+  currentConfig,
+  emitBusy,
+  emitEvent,
+  setCurrentConfig,
 } from "./state.js";
 
 export async function initVibeBridge() {
@@ -28,7 +28,7 @@ export async function initVibeBridge() {
   });
 
   // Create Rust agent
-  await invoke("agent_new", { cwd: currentConfig!.cwd }).catch(() => {});
+  await invoke("agent_new", { cwd: currentConfig?.cwd }).catch(() => {});
 
   // ---- Listen for Rust agent events and translate to VibeEvent ----
   await cleanupTauriListeners();

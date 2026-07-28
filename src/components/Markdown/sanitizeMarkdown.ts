@@ -76,7 +76,7 @@ export function sanitizeMarkdown(content: string, isStreaming = false): string {
  * Sanitizes single/double backtick parity on a line outside fenced code blocks.
  */
 function sanitizeLineParity(line: string, isActiveStreamingLine: boolean): string {
-  if (!line || !line.includes("`")) return line;
+  if (!line?.includes("`")) return line;
 
   // Smart recovery for unclosed **`word or *`word dropped by LLM before space/punctuation/EOL
   // E.g., `**\`search_codebase кодовой базе` -> `**\`search_codebase\`** кодовой базе`
@@ -93,8 +93,10 @@ function sanitizeLineParity(line: string, isActiveStreamingLine: boolean): strin
   const matches: { index: number; text: string }[] = [];
   const re = /(?<!\\)(`+)/g;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(line)) !== null) {
+  m = re.exec(line);
+  while (m !== null) {
     matches.push({ index: m.index, text: m[1] ?? "`" });
+    m = re.exec(line);
   }
 
   if (matches.length === 0) return line;
@@ -117,8 +119,8 @@ function sanitizeLineParity(line: string, isActiveStreamingLine: boolean): strin
   // If matches.length === 1 (e.g. `путь к `chтного`), the only backtick is unpaired.
   // If matches.length >= 3 (e.g. `Алгоритм `pick_color`: простая хеш = h * 31 + byte` — ...`),
   // matches[0] and [1] pair up (`pick_color`), leaving matches[matches.length - 1] unpaired!
-  const unpairedIndex = matches[matches.length - 1]!.index;
-  const unpairedLen = matches[matches.length - 1]!.text.length;
+  const unpairedIndex = matches[matches.length - 1]?.index;
+  const unpairedLen = matches[matches.length - 1]?.text.length;
 
   const before = line.slice(0, unpairedIndex);
   const after = line.slice(unpairedIndex + unpairedLen);

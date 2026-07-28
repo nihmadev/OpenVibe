@@ -334,8 +334,7 @@ export const mr: Partial<Translations> = {
   animPanelAppear: "पॅनेल आणि मॉडेल",
   animPanelAppearDesc: "सेटिंग्ज, पॉपअप आणि मॉडेल देखावा",
   animMultiplier: "ॲनिमेशन सहजता",
-  animMultiplierDesc:
-    "ॲनिमेशन स्मूथनेस गुणक. 0 = थांबलेले, 0.5 = स्नॅपी, 1 = सामान्य, 2 = गुळगुळीत, 5 = अत्यंत गुळगुळीत",
+  animMultiplierDesc: "ॲनिमेशन स्मूथनेस गुणक. 0 = थांबलेले, 0.5 = स्नॅपी, 1 = सामान्य, 2 = गुळगुळीत, 5 = अत्यंत गुळगुळीत",
   windowEffects: "विंडो इफेक्ट्स",
   blurOverlay: "पार्श्वभूमी अस्पष्ट",
   blurOverlayDesc: "मॉडेल विंडोंमागील सामग्री अस्पष्ट करा (सेटिंग्ज, संदर्भ मेनू)",
@@ -432,8 +431,7 @@ export const mr: Partial<Translations> = {
   continueBtn: "चालू ठेवा",
   onboardingStepAnimationTitle: "ॲनिमेशन सेटअप",
   onboardingStepSettingsDesc: "तुमची प्राधान्ये आता सेट करा किंवा नंतर बदला.",
-  useRegionalProxyDesc:
-    "प्रादेशिक निर्बंधांना बायपास करण्यासाठी युरोपमधील वेगवान प्रॉक्सी सर्व्हरद्वारे रूट API विनंत्या",
+  useRegionalProxyDesc: "प्रादेशिक निर्बंधांना बायपास करण्यासाठी युरोपमधील वेगवान प्रॉक्सी सर्व्हरद्वारे रूट API विनंत्या",
   animationSpeedDesc: "इंटरफेस संक्रमण आणि गुळगुळीत प्रभाव स्केलिंग",
   onboardingStepSettingsTitle: "कार्यक्षेत्र सेटिंग्ज",
   rerunOnboarding: "सेटअप विझार्ड चालवा",

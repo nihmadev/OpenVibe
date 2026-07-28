@@ -1,32 +1,29 @@
-import monokai from "./monokai.json";
-import carbonfox from "./carbonfox.json";
-import gruvbox from "./gruvbox.json";
-import gruvboxMedium from "./gruvbox-medium.json";
-import gruvboxSoft from "./gruvbox-soft.json";
-import cursor from "./cursor.json";
-import oneDark from "./one-dark.json";
-import everforest from "./everforest.json";
-import flexoki from "./flexoki.json";
-import vercel from "./vercel.json";
-import vesper from "./vesper.json";
-import zenburn from "./zenburn.json";
-import github from "./github.json";
-import kanagawa from "./kanagawa.json";
 import ayu from "./Ayu.json";
-import nord from "./nord.json";
 import amoled from "./amoled.json";
 import aura from "./aura.json";
+import carbonfox from "./carbonfox.json";
 import catppuccin from "./catppuccin.json";
 import catppuccinFrappe from "./catppuccin-frappe.json";
 import catppuccinMacchiato from "./catppuccin-macchiato.json";
 import cobalt2 from "./cobalt2.json";
+import cursor from "./cursor.json";
+import defaultTheme from "./default.json";
 import dracula from "./dracula.json";
+import everforest from "./everforest.json";
+import flexoki from "./flexoki.json";
+import github from "./github.json";
+import gruvbox from "./gruvbox.json";
+import gruvboxMedium from "./gruvbox-medium.json";
+import gruvboxSoft from "./gruvbox-soft.json";
+import kanagawa from "./kanagawa.json";
 import lucentOrng from "./lucent-orng.json";
 import material from "./material.json";
 import matrix from "./matrix.json";
 import mercury from "./mercury.json";
+import monokai from "./monokai.json";
 import nightowl from "./nightowl.json";
-import defaultTheme from "./default.json";
+import nord from "./nord.json";
+import oneDark from "./one-dark.json";
 import onedarkpro from "./onedarkpro.json";
 import opencode from "./opencode.json";
 import orng from "./orng.json";
@@ -37,6 +34,9 @@ import shadesofpurple from "./shadesofpurple.json";
 import solarized from "./solarized.json";
 import synthwave84 from "./synthwave84.json";
 import tokyonight from "./tokyonight.json";
+import vercel from "./vercel.json";
+import vesper from "./vesper.json";
+import zenburn from "./zenburn.json";
 
 interface ThemeJson {
   $schema?: string;
@@ -124,7 +124,7 @@ function hexWithAlpha(hex: string, alpha: number): string {
 function hexToArgb(hex: string, alpha: number): string {
   const [r, g, b] = hexToRgb(hex);
   const a = Math.max(0, Math.min(255, Math.round(alpha * 255)));
-  return "#" + [r, g, b, a].map((x) => x.toString(16).padStart(2, "0")).join("");
+  return `#${[r, g, b, a].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 }
 
 function deriveVars(
@@ -245,7 +245,7 @@ export function getThemeById(id: string): ThemeDef | undefined {
 
 export function parseVSCodeTheme(json: any): ThemeDef {
   const name = json.name || "Custom Theme";
-  const id = "custom-" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const id = `custom-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 
   // Basic mapping of standard vs code colors to OpenVibe tokens
   const colors = json.colors || {};
@@ -253,9 +253,9 @@ export function parseVSCodeTheme(json: any): ThemeDef {
   const bg = colors["editor.background"] || "#1e1e1e";
   const fg = colors["editor.foreground"] || "#d4d4d4";
   const line = colors["editorGroup.border"] || colors["sideBar.border"] || "#333333";
-  const accent = colors["button.background"] || colors["focusBorder"] || "#007acc";
+  const accent = colors["button.background"] || colors.focusBorder || "#007acc";
 
-  const isLight = json.type === "light";
+  const _isLight = json.type === "light";
 
   const vars: ThemeVars = {
     "--bg": bg,
@@ -265,7 +265,7 @@ export function parseVSCodeTheme(json: any): ThemeDef {
     "--line-strong": colors["widget.shadow"] || darken(line, 0.2),
     "--fg": fg,
     "--fg-dim": colors["editorLineNumber.foreground"] || darken(fg, 0.3),
-    "--fg-muted": colors["descriptionForeground"] || darken(fg, 0.5),
+    "--fg-muted": colors.descriptionForeground || darken(fg, 0.5),
     "--accent": accent,
     "--cyan": colors["terminal.ansiCyan"] || "#29b8db",
     "--green": colors["terminal.ansiGreen"] || "#23d18b",
@@ -297,7 +297,7 @@ export function parseVSCodeTheme(json: any): ThemeDef {
   // Try to refine syntax tokens if tokenColors is present
   if (Array.isArray(json.tokenColors)) {
     for (const token of json.tokenColors) {
-      if (!token.scope || !token.settings || !token.settings.foreground) continue;
+      if (!token.scope || !token.settings?.foreground) continue;
       const scopes = Array.isArray(token.scope) ? token.scope : [token.scope];
       const color = token.settings.foreground;
 
@@ -333,4 +333,4 @@ export function addCustomTheme(theme: ThemeDef) {
   }
 }
 
-export { hexWithAlpha, hexToArgb };
+export { hexToArgb, hexWithAlpha };

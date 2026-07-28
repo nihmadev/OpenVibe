@@ -1,10 +1,10 @@
-import { useMemo, useCallback, useState, useEffect } from "react";
-import type { VibeConfig, Provider } from "../types.js";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Provider, VibeConfig } from "../types.js";
 
 export function useModels(
   config: VibeConfig | null,
   setConfig: React.Dispatch<React.SetStateAction<VibeConfig | null>>,
-  settingsOpen: boolean,
+  _settingsOpen: boolean,
 ) {
   const [enabledModels, setEnabledModels] = useState<Set<string>>(new Set());
 
@@ -16,7 +16,7 @@ export function useModels(
         setEnabledModels(new Set(ids));
       })
       .catch(console.error);
-  }, [config?.model, settingsOpen]);
+  }, []);
 
   const connectedModels = useMemo(() => {
     // Enabled models now use composite key "providerDbId::modelId".

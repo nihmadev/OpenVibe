@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { Titlebar } from "../Titlebar/Titlebar.js";
 import "./SkeletonLoader.css";
 

@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import type React from "react";
+import { useState } from "react";
 import { useI18n } from "../../../hooks/useI18n.js";
-import { Tooltip } from "../../Tooltip/Tooltip.js";
-import { CopyCheckIcon } from "../../Icons/icons.js";
-import type { HistoryItem } from "../types.js";
 import { writeClipboard } from "../../../utils/clipboard.js";
+import { CopyCheckIcon } from "../../Icons/icons.js";
+import { Tooltip } from "../../Tooltip/Tooltip.js";
+import type { HistoryItem } from "../types.js";
 
 export function UserMessageActions({
   item,

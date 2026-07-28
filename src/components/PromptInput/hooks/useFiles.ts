@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import type { Attachment } from "../types.js";
-import { newAttachId, fileToDataUrl, IMAGE_RE, basename } from "../utils.js";
+import { basename, fileToDataUrl, IMAGE_RE, newAttachId } from "../utils.js";
 
 export function useFiles() {
   const [attachments, setAttachments] = useState<Attachment[]>([]);

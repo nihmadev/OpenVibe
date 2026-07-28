@@ -1,8 +1,9 @@
-import React, { useState, useRef, useMemo, useEffect, useCallback } from "react";
+import type React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./SearchPopup.css";
-import { SearchIcon, FileIcon, FolderIcon } from "../Icons/index.js";
-import type { FileMatch } from "../../types.js";
 import { useI18n } from "../../hooks/useI18n.js";
+import type { FileMatch } from "../../types.js";
+import { FileIcon, FolderIcon, SearchIcon } from "../Icons/index.js";
 import { filterCommands } from "./commands.js";
 
 interface SearchPopupProps {
@@ -107,7 +108,7 @@ export function SearchPopup({
         e.preventDefault();
         if (showingResults) {
           if (selectedIdx < commandMatches.length) {
-            onCommand?.(commandMatches[selectedIdx]!.id);
+            onCommand?.(commandMatches[selectedIdx]?.id);
           } else {
             const fileIdx = selectedIdx - commandMatches.length;
             if (fileIdx < matches.length) {
@@ -121,7 +122,7 @@ export function SearchPopup({
           }
           onClose();
         } else if (selectedIdx < actions.length) {
-          actions[selectedIdx]!.action();
+          actions[selectedIdx]?.action();
           onClose();
         }
       }
@@ -185,9 +186,7 @@ export function SearchPopup({
                 return (
                   <div
                     key={m.path}
-                    className={
-                      "search-popup__result-item" + (idx === selectedIdx ? " search-popup__result-item--active" : "")
-                    }
+                    className={`search-popup__result-item${idx === selectedIdx ? " search-popup__result-item--active" : ""}`}
                     onMouseEnter={() => setSelectedIdx(idx)}
                     onClick={() => {
                       if (m.isDir) {
@@ -215,9 +214,7 @@ export function SearchPopup({
               {actions.map((a, i) => (
                 <div
                   key={a.id}
-                  className={
-                    "search-popup__action-row" + (i === selectedIdx ? " search-popup__action-row--active" : "")
-                  }
+                  className={`search-popup__action-row${i === selectedIdx ? " search-popup__action-row--active" : ""}`}
                   onMouseEnter={() => setSelectedIdx(i)}
                   onClick={() => {
                     a.action();

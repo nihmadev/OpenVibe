@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { getFileIcon, getLanguage, getFolderIcon } from "../utils";
+import { describe, expect, it } from "vitest";
+import { getFileIcon, getFolderIcon, getLanguage } from "../utils";
 
 describe("getFileIcon", () => {
   it("returns null for unknown extension", () => {

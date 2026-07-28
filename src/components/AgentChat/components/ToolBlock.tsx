@@ -1,7 +1,7 @@
-import React from "react";
+import type React from "react";
+import { CheckCircleIcon, FailIcon, SpinIcon } from "../../Icons/icons.js";
 import type { HistoryItem } from "../types.js";
 import { describe } from "../utils.js";
-import { SpinIcon, CheckCircleIcon, FailIcon } from "../../Icons/icons.js";
 import { FileBadge } from "./FileBadge.js";
 
 export function ToolBlock({ item }: { item: HistoryItem }): React.ReactElement {

@@ -300,9 +300,9 @@ class LspConnection {
           range: model.getWordAtPosition(position)
             ? new this.m.Range(
                 position.lineNumber,
-                model.getWordAtPosition(position)!.startColumn,
+                model.getWordAtPosition(position)?.startColumn,
                 position.lineNumber,
-                model.getWordAtPosition(position)!.endColumn,
+                model.getWordAtPosition(position)?.endColumn,
               )
             : new this.m.Range(position.lineNumber, position.column, position.lineNumber, position.column),
           text: model.getWordAtPosition(position)?.word ?? "",

@@ -1,21 +1,22 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Select, NumberInput, ControlRow, Toggle, Button } from "../ui/index.js";
+import type React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button, ControlRow, NumberInput, Select } from "../ui/index.js";
 import "./Settings.css";
-import type { Provider } from "../../types.js";
-import { ConnectPopup } from "../ConnectPopup/ConnectPopup.js";
-import { useTheme } from "../../hooks/useTheme.js";
-import { themes, parseVSCodeTheme, addCustomTheme } from "../../themes/themes.js";
-import { PROVIDER_TEMPLATES, getProviderIconPath } from "../../constants.js";
-import { useI18n } from "../../hooks/useI18n.js";
-import { FONT_OPTIONS, CODE_FONT_OPTIONS, applyFont } from "../../fonts.js";
-import { ChevronRightIcon } from "../Icons/icons.js";
-import { languageOptions } from "../../i18n/index.js";
-import type { ShortcutDef, KeyCombo, ShortcutCategory } from "../../hooks/useShortcuts.js";
-import { formatCombo, setRecording } from "../../hooks/useShortcuts.js";
+import { getProviderIconPath, PROVIDER_TEMPLATES } from "../../constants.js";
+import { applyFont, CODE_FONT_OPTIONS, FONT_OPTIONS } from "../../fonts.js";
+import type { AnimStyle } from "../../hooks/useAnimations.js";
 import { useAnimations } from "../../hooks/useAnimations.js";
-import type { AnimKey, AnimStyle } from "../../hooks/useAnimations.js";
+import { useI18n } from "../../hooks/useI18n.js";
+import type { KeyCombo, ShortcutCategory, ShortcutDef } from "../../hooks/useShortcuts.js";
+import { setRecording } from "../../hooks/useShortcuts.js";
+import { useTheme } from "../../hooks/useTheme.js";
+import { languageOptions } from "../../i18n/index.js";
+import { addCustomTheme, parseVSCodeTheme, themes } from "../../themes/themes.js";
+import type { Provider } from "../../types.js";
+import { setZoomDefault as setZoomDefaultGlobal, setZoomStep as setZoomStepGlobal } from "../../zoomConfig.js";
+import { ConnectPopup } from "../ConnectPopup/ConnectPopup.js";
+import { ChevronRightIcon } from "../Icons/icons.js";
 import { InlineAnimPreview } from "./AnimationPreviewModal.js";
-import { setZoomStep as setZoomStepGlobal, setZoomDefault as setZoomDefaultGlobal } from "../../zoomConfig.js";
 
 interface DiscoveredModel {
   id: string;
@@ -26,7 +27,7 @@ interface DiscoveredModel {
   providerIcon: string;
 }
 
-import { ServerIcon, CodeIcon, UploadStrokeIcon, DownloadIcon } from "../Icons/icons.js";
+import { CodeIcon, DownloadIcon, ServerIcon, UploadStrokeIcon } from "../Icons/icons.js";
 
 import { McpSettingsPanel } from "./McpSettingsPanel.js";
 
@@ -113,7 +114,7 @@ export function Settings({
     }
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [recordingId, onUpdateBinding]);
+  }, [recordingId, onUpdateBinding, MODIFIER_CODES.has]);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [editing, setEditing] = useState<{
     template: (typeof PROVIDER_TEMPLATES)[0] | null;
@@ -123,36 +124,39 @@ export function Settings({
 
   // General settings state (persisted to DB)
   const SETTINGS_PREFIX = "settings:";
-  const defaultGeneral = {
-    language: "Russian",
-    font: "Segoe UI",
-    codeFont: "JetBrains Mono",
-    autoAccept: false,
-    terminalShell: "powershell",
-    showThinking: true,
-    expandShell: true,
-    expandEdit: true,
-    showProgress: true,
-    soundEnabled: true,
-    soundOnComplete: true,
-    soundOnStop: true,
-    zoomStep: "0.2",
-    zoomDefault: "1.2",
-    radius: "10",
-    blur: "none",
-    editorFontSize: "13",
-    editorLineHeight: "1.5",
-    editorLigatures: false,
-    editorCursorStyle: "line",
-    editorCursorBlink: "blink",
-    borderStyle: "bordered" as string,
-    tabStyle: "default" as string,
-    renderFileTree: false,
-    useRegionalProxy: true,
-    promptMarkdown: true,
-    promptMarkdownGhost: false,
-    experimentalExtremeRadius: false,
-  };
+  const defaultGeneral = useMemo(
+    () => ({
+      language: "Russian",
+      font: "Segoe UI",
+      codeFont: "JetBrains Mono",
+      autoAccept: false,
+      terminalShell: "powershell",
+      showThinking: true,
+      expandShell: true,
+      expandEdit: true,
+      showProgress: true,
+      soundEnabled: true,
+      soundOnComplete: true,
+      soundOnStop: true,
+      zoomStep: "0.2",
+      zoomDefault: "1.2",
+      radius: "10",
+      blur: "none",
+      editorFontSize: "13",
+      editorLineHeight: "1.5",
+      editorLigatures: false,
+      editorCursorStyle: "line",
+      editorCursorBlink: "blink",
+      borderStyle: "bordered" as string,
+      tabStyle: "default" as string,
+      renderFileTree: false,
+      useRegionalProxy: true,
+      promptMarkdown: true,
+      promptMarkdownGhost: false,
+      experimentalExtremeRadius: false,
+    }),
+    [],
+  );
   type GeneralSettings = typeof defaultGeneral;
   const [general, setGeneral] = useState<GeneralSettings>({ ...defaultGeneral });
   const [generalLoaded, setGeneralLoaded] = useState(false);
@@ -177,13 +181,13 @@ export function Settings({
       });
       setGeneralLoaded(true);
     });
-  }, []);
+  }, [defaultGeneral]);
 
   // Apply saved radius/blur on load
   useEffect(() => {
     if (!generalLoaded) return;
     const r = parseFloat(general.radius) || 6;
-    document.documentElement.style.setProperty("--radius", r + "px");
+    document.documentElement.style.setProperty("--radius", `${r}px`);
     const blurMap: Record<string, string> = { none: "0px", subtle: "8px", strong: "20px" };
     document.documentElement.style.setProperty("--blur-amount", blurMap[general.blur] ?? "0px");
 
@@ -198,7 +202,7 @@ export function Settings({
     } else {
       document.documentElement.classList.remove("theme-tab-pills");
     }
-  }, [generalLoaded]);
+  }, [generalLoaded, general.borderStyle, general.tabStyle, general.radius, general.blur]);
 
   // Models state
   const [discoveredModels, setDiscoveredModels] = useState<DiscoveredModel[]>([]);
@@ -233,11 +237,7 @@ export function Settings({
       .catch(console.error);
   }, [open]);
 
-  useEffect(() => {
-    fetchModels(providers);
-  }, [providers]);
-
-  async function fetchModels(providerList: Provider[]): Promise<void> {
+  const fetchModels = useCallback(async (providerList: Provider[]): Promise<void> => {
     const connected = providerList.filter((p) => p.apiKey);
     if (connected.length === 0) {
       setDiscoveredModels([]);
@@ -286,7 +286,11 @@ export function Settings({
     );
     setDiscoveredModels(results.sort((a, b) => a.name.localeCompare(b.name)));
     setModelsLoading(false);
-  }
+  }, []);
+
+  useEffect(() => {
+    fetchModels(providers);
+  }, [providers, fetchModels]);
 
   function toggleModel(providerDbId: string, modelId: string): void {
     const compositeKey = `${providerDbId}::${modelId}`;
@@ -357,7 +361,7 @@ export function Settings({
     if (key === "zoomDefault") setZoomDefaultGlobal(parseFloat(value as string) || 1.2);
     if (key === "radius") {
       const v = parseFloat(value as string) || 6;
-      document.documentElement.style.setProperty("--radius", v + "px");
+      document.documentElement.style.setProperty("--radius", `${v}px`);
     }
     if (key === "blur") {
       const m: Record<string, string> = { none: "0px", subtle: "8px", strong: "20px" };
@@ -597,7 +601,7 @@ export function Settings({
                       <Select
                         value={general.language}
                         options={languageOptions.map((o) => {
-                          const lbl = String(t("lang" + o.value) || o.value);
+                          const lbl = String(t(`lang${o.value}`) || o.value);
                           return { value: o.value, label: lbl.charAt(0).toUpperCase() + lbl.slice(1) };
                         })}
                         onChange={(v) => updateGeneral("language", v)}
@@ -899,7 +903,7 @@ export function Settings({
                         ["buttons", "animButtons", "animButtonsDesc"],
                         ["panelAppear", "animPanelAppear", "animPanelAppearDesc"],
                       ] as const
-                    ).map(([key, labelKey, descKey]) => (
+                    ).map(([key, labelKey, _descKey]) => (
                       <div className="settings__anim-card" key={key}>
                         <div className="settings__anim-card__preview">
                           <InlineAnimPreview animKey={key} animStyle={animSettings[key]} />
@@ -929,65 +933,63 @@ export function Settings({
                 </div>
               </>
             ) : activeTab === "code" ? (
-              <>
-                <div className="settings__subsection" style={{ paddingTop: "var(--settings-py)" }}>
-                  <div className="settings__control-group">
-                    <ControlRow label={t("editorFontSize")} description={t("editorFontSizeDesc")}>
-                      <NumberInput
-                        value={general.editorFontSize}
-                        step={1}
-                        min={8}
-                        max={32}
-                        onChange={(v) => updateGeneral("editorFontSize", v)}
-                      />
-                    </ControlRow>
-                    <ControlRow label={t("editorLineHeight")} description={t("editorLineHeightDesc")}>
-                      <NumberInput
-                        value={general.editorLineHeight}
-                        step={0.1}
-                        min={1.0}
-                        max={3.0}
-                        onChange={(v) => updateGeneral("editorLineHeight", v)}
-                      />
-                    </ControlRow>
-                    <ControlRow label={t("editorLigatures")} description={t("editorLigaturesDesc")}>
-                      <input
-                        type="checkbox"
-                        className="settings__checkbox"
-                        checked={general.editorLigatures}
-                        onChange={(e) => updateGeneral("editorLigatures", e.target.checked)}
-                      />
-                    </ControlRow>
-                    <ControlRow label={t("editorCursorStyle")} description={t("editorCursorStyleDesc")}>
-                      <Select
-                        value={general.editorCursorStyle}
-                        options={[
-                          { value: "line", label: t("cursorLine") },
-                          { value: "block", label: t("cursorBlock") },
-                          { value: "underline", label: t("cursorUnderline") },
-                          { value: "line-thin", label: t("cursorLineThin") },
-                          { value: "block-outline", label: t("cursorBlockOutline") },
-                          { value: "underline-thin", label: t("cursorUnderlineThin") },
-                        ]}
-                        onChange={(v) => updateGeneral("editorCursorStyle", v)}
-                      />
-                    </ControlRow>
-                    <ControlRow label={t("editorCursorBlink")} description={t("editorCursorBlinkDesc")}>
-                      <Select
-                        value={general.editorCursorBlink}
-                        options={[
-                          { value: "blink", label: t("blinkBlink") },
-                          { value: "smooth", label: t("blinkSmooth") },
-                          { value: "phase", label: t("blinkPhase") },
-                          { value: "expand", label: t("blinkExpand") },
-                          { value: "solid", label: t("blinkSolid") },
-                        ]}
-                        onChange={(v) => updateGeneral("editorCursorBlink", v)}
-                      />
-                    </ControlRow>
-                  </div>
+              <div className="settings__subsection" style={{ paddingTop: "var(--settings-py)" }}>
+                <div className="settings__control-group">
+                  <ControlRow label={t("editorFontSize")} description={t("editorFontSizeDesc")}>
+                    <NumberInput
+                      value={general.editorFontSize}
+                      step={1}
+                      min={8}
+                      max={32}
+                      onChange={(v) => updateGeneral("editorFontSize", v)}
+                    />
+                  </ControlRow>
+                  <ControlRow label={t("editorLineHeight")} description={t("editorLineHeightDesc")}>
+                    <NumberInput
+                      value={general.editorLineHeight}
+                      step={0.1}
+                      min={1.0}
+                      max={3.0}
+                      onChange={(v) => updateGeneral("editorLineHeight", v)}
+                    />
+                  </ControlRow>
+                  <ControlRow label={t("editorLigatures")} description={t("editorLigaturesDesc")}>
+                    <input
+                      type="checkbox"
+                      className="settings__checkbox"
+                      checked={general.editorLigatures}
+                      onChange={(e) => updateGeneral("editorLigatures", e.target.checked)}
+                    />
+                  </ControlRow>
+                  <ControlRow label={t("editorCursorStyle")} description={t("editorCursorStyleDesc")}>
+                    <Select
+                      value={general.editorCursorStyle}
+                      options={[
+                        { value: "line", label: t("cursorLine") },
+                        { value: "block", label: t("cursorBlock") },
+                        { value: "underline", label: t("cursorUnderline") },
+                        { value: "line-thin", label: t("cursorLineThin") },
+                        { value: "block-outline", label: t("cursorBlockOutline") },
+                        { value: "underline-thin", label: t("cursorUnderlineThin") },
+                      ]}
+                      onChange={(v) => updateGeneral("editorCursorStyle", v)}
+                    />
+                  </ControlRow>
+                  <ControlRow label={t("editorCursorBlink")} description={t("editorCursorBlinkDesc")}>
+                    <Select
+                      value={general.editorCursorBlink}
+                      options={[
+                        { value: "blink", label: t("blinkBlink") },
+                        { value: "smooth", label: t("blinkSmooth") },
+                        { value: "phase", label: t("blinkPhase") },
+                        { value: "expand", label: t("blinkExpand") },
+                        { value: "solid", label: t("blinkSolid") },
+                      ]}
+                      onChange={(v) => updateGeneral("editorCursorBlink", v)}
+                    />
+                  </ControlRow>
                 </div>
-              </>
+              </div>
             ) : activeTab === "providers" ? (
               <>
                 {connected.length > 0 && (
@@ -996,7 +998,7 @@ export function Settings({
                     <div className="settings__providers-list">
                       {connected.map((p) => {
                         const template = PROVIDER_TEMPLATES.find((t) => t.baseUrl === p.baseUrl);
-                        const hasCustomIcon = p.customIcon && p.customIcon.startsWith("data:");
+                        const hasCustomIcon = p.customIcon?.startsWith("data:");
                         return (
                           <div key={p.id} className="settings__provider-row">
                             <div className="settings__provider-info">
@@ -1251,9 +1253,7 @@ export function Settings({
                               return (
                                 <ControlRow key={h.id} label={h.label}>
                                   <button
-                                    className={
-                                      "settings__hotkey-btn" + (isRecording ? " settings__hotkey-btn--recording" : "")
-                                    }
+                                    className={`settings__hotkey-btn${isRecording ? " settings__hotkey-btn--recording" : ""}`}
                                     onClick={() => {
                                       if (isRecording) return;
                                       setRecordingId(h.id);
@@ -1289,7 +1289,7 @@ export function Settings({
           editId={editing.editId}
           editProvider={editing.editId ? providers.find((p) => p.id === editing.editId) : null}
           onConnect={async (formData) => {
-            const serializePairs = (pairs: { key: string; value: string }[]) =>
+            const _serializePairs = (pairs: { key: string; value: string }[]) =>
               pairs
                 .filter((p) => p.key.trim())
                 .map((p) => `${p.key.trim()}:${p.value.trim()}`)

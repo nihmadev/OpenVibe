@@ -1,8 +1,9 @@
-import React, { useState, useRef, useLayoutEffect } from "react";
-import type { MentionState } from "../types.js";
-import type { FileMatch } from "../../../types.js";
+import type React from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useI18n } from "../../../hooks/useI18n.js";
+import type { FileMatch } from "../../../types.js";
 import { FileIcon, FolderIcon } from "../../Icons/index.js";
+import type { MentionState } from "../types.js";
 
 interface MentionPopupProps {
   mention: MentionState;
@@ -43,7 +44,7 @@ export function MentionPopup({ mention, onSelect, onHover }: MentionPopupProps) 
         maxHeight: `${Math.max(80, Math.min(280, spaceAbove))}px`,
       });
     }
-  }, [mention.active, mention.matches.length, mention.loading]);
+  }, [mention.active]);
 
   if (!mention.active) return null;
 
@@ -54,7 +55,7 @@ export function MentionPopup({ mention, onSelect, onHover }: MentionPopupProps) 
       {mention.matches.map((m, i) => (
         <div
           key={m.path}
-          className={"popup__item popup__item--mention" + (i === mention.selected ? " popup__item--active" : "")}
+          className={`popup__item popup__item--mention${i === mention.selected ? " popup__item--active" : ""}`}
           role="option"
           aria-selected={i === mention.selected}
           onMouseEnter={() => onHover(i)}

@@ -431,8 +431,7 @@ export const bn: Partial<Translations> = {
   continueBtn: "চালিয়ে যান",
   onboardingStepAnimationTitle: "অ্যানিমেশন সেটআপ",
   onboardingStepSettingsDesc: "এখন আপনার পছন্দগুলি সেট করুন বা পরে সেগুলি পরিবর্তন করুন৷",
-  useRegionalProxyDesc:
-    "আঞ্চলিক বিধিনিষেধ বাইপাস করার জন্য ইউরোপের একটি দ্রুত প্রক্সি সার্ভারের মাধ্যমে রুট API অনুরোধ করে",
+  useRegionalProxyDesc: "আঞ্চলিক বিধিনিষেধ বাইপাস করার জন্য ইউরোপের একটি দ্রুত প্রক্সি সার্ভারের মাধ্যমে রুট API অনুরোধ করে",
   animationSpeedDesc: "ইন্টারফেস রূপান্তর এবং মসৃণ প্রভাব স্কেলিং",
   onboardingStepSettingsTitle: "ওয়ার্কস্পেস সেটিংস",
   rerunOnboarding: "সেটআপ উইজার্ড চালান",

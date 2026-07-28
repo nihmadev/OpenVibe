@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { MinusIcon, PlusIcon } from "../Icons/icons.js";
 import "./ui.css";
 

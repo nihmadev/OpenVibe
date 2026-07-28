@@ -1,11 +1,20 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { FileMatch } from "../../types.js";
+import type React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../../hooks/useI18n.js";
+import type { FileMatch } from "../../types.js";
 import "./PromptInput.css";
 
-import { Attachment, EditorPart, MentionState, SendPayload } from "./types.js";
-import { IMAGE_RE, fileToAttachment } from "./utils.js";
-import { getRecentMentions, addRecentMention } from "./utils/recentMentions.js";
+import { getReasoningEfforts } from "../../constants.js";
+import { ArrowUpIcon, AttachPlusIcon, RefreshCwIcon, StopIcon } from "../Icons/icons.js";
+import { getFileIconUrl, getFolderIconUrl } from "../Icons/utils.js";
+import { RollbackPill } from "../RollbackPill/RollbackPill.js";
+import { Tooltip } from "../Tooltip/Tooltip.js";
+import { PromptDragOverlay } from "./components/DragOverlay.js";
+import { PromptImageAttachments } from "./components/ImageAttachments.js";
+import { MentionPopup } from "./components/MentionPopup.js";
+import { ModelSelector } from "./components/ModelSelector.js";
+import { ReasoningEffortSelector } from "./components/ReasoningEffortSelector.js";
+import type { Attachment, EditorPart, FileMention, MentionState, SendPayload } from "./types.js";
 import {
   createTextFragment,
   getCursorPosition,
@@ -13,27 +22,19 @@ import {
   setCursorPosition,
   setRangeEdge,
 } from "./utils/editor-dom.js";
-import { createMarkdownFragment } from "./utils/markdown.js";
 import {
   canNavigateHistoryAtCursor,
+  type HistoryEntry,
   navigatePromptHistory,
   prependHistoryEntry,
-  HistoryEntry,
 } from "./utils/history.js";
+import { createMarkdownFragment } from "./utils/markdown.js";
 import { normalizePaste, pasteMode } from "./utils/paste.js";
 import { promptPlaceholder } from "./utils/placeholder.js";
-import { PromptDragOverlay } from "./components/DragOverlay.js";
-import { PromptImageAttachments } from "./components/ImageAttachments.js";
-import { MentionPopup } from "./components/MentionPopup.js";
-import { ModelSelector } from "./components/ModelSelector.js";
-import { ReasoningEffortSelector } from "./components/ReasoningEffortSelector.js";
-import { getReasoningEfforts } from "../../constants.js";
-import { Tooltip } from "../Tooltip/Tooltip.js";
-import { RollbackPill } from "../RollbackPill/RollbackPill.js";
-import { getFileIconUrl, getFolderIconUrl } from "../Icons/utils.js";
-import { StopIcon, RefreshCwIcon, ArrowUpIcon, AttachPlusIcon } from "../Icons/icons.js";
+import { addRecentMention, getRecentMentions } from "./utils/recentMentions.js";
+import { fileToAttachment } from "./utils.js";
 
-export type { Attachment, SendPayload };
+export type { Attachment, FileMention, SendPayload };
 
 interface Props {
   disabled: boolean;
@@ -84,13 +85,14 @@ function useSpring(target: number, deps: React.DependencyList) {
     let raf: number;
     const tick = (now: number) => {
       const t = Math.min((now - startTime) / duration, 1);
-      const eased = 1 - Math.pow(1 - t, 3);
+      const eased = 1 - (1 - t) ** 3;
       setValue(start + diff * eased);
       if (t < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // biome-ignore lint/correctness/useExhaustiveDependencies: deps forwarded from caller
   }, deps);
   return value;
 }
@@ -122,7 +124,7 @@ export function PromptInput({
 
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [dragOver, setDragOver] = useState(false);
-  const [focused, setFocused] = useState(false);
+  const [_focused, setFocused] = useState(false);
   const [mode, setMode] = useState<"normal" | "shell">("normal");
   const [composing, setComposing] = useState(false);
   const [popover, setPopover] = useState<"at" | null>(null);
@@ -167,7 +169,7 @@ export function PromptInput({
   const shell = useMemo(() => motion(1 - buttonsSpring), [buttonsSpring]);
   const control = useMemo(() => ({ height: "28px", ...buttons }) satisfies React.CSSProperties, [buttons]);
 
-  const activeModelName = useMemo(() => {
+  const _activeModelName = useMemo(() => {
     const m = models.find((m) => m.id === currentModel);
     return m ? m.name : currentModel || t("selectModelFallback");
   }, [models, currentModel, t]);
@@ -178,7 +180,7 @@ export function PromptInput({
     if (!efforts) return [];
     return [
       { value: "", labelKey: "reasoningEffortNone" },
-      ...efforts.map((e) => ({ value: e, labelKey: "reasoningEffort" + e.charAt(0).toUpperCase() + e.slice(1) })),
+      ...efforts.map((e) => ({ value: e, labelKey: `reasoningEffort${e.charAt(0).toUpperCase()}${e.slice(1)}` })),
     ];
   }, [providerId, currentModel]);
 
@@ -358,11 +360,11 @@ export function PromptInput({
     setAttachments((prev) => (a.path && prev.some((p) => p.path === a.path) ? prev : [...prev, a]));
   }, []);
 
-  const removeAttachment = useCallback((id: string) => {
+  const _removeAttachment = useCallback((id: string) => {
     setAttachments((prev) => prev.filter((a) => a.id !== id));
   }, []);
 
-  const clearAttachments = useCallback(() => setAttachments([]), []);
+  const _clearAttachments = useCallback(() => setAttachments([]), []);
 
   const handleFiles = useCallback(
     async (files: FileList | File[]) => {
@@ -454,6 +456,7 @@ export function PromptInput({
     renderEditor,
     closeMention,
     queueScroll,
+    clearEditor,
   ]);
 
   const addPartAtCursor = useCallback(
@@ -531,7 +534,7 @@ export function PromptInput({
     (match: FileMatch) => {
       closeMention();
       addRecentMention(match);
-      addPartAtCursor({ type: "file", content: "@" + match.rel, path: match.path, isDir: match.isDir } as any);
+      addPartAtCursor({ type: "file", content: `@${match.rel}`, path: match.path, isDir: match.isDir } as any);
     },
     [closeMention, addPartAtCursor],
   );
@@ -545,11 +548,31 @@ export function PromptInput({
     }
     const text = editorText().trim();
     if (!text && attachments.length === 0) return;
+
+    // Build the display text with @-prefixes for file mentions so pills can
+    // be detected from the persisted text on reload.
+    const editorParts = parseEditor();
+    const displayText = editorParts
+      .map((p) => (p.type === "file" ? `@${p.content.replace(/^@/, "")}` : p.content))
+      .join("")
+      .replace(/\u200B/g, "")
+      .trim();
+
     const parts: import("../../types.js").ContentPart[] = [];
-    if (text) parts.push({ type: "text", text });
+    if (displayText) parts.push({ type: "text", text: displayText });
     for (const a of attachments) {
       if (a.kind === "image" && a.dataUrl) parts.push({ type: "image_url", image_url: { url: a.dataUrl } });
     }
+
+    // Extract file mentions from editor parts so they can be rendered as pills
+    // in the chat history (provides isDir info for proper icon selection).
+    const mentions: FileMention[] = editorParts
+      .filter((p): p is EditorPart & { type: "file"; path: string } => p.type === "file" && !!p.path)
+      .map((p) => ({
+        display: p.content.replace(/^@/, ""),
+        path: p.path,
+        isDir: p.isDir,
+      }));
 
     setHistoryEntries((prev) => prependHistoryEntry(prev, text, attachments));
     clearEditor();
@@ -559,8 +582,13 @@ export function PromptInput({
     setSavedText(null);
     setMode("normal");
     setPopover(null);
-    onSubmit({ parts, display: text, attachments: attachments.slice() });
-  }, [disabled, editorText, attachments, clearEditor, onSubmit, onStop]);
+    onSubmit({
+      parts,
+      display: displayText,
+      attachments: attachments.slice(),
+      mentions: mentions.length > 0 ? mentions : undefined,
+    });
+  }, [disabled, editorText, parseEditor, attachments, clearEditor, onSubmit, onStop]);
 
   // ─── history navigation ─────────────────────────────────
 
@@ -685,7 +713,6 @@ export function PromptInput({
     [
       mode,
       popover,
-      composing,
       getCursor,
       editorText,
       addPartAtCursor,
@@ -695,6 +722,7 @@ export function PromptInput({
       historyIndex,
       isImeComposing,
       selectPopoverActive,
+      applyMention,
     ],
   );
 
@@ -739,7 +767,7 @@ export function PromptInput({
       if (composing) return;
       handleEditorInput();
     });
-  }, [handleEditorInput]);
+  }, [handleEditorInput, composing]);
 
   // ─── drag & drop ────────────────────────────────────────
 
@@ -759,7 +787,7 @@ export function PromptInput({
       if (vibePath) {
         let rel = vibePath;
         if (vibePath.startsWith(workspace)) rel = vibePath.slice(workspace.length).replace(/^[\\/]/, "");
-        addPartAtCursor({ type: "file", content: "@" + rel, path: vibePath });
+        addPartAtCursor({ type: "file", content: `@${rel}`, path: vibePath });
         return;
       }
       if (dt.files && dt.files.length > 0) await handleFiles(dt.files);
@@ -814,7 +842,7 @@ export function PromptInput({
   const tipText = stopping ? t("stop") : mode === "shell" ? t("runCommand") : t("sendMessage");
 
   const inset = 44;
-  const space = inset + "px";
+  const space = `${inset}px`;
 
   return (
     <div className="prompt-input-container">
@@ -824,7 +852,7 @@ export function PromptInput({
       {/* ── DockShellForm ── */}
       <form
         data-dock-surface="shell"
-        className={"prompt-input" + (dragOver ? " prompt-input--drag" : "")}
+        className={`prompt-input${dragOver ? " prompt-input--drag" : ""}`}
         onSubmit={(e) => {
           e.preventDefault();
           submit();
@@ -879,7 +907,7 @@ export function PromptInput({
               autoCapitalize={mode === "normal" ? "sentences" : "off"}
               autoCorrect={mode === "normal" ? "on" : "off"}
               inputMode="text"
-              className={"prompt-input__editor" + (mode === "shell" ? " prompt-input__editor--shell" : "")}
+              className={`prompt-input__editor${mode === "shell" ? " prompt-input__editor--shell" : ""}`}
               onInput={handleEditorInput}
               onPaste={handlePaste}
               onCompositionStart={handleCompositionStart}
@@ -897,7 +925,7 @@ export function PromptInput({
             {placeholderVisible && (
               <div
                 data-component="session-composer-text"
-                className={"prompt-input__placeholder" + (mode === "shell" ? " prompt-input__placeholder--shell" : "")}
+                className={`prompt-input__placeholder${mode === "shell" ? " prompt-input__placeholder--shell" : ""}`}
                 aria-hidden="true"
                 style={{ paddingBottom: space }}
               >
@@ -931,7 +959,7 @@ export function PromptInput({
                 <button
                   type="submit"
                   data-action="prompt-submit"
-                  className={"prompt-input__submit-btn" + (stopping ? " prompt-input__submit-btn--stop" : "")}
+                  className={`prompt-input__submit-btn${stopping ? " prompt-input__submit-btn--stop" : ""}`}
                   disabled={!stopping && !editorText().trim() && attachments.length === 0}
                   aria-label={tipText}
                 >

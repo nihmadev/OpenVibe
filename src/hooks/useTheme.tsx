@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { themes, applyThemeVars, getThemeById, type ThemeDef, type ThemeVars } from "../themes/themes.js";
+import type React from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { applyThemeVars, getThemeById, type ThemeDef, type ThemeVars, themes } from "../themes/themes.js";
 
 type ColorScheme = "dark" | "light" | "system";
 
@@ -29,7 +30,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [currentId, setCurrentId] = useState("default");
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>("dark");
-  const [ready, setReady] = useState(false);
+  const [_ready, setReady] = useState(false);
 
   useEffect(() => {
     Promise.all([window.vibe.state.get(THEME_KEY), window.vibe.state.get(SCHEME_KEY)])

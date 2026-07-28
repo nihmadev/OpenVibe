@@ -10,9 +10,9 @@
   border-radius: var(--radius-md) 0 0 var(--radius-md);
   transition:
     width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
-      var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
     min-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
-      var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1));
+    var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .session-list--open {
@@ -90,9 +90,9 @@
   font-weight: 500;
   transition:
     background calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1))
-      var(--anim-buttons-easing, ease),
+    var(--anim-buttons-easing, ease),
     border-color calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1))
-      var(--anim-buttons-easing, ease);
+    var(--anim-buttons-easing, ease);
 }
 
 .session-list__newsession:hover {
@@ -154,9 +154,9 @@
   color: var(--fg);
   transition:
     background calc(var(--anim-buttons-duration, 0.12s) * var(--anim-buttons-enabled, 1))
-      var(--anim-buttons-easing, ease),
+    var(--anim-buttons-easing, ease),
     border-color calc(var(--anim-buttons-duration, 0.12s) * var(--anim-buttons-enabled, 1))
-      var(--anim-buttons-easing, ease),
+    var(--anim-buttons-easing, ease),
     color calc(var(--anim-buttons-duration, 0.12s) * var(--anim-buttons-enabled, 1)) var(--anim-buttons-easing, ease);
   gap: var(--space-3);
 }

@@ -114,7 +114,7 @@
 
 .editor-area__tab-close:hover {
   background: var(--fg);
-  color: var(--bg) !important;
+  color: var(--bg);
 }
 
 /* Dirty dot — shown instead of close button when file has unsaved changes */

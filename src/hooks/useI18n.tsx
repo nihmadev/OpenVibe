@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useCallback } from "react";
-import { languages, type Translations, type LangCode } from "../i18n/index.js";
+import type React from "react";
+import { createContext, useCallback, useContext } from "react";
+import { type LangCode, languages, type Translations } from "../i18n/index.js";
 
 type TranslateFn = {
   (key: string): string;
@@ -33,9 +34,9 @@ function resolvePluralKey(
     params.count !== undefined
       ? params.count
       : Object.values(params).find(
-          (v) => typeof v === "number" || (!isNaN(Number(v)) && typeof v !== "boolean" && v !== ""),
+          (v) => typeof v === "number" || (!Number.isNaN(Number(v)) && typeof v !== "boolean" && v !== ""),
         );
-  if (countVal === undefined || isNaN(Number(countVal))) return key;
+  if (countVal === undefined || Number.isNaN(Number(countVal))) return key;
 
   const count = Math.abs(Number(countVal));
   const mod10 = count % 10;
@@ -63,9 +64,9 @@ function resolvePluralKey(
 
 const I18nContext = createContext<I18nContextValue>({
   t: ((key: keyof Translations, params?: Record<string, string | number | boolean>) => {
-    const actualKey = resolvePluralKey(key, params, "Russian", languages["Russian"], languages["Russian"]);
-    let v = languages["Russian"][actualKey as keyof Translations];
-    if (v === undefined) v = languages["Russian"][key as keyof Translations];
+    const actualKey = resolvePluralKey(key, params, "Russian", languages.Russian, languages.Russian);
+    let v = languages.Russian[actualKey as keyof Translations];
+    if (v === undefined) v = languages.Russian[key as keyof Translations];
     if (v === undefined) v = String(key);
     if (params) {
       for (const [k, val] of Object.entries(params)) {
@@ -91,14 +92,14 @@ interface Props {
 }
 
 export function I18nProvider({ lang, children }: Props): React.ReactElement {
-  const dict = languages[lang] ?? languages["Russian"];
+  const dict = languages[lang] ?? languages.Russian;
   const t = useCallback<TranslateFn>(
     ((key: string, params?: Record<string, string | number | boolean>) => {
-      const actualKey = resolvePluralKey(key, params, lang, dict, languages["Russian"]);
+      const actualKey = resolvePluralKey(key, params, lang, dict, languages.Russian);
       let v = dict[actualKey as keyof Translations];
-      if (v === undefined) v = languages["Russian"][actualKey as keyof Translations];
+      if (v === undefined) v = languages.Russian[actualKey as keyof Translations];
       if (v === undefined) v = dict[key as keyof Translations];
-      if (v === undefined) v = languages["Russian"][key as keyof Translations];
+      if (v === undefined) v = languages.Russian[key as keyof Translations];
       if (v === undefined) v = String(actualKey);
       if (params) {
         for (const [k, val] of Object.entries(params)) {

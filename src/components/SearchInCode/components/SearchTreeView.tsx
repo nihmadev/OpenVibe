@@ -1,7 +1,7 @@
-import React from "react";
-import { ChevronRightIcon, FolderIcon, FileIcon } from "../../Icons/index.js";
-import { getLanguageFromFilename, getCachedHighlight } from "../../../utils/searchSyntax.js";
+import type React from "react";
 import { useTranslate } from "../../../hooks/useI18n.js";
+import { getCachedHighlight, getLanguageFromFilename } from "../../../utils/searchSyntax.js";
+import { ChevronRightIcon, FileIcon, FolderIcon } from "../../Icons/index.js";
 import type { TreeNode } from "../utils/searchTreeUtils.js";
 
 export interface SearchTreeViewProps {

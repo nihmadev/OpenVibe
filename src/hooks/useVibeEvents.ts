@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { HistoryItem } from "../components/AgentChat/AgentChat.js";
+import type { FileMentionView } from "../components/AgentChat/types.js";
 import type { VibeEvent } from "../types.js";
 import { localId, playAudio } from "../utils.js";
-import type { HistoryItem } from "../components/AgentChat/AgentChat.js";
 
 function useRafBatching() {
   const pendingRef = useRef<(() => void)[]>([]);
@@ -45,6 +46,7 @@ export function useVibeEvents(onActivity: () => void) {
   const [streamingNow, setStreamingNow] = useState<string | null>(null);
   const streamingId = useRef<string | null>(null);
   const pendingAttachments = useRef<HistoryItem["attachments"]>(undefined);
+  const pendingMentions = useRef<FileMentionView[] | undefined>(undefined);
   const { schedule, flush } = useRafBatching();
 
   useEffect(() => {
@@ -56,6 +58,8 @@ export function useVibeEvents(onActivity: () => void) {
           const now = Date.now();
           const atts = pendingAttachments.current;
           pendingAttachments.current = undefined;
+          const mnts = pendingMentions.current;
+          pendingMentions.current = undefined;
           flush();
           setItems((prev) => [
             ...(prev ?? []),
@@ -65,6 +69,7 @@ export function useVibeEvents(onActivity: () => void) {
               text: e.text,
               msgIndex: (e as any).index,
               attachments: atts?.length ? atts : undefined,
+              mentions: mnts?.length ? mnts : undefined,
               startedAt: now,
               completedAt: now,
             },
@@ -281,5 +286,6 @@ export function useVibeEvents(onActivity: () => void) {
     streamingNow,
     setStreamingNow,
     pendingAttachments,
+    pendingMentions,
   };
 }

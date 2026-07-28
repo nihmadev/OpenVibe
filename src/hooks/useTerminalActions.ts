@@ -15,7 +15,7 @@ export function useTerminalActions() {
   const runCommand = useCallback(async (command: string) => {
     const id = getActiveTerminalId();
     if (id) {
-      await window.vibe.term.write(id, command + "\r");
+      await window.vibe.term.write(id, `${command}\r`);
       // Optional: switch to terminal tab or toggle it open
       // This would require more global state or event bus
       window.dispatchEvent(new CustomEvent("vibe:open-terminal"));

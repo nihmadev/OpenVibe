@@ -1,5 +1,5 @@
 import type * as monaco from "monaco-editor";
-import { pushScg2Events, SCG2EventBatch } from "../tauri-bridge.js";
+import { pushScg2Events, type SCG2EventBatch } from "../tauri-bridge.js";
 
 /**
  * Front-end telemetry service tracking active Monaco Editor interactions for Smart Context Generation 2 (SCG2).
@@ -95,7 +95,7 @@ class SCG2TrackerService {
       // Active Selection Range
       const selection = this.editor.getSelection();
       const model = this.editor.getModel();
-      let selectionData: SCG2EventBatch["selection"] = undefined;
+      let selectionData: SCG2EventBatch["selection"];
 
       if (selection && model && !selection.isEmpty()) {
         const selectedText = model.getValueInRange(selection);
@@ -111,7 +111,7 @@ class SCG2TrackerService {
       }
 
       // Model Diagnostic Markers (Compiler Errors/Warnings)
-      let diagnosticsData: SCG2EventBatch["diagnostics"] = undefined;
+      let diagnosticsData: SCG2EventBatch["diagnostics"];
       if (this.monacoInstance && model) {
         const markers = this.monacoInstance.editor.getModelMarkers({ resource: model.uri });
         if (markers.length > 0) {

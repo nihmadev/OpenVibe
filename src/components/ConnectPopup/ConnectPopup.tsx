@@ -1,9 +1,10 @@
-import React, { useState, useRef, useCallback } from "react";
-import { UserIcon, EyeIcon, EyeOffIcon, PlusIcon, TrashIcon } from "../Icons/icons.js";
-import type { Provider, KeyValuePair } from "../../types.js";
-import { PROVIDER_TEMPLATES, getProviderIconPath } from "../../constants.js";
+import type React from "react";
+import { useCallback, useRef, useState } from "react";
+import { getProviderIconPath, PROVIDER_TEMPLATES } from "../../constants.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { useTheme } from "../../hooks/useTheme.js";
+import type { KeyValuePair, Provider } from "../../types.js";
+import { EyeIcon, EyeOffIcon, PlusIcon, TrashIcon, UserIcon } from "../Icons/icons.js";
 import { Input } from "../ui/index.js";
 
 interface Template {
@@ -145,7 +146,7 @@ export function ConnectPopup({
         )?.icon
       : null;
 
-  const hasCustomIcon = !!(form.customIcon && form.customIcon.startsWith("data:"));
+  const hasCustomIcon = !!form.customIcon?.startsWith("data:");
   const isEditing = !!(editId || editProvider);
 
   function handleTabKeyDown(e: React.KeyboardEvent<HTMLButtonElement>, currentTab: CustomProviderTab): void {

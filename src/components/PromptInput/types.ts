@@ -13,10 +13,21 @@ export interface Attachment {
   sizeBytes?: number;
 }
 
+export interface FileMention {
+  /** The display text shown in the pill (e.g. "src/components/App.tsx"). */
+  display: string;
+  /** Absolute path to the file/folder. */
+  path: string;
+  /** Whether this mention points to a directory. */
+  isDir?: boolean;
+}
+
 export interface SendPayload {
   parts: import("../../types.js").ContentPart[];
   display: string;
   attachments: Attachment[];
+  /** File/folder mentions that were entered as @-pills in the editor. */
+  mentions?: FileMention[];
 }
 
 export interface MentionState {

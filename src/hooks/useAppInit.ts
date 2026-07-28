@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { VibeConfig, Project } from "../types.js";
+import type { Project, VibeConfig } from "../types.js";
 import { recordToItems } from "../utils.js";
 
 interface UseAppInitProps {
@@ -99,5 +99,15 @@ export function useAppInit({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [
+    validateProjectPaths,
+    setItems,
+    setState,
+    setFolder,
+    setActiveProject,
+    setProjects,
+    setConfig,
+    setChats,
+    setActiveChat,
+  ]);
 }

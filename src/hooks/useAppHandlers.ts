@@ -1,17 +1,18 @@
 import { useCallback } from "react";
-import type { SendPayload, Attachment } from "../components/PromptInput/PromptInput.js";
+import type { Attachment, FileMention, SendPayload } from "../components/PromptInput/PromptInput.js";
 import type { ContentPart } from "../types.js";
 import { localId } from "../utils.js";
 
 interface UseAppHandlersProps {
   setItems: React.Dispatch<React.SetStateAction<any[]>>;
   pendingAttachments: React.MutableRefObject<any[] | undefined>;
+  pendingMentions: React.MutableRefObject<FileMention[] | undefined>;
 }
 
-export function useAppHandlers({ setItems, pendingAttachments }: UseAppHandlersProps) {
+export function useAppHandlers({ setItems, pendingAttachments, pendingMentions }: UseAppHandlersProps) {
   const handleSubmit = useCallback(
     (payload: SendPayload) => {
-      const { parts, display, attachments } = payload;
+      const { parts, display, attachments, mentions } = payload;
       if (attachments.length > 0) {
         pendingAttachments.current = attachments.map((a: Attachment) => ({
           id: a.id,
@@ -21,8 +22,11 @@ export function useAppHandlers({ setItems, pendingAttachments }: UseAppHandlersP
           dataUrl: a.dataUrl,
         }));
       }
-      if (parts.length === 1 && parts[0]!.type === "text") {
-        window.vibe.send(parts[0]!.text).then((res) => {
+      if (mentions && mentions.length > 0) {
+        pendingMentions.current = mentions;
+      }
+      if (parts.length === 1 && parts[0]?.type === "text") {
+        window.vibe.send(parts[0]?.text).then((res) => {
           if (!res.ok && res.error) {
             setItems((p) => [...p, { id: localId(), kind: "error", text: res.error! }]);
           }
@@ -35,7 +39,7 @@ export function useAppHandlers({ setItems, pendingAttachments }: UseAppHandlersP
         }
       });
     },
-    [setItems, pendingAttachments],
+    [setItems, pendingAttachments, pendingMentions],
   );
 
   return { handleSubmit };

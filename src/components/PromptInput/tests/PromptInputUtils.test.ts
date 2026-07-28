@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { newAttachId, basename, IMAGE_RE } from "../utils";
+import { describe, expect, it } from "vitest";
+import { basename, IMAGE_RE, newAttachId } from "../utils";
 import { createTextFragment, readEditorParts } from "../utils/editor-dom";
 
 describe("newAttachId", () => {

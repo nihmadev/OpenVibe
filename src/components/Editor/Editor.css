@@ -92,21 +92,21 @@
 
 /* Inline Vibe Diff Styles */
 .inline-diff-added {
-  background-color: color-mix(in srgb, var(--green) 18%, transparent) !important;
+  background-color: color-mix(in srgb, var(--green) 18%, transparent);
 }
 
 .inline-diff-added-gutter {
-  border-left: 3px solid var(--green) !important;
+  border-left: 3px solid var(--green);
 }
 
 .inline-diff-removed {
-  background-color: color-mix(in srgb, var(--red) 18%, transparent) !important;
-  text-decoration: line-through !important;
+  background-color: color-mix(in srgb, var(--red) 18%, transparent);
+  text-decoration: line-through;
   opacity: 0.7;
 }
 
 .inline-diff-removed-gutter {
-  border-left: 3px solid var(--red) !important;
+  border-left: 3px solid var(--red);
 }
 
 /* Zone Widget styling for the inline prompt */
@@ -114,25 +114,25 @@
 .monaco-editor .view-zones .view-zone:focus,
 .monaco-editor .view-zones .view-zone:focus-visible,
 .monaco-editor .view-zones .view-zone:focus-within {
-  outline: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
+  outline: none;
+  border: none;
+  box-shadow: none;
+  background: transparent;
 }
 
 .inline-vibe-zone-container {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: transparent !important;
-  border: none !important;
+  background: transparent;
+  border: none;
   padding: var(--space-4) var(--space-7);
-  margin: 0 !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
+  margin: 0;
+  box-shadow: none;
+  border-radius: 0;
   z-index: 100;
   box-sizing: border-box;
-  outline: none !important;
+  outline: none;
   width: 100%;
   overflow: hidden;
 }
@@ -140,7 +140,7 @@
 .inline-vibe-zone-container:focus,
 .inline-vibe-zone-container:focus-visible,
 .inline-vibe-zone-container:focus-within {
-  outline: none !important;
+  outline: none;
 }
 
 .inline-vibe-portal-root {
@@ -171,11 +171,11 @@
   max-width: 800px;
   transition:
     border-color calc(var(--anim-buttons-duration, 0.18s) * var(--anim-buttons-enabled, 1))
-      var(--anim-buttons-easing, ease),
+    var(--anim-buttons-easing, ease),
     box-shadow calc(var(--anim-buttons-duration, 0.18s) * var(--anim-buttons-enabled, 1))
-      var(--anim-buttons-easing, ease);
-  outline: none !important;
-  box-shadow: none !important;
+    var(--anim-buttons-easing, ease);
+  outline: none;
+  box-shadow: none;
   box-sizing: border-box;
 }
 
@@ -183,16 +183,16 @@
 .inline-vibe-input-wrapper:focus-visible,
 .inline-vibe-input-wrapper:focus-within {
   border-color: var(--line-strong);
-  outline: none !important;
-  box-shadow: none !important;
+  outline: none;
+  box-shadow: none;
 }
 
 .inline-vibe-textarea {
   flex: 1;
-  background: transparent !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
+  background: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
   color: var(--fg);
   font-family: var(--sans);
   font-size: var(--text-md);
@@ -221,19 +221,19 @@
 .inline-vibe-input-wrapper::-webkit-scrollbar,
 .inline-vibe-input-wrapper::-webkit-scrollbar-thumb,
 .inline-vibe-input-wrapper::-webkit-scrollbar-track {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  background: transparent !important;
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
 }
 
 .inline-vibe-textarea:focus,
 .inline-vibe-textarea:focus-visible,
 .inline-vibe-textarea:active {
-  outline: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
+  outline: none;
+  border: none;
+  box-shadow: none;
+  background: transparent;
 }
 
 .inline-vibe-textarea::placeholder {
@@ -254,9 +254,9 @@
   transition:
     opacity calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1)) var(--anim-buttons-easing, ease),
     transform calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1))
-      var(--anim-buttons-easing, ease),
+    var(--anim-buttons-easing, ease),
     background calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1))
-      var(--anim-buttons-easing, ease);
+    var(--anim-buttons-easing, ease);
   flex-shrink: 0;
   align-self: flex-end;
 }
@@ -307,7 +307,7 @@
   background: transparent;
   border: none;
   padding: 0;
-  box-shadow: none !important;
+  box-shadow: none;
   font-family: var(--sans);
   font-size: var(--text-sm);
   flex-wrap: wrap;
@@ -328,12 +328,12 @@
   cursor: pointer;
   transition:
     background calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1))
-      var(--anim-buttons-easing, ease),
+    var(--anim-buttons-easing, ease),
     border-color calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1))
-      var(--anim-buttons-easing, ease),
+    var(--anim-buttons-easing, ease),
     color calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1)) var(--anim-buttons-easing, ease),
     transform calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1))
-      var(--anim-buttons-easing, ease);
+    var(--anim-buttons-easing, ease);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -368,13 +368,13 @@
 
 /* Ghost Text shown right after cursor on empty lines */
 .inline-vibe-ghost-text {
-  color: var(--fg-muted) !important;
-  opacity: 0.55 !important;
-  font-family: var(--sans) !important;
-  font-size: var(--text-sm) !important;
-  font-style: italic !important;
-  pointer-events: none !important;
-  user-select: none !important;
+  color: var(--fg-muted);
+  opacity: 0.55;
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  font-style: italic;
+  pointer-events: none;
+  user-select: none;
 }
 
 /* ===== Inline Vibe Connector SVG Overlay ===== */

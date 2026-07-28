@@ -1,26 +1,24 @@
-import React, { useEffect, useRef, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./History.css";
 import "../AgentToolView/Tool.css";
 import "../AgentChat/FBadge.css";
 import { useI18n } from "../../hooks/useI18n.js";
 import { writeClipboard } from "../../utils/clipboard.js";
+import { ErrorNotice } from "../AgentChat/components/ErrorNotice.js";
+import { FileIcon } from "../Icons/file-icons.js";
 import {
+  CheckCircleIcon,
+  CheckIcon,
   ChevronRightIcon,
   CircularProgress,
-  LikeIcon,
-  DislikeIcon,
-  CheckCircleIcon,
-  FailIcon,
-  SpinIcon,
-  DiffIcon,
-  CheckIcon,
   CopyIcon,
+  DiffIcon,
+  FailIcon,
   RefreshIcon2,
+  SpinIcon,
 } from "../Icons/icons.js";
-import { ErrorNotice } from "../AgentChat/components/ErrorNotice.js";
 import { Markdown } from "../Markdown/Markdown.js";
-import { FileIcon } from "../Icons/file-icons.js";
 
 export interface AttachmentView {
   id: string;
@@ -42,10 +40,10 @@ export interface HistoryItem {
   currentModel?: string;
 }
 
-function formatArgs(args: unknown): string {
+function _formatArgs(args: unknown): string {
   try {
     const s = JSON.stringify(args);
-    return s.length > 200 ? s.slice(0, 200) + "…" : s;
+    return s.length > 200 ? `${s.slice(0, 200)}…` : s;
   } catch {
     return "";
   }
@@ -271,7 +269,7 @@ function ToolBlock({ item }: { item: HistoryItem }): React.ReactElement {
   const [open, setOpen] = useState(false);
   const stateCls = item.ok === undefined ? "tool--pending" : item.ok ? "tool--ok" : "tool--err";
 
-  const diff = useMemo(() => computeDiff(item), [item.toolName, item.toolArgs]);
+  const diff = useMemo(() => computeDiff(item), [item.toolName, item.toolArgs, item]);
   const hasDiff = diff !== null;
 
   return (
@@ -392,7 +390,7 @@ function MessageFooter({
     return () => {
       cancelled = true;
     };
-  }, [items]);
+  }, []);
 
   const onCopy = async () => {
     const ok = await writeClipboard(item.text);
@@ -518,7 +516,7 @@ export function History({ items, onPickModel, onRegenerate, streamingId, busy }:
     // auto-scroll only if user is already near the bottom
     const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
     if (nearBottom) el.scrollTop = el.scrollHeight;
-  }, [items, busy]);
+  }, []);
 
   return (
     <div className="history" ref={ref}>
@@ -531,7 +529,7 @@ export function History({ items, onPickModel, onRegenerate, streamingId, busy }:
               {item.models.map((m) => (
                 <button
                   key={m.id}
-                  className={"modelpicker__item" + (m.id === item.currentModel ? " modelpicker__item--active" : "")}
+                  className={`modelpicker__item${m.id === item.currentModel ? " modelpicker__item--active" : ""}`}
                   onClick={() => onPickModel?.(m.id)}
                 >
                   <span className="modelpicker__name">{m.name}</span>

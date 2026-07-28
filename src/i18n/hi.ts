@@ -436,8 +436,7 @@ export const hi: Partial<Translations> = {
   onboardingStepThemeDesc: "जारी रखने से पहले किसी थीम का पूर्वावलोकन करें.",
   welcomeThanks: "आइए आपके वर्कफ़्लो के लिए OpenVibe सेट करें।",
   backBtn: "पीछे",
-  useRegionalProxyDesc:
-    "क्षेत्रीय प्रतिबंधों को दरकिनार करने के लिए यूरोप में तेज़ प्रॉक्सी सर्वर के माध्यम से एपीआई अनुरोधों को रूट करें",
+  useRegionalProxyDesc: "क्षेत्रीय प्रतिबंधों को दरकिनार करने के लिए यूरोप में तेज़ प्रॉक्सी सर्वर के माध्यम से एपीआई अनुरोधों को रूट करें",
   letsVibeBtn: "Let's vibe",
   continueBtn: "जारी रखना",
   useRegionalProxy: "क्षेत्रीय प्रॉक्सी का उपयोग करें (यूरोप)",

@@ -1,15 +1,15 @@
-import React from "react";
-import { RefreshIcon, CollapseAllIcon, Loader2Icon, ClearIcon } from "../Icons/index.js";
-import { Tooltip } from "../Tooltip/Tooltip.js";
+import type React from "react";
 import { useTranslate } from "../../hooks/useI18n.js";
+import { ClearIcon, CollapseAllIcon, Loader2Icon, RefreshIcon } from "../Icons/index.js";
+import { Tooltip } from "../Tooltip/Tooltip.js";
 import "@vscode/codicons/dist/codicon.css";
 import "./SearchInCode.css";
 import { getLanguageFromFilename } from "../../utils/searchSyntax.js";
-import { useCodeSearch } from "./hooks/useCodeSearch.js";
-import { SearchFilterBar } from "./components/SearchFilterBar.js";
 import { SearchFileGroup } from "./components/SearchFileGroup.js";
+import { SearchFilterBar } from "./components/SearchFilterBar.js";
 import { SearchMatchRowMemo } from "./components/SearchMatchRow.js";
 import { SearchTreeView } from "./components/SearchTreeView.js";
+import { useCodeSearch } from "./hooks/useCodeSearch.js";
 
 export interface SearchInCodeProps {
   cwd: string;
@@ -186,7 +186,7 @@ export function SearchInCode({ cwd, onOpenFile, onClose }: SearchInCodeProps): R
                 return (
                   <div
                     key={row.key}
-                    className={"sc-match-row" + (virtualRow.index === selectedIndex ? " sc-match-row--selected" : "")}
+                    className={`sc-match-row${virtualRow.index === selectedIndex ? " sc-match-row--selected" : ""}`}
                     style={{
                       position: "absolute",
                       top: 0,

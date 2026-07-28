@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { FileIcon, FolderIcon } from "../../Icons/file-icons.js";
 import type { FileBadgeInfo } from "../utils.js";
 

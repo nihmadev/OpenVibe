@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
-import { PenIcon, TrashIcon } from "../Icons/icons.js";
 import { useI18n } from "../../hooks/useI18n.js";
+import { PenIcon, TrashIcon } from "../Icons/icons.js";
 import "./RollbackPill.css";
 
 interface RollbackPillProps {
@@ -47,9 +47,9 @@ export function RollbackPill({
     } else {
       setBodyHeight(0);
     }
-  }, [expanded, filesOpen]);
+  }, [expanded]);
 
-  const truncated = messageText.length > 100 ? messageText.slice(0, 100) + "…" : messageText;
+  const truncated = messageText.length > 100 ? `${messageText.slice(0, 100)}…` : messageText;
 
   const fileLabel = t("filesChanged", { count: fileCount });
   const msgLabel = t("messagesReverted", { count: messagesRemoved });

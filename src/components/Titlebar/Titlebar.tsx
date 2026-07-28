@@ -1,31 +1,31 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import "./Titlebar.css";
-import { Tooltip } from "../Tooltip/Tooltip.js";
 import { useI18n } from "../../hooks/useI18n.js";
-import { ContextMenu, type MenuItem } from "../ContextMenu/ContextMenu.js";
-import {
-  BurgerIcon,
-  SidebarToggleIcon,
-  NewSessionIcon,
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  SearchIcon,
-  TerminalIcon,
-  FolderToggleIcon,
-  SearchInCodeIcon,
-  MinimizeIcon,
-  MaximizeIcon,
-  CloseIcon,
-  GitBranchIcon,
-  ServerIcon,
-} from "../Icons/index.js";
-
-import { ServersPanel } from "../ServersPanel/ServersPanel.js";
 import { mcpGetServers, mcpStartServer, mcpStopServer } from "../../tauri-bridge.js";
 import type { McpServerStatus } from "../../types.js";
-import { lspStore, type LspServerItem } from "../ServersPanel/lspStore.js";
+import { ContextMenu, type MenuItem } from "../ContextMenu/ContextMenu.js";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  BurgerIcon,
+  CloseIcon,
+  FolderToggleIcon,
+  GitBranchIcon,
+  MaximizeIcon,
+  MinimizeIcon,
+  NewSessionIcon,
+  SearchIcon,
+  SearchInCodeIcon,
+  ServerIcon,
+  SidebarToggleIcon,
+  TerminalIcon,
+} from "../Icons/index.js";
+import { type LspServerItem, lspStore } from "../ServersPanel/lspStore.js";
+import { ServersPanel } from "../ServersPanel/ServersPanel.js";
+import { Tooltip } from "../Tooltip/Tooltip.js";
 
 interface TitlebarProps {
   chatSideOpen?: boolean;
@@ -253,7 +253,7 @@ export function Titlebar({
 
   function btnClasses(id: BtnId, extra = ""): string {
     let cls = "ui-icon-btn ui-icon-btn--lg titlebar__action-btn";
-    if (extra) cls += " " + extra;
+    if (extra) cls += ` ${extra}`;
     if (hiding.has(id)) cls += " titlebar__action-btn--hiding";
     if (showing.has(id)) cls += " titlebar__action-btn--showing";
     return cls;

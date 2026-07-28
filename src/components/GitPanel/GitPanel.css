@@ -34,14 +34,14 @@
   cursor: pointer;
   padding: 0 var(--space-2);
   height: 22px;
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-  width: 100% !important;
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 100%;
 }
 
 .scm-view .monaco-list {
-  height: auto !important;
+  height: auto;
 }
 
 .monaco-list-row:hover {
@@ -304,8 +304,8 @@
 }
 
 .scm-split-button-wand .codicon {
-  color: var(--bg) !important;
-  opacity: 0.9 !important;
+  color: var(--bg);
+  opacity: 0.9;
 }
 
 .scm-split-button-wand:hover:not(:disabled) {
@@ -325,8 +325,8 @@
 
 .scm-split-button-wand.disabled .codicon,
 .scm-split-button-wand:disabled .codicon {
-  color: var(--bg) !important;
-  opacity: var(--disabled-opacity) !important;
+  color: var(--bg);
+  opacity: var(--disabled-opacity);
 }
 
 /* Entire container disabled state */
@@ -348,8 +348,8 @@
 }
 
 .scm-split-button-container.disabled .scm-split-button-wand .codicon {
-  color: var(--fg-dim) !important;
-  opacity: 0.7 !important;
+  color: var(--fg-dim);
+  opacity: 0.7;
 }
 
 .scm-split-button-container.disabled .scm-split-button-separator {
@@ -404,8 +404,8 @@
 .scm-body *,
 .monaco-list,
 .monaco-list * {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .scm-view::-webkit-scrollbar,
@@ -414,10 +414,10 @@
 .scm-body *::-webkit-scrollbar,
 .monaco-list::-webkit-scrollbar,
 .monaco-list *::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  background: transparent !important;
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
 }
 
 /* ── Commit Tooltip (Exact VSCode .monaco-hover.workbench-hover style) ── */
@@ -446,19 +446,19 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto !important;
+  overflow-y: auto;
   padding: var(--space-4) var(--space-6);
   overscroll-behavior: contain;
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .scm-commit-tooltip::-webkit-scrollbar,
 .scm-commit-tooltip *::-webkit-scrollbar,
 .scm-commit-tooltip-scrollable::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .scm-commit-tooltip-author {
@@ -473,12 +473,12 @@
 .scm-commit-tooltip-author-name {
   font-weight: 600;
   color: var(--fg);
-  text-decoration: none !important;
+  text-decoration: none;
 }
 
 .scm-commit-tooltip-author-name:hover,
 .scm-commit-tooltip-author-name:hover > span {
-  text-decoration: underline !important;
+  text-decoration: underline;
 }
 
 .scm-commit-tooltip-author-meta {
@@ -514,24 +514,24 @@
   align-items: center;
   gap: var(--space-2);
   color: var(--cyan);
-  text-decoration: none !important;
+  text-decoration: none;
   cursor: pointer;
 }
 
 .scm-commit-tooltip-cmd:hover {
-  text-decoration: none !important;
+  text-decoration: none;
   color: var(--accent);
 }
 
 .scm-commit-tooltip-cmd:hover > span {
-  text-decoration: underline !important;
+  text-decoration: underline;
 }
 
 .scm-commit-tooltip i.codicon,
 .scm-commit-tooltip .codicon,
 .scm-commit-tooltip-cmd:hover > i.codicon,
 .scm-commit-tooltip-cmd:hover > .codicon {
-  text-decoration: none !important;
+  text-decoration: none;
   display: inline-block;
 }
 
@@ -690,6 +690,6 @@
 
 .spin,
 .codicon-modifier-spin {
-  animation: scm-spin 1s linear infinite !important;
+  animation: scm-spin 1s linear infinite;
   display: inline-block;
 }

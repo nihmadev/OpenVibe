@@ -1,0 +1,91 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noConsole": "off",
+        "noArrayIndexKey": "off"
+      },
+      "correctness": {
+        "noUnusedVariables": "warn",
+        "noUnknownProperty": "off"
+      },
+      "complexity": {
+        "noBannedTypes": "off",
+        "noForEach": "off"
+      },
+      "style": {
+        "noNonNullAssertion": "off",
+        "noDescendingSpecificity": "off",
+        "noParameterAssign": "off",
+        "noUselessElse": "off"
+      },
+      "a11y": {
+        "noSvgWithoutTitle": "off",
+        "useButtonType": "off",
+        "useKeyWithClickEvents": "off",
+        "useFocusableInteractive": "off",
+        "useSemanticElements": "off",
+        "noStaticElementInteractions": "off",
+        "useAriaPropsSupportedByRole": "off",
+        "noLabelWithoutControl": "off",
+        "useAriaPropsForRole": "off"
+      },
+      "performance": {
+        "noDelete": "off"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120,
+    "lineEnding": "lf",
+    "attributePosition": "auto"
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "arrowParentheses": "always",
+      "trailingCommas": "all",
+      "semicolons": "always"
+    }
+  },
+  "json": {
+    "formatter": {
+      "trailingCommas": "none"
+    }
+  },
+  "files": {
+    "includes": [
+      "src/**/*.{ts,tsx,js,jsx,json,css,md}",
+      "!src/dist",
+      "!node_modules",
+      "!target",
+      "!src-tauri/target",
+      "!src-tauri/gen",
+      "!public/monaco-editor",
+      "!vscode",
+      "!packages",
+      "!venv",
+      "!venv_translate",
+      "!*.rs",
+      "!*.log",
+      "!CHANGELOG*.md"
+    ],
+    "ignoreUnknown": true
+  }
+}

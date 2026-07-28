@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "../../hooks/useI18n.js";
-import { PlayIcon, PauseIcon, VolumeMutedIcon, VolumeLowIcon, VolumeHighIcon, FullscreenIcon } from "../Icons/icons.js";
+import { FullscreenIcon, PauseIcon, PlayIcon, VolumeHighIcon, VolumeLowIcon, VolumeMutedIcon } from "../Icons/icons.js";
 import "./VideoViewer.css";
 
 const VIDEO_EXTENSIONS = new Set(["mp4", "webm", "ogg", "mov", "avi", "mkv", "wmv", "flv", "m4v", "3gp", "avi"]);
@@ -44,7 +45,7 @@ export function isVideoFile(path: string): boolean {
 }
 
 function formatTime(seconds: number): string {
-  if (!isFinite(seconds) || seconds < 0) return "0:00";
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
@@ -103,7 +104,7 @@ export function VideoViewer({ path }: Props): React.ReactElement {
     return () => {
       cancelled = true;
     };
-  }, [path]);
+  }, [path, t]);
 
   // Media event handlers
   const onPlay = useCallback(() => setPlaying(true), []);
@@ -222,7 +223,9 @@ export function VideoViewer({ path }: Props): React.ReactElement {
           onTimeUpdate={onTimeUpdate}
           onLoadedMetadata={onLoadedMetadata}
           onEnded={onEnded}
-        />
+        >
+          <track kind="captions" />
+        </video>
 
         <div className="video-viewer__controls">
           {/* Progress bar */}
@@ -288,9 +291,7 @@ export function VideoViewer({ path }: Props): React.ReactElement {
                   {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
                     <button
                       key={rate}
-                      className={
-                        "video-viewer__speed-opt" + (rate === playbackRate ? " video-viewer__speed-opt--active" : "")
-                      }
+                      className={`video-viewer__speed-opt${rate === playbackRate ? " video-viewer__speed-opt--active" : ""}`}
                       onClick={() => changeSpeed(rate)}
                     >
                       {rate}x

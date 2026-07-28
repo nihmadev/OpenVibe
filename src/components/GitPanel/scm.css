@@ -34,10 +34,9 @@
 
 .scm-view .scm-provider {
   display: flex;
-  flex-direction: column;
+  flex-flow: column nowrap;
   height: 100%;
   align-items: center;
-  flex-flow: nowrap;
   box-shadow: 0 1px 3px var(--fg-muted);
 }
 
@@ -247,7 +246,7 @@
 }
 
 .scm-view .monaco-list-row.focused.selected .history-item > .graph-container > .graph > circle:first-of-type {
-  stroke: transparent !important;
+  stroke: transparent;
 }
 
 .scm-view.scm-history-view
@@ -325,7 +324,7 @@
 }
 
 .scm-view .monaco-list-row .history-item > .label-container > .label > .codicon {
-  color: inherit !important;
+  color: inherit;
   padding: 1px;
 }
 
@@ -437,7 +436,7 @@
 .scm-view .monaco-list .monaco-list-row:hover.force-no-hover,
 .scm-view .monaco-list .monaco-list-row.focused.force-no-hover,
 .scm-view .monaco-list .monaco-list-row.selected.force-no-hover {
-  background: transparent !important;
+  background: transparent;
 }
 
 .scm-view .monaco-list .monaco-list-row.cursor-default {
@@ -476,7 +475,7 @@
 }
 
 .scm-view .scm-input .scm-editor .scm-editor-toolbar .action-label.codicon.codicon-debug-stop {
-  color: var(--fg-dim) !important;
+  color: var(--fg-dim);
 }
 
 .scm-view .scm-editor-container .monaco-editor {
@@ -492,7 +491,6 @@
   width: 100%;
   display: flex;
   align-items: flex-start;
-  box-sizing: border-box;
   border: 1px solid var(--line);
   background-color: var(--bg-2);
   border-radius: 4px;
@@ -512,7 +510,7 @@
 
 .scm-view .button-container .codicon.codicon-arrow-up,
 .scm-view .button-container .codicon.codicon-arrow-down {
-  font-size: var(--text-sm) !important;
+  font-size: var(--text-sm);
   margin: 0 var(--space-2) 0 0;
 }
 
@@ -552,17 +550,17 @@
 }
 
 .scm-view .scm-editor.validation-info {
-  outline: 1px solid var(--cyan) !important;
+  outline: 1px solid var(--cyan);
   outline-offset: -1px;
 }
 
 .scm-view .scm-editor.validation-warning {
-  outline: 1px solid var(--yellow) !important;
+  outline: 1px solid var(--yellow);
   outline-offset: -1px;
 }
 
 .scm-view .scm-editor.validation-error {
-  outline: 1px solid var(--red) !important;
+  outline: 1px solid var(--red);
   outline-offset: -1px;
 }
 
@@ -724,7 +722,7 @@
 }
 
 .monaco-hover.history-item-hover .history-item-hover-container > .rendered-markdown:last-child p {
-  margin-bottom: var(--space-1) !important;
+  margin-bottom: var(--space-1);
 }
 
 .monaco-hover.history-item-hover .history-item-hover-container > .rendered-markdown:last-child p span:not(.codicon) {
@@ -747,23 +745,23 @@
 }
 
 .monaco-hover.history-item-hover .history-item-hover-container span:not(.codicon) {
-  margin-bottom: 0 !important;
+  margin-bottom: 0;
 }
 
 .monaco-hover.history-item-hover .history-item-hover-container p > span > span.codicon.codicon-git-branch {
   font-size: var(--text-sm);
-  margin-bottom: var(--space-1) !important;
+  margin-bottom: var(--space-1);
 }
 
 .monaco-hover.history-item-hover .history-item-hover-container p > span > span.codicon.codicon-tag,
 .monaco-hover.history-item-hover .history-item-hover-container p > span > span.codicon.codicon-target {
   font-size: var(--text-lg);
-  margin-bottom: var(--space-1) !important;
+  margin-bottom: var(--space-1);
 }
 
 .monaco-hover.history-item-hover .history-item-hover-container p > span > span.codicon.codicon-cloud {
   font-size: var(--text-lg);
-  margin-bottom: 1px !important;
+  margin-bottom: 1px;
 }
 
 /* Graph */
@@ -818,7 +816,7 @@
 }
 
 .scm-history-view .monaco-list-row > .monaco-tl-row > .monaco-tl-twistie.force-no-twistie {
-  display: none !important;
+  display: none;
 }
 
 .scm-history-view .scm-provider .label-name {

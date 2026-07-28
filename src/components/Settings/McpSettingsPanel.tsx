@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from "react";
-import type { McpConfig, McpServerConfig, McpServerStatus } from "../../types.js";
-import { mcpGetConfig, mcpSaveConfig, mcpGetServers, mcpStartServer, mcpStopServer } from "../../tauri-bridge.js";
-import {
-  ServerIcon,
-  PlusStrokeIcon,
-  Edit2Icon,
-  Trash2Icon,
-  DownloadIcon,
-  UploadStrokeIcon,
-  AlertCircleIcon,
-  TrashIcon,
-  PlusIcon,
-} from "../Icons/icons.js";
-import { Toggle, Input } from "../ui/index.js";
-
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslate } from "../../hooks/useI18n.js";
+import { mcpGetConfig, mcpGetServers, mcpSaveConfig, mcpStartServer, mcpStopServer } from "../../tauri-bridge.js";
+import type { McpConfig, McpServerConfig, McpServerStatus } from "../../types.js";
+import {
+  AlertCircleIcon,
+  DownloadIcon,
+  Edit2Icon,
+  PlusIcon,
+  PlusStrokeIcon,
+  ServerIcon,
+  Trash2Icon,
+  TrashIcon,
+  UploadStrokeIcon,
+} from "../Icons/icons.js";
+import { Input, Toggle } from "../ui/index.js";
 
 export function McpSettingsPanel(): React.ReactElement {
   const t = useTranslate();
@@ -34,12 +34,12 @@ export function McpSettingsPanel(): React.ReactElement {
   const [formEnabled, setFormEnabled] = useState(true);
   const [formError, setFormError] = useState("");
 
-  const getServers = (cfg?: McpConfig | null): McpServerConfig[] => {
+  const getServers = useCallback((cfg?: McpConfig | null): McpServerConfig[] => {
     if (!cfg) return [];
     return cfg.servers || (cfg as any).server || [];
-  };
+  }, []);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const cfg = await mcpGetConfig();
       const servers = getServers(cfg);
@@ -60,11 +60,11 @@ export function McpSettingsPanel(): React.ReactElement {
     } catch (e) {
       console.error("Failed to load MCP data:", e);
     }
-  };
+  }, [getServers]);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const handleToggleServer = async (name: string, enable: boolean) => {
     const serversList = getServers(config);
@@ -204,7 +204,7 @@ export function McpSettingsPanel(): React.ReactElement {
   };
 
   const handleExport = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(config, null, 2));
+    const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(config, null, 2))}`;
     const downloadAnchor = document.createElement("a");
     downloadAnchor.setAttribute("href", dataStr);
     downloadAnchor.setAttribute("download", "mcp-config.json");
@@ -228,7 +228,7 @@ export function McpSettingsPanel(): React.ReactElement {
         } else {
           alert(t("mcpInvalidJsonFormat"));
         }
-      } catch (err) {
+      } catch (_err) {
         alert(t("mcpFailedParseJson"));
       }
     };
@@ -237,7 +237,7 @@ export function McpSettingsPanel(): React.ReactElement {
 
   const getStatusDotClass = (name: string) => {
     const st = statuses.find((s) => s.name === name);
-    if (!st || !st.enabled) return "mcp-dot--gray";
+    if (!st?.enabled) return "mcp-dot--gray";
     const statusType = typeof st.status === "string" ? st.status : st.status.type;
     if (statusType === "running") return "mcp-dot--green";
     if (statusType === "starting") return "mcp-dot--starting";

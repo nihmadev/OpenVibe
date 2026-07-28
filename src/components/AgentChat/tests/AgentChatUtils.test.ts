@@ -1,14 +1,14 @@
-import { describe as suite, it, expect } from "vitest";
+import { expect, it, describe as suite } from "vitest";
+import type { HistoryItem } from "../types";
 import {
-  EXT_COLORS,
   basename,
-  pickFile,
   describe as describeItem,
-  toRelativePath,
+  EXT_COLORS,
   formatArgs,
   ICON_MAP_HISTORY,
+  pickFile,
+  toRelativePath,
 } from "../utils";
-import type { HistoryItem } from "../types";
 
 suite("EXT_COLORS", () => {
   it("has entries for common extensions", () => {

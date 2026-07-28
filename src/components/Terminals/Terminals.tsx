@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { TermPane } from "../TermPane/TermPane.js";
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "../../hooks/useI18n.js";
+import { TermPane } from "../TermPane/TermPane.js";
 import "./Terminals.css";
 
 interface Tab {
@@ -24,17 +25,17 @@ interface TerminalsProps {
 export function Terminals({ active }: TerminalsProps): React.ReactElement {
   const { t } = useI18n();
   const [tabs, setTabs] = useState<Tab[]>(() => [makeTab(t)]);
-  const [activeId, setActiveId] = useState<string>(tabs[0]!.id);
+  const [activeId, setActiveId] = useState<string>(tabs[0]?.id);
   const tabsRef = useRef(tabs);
   const activeIdRef = useRef(activeId);
   tabsRef.current = tabs;
   activeIdRef.current = activeId;
 
-  function addTab(): void {
+  const addTab = useCallback((): void => {
     const tab = makeTab(t);
     setTabs((p) => [...p, tab]);
     setActiveId(tab.id);
-  }
+  }, [t]);
 
   const switchTab = useCallback((dir: "prev" | "next"): void => {
     const list = tabsRef.current;
@@ -42,26 +43,26 @@ export function Terminals({ active }: TerminalsProps): React.ReactElement {
     const idx = list.findIndex((tab) => tab.id === activeIdRef.current);
     if (idx < 0) return;
     const nextIdx = dir === "next" ? (idx + 1) % list.length : (idx - 1 + list.length) % list.length;
-    setActiveId(list[nextIdx]!.id);
+    setActiveId(list[nextIdx]?.id);
   }, []);
 
-  function closeTabById(id: string): void {
-    setTabs((prev) => {
-      const idx = prev.findIndex((tab) => tab.id === id);
-      if (idx === -1) return prev;
-      const next = prev.filter((tab) => tab.id !== id);
-      if (next.length === 0) {
-        const fresh = makeTab(t);
-        setActiveId(fresh.id);
-        return [fresh];
-      }
-      if (activeIdRef.current === id) {
-        const fallback = next[Math.max(0, idx - 1)]!;
-        setActiveId(fallback.id);
-      }
-      return next;
-    });
-  }
+  const closeTabById = useCallback((id: string): void => {
+    const prev = tabsRef.current;
+    const idx = prev.findIndex((tab) => tab.id === id);
+    if (idx === -1) return;
+
+    if (prev.length <= 1) {
+      window.dispatchEvent(new CustomEvent("vibe:close-terminal-panel"));
+      return;
+    }
+
+    const next = prev.filter((tab) => tab.id !== id);
+    setTabs(next);
+    if (activeIdRef.current === id) {
+      const fallback = next[Math.max(0, idx - 1)]!;
+      setActiveId(fallback.id);
+    }
+  }, []);
 
   function closeTab(id: string, e: React.MouseEvent): void {
     e.stopPropagation();
@@ -70,7 +71,7 @@ export function Terminals({ active }: TerminalsProps): React.ReactElement {
 
   const closeActiveTab = useCallback((): void => {
     if (activeIdRef.current) closeTabById(activeIdRef.current);
-  }, []);
+  }, [closeTabById]);
 
   useEffect(() => {
     function onNew() {
@@ -97,7 +98,7 @@ export function Terminals({ active }: TerminalsProps): React.ReactElement {
       window.removeEventListener("vibe:close-terminal", onClose);
       window.removeEventListener("vibe:close-terminal-by-id", onCloseById);
     };
-  }, [switchTab, closeActiveTab]);
+  }, [switchTab, closeActiveTab, addTab, closeTabById]);
 
   return (
     <div className="terminals">
@@ -105,7 +106,7 @@ export function Terminals({ active }: TerminalsProps): React.ReactElement {
         {tabs.map((tab) => (
           <div
             key={tab.id}
-            className={"termtabs__tab" + (tab.id === activeId ? " termtabs__tab--active" : "")}
+            className={`termtabs__tab${tab.id === activeId ? " termtabs__tab--active" : ""}`}
             onClick={() => setActiveId(tab.id)}
             onMouseUp={(e) => {
               if (e.button === 1) closeTab(tab.id, e);

@@ -1,29 +1,28 @@
 import React from "react";
-import { HistoryItem } from "../AgentChat/types.js";
-import { describe, pickFile, getFilePathFromArgs, getEditStrings } from "../AgentChat/utils.js";
-import { FailIcon } from "../Icons/icons.js";
+import { useI18n } from "../../hooks/useI18n.js";
 import { FileBadge } from "../AgentChat/components/FileBadge.js";
+import type { HistoryItem } from "../AgentChat/types.js";
+import { describe, getEditStrings, getFilePathFromArgs, pickFile } from "../AgentChat/utils.js";
+import { CodeBlock, resolveMonacoLang } from "../CodeBlock/CodeBlock.js";
+import { DiffEditor } from "../DiffEditor/DiffEditor.js";
+import { FileIcon, FolderIcon } from "../Icons/file-icons.js";
 import {
-  ChevronRightIcon,
-  Loader2Icon,
-  ShowMoreIcon,
   BookOpenIcon,
   BotIcon,
+  ChevronRightIcon,
+  FailIcon,
   FilePlus2Icon,
   FolderOpenStrokeIcon,
   GlobeIcon,
   LinkIcon,
+  Loader2Icon,
   PencilIcon,
   SearchStrokeIcon,
   ServerIcon,
+  ShowMoreIcon,
   SquareTerminalIcon,
   WrenchIcon,
 } from "../Icons/icons.js";
-import { FileIcon, FolderIcon } from "../Icons/file-icons.js";
-import { CodeBlock, resolveMonacoLang } from "../CodeBlock/CodeBlock.js";
-import { DiffEditor } from "../DiffEditor/DiffEditor.js";
-import { Markdown } from "../Markdown/Markdown.js";
-import { useI18n } from "../../hooks/useI18n.js";
 import "./Tool.css";
 
 function ToolKindIcon({ name, size = 14 }: { name?: string; size?: number }): React.ReactElement {
@@ -167,7 +166,7 @@ function DiffBlock({ item, file }: { item: HistoryItem; file?: { name: string } 
     } else {
       setLoading(false);
     }
-  }, [item.id, item.ok, item.toolArgs, file]);
+  }, [item.ok, item.toolArgs, file]);
 
   const info = pickFile(item.toolArgs) || file;
 
@@ -209,7 +208,7 @@ function WriteFileBlock({ item }: { item: HistoryItem }) {
       if (newStr) setContent(newStr);
       setLoading(false);
     }
-  }, [item.id, item.ok, item.toolArgs]);
+  }, [item.ok, item.toolArgs]);
 
   if (loading) return <div className="tool__diff-loading">Loading…</div>;
   if (!content) return <div className="tool__diff-loading">No content preview available.</div>;
@@ -335,7 +334,7 @@ export function AgentToolView({
   const mcpFormatted = React.useMemo(() => {
     if (!item.text) return null;
     return formatToolResultText(item.text, getToolResultLang(item));
-  }, [item.text, item.toolName]);
+  }, [item.text, item.toolName, item]);
 
   if (isAgent) {
     return (

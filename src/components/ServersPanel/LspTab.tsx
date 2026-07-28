@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { useTranslate } from "../../hooks/useI18n.js";
-import { Toggle } from "../ui/index.js";
-import { Loader2Icon } from "../Icons/index.js";
 import { invoke } from "@tauri-apps/api/core";
-import { lspStore, type LspServerItem } from "./lspStore.js";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useTranslate } from "../../hooks/useI18n.js";
+import { Loader2Icon } from "../Icons/index.js";
+import { Toggle } from "../ui/index.js";
+import { type LspServerItem, lspStore } from "./lspStore.js";
 
 export function LspTab(): React.ReactElement {
-  const t = useTranslate();
+  const _t = useTranslate();
   const [servers, setServers] = useState<LspServerItem[]>(lspStore.getServers());
 
   useEffect(() => {

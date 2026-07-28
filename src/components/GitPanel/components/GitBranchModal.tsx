@@ -1,6 +1,5 @@
-import React from "react";
-import type { BranchInfo } from "../types.js";
 import { useI18n } from "../../../hooks/useI18n.js";
+import type { BranchInfo } from "../types.js";
 
 export interface GitBranchModalProps {
   branches: BranchInfo[];

@@ -2,11 +2,11 @@ import { loader } from "@monaco-editor/react";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Tooltip } from "../Tooltip/Tooltip.js";
 import "./CodeBlock.css";
-import { useTheme } from "../../hooks/useTheme.js";
 import { useI18n } from "../../hooks/useI18n.js";
-import { makeMonacoTheme } from "../Themes/monacoThemes.js";
-import { CopyIcon } from "../Icons/icons.js";
+import { useTheme } from "../../hooks/useTheme.js";
 import { writeClipboard } from "../../utils/clipboard.js";
+import { CopyIcon } from "../Icons/icons.js";
+import { makeMonacoTheme } from "../Themes/monacoThemes.js";
 
 type Monaco = any;
 
@@ -307,7 +307,7 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
         cleanupRef.current = null;
       }
     };
-  }, [monacoLang]);
+  }, [monacoLang, monacoThemeName, themeVars, isDark]);
 
   useEffect(() => {
     const ed = editorRef.current;
@@ -319,7 +319,7 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
     } catch {
       // editor may be disposed during rapid streaming
     }
-  }, [themeVars, monacoThemeName, isDark, isEditorReady]);
+  }, [themeVars, monacoThemeName, isDark]);
 
   useEffect(() => {
     const ed = editorRef.current;
@@ -369,7 +369,7 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
         // editor might be disposed during rapid streaming
       }
     }
-  }, [displayCode]);
+  }, []);
 
   useEffect(() => {
     const m = monacoRef.current;
@@ -386,7 +386,7 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
       },
     }));
     ed.deltaDecorations([], decos);
-  }, [decorations, isEditorReady]);
+  }, [decorations]);
 
   const handleCopy = async () => {
     const ok = await writeClipboard(code);

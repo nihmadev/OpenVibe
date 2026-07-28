@@ -19,7 +19,7 @@ export const Markdown = React.memo(function Markdown({
   isStreaming,
 }: MarkdownProps) {
   return (
-    <div className={"markdown-body " + (className || "")}>
+    <div className={`markdown-body ${className || ""}`}>
       <StreamingMarkdown
         content={content}
         isAssistant={isAssistant}

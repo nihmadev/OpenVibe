@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import type { MentionState } from "../types.js";
 
 export function useMention(workspace: string) {

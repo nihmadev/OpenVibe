@@ -1,8 +1,8 @@
-import React from "react";
-import { FileIcon, FolderIcon } from "../../Icons/index.js";
-import { getStatusLetter } from "../utils/commitGraphUtils.js";
-import type { FileStatus, CommitFile } from "../types.js";
+import type React from "react";
 import { useI18n } from "../../../hooks/useI18n.js";
+import { FileIcon, FolderIcon } from "../../Icons/index.js";
+import type { CommitFile, FileStatus } from "../types.js";
+import { getStatusLetter } from "../utils/commitGraphUtils.js";
 
 export interface FileRowProps {
   file: FileStatus;
@@ -133,7 +133,7 @@ export function TreeFolder({
           <div className="ftree__line" style={{ left: `${depth * 14 + 6}px` }} />
           {Object.keys(folderData.folders).map((subName) => (
             <TreeFolder
-              key={"folder-" + folderData.folders[subName].path}
+              key={`folder-${folderData.folders[subName].path}`}
               folderName={subName}
               folderData={folderData.folders[subName]}
               isStaged={isStaged}
@@ -147,7 +147,7 @@ export function TreeFolder({
             />
           ))}
           {folderData.files.map((file: FileStatus) => (
-            <div key={"tree-file-" + file.path} style={{ paddingLeft: `${(depth + 1) * 14}px` }}>
+            <div key={`tree-file-${file.path}`} style={{ paddingLeft: `${(depth + 1) * 14}px` }}>
               <FileRow
                 file={file}
                 isStaged={isStaged}
@@ -263,7 +263,7 @@ export function CommitTreeFolder({
           <div className="ftree__line" style={{ left: `${depth * 14 + 6}px` }} />
           {Object.keys(folderData.folders).map((subName) => (
             <CommitTreeFolder
-              key={"commit-folder-" + folderData.folders[subName].path}
+              key={`commit-folder-${folderData.folders[subName].path}`}
               folderName={subName}
               folderData={folderData.folders[subName]}
               depth={depth + 1}
@@ -273,7 +273,7 @@ export function CommitTreeFolder({
             />
           ))}
           {folderData.files.map((file: CommitFile) => (
-            <div key={"commit-tree-file-" + file.path} style={{ paddingLeft: `${(depth + 1) * 14}px` }}>
+            <div key={`commit-tree-file-${file.path}`} style={{ paddingLeft: `${(depth + 1) * 14}px` }}>
               <CommitFileRow file={file} onOpenFile={onOpenFile} />
             </div>
           ))}

@@ -1,14 +1,15 @@
-import React, { useMemo } from "react";
+import type React from "react";
+import { useMemo } from "react";
+import { useI18n } from "../../../hooks/useI18n.js";
 import {
   AlertTriangleIcon,
   ChevronDownStrokeIcon,
   GaugeIcon,
+  type IconComponent,
   RotateCcwIcon,
   ShieldAlertIcon,
   WifiOffIcon,
-  type IconComponent,
 } from "../../Icons/icons.js";
-import { useI18n } from "../../../hooks/useI18n.js";
 import "./ErrorNotice.css";
 
 type ErrorKind = "network" | "quota" | "blocked" | "provider";
@@ -34,7 +35,7 @@ export function ErrorNotice({ text, onRetry }: { text: string; onRetry?: () => v
   const { t } = useI18n();
   const kind = useMemo(() => classifyError(text), [text]);
   const Icon = iconFor[kind];
-  const title = t(`errorNotice${kind[0]!.toUpperCase()}${kind.slice(1)}Title`);
+  const title = t(`errorNotice${kind[0]?.toUpperCase()}${kind.slice(1)}Title`);
 
   return (
     <section className={`error-notice error-notice--${kind}`} role="alert">

@@ -27,7 +27,8 @@ function parseInlineMarkdown(text: string, target: Node, options?: MarkdownOptio
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
-  while ((match = INLINE_RE.exec(text)) !== null) {
+  match = INLINE_RE.exec(text);
+  while (match !== null) {
     if (match.index > lastIndex) {
       target.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
     }
@@ -89,6 +90,7 @@ function parseInlineMarkdown(text: string, target: Node, options?: MarkdownOptio
     }
 
     lastIndex = INLINE_RE.lastIndex;
+    match = INLINE_RE.exec(text);
   }
 
   if (lastIndex < text.length) {

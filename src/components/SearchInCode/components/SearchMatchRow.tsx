@@ -1,6 +1,6 @@
 import React from "react";
-import { getCachedHighlight } from "../../../utils/searchSyntax.js";
 import type { ContentMatch } from "../../../types.js";
+import { getCachedHighlight } from "../../../utils/searchSyntax.js";
 
 export interface SearchMatchRowProps {
   match: ContentMatch;
@@ -22,7 +22,7 @@ export function SearchMatchRow({
   isLastMatch,
   isSelected,
   onOpenFile,
-  onClose,
+  onClose: _onClose,
   onMouseEnter,
 }: SearchMatchRowProps): React.ReactElement {
   return (

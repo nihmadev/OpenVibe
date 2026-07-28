@@ -19,8 +19,8 @@
 .servers-panel__content,
 .servers-panel__lsp,
 .titlebar__mcp-server-list {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .servers-panel::-webkit-scrollbar,
@@ -28,9 +28,9 @@
 .servers-panel__content::-webkit-scrollbar,
 .servers-panel__lsp::-webkit-scrollbar,
 .titlebar__mcp-server-list::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .servers-panel__mcp,

@@ -1,7 +1,7 @@
 import React from "react";
+import { useI18n } from "../../hooks/useI18n.js";
 import type { HistoryItem } from "../AgentChat/types.js";
 import { AgentToolView } from "../AgentToolView/AgentToolView.js";
-import { useI18n } from "../../hooks/useI18n.js";
 import "./SubAgentView.css";
 
 interface Props {
@@ -18,7 +18,7 @@ export function SubAgentView({ items, onBack, cwd }: Props): React.ReactElement 
     const el = ref.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
-  }, [items]);
+  }, []);
 
   return (
     <div className="subagent-view">

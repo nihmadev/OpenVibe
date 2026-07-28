@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import "./FileTree.css";
+import { useI18n } from "../../hooks/useI18n.js";
 import type { FsEntry } from "../../types.js";
 import { ContextMenu, type MenuItem } from "../ContextMenu/ContextMenu.js";
-import { Tooltip } from "../Tooltip/Tooltip.js";
-import { useI18n } from "../../hooks/useI18n.js";
 import { ChevronRightIcon, CollapseAllIcon, NewFileIcon, NewFolderIcon, RefreshIcon } from "../Icons/index.js";
+import { Tooltip } from "../Tooltip/Tooltip.js";
 import { FileNode } from "./FileNode";
 import { RenameInput } from "./RenameInput";
+import type { CtxState, NodeState, RootProps } from "./types.js";
 import { basename, dirnameOf } from "./utils.js";
-import type { NodeState, CtxState, RootProps } from "./types.js";
 
 export function FileTree({ cwd, onOpenFile, activeFile, revealPath }: RootProps): React.ReactElement {
   const { t } = useI18n();
@@ -119,7 +119,7 @@ export function FileTree({ cwd, onOpenFile, activeFile, revealPath }: RootProps)
     let base = cwd.replace(/\\/g, "/");
     const dirs: string[] = [];
     for (const p of parts) {
-      base = base + "/" + p;
+      base = `${base}/${p}`;
       dirs.push(base.replace(/\//g, "\\"));
     }
     (async () => {
@@ -145,7 +145,7 @@ export function FileTree({ cwd, onOpenFile, activeFile, revealPath }: RootProps)
     // Ensure dir is expanded so we see the input
     if (dir !== cwd) {
       const cur = states.get(dir);
-      if (!cur || !cur.open) {
+      if (!cur?.open) {
         // Expand logic
         window.vibe.fs.list(dir).then((res) => {
           if (!res.ok) return;

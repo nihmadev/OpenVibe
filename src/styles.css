@@ -88,8 +88,8 @@
 }
 
 html.theme-borderless {
-  --line: rgba(255, 255, 255, 0) !important;
-  --line-strong: rgba(255, 255, 255, 0.02) !important;
+  --line: rgba(255, 255, 255, 0);
+  --line-strong: rgba(255, 255, 255, 0.02);
 }
 
 html.theme-borderless .project-rail,
@@ -101,7 +101,7 @@ html.theme-borderless .terminal-embedded,
 html.theme-borderless .app-sidebar {
   position: relative;
   z-index: 10;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -171,7 +171,7 @@ select:focus-visible,
 input[type="checkbox"]:focus-visible,
 input[type="radio"]:focus-visible,
 input[type="range"]:focus-visible {
-  outline: 2px solid var(--fg-dim) !important;
+  outline: 2px solid var(--fg-dim);
   outline-offset: 1px;
 }
 

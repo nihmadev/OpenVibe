@@ -1,23 +1,23 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { vibe } from "../../tauri-bridge.js";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useI18n } from "../../hooks/useI18n.js";
+import { vibe } from "../../tauri-bridge.js";
 import "@vscode/codicons/dist/codicon.css";
 import "./scm.css";
 import "./GitPanel.css";
-import type { GitPanelProps, FileStatus, BranchInfo, CommitGraphNode, CommitInfo, CommitFile } from "./types.js";
-import {
-  computeSwimlanes,
-  GraphRow,
-  buildTree,
-  buildCommitTree,
-  SWIMLANE_WIDTH,
-  GRAPH_LEFT_PADDING,
-} from "./utils/commitGraphUtils.js";
-import { FileRow, TreeFolder, CommitFileRow, CommitTreeFolder } from "./components/GitFileList.js";
-import { GitCommitTooltip } from "./components/GitCommitTooltip.js";
 import { GitBranchModal } from "./components/GitBranchModal.js";
+import { GitCommitTooltip } from "./components/GitCommitTooltip.js";
+import { CommitFileRow, CommitTreeFolder, FileRow, TreeFolder } from "./components/GitFileList.js";
+import type { BranchInfo, CommitFile, CommitGraphNode, CommitInfo, FileStatus, GitPanelProps } from "./types.js";
+import {
+  buildCommitTree,
+  buildTree,
+  computeSwimlanes,
+  GRAPH_LEFT_PADDING,
+  GraphRow,
+  SWIMLANE_WIDTH,
+} from "./utils/commitGraphUtils.js";
 
-export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
+export function GitPanel({ cwd, onOpenFile, onClose: _onClose }: GitPanelProps) {
   const { t } = useI18n();
 
   const handleOpenFile = useCallback(
@@ -73,7 +73,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
   const [branches, setBranches] = useState<BranchInfo[]>([]);
   const [currentBranch, setCurrentBranch] = useState<string>("main");
   const [graphNodes, setGraphNodes] = useState<CommitGraphNode[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [commitMessage, setCommitMessage] = useState("");
   const [isGeneratingCommitMsg, setIsGeneratingCommitMsg] = useState(false);
 
@@ -151,7 +151,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
 
       tooltipRef.current.style.top = `${top}px`;
     }
-  }, [hoveredCommit, tooltipPosition, hoveredCommit ? commitFilesMap[hoveredCommit.id] : undefined]);
+  }, [hoveredCommit, tooltipPosition]);
 
   const toggleSection = (section: keyof typeof expanded) => {
     setExpanded((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -337,7 +337,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
     setIsGeneratingCommitMsg(true);
     try {
       const res = await vibe.git.generateCommitMessage(cwd);
-      if (res && res.data) {
+      if (res?.data) {
         setCommitMessage(res.data);
       } else if (res && (res as any).error) {
         const errStr = String((res as any).error);
@@ -631,7 +631,9 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                               title={t("unstageAll")}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                stagedFiles.forEach((f) => handleUnstageFile(f.path));
+                                stagedFiles.forEach((f) => {
+                                  handleUnstageFile(f.path);
+                                });
                               }}
                             >
                               <i className="codicon codicon-remove"></i>
@@ -646,7 +648,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                           {viewMode === "list" ? (
                             stagedFiles.map((file) => (
                               <FileRow
-                                key={"staged-" + file.path}
+                                key={`staged-${file.path}`}
                                 file={file}
                                 isStaged={true}
                                 onOpenFile={openStagedFile}
@@ -659,7 +661,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                             <>
                               {Object.keys(stagedTree.folders).map((fName) => (
                                 <TreeFolder
-                                  key={"staged-folder-" + stagedTree.folders[fName].path}
+                                  key={`staged-folder-${stagedTree.folders[fName].path}`}
                                   folderName={fName}
                                   folderData={stagedTree.folders[fName]}
                                   isStaged={true}
@@ -674,7 +676,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                               ))}
                               {stagedTree.files.map((file) => (
                                 <FileRow
-                                  key={"staged-tree-" + file.path}
+                                  key={`staged-tree-${file.path}`}
                                   file={file}
                                   isStaged={true}
                                   onOpenFile={openStagedFile}
@@ -729,7 +731,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                           {viewMode === "list" ? (
                             changesFiles.map((file) => (
                               <FileRow
-                                key={"changed-" + file.path}
+                                key={`changed-${file.path}`}
                                 file={file}
                                 isStaged={false}
                                 onOpenFile={openWorkingFile}
@@ -742,7 +744,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                             <>
                               {Object.keys(changesTree.folders).map((fName) => (
                                 <TreeFolder
-                                  key={"changed-folder-" + changesTree.folders[fName].path}
+                                  key={`changed-folder-${changesTree.folders[fName].path}`}
                                   folderName={fName}
                                   folderData={changesTree.folders[fName]}
                                   isStaged={false}
@@ -757,7 +759,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                               ))}
                               {changesTree.files.map((file) => (
                                 <FileRow
-                                  key={"changed-tree-" + file.path}
+                                  key={`changed-tree-${file.path}`}
                                   file={file}
                                   isStaged={false}
                                   onOpenFile={openWorkingFile}
@@ -966,7 +968,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                                     <>
                                       {Object.keys(tree.folders).map((fName) => (
                                         <CommitTreeFolder
-                                          key={"commit-folder-" + tree.folders[fName].path}
+                                          key={`commit-folder-${tree.folders[fName].path}`}
                                           folderName={fName}
                                           folderData={tree.folders[fName]}
                                           depth={0}
@@ -976,7 +978,7 @@ export function GitPanel({ cwd, onOpenFile, onClose }: GitPanelProps) {
                                         />
                                       ))}
                                       {tree.files.map((file) => (
-                                        <div key={"commit-tree-file-" + file.path}>
+                                        <div key={`commit-tree-file-${file.path}`}>
                                           <CommitFileRow
                                             file={file}
                                             onOpenFile={(path) => openCommitFile(node.id, path)}

@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
-import { CheckIcon, CloseIcon, ArrowUpIcon, ArrowLeftIcon, ArrowRightIcon, SpinIcon } from "../Icons/index.js";
-import { Button } from "../ui/index.js";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../../hooks/useI18n.js";
+import { ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, CheckIcon, CloseIcon, SpinIcon } from "../Icons/index.js";
+import { Button } from "../ui/index.js";
 
 interface InlinePromptProps {
   onSend: (prompt: string) => void;

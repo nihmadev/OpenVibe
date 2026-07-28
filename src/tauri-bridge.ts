@@ -1,10 +1,10 @@
-import { initVibeBridge } from "./bridge/events.js";
-import { currentConfig, eventListeners, busyListeners } from "./bridge/state.js";
 import { chatsBridge } from "./bridge/chats.js";
 import { configBridge } from "./bridge/config.js";
-import { projectsBridge } from "./bridge/projects.js";
+import { initVibeBridge } from "./bridge/events.js";
 import { filesBridge } from "./bridge/files.js";
 import { gitBridge } from "./bridge/git.js";
+import { projectsBridge } from "./bridge/projects.js";
+import { busyListeners, currentConfig, eventListeners } from "./bridge/state.js";
 import { terminalsBridge } from "./bridge/terminals.js";
 import type { VibeEvent } from "./types.js";
 
@@ -59,14 +59,14 @@ export const vibe = {
 (window as any).vibe = vibe;
 
 export {
+  mcpGetConfig,
   mcpGetServers,
+  mcpGetStatus,
+  mcpListTools,
+  mcpRestartServer,
+  mcpSaveConfig,
   mcpStartServer,
   mcpStopServer,
-  mcpRestartServer,
-  mcpGetStatus,
-  mcpGetConfig,
-  mcpSaveConfig,
-  mcpListTools,
   pushScg2Events,
   type SCG2EventBatch,
 } from "./bridge/mcp.js";

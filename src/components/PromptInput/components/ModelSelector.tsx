@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Provider } from "../../../types.js";
-import { PROVIDER_TEMPLATES, getProviderIconPath } from "../../../constants.js";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getProviderIconPath, PROVIDER_TEMPLATES } from "../../../constants.js";
 import { useI18n } from "../../../hooks/useI18n.js";
 import { useTheme } from "../../../hooks/useTheme.js";
-import { ChevronDownIcon, SearchMiniIcon, AttachPlusIcon, FilterIcon, CheckIcon } from "../../Icons/icons.js";
+import type { Provider } from "../../../types.js";
+import { AttachPlusIcon, CheckIcon, ChevronDownIcon, FilterIcon, SearchMiniIcon } from "../../Icons/icons.js";
 import { Input, List, ListGroup, ListItem } from "../../ui/index.js";
 
 interface ModelEntry {
@@ -200,7 +200,7 @@ export function ModelSelector({ currentModel, onPickModel, onOpenSettings }: Mod
       if (m) return m.name;
     }
     return currentModel || t("selectModelFallback");
-  }, [groups, currentModel]);
+  }, [groups, currentModel, t]);
 
   return (
     <div className="model-selector" ref={selRef}>

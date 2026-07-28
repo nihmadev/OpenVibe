@@ -1,6 +1,7 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
-import type { Project } from "../../types.js";
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "../../hooks/useI18n.js";
+import type { Project } from "../../types.js";
 import { CloseXIcon, UploadIcon } from "../Icons/icons.js";
 import "./EditProjectPopup.css";
 
@@ -108,20 +109,11 @@ export function EditProjectPopup({ project, onSave, onClose }: Props): React.Rea
         </div>
 
         <label className="edit-project__label">{t("name")}</label>
-        <input
-          className="edit-project__input"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          autoFocus
-        />
+        <input className="edit-project__input" type="text" value={name} onChange={(e) => setName(e.target.value)} />
 
         <label className="edit-project__label">{t("projectIcon")}</label>
         <div className="edit-project__preview-wrap" ref={wrapRef} onClick={handleClickUpload}>
-          <div
-            className={"edit-project__preview" + (photo ? " edit-project__preview--photo" : "")}
-            style={previewStyle}
-          >
+          <div className={`edit-project__preview${photo ? " edit-project__preview--photo" : ""}`} style={previewStyle}>
             <input
               ref={fileRef}
               type="file"
@@ -134,7 +126,7 @@ export function EditProjectPopup({ project, onSave, onClose }: Props): React.Rea
             ) : (
               <span className="edit-project__preview-letter">{initialLetter(name)}</span>
             )}
-            <div className={"edit-project__preview-overlay" + (dragOver ? " edit-project__preview-overlay--drag" : "")}>
+            <div className={`edit-project__preview-overlay${dragOver ? " edit-project__preview-overlay--drag" : ""}`}>
               {photo ? (
                 <button className="edit-project__preview-action" onClick={handleClearPhoto}>
                   <CloseXIcon />
@@ -147,13 +139,13 @@ export function EditProjectPopup({ project, onSave, onClose }: Props): React.Rea
           <span className="edit-project__preview-hint">Drop photo or click</span>
         </div>
 
-        <div className={"edit-project__bg-wrap" + (photo ? " edit-project__bg-wrap--hidden" : "")}>
+        <div className={`edit-project__bg-wrap${photo ? " edit-project__bg-wrap--hidden" : ""}`}>
           <label className="edit-project__label">{t("backgroundColor")}</label>
           <div className="edit-project__swatches">
             {SWATCHES.map((swatch) => (
               <button
                 key={swatch}
-                className={"edit-project__swatch" + (color === swatch ? " edit-project__swatch--active" : "")}
+                className={`edit-project__swatch${color === swatch ? " edit-project__swatch--active" : ""}`}
                 style={{ "--swatch-color": swatch } as React.CSSProperties}
                 onClick={() => setColor(swatch)}
                 aria-label={swatch}

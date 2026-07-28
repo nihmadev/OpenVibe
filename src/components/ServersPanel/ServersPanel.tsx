@@ -1,8 +1,9 @@
-import React, { useState } from "react";
-import { ServerIcon, RefreshCwStrokeIcon, SettingsIcon } from "../Icons/icons.js";
+import type React from "react";
+import { useState } from "react";
 import { useTranslate } from "../../hooks/useI18n.js";
-import { Toggle } from "../ui/index.js";
 import type { McpServerStatus } from "../../types.js";
+import { RefreshCwStrokeIcon, ServerIcon, SettingsIcon } from "../Icons/icons.js";
+import { Toggle } from "../ui/index.js";
 import { LspTab } from "./LspTab.js";
 import "./ServersPanel.css";
 import "../Terminals/Terminals.css"; // Reuse termtabs styles

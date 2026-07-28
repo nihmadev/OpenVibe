@@ -1,4 +1,4 @@
-import { ICON_MAP, FOLDER_MAP, LANGUAGE_MAP } from "./maps.js";
+import { FOLDER_MAP, ICON_MAP, LANGUAGE_MAP } from "./maps.js";
 
 export function getFileIcon(filename: string): string | null {
   // Check full filename first (for package.json etc)

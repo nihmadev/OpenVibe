@@ -1,5 +1,3 @@
-import React from "react";
-
 interface ContextItem {
   key: string;
   path: string;
@@ -30,13 +28,13 @@ export function PromptContextItems({ items, active, openComment, remove, t }: Pr
     <div className="prompt-input__context-items">
       {items.map((item) => {
         const filename = getFilename(item.path);
-        const dir = getDirectory(item.path);
+        const _dir = getDirectory(item.path);
         const isActive = active ? active(item) : false;
 
         return (
           <div
             key={item.key}
-            className={"prompt-input__context-chip" + (isActive ? " prompt-input__context-chip--active" : "")}
+            className={`prompt-input__context-chip${isActive ? " prompt-input__context-chip--active" : ""}`}
             onClick={() => openComment?.(item)}
           >
             <div className="prompt-input__context-chip-header">

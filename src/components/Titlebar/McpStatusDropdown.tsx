@@ -1,7 +1,7 @@
-import React from "react";
-import type { McpServerStatus } from "../../types.js";
-import { ServerIcon, RefreshCwStrokeIcon, SettingsIcon } from "../Icons/icons.js";
+import type React from "react";
 import { useTranslate } from "../../hooks/useI18n.js";
+import type { McpServerStatus } from "../../types.js";
+import { RefreshCwStrokeIcon, ServerIcon, SettingsIcon } from "../Icons/icons.js";
 import { Toggle } from "../ui/index.js";
 import "./Titlebar.css";
 

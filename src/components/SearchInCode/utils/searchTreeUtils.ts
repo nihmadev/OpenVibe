@@ -139,7 +139,7 @@ export function globToRegex(pattern: string): RegExp {
     } else if (ch === "?") {
       re += "[^/]";
     } else if (/[.+^${}()|[\]\\]/.test(ch)) {
-      re += "\\" + ch;
+      re += `\\${ch}`;
     } else {
       re += ch;
     }

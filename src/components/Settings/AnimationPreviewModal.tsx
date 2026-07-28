@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import type { AnimStyle, AnimKey } from "../../hooks/useAnimations.js";
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { AnimKey, AnimStyle } from "../../hooks/useAnimations.js";
 import { useAnimations } from "../../hooks/useAnimations.js";
 
 // ─── Duration map ────────────────────────────────────────────────────────────
@@ -27,7 +28,7 @@ function MiniProjectRail({ highlightIdx }: { highlightIdx: number }) {
   return (
     <div className="apm-rail apm-rail--row">
       {TILE_LABELS.map((label, i) => (
-        <div key={i} className={"apm-rail__tile" + (i === highlightIdx ? " apm-rail__tile--active" : "")}>
+        <div key={i} className={`apm-rail__tile${i === highlightIdx ? " apm-rail__tile--active" : ""}`}>
           <span className="apm-rail__avatar" style={{ background: TILE_COLORS[i] } as React.CSSProperties}>
             {label}
           </span>
@@ -41,7 +42,7 @@ function MiniProjectRail({ highlightIdx }: { highlightIdx: number }) {
 // ─── Mini ContextMenu ────────────────────────────────────────────────────────
 function MiniContextMenu({ cls, visible }: { cls: string; visible: boolean }) {
   return (
-    <div className={"apm-ctx " + cls} style={{ opacity: visible ? undefined : 0 }} key={String(visible)}>
+    <div className={`apm-ctx ${cls}`} style={{ opacity: visible ? undefined : 0 }} key={String(visible)}>
       <div className="apm-ctx__item">New File</div>
       <div className="apm-ctx__item">New Folder</div>
       <div className="apm-ctx__sep" />
@@ -53,7 +54,7 @@ function MiniContextMenu({ cls, visible }: { cls: string; visible: boolean }) {
 // ─── Mini Panel / Modal ──────────────────────────────────────────────────────
 function MiniPanel({ cls, visible }: { cls: string; visible: boolean }) {
   return (
-    <div className={"apm-panel " + cls} style={{ opacity: visible ? undefined : 0 }} key={String(visible)}>
+    <div className={`apm-panel ${cls}`} style={{ opacity: visible ? undefined : 0 }} key={String(visible)}>
       <div className="apm-panel__header" />
       <div className="apm-panel__body">
         <div className="apm-panel__bar" />
@@ -68,11 +69,11 @@ function MiniPanel({ cls, visible }: { cls: string; visible: boolean }) {
 function MiniButtons({ cls, visible }: { cls: string; visible: boolean }) {
   return (
     <div className="apm-buttons" key={String(visible)}>
-      <button className={"apm-btn" + (visible ? " " + cls : "")} style={{ opacity: visible ? 1 : 0.3 }} tabIndex={-1}>
+      <button className={`apm-btn${visible ? ` ${cls}` : ""}`} style={{ opacity: visible ? 1 : 0.3 }} tabIndex={-1}>
         Send
       </button>
       <button
-        className={"apm-btn apm-btn--outline" + (visible ? " " + cls : "")}
+        className={`apm-btn apm-btn--outline${visible ? ` ${cls}` : ""}`}
         style={{ animationDelay: "0.06s", opacity: visible ? 1 : 0.3 }}
         tabIndex={-1}
       >
@@ -89,7 +90,7 @@ function MiniSidebarSlide({ cls, sidebarOpen }: { cls: string; sidebarOpen: bool
   return (
     <div className="apm-layout">
       <div
-        className={"apm-sidebar" + (sidebarOpen ? " apm-sidebar--open " + cls : " apm-sidebar--closed")}
+        className={`apm-sidebar${sidebarOpen ? ` apm-sidebar--open ${cls}` : " apm-sidebar--closed"}`}
         key={String(sidebarOpen)}
       >
         <span className="apm-sidebar__item" />
@@ -208,7 +209,7 @@ export function InlineAnimPreview({ animKey, animStyle }: { animKey: AnimKey; an
 
   return (
     <div
-      className={"apm-inline-stage" + (hovered ? " apm-inline-stage--active" : "")}
+      className={`apm-inline-stage${hovered ? " apm-inline-stage--active" : ""}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { LightbulbIcon } from "../../Icons/icons.js";
+import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../../../hooks/useI18n.js";
+import { LightbulbIcon } from "../../Icons/icons.js";
 
 interface EffortOption {
   value: string;

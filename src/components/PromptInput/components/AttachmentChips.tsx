@@ -1,7 +1,6 @@
-import React from "react";
-import type { Attachment } from "../types.js";
-import { Tooltip } from "../../Tooltip/Tooltip.js";
 import { FileIcon } from "../../Icons/file-icons.js";
+import { Tooltip } from "../../Tooltip/Tooltip.js";
+import type { Attachment } from "../types.js";
 
 interface AttachmentChipsProps {
   attachments: Attachment[];

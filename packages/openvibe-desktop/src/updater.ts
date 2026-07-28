@@ -242,16 +242,8 @@ async function makeExecutableAndLink(filePath: string, binDir: string, info: Upd
   }
 
   if (platform === "windows") {
-    const link = join(binDir, "openvibe.exe");
-    await writeFile(link.replace(/openvibe\.exe$/, ".version"), info.version);
-    // For exe installer, just symlink
-    try {
-      await unlink(link);
-    } catch {
-      /* ignore */
-    }
-    await exec(`mklink "${link}" "${filePath}"`, true);
-    return link;
+    await writeFile(join(binDir, ".version"), info.version);
+    return filePath;
   }
 
   return filePath;

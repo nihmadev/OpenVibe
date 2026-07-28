@@ -1,13 +1,13 @@
-import React, { useState } from "react";
 import katex from "katex";
+import React, { useState } from "react";
 import "katex/dist/katex.min.css";
 import { writeClipboard } from "../../utils/clipboard.js";
 import { escapeHtml } from "../../utils/string.js";
+import { CodeBlock } from "../CodeBlock/CodeBlock.js";
 import { FileIcon, FolderIcon } from "../Icons/file-icons.js";
 import { CopyCheckIcon } from "../Icons/icons.js";
 import { getFileIcon } from "../Icons/utils.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
-import { CodeBlock } from "../CodeBlock/CodeBlock.js";
 import { FileTreeViewer } from "./FileTreeViewer.js";
 import { sanitizeMarkdown } from "./sanitizeMarkdown.js";
 
@@ -35,17 +35,14 @@ const LINE_START_FILE_RE = new RegExp(
 );
 const LINE_START_DOTFILE_RE = /(^|\n)([\t ]*(?:[-*+]|[0-9]+\.)?[\t ]*)(\.[\w\-.]+)(?!\/)(?=\b|\s|$)/g;
 const EXTLESS_FILE_RE = /(^|\n)([\t ]*(?:[-*+]|[0-9]+\.)?[\t ]*)(LICENSE|COPYING|Dockerfile|Procfile)(?=\b|\s|$)/gi;
-const EXPLICIT_FOLDER_RE = new RegExp(
-  `(^|\\n)([\\t ]*(?:[-*+]|[0-9]+\\.)?[\\t ]*(?:Folder|folder):\\s*)([\\w\\-./]+)(?=\\b|\\s|$)`,
-  "g",
-);
-const STANDALONE_FOLDER_RE = new RegExp(`(^|\\n)([\\t ]*(?:[-*+]|[0-9]+\\.)?[\\t ]*)([\\w\\-.]+\\/)(?=\\b|\\s|$)`, "g");
+const EXPLICIT_FOLDER_RE = /(^|\n)([\t ]*(?:[-*+]|[0-9]+\.)?[\t ]*(?:Folder|folder):\s*)([\w\-./]+)(?=\b|\s|$)/g;
+const STANDALONE_FOLDER_RE = /(^|\n)([\t ]*(?:[-*+]|[0-9]+\.)?[\t ]*)([\w\-.]+\\\/)(?=\b|\s|$)/g;
 
 const USER_FILE_RE = new RegExp(`@([\\w\\-./]+\\.(?:${FILE_EXTENSIONS}))`, "g");
 const USER_FOLDER_RE = /@((?:Folder:)?[\w\-./]+\/|(?:Folder:)?[\w\-./]+(?=\s+folder|Folder|$))/g;
 
-const ESCAPE_RE = /&/g;
-const LT_RE = /</g;
+const _ESCAPE_RE = /&/g;
+const _LT_RE = /</g;
 
 const INLINE_RE =
   /(\*\*(.+?)\*\*)|(\*(.+?)\*)|(`([^`\n]+)`)|(\$([^$\n]+?)\$)|(\[([^\]]+)\]\(([^)]+)\))|(<file>([^<]+)<\/file>)|(<folder>([^<]+)<\/folder>)/g;
@@ -154,9 +151,11 @@ function renderInlineHtml(html: string, noFileIcons?: boolean): React.ReactNode[
   let match: RegExpExecArray | null;
 
   TAG_RE.lastIndex = 0;
-  while ((match = TAG_RE.exec(html)) !== null) {
+  match = TAG_RE.exec(html);
+  while (match !== null) {
     if (match.index > lastIndex) {
       const before = html.slice(lastIndex, match.index);
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: rendering sanitized markdown HTML
       nodes.push(<span key={`t${lastIndex}`} dangerouslySetInnerHTML={{ __html: before }} />);
     }
     if (match[1] !== undefined) {
@@ -165,10 +164,12 @@ function renderInlineHtml(html: string, noFileIcons?: boolean): React.ReactNode[
       nodes.push(<React.Fragment key={`d${match.index}`}>{renderFolderRef(match[2], noFileIcons)}</React.Fragment>);
     }
     lastIndex = match.index + match[0].length;
+    match = TAG_RE.exec(html);
   }
 
   if (lastIndex < html.length) {
     const remaining = html.slice(lastIndex);
+    // biome-ignore lint/security/noDangerouslySetInnerHtml: rendering sanitized markdown HTML
     nodes.push(<span key={`t${lastIndex}`} dangerouslySetInnerHTML={{ __html: remaining }} />);
   }
 
@@ -197,6 +198,7 @@ function AccentCodeBlock({ code }: { code: string }): React.ReactElement {
       </Tooltip>
       <div className="code-block__body">
         <pre className="code-block__pre">
+          {/* biome-ignore lint/security/noDangerouslySetInnerHtml: rendering syntax-highlighted code */}
           <code className="code-block__code" dangerouslySetInnerHTML={{ __html: escaped }} />
         </pre>
       </div>
@@ -236,6 +238,7 @@ function renderMathBlock(latex: string, blockKey?: string): React.ReactElement {
       >
         {`$$${trimmed}$$`}
       </span>
+      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: rendering KaTeX math output */}
       <span dangerouslySetInnerHTML={{ __html: html }} aria-hidden="true" style={{ userSelect: "none" }} />
     </div>
   );
@@ -314,7 +317,8 @@ export const StreamingMarkdown = React.memo(function StreamingMarkdown({
 
     FENCED_CODE_RE.lastIndex = 0;
     let m: RegExpExecArray | null;
-    while ((m = FENCED_CODE_RE.exec(processed)) !== null) {
+    m = FENCED_CODE_RE.exec(processed);
+    while (m !== null) {
       blocks.push({
         start: m.index,
         end: m.index + m[0].length,
@@ -322,11 +326,14 @@ export const StreamingMarkdown = React.memo(function StreamingMarkdown({
         lang: m[2],
         code: m[3].replace(/\n$/, ""),
       });
+      m = FENCED_CODE_RE.exec(processed);
     }
 
     BLOCK_MATH_RE.lastIndex = 0;
-    while ((m = BLOCK_MATH_RE.exec(processed)) !== null) {
+    m = BLOCK_MATH_RE.exec(processed);
+    while (m !== null) {
       blocks.push({ start: m.index, end: m.index + m[0].length, type: "math", latex: m[1] });
+      m = BLOCK_MATH_RE.exec(processed);
     }
 
     blocks.sort((a, b) => a.start - b.start);
@@ -366,7 +373,7 @@ export const StreamingMarkdown = React.memo(function StreamingMarkdown({
     }
 
     return nodes.length > 0 ? nodes : null;
-  }, [content, isAssistant, noFileIcons, renderFileTree, simplifiedCodeBlocks]);
+  }, [content, isAssistant, noFileIcons, renderFileTree, simplifiedCodeBlocks, isStreaming]);
 
   return <div className="markdown-body">{elements}</div>;
 });
@@ -442,7 +449,7 @@ function renderTextBlock(text: string, noFileIcons: boolean, prefix?: string): R
       const bqLines: string[] = [bqContent];
       i++;
       while (i < lines.length) {
-        const nextBqMatch = lines[i]!.match(BLOCKQUOTE_RE);
+        const nextBqMatch = lines[i]?.match(BLOCKQUOTE_RE);
         if (!nextBqMatch) break;
         bqLines.push(nextBqMatch[1] || "");
         i++;
@@ -456,7 +463,7 @@ function renderTextBlock(text: string, noFileIcons: boolean, prefix?: string): R
     if (UNORDERED_LIST_RE.test(line)) {
       const items: React.ReactNode[] = [];
       while (i < lines.length) {
-        const liMatch = lines[i]!.match(UNORDERED_LIST_RE);
+        const liMatch = lines[i]?.match(UNORDERED_LIST_RE);
         if (!liMatch) break;
         const html = inlineToHtml(liMatch[1]);
         items.push(<li key={nextKey()}>{renderInlineHtml(html, noFileIcons)}</li>);
@@ -469,7 +476,7 @@ function renderTextBlock(text: string, noFileIcons: boolean, prefix?: string): R
     if (ORDERED_LIST_RE.test(line)) {
       const items: React.ReactNode[] = [];
       while (i < lines.length) {
-        const liMatch = lines[i]!.match(ORDERED_LIST_RE);
+        const liMatch = lines[i]?.match(ORDERED_LIST_RE);
         if (!liMatch) break;
         const html = inlineToHtml(liMatch[1]);
         items.push(<li key={nextKey()}>{renderInlineHtml(html, noFileIcons)}</li>);
@@ -481,7 +488,7 @@ function renderTextBlock(text: string, noFileIcons: boolean, prefix?: string): R
 
     if (line.startsWith("|") && lines.length > i + 2 && TABLE_SEP_RE.test(lines[i + 1]!)) {
       const tableRows: string[] = [];
-      while (i < lines.length && lines[i]!.startsWith("|")) {
+      while (i < lines.length && lines[i]?.startsWith("|")) {
         tableRows.push(lines[i]!);
         i++;
       }

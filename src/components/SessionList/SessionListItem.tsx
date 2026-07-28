@@ -1,8 +1,8 @@
-import React from "react";
+import type React from "react";
+import { useI18n } from "../../hooks/useI18n.js";
 import type { ChatSummary } from "../../types.js";
 import { CheckIcon, TrashIcon } from "../Icons/icons.js";
 import { Tooltip } from "../Tooltip/Tooltip.js";
-import { useI18n } from "../../hooks/useI18n.js";
 
 interface SessionListItemProps {
   chat: ChatSummary;

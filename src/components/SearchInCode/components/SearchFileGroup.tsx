@@ -1,6 +1,6 @@
-import React from "react";
-import { ChevronRightIcon, FileIcon } from "../../Icons/index.js";
+import type React from "react";
 import type { FileGroupEntry } from "../../../types.js";
+import { ChevronRightIcon, FileIcon } from "../../Icons/index.js";
 
 export interface SearchFileGroupProps {
   entry: FileGroupEntry;
@@ -19,7 +19,7 @@ export function SearchFileGroup({
 }: SearchFileGroupProps): React.ReactElement {
   return (
     <div
-      className={"sc-file-header" + (isSelected ? " sc-file-header--selected" : "")}
+      className={`sc-file-header${isSelected ? " sc-file-header--selected" : ""}`}
       onClick={onClick}
       onMouseEnter={onMouseEnter}
     >

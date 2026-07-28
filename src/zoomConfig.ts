@@ -19,11 +19,11 @@ export async function initZoomConfig(): Promise<void> {
     ]);
     if (step !== null) {
       const parsed = parseFloat(step);
-      if (!isNaN(parsed) && parsed > 0) zoomStep = parsed;
+      if (!Number.isNaN(parsed) && parsed > 0) zoomStep = parsed;
     }
     if (def !== null) {
       const parsed = parseFloat(def);
-      if (!isNaN(parsed) && parsed >= 0.2) zoomDefault = parsed;
+      if (!Number.isNaN(parsed) && parsed >= 0.2) zoomDefault = parsed;
     }
   } catch {
     // ignore

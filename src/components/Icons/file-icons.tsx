@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { getFileIcon, getFolderIcon } from "./utils.js";
 
 export function FolderIcon({ open, name }: { open: boolean; name?: string }): React.ReactElement {

@@ -1,24 +1,25 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import { AppMain } from "../AppMain/AppMain.js";
-import { Welcome } from "../Welcome/Welcome.js";
-import { Settings } from "../Settings/Settings.js";
-import { FatalError } from "../FatalError/FatalError.js";
-import { Titlebar } from "../Titlebar/Titlebar.js";
-import { SearchPopup } from "../SearchPopup/SearchPopup.js";
-import { Loading } from "../Loading/Loading.js";
-import { WelcomeScreen } from "../WelcomeScreen/WelcomeScreen.js";
-import { useProjects } from "../../hooks/useProjects.js";
-import { useChats } from "../../hooks/useChats.js";
-import { useModels } from "../../hooks/useModels.js";
-import { useVibeEvents } from "../../hooks/useVibeEvents.js";
-import { useAppInit } from "../../hooks/useAppInit.js";
-import { useAppHandlers } from "../../hooks/useAppHandlers.js";
-import { ThemeProvider } from "../../hooks/useTheme.js";
-import { I18nProvider } from "../../hooks/useI18n.js";
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimationProvider } from "../../hooks/useAnimations.js";
+import { useAppHandlers } from "../../hooks/useAppHandlers.js";
+import { useAppInit } from "../../hooks/useAppInit.js";
+import { useChats } from "../../hooks/useChats.js";
+import { I18nProvider } from "../../hooks/useI18n.js";
+import { useModels } from "../../hooks/useModels.js";
+import { useProjects } from "../../hooks/useProjects.js";
 import { useShortcuts } from "../../hooks/useShortcuts.js";
-import type { VibeConfig, Project, ChatSummary } from "../../types.js";
+import { ThemeProvider } from "../../hooks/useTheme.js";
+import { useVibeEvents } from "../../hooks/useVibeEvents.js";
+import type { ChatSummary, Project, VibeConfig } from "../../types.js";
 import { recordToItems } from "../../utils.js";
+import { AppMain } from "../AppMain/AppMain.js";
+import { FatalError } from "../FatalError/FatalError.js";
+import { Loading } from "../Loading/Loading.js";
+import { SearchPopup } from "../SearchPopup/SearchPopup.js";
+import { Settings } from "../Settings/Settings.js";
+import { Titlebar } from "../Titlebar/Titlebar.js";
+import { Welcome } from "../Welcome/Welcome.js";
+import { WelcomeScreen } from "../WelcomeScreen/WelcomeScreen.js";
 export function App(): React.ReactElement {
   const [state, setState] = useState<{ kind: "ok" } | { kind: "fatal"; error: string } | null>(null);
   const [config, setConfig] = useState<VibeConfig | null>(null);
@@ -120,11 +121,14 @@ export function App(): React.ReactElement {
     [config],
   );
 
-  const { items, setItems, busy, streamingNow, pendingAttachments } = useVibeEvents(useCallback(() => {}, []));
+  const { items, setItems, busy, streamingNow, pendingAttachments, pendingMentions } = useVibeEvents(
+    useCallback(() => {}, []),
+  );
 
   const { handleSubmit } = useAppHandlers({
     setItems,
     pendingAttachments,
+    pendingMentions,
   });
 
   useAppInit({
@@ -281,6 +285,12 @@ export function App(): React.ReactElement {
     };
     window.addEventListener("vibe:open-welcome-screen", handler);
     return () => window.removeEventListener("vibe:open-welcome-screen", handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setTerminalOpen(false);
+    window.addEventListener("vibe:close-terminal-panel", handler);
+    return () => window.removeEventListener("vibe:close-terminal-panel", handler);
   }, []);
 
   const handleCloseActiveFile = useCallback(() => {

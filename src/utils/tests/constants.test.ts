@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { PROVIDER_TEMPLATES, getProviderIconPath } from "../../constants";
+import { describe, expect, it } from "vitest";
+import { getProviderIconPath, PROVIDER_TEMPLATES } from "../../constants";
 
 describe("PROVIDER_TEMPLATES", () => {
   it("contains expected providers", () => {

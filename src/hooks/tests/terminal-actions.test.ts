@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { setActiveTerminalId, getActiveTerminalId } from "../useTerminalActions";
+import { beforeEach, describe, expect, it } from "vitest";
+import { getActiveTerminalId, setActiveTerminalId } from "../useTerminalActions";
 
 describe("setActiveTerminalId / getActiveTerminalId", () => {
   beforeEach(() => {

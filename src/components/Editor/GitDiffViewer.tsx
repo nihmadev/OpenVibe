@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { DiffEditor } from "../DiffEditor/DiffEditor.js";
-import { vibe } from "../../tauri-bridge.js";
-import { getLanguage } from "../Icons/utils.js";
+import { useEffect, useState } from "react";
 import { useI18n } from "../../hooks/useI18n.js";
+import { vibe } from "../../tauri-bridge.js";
+import { DiffEditor } from "../DiffEditor/DiffEditor.js";
+import { getLanguage } from "../Icons/utils.js";
 import "./EditorArea.css";
 
 interface GitDiffViewerProps {
@@ -43,7 +43,7 @@ export function GitDiffViewer({ path, cwd }: GitDiffViewerProps) {
           origRef = "HEAD";
           modRef = "INDEX";
         } else if (type === "commit") {
-          origRef = hash + "~1"; // parent commit
+          origRef = `${hash}~1`; // parent commit
           modRef = hash;
         } else {
           throw new Error("Invalid git-diff URI type");

@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import type React from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -135,7 +136,7 @@ export function AnimationProvider({ children }: { children: React.ReactNode }) {
         return [k, val] as const;
       }),
     ).then((entries) => {
-      window.vibe.state.get(STORAGE_PREFIX + "animMultiplier").then((mult) => {
+      window.vibe.state.get(`${STORAGE_PREFIX}animMultiplier`).then((mult) => {
         setSettings((prev) => {
           const next = { ...prev };
           for (const [k, val] of entries) {
@@ -145,7 +146,7 @@ export function AnimationProvider({ children }: { children: React.ReactNode }) {
           }
           if (mult) {
             const parsed = parseFloat(mult as string);
-            if (!isNaN(parsed) && parsed >= 0) {
+            if (!Number.isNaN(parsed) && parsed >= 0) {
               next.animMultiplier = parsed.toString();
             }
           }
@@ -154,7 +155,7 @@ export function AnimationProvider({ children }: { children: React.ReactNode }) {
         });
       });
     });
-  }, []);
+  }, [VALID_STYLES.has]);
 
   const set = useCallback((key: AnimKey, value: AnimStyle) => {
     setSettings((prev) => {
@@ -171,7 +172,7 @@ export function AnimationProvider({ children }: { children: React.ReactNode }) {
       applyAnimVars(next);
       return next;
     });
-    window.vibe.state.set(STORAGE_PREFIX + "animMultiplier", value);
+    window.vibe.state.set(`${STORAGE_PREFIX}animMultiplier`, value);
   }, []);
 
   return (

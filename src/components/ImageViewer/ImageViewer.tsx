@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 import { useI18n } from "../../hooks/useI18n.js";
 import "./ImageViewer.css";
 
@@ -86,7 +87,7 @@ export function ImageViewer({ path }: Props): React.ReactElement {
     return () => {
       cancelled = true;
     };
-  }, [path]);
+  }, [path, t]);
 
   if (error) {
     return (

@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useRef, Component, type ReactNode } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import React, { Component, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import type { AnimKey, AnimStyle } from "../../hooks/useAnimations.js";
+import { useAnimations } from "../../hooks/useAnimations.js";
 import { useI18n } from "../../hooks/useI18n.js";
 import { useTheme } from "../../hooks/useTheme.js";
-import { useAnimations } from "../../hooks/useAnimations.js";
-import type { AnimKey, AnimStyle } from "../../hooks/useAnimations.js";
-import { themes, type ThemeDef } from "../../themes/themes.js";
-import { Select } from "../ui/Select.js";
-import { NumberInput } from "../ui/NumberInput.js";
-import { Toggle } from "../ui/Toggle.js";
-import { Button } from "../ui/Button.js";
 import { languageOptions } from "../../i18n/index.js";
+import { type ThemeDef, themes } from "../../themes/themes.js";
 import { InlineAnimPreview } from "../Settings/AnimationPreviewModal.js";
+import { Button } from "../ui/Button.js";
+import { NumberInput } from "../ui/NumberInput.js";
+import { Select } from "../ui/Select.js";
+import { Toggle } from "../ui/Toggle.js";
 import "./WelcomeScreen.css";
 import "../Settings/Settings.css";
 
@@ -78,7 +78,7 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
   const { settings: animSettings, set: setAnim, animMultiplier, setAnimMultiplier } = useAnimations();
 
   const [step, setStep] = useState<number>(1);
-  const [prevStep, setPrevStep] = useState<number>(0);
+  const [_prevStep, setPrevStep] = useState<number>(0);
   const [userName, setUserName] = useState<string>("Developer");
   const [isClosing, setIsClosing] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -103,10 +103,10 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
   const [editorFontSize, setEditorFontSize] = useState("13");
   const [font, setFont] = useState("Segoe UI");
 
-  const applyInterfaceFont = (value: string) => {
+  const applyInterfaceFont = useCallback((value: string) => {
     const family = value === "System" ? "system-ui, sans-serif" : `"${value}", sans-serif`;
     document.documentElement.style.setProperty("--sans", family);
-  };
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 50);
@@ -137,7 +137,7 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
       void error;
     }
 
-    const loadSetting = async (key: string, setter: (v: any) => void, def: string) => {
+    const loadSetting = async (key: string, setter: (v: any) => void, _def: string) => {
       try {
         const v = await window.vibe.state.get(key);
         if (v !== null && v !== undefined) setter(v);
@@ -164,7 +164,7 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
       },
       "Segoe UI",
     );
-  }, []);
+  }, [applyInterfaceFont]);
 
   const goToStep = (next: number) => {
     setPrevStep(step);

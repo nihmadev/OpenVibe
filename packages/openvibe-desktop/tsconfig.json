@@ -9,6 +9,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "outDir": "dist",
+    "rootDir": "src",
     "declaration": false,
     "sourceMap": false
   },

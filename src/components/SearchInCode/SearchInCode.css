@@ -466,8 +466,8 @@
 }
 
 .sc-match-row--selected {
-  background: var(--bg-2) !important;
-  color: var(--fg) !important;
+  background: var(--bg-2);
+  color: var(--fg);
   outline: 1px solid var(--fg-dim);
   outline-offset: -1px;
 }

@@ -1,15 +1,15 @@
-import { describe, it, expect } from "vitest";
-import { tokenizeLine, syntaxHighlightLine, getLanguageFromFilename, LRU } from "../../../utils/searchSyntax.js";
-import {
-  globToRegex,
-  matchesGlob,
-  filterResults,
-  groupByFile,
-  buildTree,
-  sortNodes,
-  computeTreeNodes,
-} from "../utils/searchTreeUtils.js";
+import { describe, expect, it } from "vitest";
 import type { ContentMatch } from "../../../types.js";
+import { getLanguageFromFilename, LRU, syntaxHighlightLine, tokenizeLine } from "../../../utils/searchSyntax.js";
+import {
+  buildTree,
+  computeTreeNodes,
+  filterResults,
+  globToRegex,
+  groupByFile,
+  matchesGlob,
+  sortNodes,
+} from "../utils/searchTreeUtils.js";
 
 // ── LRU cache ──
 

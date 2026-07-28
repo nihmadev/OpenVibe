@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef } from "react";
 import type { Virtualizer } from "@tanstack/react-virtual";
+import { useCallback, useEffect, useRef } from "react";
 import type { ContentMatch, FileGroupEntry } from "../../../types.js";
 import type { FlatRow } from "../utils/searchTreeUtils.js";
 
@@ -40,10 +40,13 @@ export function useSearchKeyboardNav({
 }: UseSearchKeyboardNavProps) {
   const keyboardNavRef = useRef(false);
 
-  function keyboardSetIndex(i: number): void {
-    keyboardNavRef.current = true;
-    setSelectedIndex(i);
-  }
+  const keyboardSetIndex = useCallback(
+    (i: number): void => {
+      keyboardNavRef.current = true;
+      setSelectedIndex(i);
+    },
+    [setSelectedIndex],
+  );
 
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -131,7 +134,7 @@ export function useSearchKeyboardNav({
           const entry = fileEntries[row.fileIndex];
           if (!entry) return;
           const fm = fileMatchesMap[entry.path];
-          if (fm && fm.matches[row.matchIndex]) {
+          if (fm?.matches[row.matchIndex]) {
             const m = fm.matches[row.matchIndex]!;
             const matchLen = committedQueryRef.current?.query.length ?? query.length;
             onOpenFile(m.path, m.line, m.column, matchLen);
@@ -144,7 +147,7 @@ export function useSearchKeyboardNav({
       if (e.key === "ArrowRight" && selectedIndex >= 0) {
         const row = flatRows[selectedIndex];
         if (row?.type === "file-header") {
-          const path = fileEntries[row.fileIndex]!.path;
+          const path = fileEntries[row.fileIndex]?.path;
           if (collapsedFiles.has(path)) toggleFile(path);
         }
         return;
@@ -152,7 +155,7 @@ export function useSearchKeyboardNav({
       if (e.key === "ArrowLeft" && selectedIndex >= 0) {
         const row = flatRows[selectedIndex];
         if (row?.type === "file-header") {
-          const path = fileEntries[row.fileIndex]!.path;
+          const path = fileEntries[row.fileIndex]?.path;
           if (!collapsedFiles.has(path)) toggleFile(path);
         }
         return;
@@ -176,6 +179,7 @@ export function useSearchKeyboardNav({
       onClose,
       committedQueryRef,
       query,
+      keyboardSetIndex,
     ],
   );
 

@@ -1,13 +1,11 @@
 import React, { useState } from "react";
-import { FileIcon, FolderIcon, ChevronRightIcon } from "../Icons/index.js";
-import { RenameInput } from "./RenameInput.js";
-import { useI18n } from "../../hooks/useI18n.js";
-import { dirnameOf } from "./utils.js";
 import { compactFolderPath, compactFolderSegments } from "../../utils/paths.js";
+import { ChevronRightIcon, FileIcon, FolderIcon } from "../Icons/index.js";
+import { RenameInput } from "./RenameInput.js";
 import type { NodeProps } from "./types.js";
+import { dirnameOf } from "./utils.js";
 
 export function FileNode(props: NodeProps): React.ReactElement {
-  const { t } = useI18n();
   const {
     entry,
     depth,
@@ -186,11 +184,9 @@ export function FileNode(props: NodeProps): React.ReactElement {
         ))}
         {depth > 0 && <span className={`ftree__branch${isLast ? " ftree__branch--last" : ""}`} />}
         {entry.isDir ? (
-          <>
-            <span className="ftree__chev" onClick={onChevronClick}>
-              <ChevronRightIcon open={isOpen} />
-            </span>
-          </>
+          <span className="ftree__chev" onClick={onChevronClick}>
+            <ChevronRightIcon open={isOpen} />
+          </span>
         ) : null}
         {isRenaming ? (
           <RenameInput
@@ -222,7 +218,7 @@ export function FileNode(props: NodeProps): React.ReactElement {
                 /
               </span>
             ) : (
-              <span className={"ftree__name" + (entry.isDir ? " ftree__name--dir" : "")}>{compactLabel.label}</span>
+              <span className={`ftree__name${entry.isDir ? " ftree__name--dir" : ""}`}>{compactLabel.label}</span>
             )}
           </>
         )}
@@ -231,7 +227,7 @@ export function FileNode(props: NodeProps): React.ReactElement {
         <div className={`ftree__subtree${isOpen ? " ftree__subtree--open" : ""}`}>
           <div className="ftree__subtree-content">
             <div
-              className={"ftree__line" + (containsActive ? " ftree__line--active" : "")}
+              className={`ftree__line${containsActive ? " ftree__line--active" : ""}`}
               style={{ left: 8 + depth * 12 + 6 }}
             />
             {/*
@@ -254,7 +250,7 @@ export function FileNode(props: NodeProps): React.ReactElement {
                 />
               </div>
             ) : null}
-            {renderedChildren?.map((child, idx, arr) => (
+            {renderedChildren?.map((child, _idx, _arr) => (
               <FileNode
                 key={child.path}
                 entry={child}

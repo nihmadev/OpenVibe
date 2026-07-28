@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Project } from "../types.js";
 
 /** Duration of the fade-out animation for removed project tiles (ms). */

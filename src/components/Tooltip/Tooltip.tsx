@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useLayoutEffect } from "react";
+import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import "./Tooltip.css";
 
@@ -9,8 +9,8 @@ interface Props {
 }
 
 function applyTipStyle(tip: HTMLElement, x: number, y: number, dir: string): void {
-  tip.style.left = x + "px";
-  tip.style.top = y + "px";
+  tip.style.left = `${x}px`;
+  tip.style.top = `${y}px`;
 
   const arrow = tip.firstElementChild as HTMLElement | null;
 

@@ -21,9 +21,9 @@
   visibility: hidden;
   transition:
     opacity calc(var(--anim-panel-appear-duration, 0.18s) * var(--anim-panel-appear-enabled, 1))
-      var(--anim-panel-appear-easing, ease),
+    var(--anim-panel-appear-easing, ease),
     transform calc(var(--anim-panel-appear-duration, 0.18s) * var(--anim-panel-appear-enabled, 1))
-      var(--anim-panel-appear-easing, ease),
+    var(--anim-panel-appear-easing, ease),
     visibility 0s linear calc(var(--anim-panel-appear-duration, 0.18s) * var(--anim-panel-appear-enabled, 1));
 }
 
@@ -168,9 +168,9 @@
   cursor: pointer;
   transition:
     background calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1))
-      var(--anim-buttons-easing, ease),
+    var(--anim-buttons-easing, ease),
     transform calc(var(--anim-buttons-duration, 0.15s) * var(--anim-buttons-enabled, 1))
-      var(--anim-buttons-easing, ease);
+    var(--anim-buttons-easing, ease);
 }
 
 .todo-widget__button:hover,

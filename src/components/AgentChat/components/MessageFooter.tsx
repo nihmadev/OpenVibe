@@ -1,15 +1,16 @@
-import React, { useEffect, useState, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import type React from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useI18n } from "../../../hooks/useI18n.js";
-import { CheckCircleIcon, DiffIcon, CircularProgress, ChevronRightIcon, CopyCheckIcon } from "../../Icons/icons.js";
-import { FileIcon } from "../../Icons/file-icons.js";
-import { Tooltip } from "../../Tooltip/Tooltip.js";
-import { DiffEditor } from "../../DiffEditor/DiffEditor.js";
-import { resolveMonacoLang } from "../../CodeBlock/CodeBlock.js";
-import { pickFile, toRelativePath, getFilePathFromArgs, getEditStrings } from "../utils.js";
-import type { HistoryItem } from "../types.js";
-import { ContextMenu } from "../../ContextMenu/ContextMenu.js";
 import { writeClipboard } from "../../../utils/clipboard.js";
+import { resolveMonacoLang } from "../../CodeBlock/CodeBlock.js";
+import { ContextMenu } from "../../ContextMenu/ContextMenu.js";
+import { DiffEditor } from "../../DiffEditor/DiffEditor.js";
+import { FileIcon } from "../../Icons/file-icons.js";
+import { CheckCircleIcon, ChevronRightIcon, CircularProgress, CopyCheckIcon, DiffIcon } from "../../Icons/icons.js";
+import { Tooltip } from "../../Tooltip/Tooltip.js";
+import type { HistoryItem } from "../types.js";
+import { getEditStrings, getFilePathFromArgs, pickFile, toRelativePath } from "../utils.js";
 
 interface FileChangeInfo {
   filePath: string;
@@ -129,7 +130,7 @@ function FileChangeRow({ change, cwd }: { change: FileChangeInfo; cwd?: string }
         setDiffData({ original: oldStr, modified: newStr, lang });
         setLoading(false);
       });
-  }, [open, change.filePath, change.items, diffData, info?.ext]);
+  }, [open, change.filePath, change.items, diffData, info?.ext, cwd.replace, cwd]);
 
   return (
     <div className="changes-pill">
@@ -218,7 +219,7 @@ function formatRawTrace(items: HistoryItem[]): string {
         const sections = [`## User message: ${entry.id}`];
         if (entry.text) sections.push(entry.text);
         if (entry.attachments?.length) {
-          sections.push("attachments: " + entry.attachments.map((a) => a.name).join(", "));
+          sections.push(`attachments: ${entry.attachments.map((a) => a.name).join(", ")}`);
         }
         return sections.join("\n");
       }
@@ -245,7 +246,7 @@ function formatRawTrace(items: HistoryItem[]): string {
       if (entry.kind === "assistant") {
         const sections = [`## Assistant message: ${entry.id}`];
         if (entry.reasoningName) sections.push(`reasoning name: ${entry.reasoningName}`);
-        if (entry.reasoning) sections.push("<thinking>\n" + entry.reasoning + "\n</thinking>");
+        if (entry.reasoning) sections.push(`<thinking>\n${entry.reasoning}\n</thinking>`);
         if (entry.text) sections.push(entry.text);
         return sections.join("\n\n");
       }
@@ -306,7 +307,7 @@ export function MessageFooter({
     return () => {
       cancelled = true;
     };
-  }, [items]);
+  }, []);
 
   const copyText = async (text: string) => {
     const ok = await writeClipboard(text);

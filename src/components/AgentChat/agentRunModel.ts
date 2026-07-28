@@ -1,10 +1,11 @@
-import type { HistoryItem, TodoTask, TodoCheckpoint } from "./types.js";
+import type { HistoryItem, TodoCheckpoint, TodoTask } from "./types.js";
 import { basename, getFilePathFromArgs } from "./utils.js";
 
 export type Translate = (key: string, params?: Record<string, string | number | boolean>) => string;
 
 export type ChatEntry =
-  { kind: "single"; item: HistoryItem } | { kind: "run"; id: string; items: HistoryItem[]; finalItem?: HistoryItem };
+  | { kind: "single"; item: HistoryItem }
+  | { kind: "run"; id: string; items: HistoryItem[]; finalItem?: HistoryItem };
 
 const RUN_ITEM_KINDS = new Set<HistoryItem["kind"]>(["assistant", "tool", "info", "error", "stopped"]);
 
@@ -49,7 +50,7 @@ export function buildChatEntries(items: HistoryItem[]): ChatEntry[] {
   const flushRun = () => {
     if (run.length === 0) return;
     const finalItem = [...run].reverse().find((item) => item.kind === "assistant" && item.text.trim().length > 0);
-    entries.push({ kind: "run", id: run[0]!.id, items: run, finalItem });
+    entries.push({ kind: "run", id: run[0]?.id, items: run, finalItem });
     run = [];
   };
 
@@ -128,7 +129,17 @@ export function toolActivityTitle(item: HistoryItem, t: Translate): string {
 }
 
 export type ToolActivityKind =
-  "search" | "read" | "edit" | "command" | "browse" | "agent" | "git" | "todo" | "web" | "external" | "tool";
+  | "search"
+  | "read"
+  | "edit"
+  | "command"
+  | "browse"
+  | "agent"
+  | "git"
+  | "todo"
+  | "web"
+  | "external"
+  | "tool";
 
 export function toolActivityKind(item: HistoryItem): ToolActivityKind {
   if (item.toolName?.startsWith("git_")) return "git";
@@ -288,7 +299,7 @@ export function getRunTiming(
       if (idx > 0) {
         for (let i = idx - 1; i >= 0; i--) {
           if (allItems[i]?.kind === "user" && allItems[i]?.startedAt !== undefined) {
-            startedAt = allItems[i]!.startedAt;
+            startedAt = allItems[i]?.startedAt;
             break;
           }
         }

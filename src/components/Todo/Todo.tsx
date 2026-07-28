@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { ArrowRightStrokeIcon, CheckStrokeIcon, CircleStrokeIcon } from "../Icons/icons.js";
+import type React from "react";
+import { useState } from "react";
 import { useI18n } from "../../hooks/useI18n.js";
 import type { TodoTask } from "../AgentChat/types.js";
+import { ArrowRightStrokeIcon, CheckStrokeIcon, CircleStrokeIcon } from "../Icons/icons.js";
 import "./Todo.css";
 
 interface TodoProps {

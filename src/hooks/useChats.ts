@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect, useRef } from "react";
-import type { ChatSummary, ChatRecord } from "../types.js";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { ChatRecord, ChatSummary } from "../types.js";
 
 export function useChats() {
   const [chats, setChats] = useState<ChatSummary[]>([]);
@@ -104,7 +104,7 @@ export function useChats() {
         isCreatingRef.current = false;
       }
     },
-    [setActiveChatSynced, setChatsSynced],
+    [setActiveChatSynced],
   );
 
   const handleCloseChat = useCallback(

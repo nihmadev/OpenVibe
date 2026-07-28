@@ -1,21 +1,21 @@
-import { Editor as MonacoEditor, loader } from "@monaco-editor/react";
+import { loader, Editor as MonacoEditor } from "@monaco-editor/react";
+import { invoke } from "@tauri-apps/api/core";
+import type * as monaco from "monaco-editor";
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
-import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import cssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker";
 import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
+import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
-import type * as monaco from "monaco-editor";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
-import { invoke } from "@tauri-apps/api/core";
-import { InlinePromptPanel, InlineActionPill } from "./InlineVibePanel.js";
+import { InlineActionPill, InlinePromptPanel } from "./InlineVibePanel.js";
 import "./Editor.css";
-import { getLanguage } from "../Icons/utils.js";
-import { useTheme } from "../../hooks/useTheme.js";
-import { makeMonacoTheme } from "../Themes/monacoThemes.js";
 import { useI18n } from "../../hooks/useI18n.js";
-import { scg2Tracker } from "../../services/scg2Tracker.js";
+import { useTheme } from "../../hooks/useTheme.js";
 import { connectMonacoLsp, type MonacoLspSession } from "../../services/monacoLspClient.js";
+import { scg2Tracker } from "../../services/scg2Tracker.js";
+import { getLanguage } from "../Icons/utils.js";
+import { makeMonacoTheme } from "../Themes/monacoThemes.js";
 
 // Wire up Monaco workers for Vite (one-time, module scope is fine)
 if (typeof self !== "undefined") {
@@ -56,7 +56,7 @@ const TYPES_LOADING_PROMISES = new Map<string, Promise<void>>();
 const PACKAGE_PATHS_CACHE = new Map<string, Record<string, string[]>>();
 
 async function loadTypeDefinitions(m: typeof monaco, cwd: string) {
-  const baseUrl = cwd.replace(/\\/g, "/") + "/";
+  const baseUrl = `${cwd.replace(/\\/g, "/")}/`;
 
   // Load type data from backend once per cwd
   if (!TYPES_LOADING_PROMISES.has(cwd)) {
@@ -71,7 +71,7 @@ async function loadTypeDefinitions(m: typeof monaco, cwd: string) {
             for (const pkg of res.packages) {
               const typeFilePath = pkg.typePath.replace(/\\/g, "/");
               if (typeFilePath.startsWith(baseUrl)) {
-                packagePaths[pkg.name] = ["./" + typeFilePath.slice(baseUrl.length)];
+                packagePaths[pkg.name] = [`./${typeFilePath.slice(baseUrl.length)}`];
               }
             }
           }
@@ -81,7 +81,7 @@ async function loadTypeDefinitions(m: typeof monaco, cwd: string) {
             for (const tf of res.types) {
               try {
                 m.typescript.typescriptDefaults.addExtraLib(tf.content, tf.path.replace(/\\/g, "/"));
-              } catch (e) {
+              } catch (_e) {
                 /* ignore per-file errors */
               }
             }
@@ -105,7 +105,7 @@ async function loadTypeDefinitions(m: typeof monaco, cwd: string) {
     moduleResolution: 100 as any /* ModuleResolutionKind.Bundler */,
     module: m.typescript.ModuleKind.ESNext,
     noEmit: true,
-    typeRoots: [baseUrl + "node_modules/@types"],
+    typeRoots: [`${baseUrl}node_modules/@types`],
     jsx: m.typescript.JsxEmit.React,
     allowJs: true,
     reactNamespace: "React",
@@ -160,7 +160,7 @@ async function preloadLocalImports(m: typeof monaco, content: string, currentPat
           try {
             const model = m.editor.createModel(res.content, getLanguage(targetPath), uri);
             MODEL_CACHE.set(targetPath, { model, originalContent: res.content });
-          } catch (e) {
+          } catch (_e) {
             /* model might have been created in parallel */
           }
           return;
@@ -213,7 +213,7 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
       disposable?.dispose();
       if (lspSessionRef.current === disposable) lspSessionRef.current = null;
     };
-  }, [isContentLoading, cwd, path]);
+  }, [isContentLoading, cwd]);
 
   const [editorOptions, setEditorOptions] = useState<any>({
     fontSize: 13,
@@ -398,7 +398,7 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
       session.startLine,
       1,
       session.endLine,
-      ed.getModel()!.getLineMaxColumn(session.endLine),
+      ed.getModel()?.getLineMaxColumn(session.endLine),
     );
 
     ed.executeEdits("inline-vibe-reject", [
@@ -450,7 +450,7 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
         session.startLine,
         1,
         session.endLine,
-        ed.getModel()!.getLineMaxColumn(session.endLine),
+        ed.getModel()?.getLineMaxColumn(session.endLine),
       );
 
       ed.executeEdits("inline-vibe", [
@@ -525,9 +525,9 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
           session.startLine,
           1,
           session.endLine,
-          ed.getModel()!.getLineMaxColumn(session.endLine),
+          ed.getModel()?.getLineMaxColumn(session.endLine),
         );
-        const currentText = ed.getModel()!.getValueInRange(replaceRange);
+        const currentText = ed.getModel()?.getValueInRange(replaceRange);
         session.originalText = currentText;
 
         if (inlineDecorationsRef.current.length > 0) {
@@ -594,7 +594,7 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
           if (editorRef.current) {
             setContent(editorRef.current.getValue());
           }
-          alert("Error generating inline edits: " + e.payload.error);
+          alert(`Error generating inline edits: ${e.payload.error}`);
           cleanupInlineSession();
         }
       });
@@ -642,11 +642,11 @@ User Instruction: ${promptText}`;
         unlistenError();
         inlineLoadingRef.current = false;
         setInlineLoading(false);
-        alert("Failed to start stream: " + err.message);
+        alert(`Failed to start stream: ${err.message}`);
         cleanupInlineSession();
       }
     },
-    [path, handleInlineStreamUpdate, cleanupInlineSession, inlineZoneNode],
+    [path, handleInlineStreamUpdate, cleanupInlineSession, inlineZoneNode, hasInlineDiff],
   );
 
   const handleTriggerInlineVibe = useCallback(() => {
@@ -679,7 +679,7 @@ User Instruction: ${promptText}`;
           position.lineNumber,
           1,
           position.lineNumber,
-          ed.getModel()!.getLineMaxColumn(position.lineNumber),
+          ed.getModel()?.getLineMaxColumn(position.lineNumber),
         );
         ed.setSelection(selection);
       }
@@ -687,7 +687,7 @@ User Instruction: ${promptText}`;
 
     if (!selection) return;
 
-    const originalText = ed.getModel()!.getValueInRange(selection);
+    const originalText = ed.getModel()?.getValueInRange(selection);
     inlineSessionRef.current = {
       startLine: selection.startLineNumber,
       endLine: selection.endLineNumber,
@@ -760,7 +760,7 @@ User Instruction: ${promptText}`;
     observer.observe(inlineZoneNode);
 
     return () => observer.disconnect();
-  }, [inlineZoneNode, inlineLoading, hasInlineDiff]);
+  }, [inlineZoneNode]);
 
   const triggerRef = useRef(handleTriggerInlineVibe);
   triggerRef.current = handleTriggerInlineVibe;
@@ -821,7 +821,7 @@ User Instruction: ${promptText}`;
       }
 
       const m = monacoInstanceRef.current;
-      const uriStr = "file://" + path.replace(/\\/g, "/");
+      const uriStr = `file://${path.replace(/\\/g, "/")}`;
       let model = m
         ? m.editor.getModel(m.Uri.parse(uriStr)) || m.editor.getModel(m.Uri.file(path.replace(/\\/g, "/")))
         : null;
@@ -868,7 +868,7 @@ User Instruction: ${promptText}`;
     return () => {
       cancelled = true;
     };
-  }, [path, cwd]);
+  }, [path, cwd, cleanupInlineSession]);
 
   const dirty = content !== null && content !== original;
 
@@ -965,7 +965,7 @@ User Instruction: ${promptText}`;
       <MonacoEditor
         height="100%"
         theme={monacoThemeName}
-        path={"file://" + path.replace(/\\/g, "/")}
+        path={`file://${path.replace(/\\/g, "/")}`}
         language={getLanguage(path)}
         value={inlineLoading ? undefined : content}
         loading={<div className="editor" />}
@@ -1098,7 +1098,7 @@ User Instruction: ${promptText}`;
                 let target = e.target as HTMLElement;
                 while (target && target !== domNode) {
                   const href = target.getAttribute("data-href") || target.getAttribute("href");
-                  if (href && href.startsWith("command:agent.fixError?")) {
+                  if (href?.startsWith("command:agent.fixError?")) {
                     e.preventDefault();
                     e.stopPropagation();
                     try {
@@ -1247,7 +1247,7 @@ function InlineVibeConnector({
   monacoInstance,
   session,
   zoneNode,
-  hasDiff,
+  hasDiff: _hasDiff,
   loading,
 }: InlineVibeConnectorProps) {
   const [coords, setCoords] = useState<{
@@ -1395,7 +1395,7 @@ function InlineVibeConnector({
       resizeObserver.disconnect();
       if (animFrameId !== null) cancelAnimationFrame(animFrameId);
     };
-  }, [editor, monacoInstance, session, zoneNode, hasDiff, loading]);
+  }, [editor, monacoInstance, session, zoneNode]);
 
   if (!coords) return null;
 

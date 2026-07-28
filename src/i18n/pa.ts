@@ -71,8 +71,7 @@ export const pa: Partial<Translations> = {
   welcomeSubtitle: "ਕੋਈ ਪ੍ਰੋਜੈਕਟ ਨਹੀਂ ਖੁੱਲ੍ਹਿਆ। ਸੈਸ਼ਨ ਸ਼ੁਰੂ ਕਰਨ ਲਈ ਇੱਕ ਫੋਲਡਰ ਚੁਣੋ।",
   openProject: "ਪ੍ਰੋਜੈਕਟ ਖੋਲ੍ਹੋ",
   fatalErrorTitle: "vibe ਸ਼ੁਰੂ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ",
-  fatalErrorHint:
-    "VIBE_API_KEY ਨੂੰ vibe ਦੇ ਨੇੜੇ .env ਵਿੱਚ, ~/.vibe/config ਵਿੱਚ, ਜਾਂ ਇੱਕ ਵਾਤਾਵਰਨ ਵੇਰੀਏਬਲ ਵਜੋਂ ਸੈੱਟ ਕਰੋ।",
+  fatalErrorHint: "VIBE_API_KEY ਨੂੰ vibe ਦੇ ਨੇੜੇ .env ਵਿੱਚ, ~/.vibe/config ਵਿੱਚ, ਜਾਂ ਇੱਕ ਵਾਤਾਵਰਨ ਵੇਰੀਏਬਲ ਵਜੋਂ ਸੈੱਟ ਕਰੋ।",
   loadingText: "Openvibe ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ…",
   noSessions: "ਅਜੇ ਤੱਕ ਕੋਈ ਸੈਸ਼ਨ ਨਹੀਂ",
   untitled: "ਬਿਨਾਂ ਸਿਰਲੇਖ",

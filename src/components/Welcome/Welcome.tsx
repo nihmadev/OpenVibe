@@ -1,9 +1,9 @@
-import React from "react";
+import type React from "react";
+import { useI18n } from "../../hooks/useI18n.js";
+import type { Project } from "../../types.js";
 import { FolderOpenStrokeIcon } from "../Icons/icons.js";
 import { ProjectRail } from "../ProjectRail/ProjectRail.js";
 import { Button } from "../ui/Button.js";
-import type { Project } from "../../types.js";
-import { useI18n } from "../../hooks/useI18n.js";
 import "./Welcome.css";
 
 interface WelcomeProps {

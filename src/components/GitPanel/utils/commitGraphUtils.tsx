@@ -1,5 +1,5 @@
-import React from "react";
-import type { CommitGraphNode, CommitViewModel, SwimlaneNode, FileStatus, CommitFile } from "../types.js";
+import type React from "react";
+import type { CommitFile, CommitGraphNode, CommitViewModel, FileStatus, SwimlaneNode } from "../types.js";
 
 // Format relative time helper
 export function formatRelativeTime(timestampSeconds: number): string {
@@ -212,9 +212,9 @@ export function GraphRow({ viewModel }: { viewModel: CommitViewModel }) {
   for (let out = 0; out < finalLayout.length; out++) {
     const val = finalLayout[out];
     if (val.startsWith("p")) {
-      parentOutputMap.set(parseInt(val.substring(1)), out);
+      parentOutputMap.set(parseInt(val.substring(1), 10), out);
     } else if (val.startsWith("in")) {
-      passThroughMap.set(parseInt(val.substring(2)), out);
+      passThroughMap.set(parseInt(val.substring(2), 10), out);
     }
   }
 

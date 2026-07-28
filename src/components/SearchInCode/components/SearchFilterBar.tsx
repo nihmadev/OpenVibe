@@ -1,15 +1,15 @@
-import React from "react";
+import type React from "react";
+import { useTranslate } from "../../../hooks/useI18n.js";
 import {
   ChevronRightIcon,
   MatchCaseIcon,
-  WholeWordIcon,
-  RegexIcon,
   PreserveCaseIcon,
+  RegexIcon,
   ReplaceAllIcon,
   ThreeDotIcon,
+  WholeWordIcon,
 } from "../../Icons/index.js";
 import { Tooltip } from "../../Tooltip/Tooltip.js";
-import { useTranslate } from "../../../hooks/useI18n.js";
 
 export interface SearchFilterBarProps {
   inputRef: React.RefObject<HTMLInputElement>;

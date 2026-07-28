@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { KebabMenuIcon, PlusSmallIcon } from "../Icons/icons.js";
-import type { ChatSummary, Project } from "../../types.js";
-import { SessionListItem } from "./SessionListItem.js";
-import { ContextMenu } from "../ContextMenu/ContextMenu.js";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useI18n } from "../../hooks/useI18n.js";
+import type { ChatSummary, Project } from "../../types.js";
+import { ContextMenu } from "../ContextMenu/ContextMenu.js";
+import { KebabMenuIcon, PlusSmallIcon } from "../Icons/icons.js";
+import { SessionListItem } from "./SessionListItem.js";
 import "./SessionList.css";
 
 interface SessionListProps {
@@ -36,7 +37,7 @@ export function SessionList({
   onPick,
   onNew,
   onDelete,
-  onClose,
+  onClose: _onClose,
   project,
   onProjectEdit,
   onProjectRemove,
@@ -66,7 +67,9 @@ export function SessionList({
   const handleDelete = (id: string) => {
     if (selectedIds.length > 0 && selectedIds.includes(id)) {
       // Delete all selected sessions
-      selectedIds.forEach((sid) => onDelete(sid));
+      selectedIds.forEach((sid) => {
+        onDelete(sid);
+      });
       setSelectedIds([]);
     } else {
       onDelete(id);
@@ -121,7 +124,7 @@ export function SessionList({
 
   return (
     <div
-      className={"session-list" + (open ? " session-list--open" : "") + (isResizing ? " session-list--resizing" : "")}
+      className={`session-list${open ? " session-list--open" : ""}${isResizing ? " session-list--resizing" : ""}`}
       style={{
         width: open ? `${localWidth}px` : "0px",
         minWidth: open ? `${localWidth}px` : "0px",

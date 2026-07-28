@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
-import { currentConfig, setCurrentConfig } from "./state.js";
 import { wrap } from "./helpers.js";
+import { currentConfig } from "./state.js";
 
 export const configBridge = {
   setModel: (model: string) => {

@@ -163,7 +163,7 @@ export const DiffEditor = React.memo(function DiffEditor({
         cleanupRef.current = null;
       }
     };
-  }, []);
+  }, [monacoThemeName, themeVars, language, isDark, fill]);
 
   useEffect(() => {
     const m = monacoRef.current;
@@ -189,7 +189,7 @@ export const DiffEditor = React.memo(function DiffEditor({
     if (modModel && !modModel.isDisposed?.() && modModel.getValue() !== modifiedRef.current) {
       modModel.setValue(modifiedRef.current);
     }
-  }, [original, modified]);
+  }, []);
 
   return (
     <div

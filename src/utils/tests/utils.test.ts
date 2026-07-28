@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { localId, recordToItems } from "../../utils";
+import { describe, expect, it } from "vitest";
 import type { ChatRecord } from "../../types";
+import { localId, recordToItems } from "../../utils";
 
 describe("localId", () => {
   it("generates sequential IDs with l prefix", () => {

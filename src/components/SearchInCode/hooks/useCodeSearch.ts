@@ -1,11 +1,11 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ContentMatch, FileGroupEntry } from "../../../types.js";
-import { computeFlatRows, computeTreeNodes, type TreeNode, type FlatRow } from "../utils/searchTreeUtils.js";
-import { useSearchShortcuts } from "./useSearchShortcuts.js";
+import { computeFlatRows, computeTreeNodes, type FlatRow, type TreeNode } from "../utils/searchTreeUtils.js";
 import { useSearchKeyboardNav } from "./useSearchKeyboardNav.js";
+import { useSearchShortcuts } from "./useSearchShortcuts.js";
 
-export { type FlatRow } from "../utils/searchTreeUtils.js";
+export type { FlatRow } from "../utils/searchTreeUtils.js";
 
 export interface UseCodeSearchProps {
   cwd: string;
@@ -56,7 +56,7 @@ export function useCodeSearch({ cwd, onOpenFile, onClose }: UseCodeSearchProps) 
 
   useEffect(() => {
     setSelectedIndex(-1);
-  }, [viewAsTree, query, fileEntries]);
+  }, []);
 
   const loadFileMatches = useCallback(async (path: string) => {
     if (fileMatchesRef.current[path] || loadingFilesRef.current.has(path)) return;
@@ -195,7 +195,7 @@ export function useCodeSearch({ cwd, onOpenFile, onClose }: UseCodeSearchProps) 
     return () => {
       if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current);
     };
-  }, [includeFilter, excludeFilter, requery]);
+  }, [requery]);
 
   const flatRows: FlatRow[] = useMemo(
     () => computeFlatRows(fileEntries, collapsedFiles, fileMatchesMap),

@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
-import { Titlebar } from "../Titlebar/Titlebar.js";
+import type React from "react";
+import { useEffect } from "react";
 import { useI18n } from "../../hooks/useI18n.js";
 import { preloadAll } from "../../utils/preloader.js";
+import { Titlebar } from "../Titlebar/Titlebar.js";
 import "./Loading.css";
 
 export function Loading(): React.ReactElement {

@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from "react";
+import type React from "react";
+import { useEffect, useRef } from "react";
 import "./ContextMenu.css";
 
 export interface MenuItem {
@@ -83,7 +84,7 @@ export function ContextMenu({ x, y, items, onClose }: Props): React.ReactElement
         return (
           <button
             key={`${item.label}-${i}`}
-            className={"ctxmenu__item" + (item.danger ? " ctxmenu__item--danger" : "")}
+            className={`ctxmenu__item${item.danger ? " ctxmenu__item--danger" : ""}`}
             type="button"
             role={item.checked !== undefined ? "menuitemcheckbox" : "menuitem"}
             aria-checked={item.checked !== undefined ? item.checked : undefined}

@@ -1,9 +1,9 @@
-import React from "react";
-import { Markdown } from "../../Markdown/Markdown.js";
-import { formatRelativeTime } from "../utils/commitGraphUtils.js";
-import type { CommitGraphNode, CommitFile } from "../types.js";
+import type React from "react";
 import { useI18n } from "../../../hooks/useI18n.js";
 import { writeClipboard } from "../../../utils/clipboard.js";
+import { Markdown } from "../../Markdown/Markdown.js";
+import type { CommitFile, CommitGraphNode } from "../types.js";
+import { formatRelativeTime } from "../utils/commitGraphUtils.js";
 
 export interface GitCommitTooltipProps {
   hoveredCommit: CommitGraphNode;
@@ -208,7 +208,7 @@ export function GitCommitTooltip({
         {/* Block 3: Commands footer */}
         <hr className="scm-commit-tooltip-divider" />
         <div className="scm-commit-tooltip-commands">
-          <a
+          <button
             className="scm-commit-tooltip-cmd"
             title={t("openCommit")}
             onClick={(e) => {
@@ -218,9 +218,9 @@ export function GitCommitTooltip({
           >
             <i className="codicon codicon-git-commit"></i>
             <span>{hoveredCommit.shortId}</span>
-          </a>
+          </button>
           <span className="scm-commit-tooltip-cmd-space">&nbsp;</span>
-          <a
+          <button
             className="scm-commit-tooltip-cmd"
             title={t("copyCommitHash")}
             onClick={(e) => {
@@ -229,9 +229,9 @@ export function GitCommitTooltip({
             }}
           >
             <i className="codicon codicon-copy"></i>
-          </a>
+          </button>
           <span className="scm-commit-tooltip-cmd-sep">&nbsp;&nbsp;|&nbsp;&nbsp;</span>
-          <a
+          <button
             className="scm-commit-tooltip-cmd"
             title={t("openOnGitHub")}
             onClick={(e) => {
@@ -241,7 +241,7 @@ export function GitCommitTooltip({
           >
             <i className="codicon codicon-github"></i>
             <span>{t("openOnGitHub")}</span>
-          </a>
+          </button>
         </div>
       </div>
     </div>

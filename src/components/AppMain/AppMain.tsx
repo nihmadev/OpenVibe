@@ -1,21 +1,22 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { ProjectRail } from "../ProjectRail/ProjectRail.js";
-import { SessionList } from "../SessionList/SessionList.js";
+import type React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ChatSummary, FileSnapshot, Project, VibeConfig } from "../../types.js";
+import { localId, recordToItems } from "../../utils.js";
 import { AgentChat } from "../AgentChat/AgentChat.js";
-import { SubAgentView } from "../SubAgentView/SubAgentView.js";
-import { PromptInput } from "../PromptInput/PromptInput.js";
-import { Todo } from "../Todo/Todo.js";
-import { Terminals } from "../Terminals/Terminals.js";
-import { EditorArea } from "../Editor/EditorArea.js";
-import { SearchInCode } from "../SearchInCode/SearchInCode.js";
-import { FileTree } from "../FileTree/FileTree.js";
-import { EditProjectPopup } from "../EditProjectPopup/EditProjectPopup.js";
-import { GitPanel } from "../GitPanel/GitPanel.js";
-import type { Project, ChatSummary, VibeConfig, FileSnapshot } from "../../types.js";
-import type { HistoryItem } from "../AgentChat/types.js";
-import { recordToItems, localId } from "../../utils.js";
 import { currentTodoTasks } from "../AgentChat/agentRunModel.js";
+import type { HistoryItem } from "../AgentChat/types.js";
+import { EditorArea } from "../Editor/EditorArea.js";
+import { EditProjectPopup } from "../EditProjectPopup/EditProjectPopup.js";
+import { FileTree } from "../FileTree/FileTree.js";
+import { GitPanel } from "../GitPanel/GitPanel.js";
+import { ProjectRail } from "../ProjectRail/ProjectRail.js";
+import { PromptInput } from "../PromptInput/PromptInput.js";
+import { SearchInCode } from "../SearchInCode/SearchInCode.js";
+import { SessionList } from "../SessionList/SessionList.js";
+import { SubAgentView } from "../SubAgentView/SubAgentView.js";
+import { Terminals } from "../Terminals/Terminals.js";
+import { Todo } from "../Todo/Todo.js";
 
 /** Drag-handle divider — directly manipulates the target element during drag,
  *  avoiding React re-renders. Only commits the final width to state on mouseup. */
@@ -77,15 +78,16 @@ function ResizeHandle({
         const delta = cur - last.current;
         last.current = cur;
 
-        const rect = el!.getBoundingClientRect();
+        const rect = el?.getBoundingClientRect();
         if (direction === "horizontal") {
           const newWidth = handleIsLeftOrTop ? rect.width - delta : rect.width + delta;
-          const clamped = Math.max(minWidth, Math.min(maxWidth, newWidth));
-          el!.style.flex = `0 1 ${clamped}px`;
+          if (el) {
+            el.style.flex = `0 1 ${clamped}px`;
+          }
         } else {
           const newHeight = handleIsLeftOrTop ? rect.height - delta : rect.height + delta;
           const clamped = Math.max(minWidth, Math.min(maxWidth, newHeight));
-          el!.style.height = `${clamped}px`;
+          el.style.height = `${clamped}px`;
         }
       }
       function onUp() {
@@ -106,7 +108,7 @@ function ResizeHandle({
     [targetRef, onCommit, minWidth, maxWidth, direction, forceHandleSide],
   );
 
-  return <div className={"resize-handle resize-handle--" + direction} onMouseDown={onMouseDown} aria-hidden="true" />;
+  return <div className={`resize-handle resize-handle--${direction}`} onMouseDown={onMouseDown} aria-hidden="true" />;
 }
 
 interface AppMainProps {
@@ -203,9 +205,9 @@ export function AppMain({
   onStop,
   reasoningEffort,
   onReasoningEffortChange,
-  providerId,
+  providerId: _providerId,
   terminalOpen,
-  setTerminalOpen,
+  setTerminalOpen: _setTerminalOpen,
   connectedModels,
   openFiles,
   activeFile,
@@ -280,7 +282,7 @@ export function AppMain({
 
   useEffect(() => {
     clearRollback();
-  }, [activeChat, activeProject, clearRollback]);
+  }, [clearRollback]);
 
   // ── Sub-agent drill-down ──
   const [drillDownId, setDrillDownId] = useState<string | null>(null);
@@ -339,7 +341,7 @@ export function AppMain({
     }
     setItems((prev: any[]) => [...prev, ...rollbackRemovedItems]);
     clearRollback();
-  }, [rollbackIndex, rollbackRemovedItems, clearRollback]);
+  }, [rollbackIndex, rollbackRemovedItems, clearRollback, setItems]);
 
   const handleProjectEdit = useCallback((project: Project) => {
     setEditingProject(project);
@@ -432,7 +434,7 @@ export function AppMain({
           {/* Chat panel */}
           <div
             ref={chatPanelRef}
-            className={"layout__chat" + (items.length === 0 ? " layout__chat--empty" : "")}
+            className={`layout__chat${items.length === 0 ? " layout__chat--empty" : ""}`}
             style={
               openFiles.length > 0
                 ? chatWidth === null
@@ -481,7 +483,7 @@ export function AppMain({
                     if (idx < 0) return;
                     let userIdx = -1;
                     for (let i = idx - 1; i >= 0; i--) {
-                      if (items[i]!.kind === "user") {
+                      if (items[i]?.kind === "user") {
                         userIdx = i;
                         break;
                       }

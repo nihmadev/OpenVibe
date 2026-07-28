@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
-import { activeChatId, setActiveChatId } from "./state.js";
 import type { ContentPart, RollbackPreview } from "../types.js";
+import { activeChatId, setActiveChatId } from "./state.js";
 
 export const chatsBridge = {
   updateTodo: async (context: string) => {

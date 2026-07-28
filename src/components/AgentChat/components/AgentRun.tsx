@@ -1,7 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import type React from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useI18n } from "../../../hooks/useI18n.js";
+import { AgentToolView } from "../../AgentToolView/AgentToolView.js";
 import {
-  BotIcon,
   BookOpenIcon,
+  BotIcon,
   ChevronDownStrokeIcon,
   FolderOpenStrokeIcon,
   GlobeIcon,
@@ -12,12 +15,10 @@ import {
   WrenchIcon,
 } from "../../Icons/icons.js";
 import { Markdown } from "../../Markdown/Markdown.js";
-import { useI18n } from "../../../hooks/useI18n.js";
-import { MessageFooter } from "./MessageFooter.js";
-import type { HistoryItem } from "../types.js";
 import { buildRunTimeline, formatRunDurationLabel, getRunTiming, type ToolActivityKind } from "../agentRunModel.js";
-import { AgentToolView } from "../../AgentToolView/AgentToolView.js";
+import type { HistoryItem } from "../types.js";
 import { ErrorNotice } from "./ErrorNotice.js";
+import { MessageFooter } from "./MessageFooter.js";
 
 interface AgentRunProps {
   items: HistoryItem[];

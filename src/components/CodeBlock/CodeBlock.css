@@ -95,10 +95,10 @@
 .code-block__container .monaco-editor,
 .code-block__container .monaco-editor .view-lines,
 .code-block__container .monaco-editor .view-line {
-  -webkit-font-smoothing: antialiased !important;
-  -moz-osx-font-smoothing: grayscale !important;
-  font-smooth: always !important;
-  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-smooth: always;
+  text-rendering: optimizeLegibility;
   transform: translateZ(0);
   backface-visibility: hidden;
 }
@@ -107,13 +107,13 @@
 .code-block__container .monaco-editor .glyph-margin,
 .code-block__container .monaco-editor .margin-view-overlays,
 .code-block__container .monaco-editor .margin-background {
-  display: none !important;
-  width: 0 !important;
-  border: none !important;
+  display: none;
+  width: 0;
+  border: none;
 }
 
 .code-block__container .monaco-editor .lines-content {
-  padding-left: var(--space-5) !important;
+  padding-left: var(--space-5);
 }
 
 .code-block__container .monaco-editor .decorationsOverviewRuler,
@@ -121,7 +121,7 @@
 .code-block__container .monaco-editor .cigr,
 .code-block__container .monaco-editor .core-guide,
 .code-block__container .monaco-editor .indent-active {
-  display: none !important;
-  width: 0 !important;
-  visibility: hidden !important;
+  display: none;
+  width: 0;
+  visibility: hidden;
 }
