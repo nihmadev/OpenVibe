@@ -5,6 +5,7 @@ import type { FileMatch } from "../../types.js";
 import "./PromptInput.css";
 
 import { getReasoningEfforts } from "../../constants.js";
+import { prewarmLlmConnection } from "../../utils/prewarm.js";
 import { ArrowUpIcon, AttachPlusIcon, RefreshCwIcon, StopIcon } from "../Icons/icons.js";
 import { getFileIconUrl, getFolderIconUrl } from "../Icons/utils.js";
 import { RollbackPill } from "../RollbackPill/RollbackPill.js";
@@ -30,7 +31,7 @@ import {
 } from "./utils/history.js";
 import { createMarkdownFragment } from "./utils/markdown.js";
 import { normalizePaste, pasteMode } from "./utils/paste.js";
-import { promptPlaceholder } from "./utils/placeholder.js";
+import { PROMPT_SUGGESTION_KEYS, promptPlaceholder } from "./utils/placeholder.js";
 import { addRecentMention, getRecentMentions } from "./utils/recentMentions.js";
 import { fileToAttachment } from "./utils.js";
 
@@ -55,6 +56,7 @@ interface Props {
   providerId?: string;
   currentEffort?: string;
   onReasoningEffortChange?: (effort: string | null) => void;
+  emptyState?: boolean;
 }
 
 // ─── helpers ─────────────────────────────────────────────
@@ -116,6 +118,7 @@ export function PromptInput({
   providerId,
   currentEffort,
   onReasoningEffortChange,
+  emptyState = false,
 }: Props): React.ReactElement {
   const { t } = useI18n();
   const editorRef = useRef<HTMLDivElement | null>(null);
@@ -124,11 +127,20 @@ export function PromptInput({
 
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [dragOver, setDragOver] = useState(false);
-  const [_focused, setFocused] = useState(false);
+  const [focused, setFocused] = useState(false);
   const [mode, setMode] = useState<"normal" | "shell">("normal");
   const [composing, setComposing] = useState(false);
   const [popover, setPopover] = useState<"at" | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [promptSuggestionIndex, setPromptSuggestionIndex] = useState(0);
+
+  useEffect(() => {
+    if (!emptyState || disabled || mode !== "normal" || dirty || focused) return;
+    const timer = window.setInterval(() => {
+      setPromptSuggestionIndex((index) => (index + 1) % PROMPT_SUGGESTION_KEYS.length);
+    }, 3600);
+    return () => window.clearInterval(timer);
+  }, [disabled, mode, dirty, focused, emptyState]);
 
   const [markdownEnabled, setMarkdownEnabled] = useState<boolean>(
     () => localStorage.getItem("openvibe_prompt_markdown") !== "false",
@@ -188,14 +200,19 @@ export function PromptInput({
 
   const placeholder = useMemo(
     () =>
-      promptPlaceholder({
-        mode,
-        disabled,
-        suggest: true,
-        example: mode === "shell" ? "git status" : "help me refactor",
-        t,
-      }),
-    [mode, disabled, t],
+      promptPlaceholder(
+        {
+          mode,
+          disabled,
+          suggest: true,
+          example: mode === "shell" ? "git status" : "help me refactor",
+          t,
+        },
+        emptyState && mode === "normal"
+          ? t(PROMPT_SUGGESTION_KEYS[promptSuggestionIndex] ?? PROMPT_SUGGESTION_KEYS[0])
+          : undefined,
+      ),
+    [emptyState, mode, disabled, promptSuggestionIndex, t],
   );
 
   // ─── DOM helpers ────────────────────────────────────────
@@ -412,6 +429,9 @@ export function PromptInput({
   const handleEditorInput = useCallback(() => {
     const el = editorRef.current;
     if (!el) return;
+    // Typing is the strongest "a request is coming" signal — make sure the
+    // TCP+TLS connection to the provider is warm (throttled internally).
+    prewarmLlmConnection();
     const text = editorText();
     if (!text && attachments.length === 0) {
       clearEditor();
@@ -912,7 +932,10 @@ export function PromptInput({
               onPaste={handlePaste}
               onCompositionStart={handleCompositionStart}
               onCompositionEnd={handleCompositionEnd}
-              onFocus={() => setFocused(true)}
+              onFocus={() => {
+                setFocused(true);
+                prewarmLlmConnection();
+              }}
               onBlur={() => {
                 setFocused(false);
                 setPopover(null);
@@ -929,7 +952,12 @@ export function PromptInput({
                 aria-hidden="true"
                 style={{ paddingBottom: space }}
               >
-                {placeholder}
+                <span
+                  key={`${emptyState}-${mode}-${promptSuggestionIndex}-${disabled}`}
+                  className="prompt-input__placeholder-text"
+                >
+                  {placeholder}
+                </span>
               </div>
             )}
           </div>

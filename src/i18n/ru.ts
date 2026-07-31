@@ -276,6 +276,13 @@ export const ru = {
   cancel: "Отмена",
   processing: "Обработка...",
   vibeAnything: "Напишите что-нибудь...",
+  promptSuggestionStart: "С чего начнём?",
+  promptSuggestionWorkspace: "Куда двинемся в этом проекте?",
+  promptSuggestionCode: "Есть кусок кода, который давно просится на разбор?",
+  promptSuggestionEntry: "Проверим, где здесь начинается приложение?",
+  promptSuggestionBlocker: "Что сейчас мешает двигаться дальше?",
+  promptSuggestionStructure: "Разложим этот репозиторий по полочкам?",
+  promptSuggestionNext: "Найти узкое место или придумать следующий шаг?",
 
   // ModelSelector
   selectModelFallback: "Выберите модель",

@@ -80,14 +80,17 @@ function ResizeHandle({
 
         const rect = el?.getBoundingClientRect();
         if (direction === "horizontal") {
-          const newWidth = handleIsLeftOrTop ? rect.width - delta : rect.width + delta;
+          const newWidth = handleIsLeftOrTop ? (rect?.width ?? 0) - delta : (rect?.width ?? 0) + delta;
           if (el) {
+            const clamped = Math.max(minWidth, Math.min(maxWidth, newWidth));
             el.style.flex = `0 1 ${clamped}px`;
           }
         } else {
-          const newHeight = handleIsLeftOrTop ? rect.height - delta : rect.height + delta;
-          const clamped = Math.max(minWidth, Math.min(maxWidth, newHeight));
-          el.style.height = `${clamped}px`;
+          const newHeight = handleIsLeftOrTop ? (rect?.height ?? 0) - delta : (rect?.height ?? 0) + delta;
+          if (el) {
+            const clamped = Math.max(minWidth, Math.min(maxWidth, newHeight));
+            el.style.height = `${clamped}px`;
+          }
         }
       }
       function onUp() {
@@ -529,6 +532,7 @@ export function AppMain({
                   providerId={config.providerId}
                   currentEffort={reasoningEffort}
                   onReasoningEffortChange={onReasoningEffortChange}
+                  emptyState={items.length === 0}
                 />
               </>
             )}
