@@ -1,7 +1,6 @@
 const useColor = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
 
-const paint = (code: string, value: string): string =>
-  useColor ? `\x1b[${code}m${value}\x1b[0m` : value;
+const paint = (code: string, value: string): string => (useColor ? `\x1b[${code}m${value}\x1b[0m` : value);
 
 export const ui = {
   brand: (value: string) => paint("38;5;109", value),
@@ -20,6 +19,13 @@ export const ui = {
 };
 
 export function status(kind: "info" | "success" | "warning" | "error", message: string): string {
-  const icon = kind === "success" ? ui.success(ui.check) : kind === "error" ? ui.danger(ui.cross) : kind === "warning" ? ui.warning("!") : ui.accent(ui.arrow);
+  const icon =
+    kind === "success"
+      ? ui.success(ui.check)
+      : kind === "error"
+        ? ui.danger(ui.cross)
+        : kind === "warning"
+          ? ui.warning("!")
+          : ui.accent(ui.arrow);
   return `${icon} ${message}`;
 }

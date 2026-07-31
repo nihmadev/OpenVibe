@@ -88,7 +88,12 @@ async function maybeUpdate(cache: CacheData): Promise<CacheData> {
   if (!info || !isNewerVersion(info.version, cache.version)) return cache;
 
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    console.log(status("info", `${ui.success(`v${info.version}`)} is available. Run ${ui.accent("openvibe --update")} to install it.`));
+    console.log(
+      status(
+        "info",
+        `${ui.success(`v${info.version}`)} is available. Run ${ui.accent("openvibe --update")} to install it.`,
+      ),
+    );
     return cache;
   }
 
@@ -96,7 +101,12 @@ async function maybeUpdate(cache: CacheData): Promise<CacheData> {
   if (choice === "disable") {
     const updatedCache = { ...cache, checkForUpdates: false };
     await writeCache(updatedCache);
-    console.log(status("info", `Automatic update checks disabled. Run ${ui.accent("openvibe --enable-update-checks")} to enable them again.`));
+    console.log(
+      status(
+        "info",
+        `Automatic update checks disabled. Run ${ui.accent("openvibe --enable-update-checks")} to enable them again.`,
+      ),
+    );
     return updatedCache;
   }
   if (choice !== "install") return cache;
@@ -108,7 +118,12 @@ async function maybeUpdate(cache: CacheData): Promise<CacheData> {
     console.log(status("success", `Updated to ${ui.success(`v${info.version}`)}`));
     return updatedCache;
   } catch (error) {
-    console.warn(status("warning", `Update failed; starting ${ui.accent(`v${cache.version}`)}: ${error instanceof Error ? error.message : String(error)}`));
+    console.warn(
+      status(
+        "warning",
+        `Update failed; starting ${ui.accent(`v${cache.version}`)}: ${error instanceof Error ? error.message : String(error)}`,
+      ),
+    );
     return cache;
   }
 }
@@ -147,7 +162,9 @@ async function main() {
   }
 
   if (args.includes("--help") || args.includes("-h")) {
-    console.log(`\n${ui.brand("◆ OpenVibe Desktop")}\n${ui.muted("A calm, open-source agentic coding environment")}\n\n${ui.heading("Usage")}\n  ${ui.accent("openvibe")} ${ui.muted("[options]")}\n\n${ui.heading("Options")}\n  ${ui.accent("-v, --version")}            Show installed version\n  ${ui.accent("-h, --help")}               Show this help\n  ${ui.accent("--update")}                 Check for and install updates\n  ${ui.accent("--no-update-checks")}      Skip checks before startup\n  ${ui.accent("--enable-update-checks")}  Re-enable update checks\n\n${ui.muted("Tip: run openvibe from any project directory to launch the desktop app.")}\n`);
+    console.log(
+      `\n${ui.brand("◆ OpenVibe Desktop")}\n${ui.muted("A calm, open-source agentic coding environment")}\n\n${ui.heading("Usage")}\n  ${ui.accent("openvibe")} ${ui.muted("[options]")}\n\n${ui.heading("Options")}\n  ${ui.accent("-v, --version")}            Show installed version\n  ${ui.accent("-h, --help")}               Show this help\n  ${ui.accent("--update")}                 Check for and install updates\n  ${ui.accent("--no-update-checks")}      Skip checks before startup\n  ${ui.accent("--enable-update-checks")}  Re-enable update checks\n\n${ui.muted("Tip: run openvibe from any project directory to launch the desktop app.")}\n`,
+    );
     process.exit(0);
   }
 

@@ -141,7 +141,7 @@ async function checkViaGitHub(platform: string, arch: string): Promise<UpdateInf
   );
 
   if (!asset) {
-    const assetsWithExt = (data.assets as any[]).filter(a => (a.name as string).endsWith(ext));
+    const assetsWithExt = (data.assets as any[]).filter((a) => (a.name as string).endsWith(ext));
     if (assetsWithExt.length === 1) {
       asset = assetsWithExt[0];
     }
@@ -179,7 +179,9 @@ export async function downloadAndVerify(info: UpdateInfo): Promise<string> {
     }
   }
 
-  console.log(status("info", `Downloading ${ui.accent(`v${info.version}`)} · ${ui.muted(`${info.platform}-${info.arch}`)}`));
+  console.log(
+    status("info", `Downloading ${ui.accent(`v${info.version}`)} · ${ui.muted(`${info.platform}-${info.arch}`)}`),
+  );
   await downloadFile(info.url, filePath);
 
   if (info.sha256) {
