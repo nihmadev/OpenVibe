@@ -278,6 +278,158 @@ function preprocessContent(text: string, isAssistant: boolean, isStreaming?: boo
     .join("");
 }
 
+// ─── Segment splitting for incremental streaming renders ──────────────────
+//
+// During streaming the content grows append-only, so everything before the
+// last "stable boundary" (blank line outside code fences and $$ math) never
+// changes. Splitting into segments and rendering each through a memoized
+// component means each new chunk re-parses only the tail segment instead of
+// the entire document (which was O(n²) over the stream).
+
+function splitStableSegments(text: string): string[] {
+  const lines = text.split("\n");
+  const segments: string[] = [];
+  let current: string[] = [];
+  let inFence = false;
+  let inMath = false;
+  let bracketMathDepth = 0;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (!inFence && !inMath && bracketMathDepth <= 0 && trimmed === "") {
+      if (current.length > 0) {
+        segments.push(current.join("\n"));
+        current = [];
+      }
+      continue;
+    }
+
+    if (inFence) {
+      if (trimmed.startsWith("```")) inFence = false;
+    } else if (trimmed.startsWith("```")) {
+      const ticks = (line.match(/```/g) || []).length;
+      if (ticks % 2 === 1) inFence = true;
+    } else {
+      const dollars = (line.match(/\$\$/g) || []).length;
+      if (dollars % 2 === 1) inMath = !inMath;
+      // Keep multi-line \[ ... \] display math inside a single segment.
+      bracketMathDepth += (line.match(/\\\[/g) || []).length - (line.match(/\\\]/g) || []).length;
+      if (bracketMathDepth < 0) bracketMathDepth = 0;
+    }
+
+    current.push(line);
+  }
+
+  if (current.length > 0) segments.push(current.join("\n"));
+  return segments;
+}
+
+// ─── Segment renderer (full parse of one segment) ──────────────────────────
+
+function renderSegmentNodes(
+  content: string,
+  isAssistant: boolean,
+  noFileIcons: boolean,
+  simplifiedCodeBlocks: boolean | undefined,
+  isStreaming: boolean,
+  renderFileTree: boolean,
+): React.ReactNode[] | null {
+  if (!content) return null;
+
+  const processed = preprocessContent(content, isAssistant, isStreaming);
+
+  // Collect block-level boundaries: code, math, then text
+  type BlockSpan =
+    | { start: number; end: number; type: "code"; lang: string; code: string }
+    | { start: number; end: number; type: "math"; latex: string };
+
+  const blocks: BlockSpan[] = [];
+
+  FENCED_CODE_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  m = FENCED_CODE_RE.exec(processed);
+  while (m !== null) {
+    blocks.push({
+      start: m.index,
+      end: m.index + m[0].length,
+      type: "code",
+      lang: m[2],
+      code: m[3].replace(/\n$/, ""),
+    });
+    m = FENCED_CODE_RE.exec(processed);
+  }
+
+  BLOCK_MATH_RE.lastIndex = 0;
+  m = BLOCK_MATH_RE.exec(processed);
+  while (m !== null) {
+    blocks.push({ start: m.index, end: m.index + m[0].length, type: "math", latex: m[1] });
+    m = BLOCK_MATH_RE.exec(processed);
+  }
+
+  blocks.sort((a, b) => a.start - b.start);
+
+  const nodes: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let textSegmentIdx = 0;
+  let codeBlockIdx = 0;
+  let mathBlockIdx = 0;
+
+  for (const b of blocks) {
+    if (b.start > lastIndex) {
+      const textBlock = processed.slice(lastIndex, b.start).trim();
+      if (textBlock) {
+        nodes.push(...renderTextBlock(textBlock, noFileIcons, `s${textSegmentIdx++}`));
+      }
+    }
+
+    if (b.type === "code") {
+      if (b.lang === "tree" && renderFileTree) {
+        nodes.push(<FileTreeViewer key={`cb-${codeBlockIdx++}`} content={b.code} />);
+      } else {
+        nodes.push(renderCodeBlock(b.lang, b.code, simplifiedCodeBlocks, `cb-${codeBlockIdx++}`));
+      }
+    } else if (b.type === "math") {
+      nodes.push(renderMathBlock(b.latex, `m-${mathBlockIdx++}`));
+    }
+
+    lastIndex = b.end;
+  }
+
+  if (lastIndex < processed.length) {
+    const remaining = processed.slice(lastIndex).trim();
+    if (remaining) {
+      nodes.push(...renderTextBlock(remaining, noFileIcons, `s${textSegmentIdx++}`));
+    }
+  }
+
+  return nodes.length > 0 ? nodes : null;
+}
+
+interface MarkdownSegmentProps {
+  text: string;
+  isAssistant: boolean;
+  noFileIcons: boolean;
+  simplifiedCodeBlocks?: boolean;
+  isStreaming: boolean;
+  renderFileTree: boolean;
+}
+
+const MarkdownSegment = React.memo(function MarkdownSegment({
+  text,
+  isAssistant,
+  noFileIcons,
+  simplifiedCodeBlocks,
+  isStreaming,
+  renderFileTree,
+}: MarkdownSegmentProps) {
+  const nodes = React.useMemo(
+    () => renderSegmentNodes(text, isAssistant, noFileIcons, simplifiedCodeBlocks, isStreaming, renderFileTree),
+    [text, isAssistant, noFileIcons, simplifiedCodeBlocks, isStreaming, renderFileTree],
+  );
+  return <>{nodes}</>;
+});
+
 // ─── Top-level StreamingMarkdown component ─────────────────────────────────
 
 export const StreamingMarkdown = React.memo(function StreamingMarkdown({
@@ -303,79 +455,25 @@ export const StreamingMarkdown = React.memo(function StreamingMarkdown({
     return () => window.removeEventListener("settings-changed", onSettingsChanged);
   }, []);
 
-  const elements = React.useMemo(() => {
-    if (!content) return null;
+  const segments = React.useMemo(() => (content ? splitStableSegments(content) : []), [content]);
 
-    const processed = preprocessContent(content, !!isAssistant, !!isStreaming);
-
-    // Collect block-level boundaries: code, math, then text
-    type BlockSpan =
-      | { start: number; end: number; type: "code"; lang: string; code: string }
-      | { start: number; end: number; type: "math"; latex: string };
-
-    const blocks: BlockSpan[] = [];
-
-    FENCED_CODE_RE.lastIndex = 0;
-    let m: RegExpExecArray | null;
-    m = FENCED_CODE_RE.exec(processed);
-    while (m !== null) {
-      blocks.push({
-        start: m.index,
-        end: m.index + m[0].length,
-        type: "code",
-        lang: m[2],
-        code: m[3].replace(/\n$/, ""),
-      });
-      m = FENCED_CODE_RE.exec(processed);
-    }
-
-    BLOCK_MATH_RE.lastIndex = 0;
-    m = BLOCK_MATH_RE.exec(processed);
-    while (m !== null) {
-      blocks.push({ start: m.index, end: m.index + m[0].length, type: "math", latex: m[1] });
-      m = BLOCK_MATH_RE.exec(processed);
-    }
-
-    blocks.sort((a, b) => a.start - b.start);
-
-    const nodes: React.ReactNode[] = [];
-    let lastIndex = 0;
-    let textSegmentIdx = 0;
-    let codeBlockIdx = 0;
-    let mathBlockIdx = 0;
-
-    for (const b of blocks) {
-      if (b.start > lastIndex) {
-        const textBlock = processed.slice(lastIndex, b.start).trim();
-        if (textBlock) {
-          nodes.push(...renderTextBlock(textBlock, !!noFileIcons, `s${textSegmentIdx++}`));
-        }
-      }
-
-      if (b.type === "code") {
-        if (b.lang === "tree" && renderFileTree) {
-          nodes.push(<FileTreeViewer key={`cb-${codeBlockIdx++}`} content={b.code} />);
-        } else {
-          nodes.push(renderCodeBlock(b.lang, b.code, simplifiedCodeBlocks, `cb-${codeBlockIdx++}`));
-        }
-      } else if (b.type === "math") {
-        nodes.push(renderMathBlock(b.latex, `m-${mathBlockIdx++}`));
-      }
-
-      lastIndex = b.end;
-    }
-
-    if (lastIndex < processed.length) {
-      const remaining = processed.slice(lastIndex).trim();
-      if (remaining) {
-        nodes.push(...renderTextBlock(remaining, !!noFileIcons, `s${textSegmentIdx++}`));
-      }
-    }
-
-    return nodes.length > 0 ? nodes : null;
-  }, [content, isAssistant, noFileIcons, renderFileTree, simplifiedCodeBlocks, isStreaming]);
-
-  return <div className="markdown-body">{elements}</div>;
+  return (
+    <div className="markdown-body">
+      {segments.map((seg, i) => (
+        <MarkdownSegment
+          // Content is append-only while streaming, so positional keys are
+          // stable: only the last segment's text ever changes.
+          key={i}
+          text={seg}
+          isAssistant={!!isAssistant}
+          noFileIcons={!!noFileIcons}
+          simplifiedCodeBlocks={simplifiedCodeBlocks}
+          isStreaming={!!isStreaming && i === segments.length - 1}
+          renderFileTree={renderFileTree}
+        />
+      ))}
+    </div>
+  );
 });
 
 // ─── Table renderer ────────────────────────────────────────────────────────
