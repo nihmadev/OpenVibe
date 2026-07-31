@@ -115,6 +115,8 @@
 .layout__search-code-wrap--closed {
   overflow: hidden;
   padding: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* Disable CSS transitions on resizable panels while drag is active */

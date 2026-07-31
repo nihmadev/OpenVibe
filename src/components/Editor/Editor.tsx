@@ -398,7 +398,7 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
       session.startLine,
       1,
       session.endLine,
-      ed.getModel()?.getLineMaxColumn(session.endLine),
+      ed.getModel()?.getLineMaxColumn(session.endLine) ?? 1,
     );
 
     ed.executeEdits("inline-vibe-reject", [
@@ -450,7 +450,7 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
         session.startLine,
         1,
         session.endLine,
-        ed.getModel()?.getLineMaxColumn(session.endLine),
+        ed.getModel()?.getLineMaxColumn(session.endLine) ?? 1,
       );
 
       ed.executeEdits("inline-vibe", [
@@ -525,9 +525,9 @@ export function Editor({ path, cwd, onDirtyChange, gotoLine, gotoColumn, gotoMat
           session.startLine,
           1,
           session.endLine,
-          ed.getModel()?.getLineMaxColumn(session.endLine),
+          ed.getModel()?.getLineMaxColumn(session.endLine) ?? 1,
         );
-        const currentText = ed.getModel()?.getValueInRange(replaceRange);
+        const currentText = ed.getModel()?.getValueInRange(replaceRange) ?? "";
         session.originalText = currentText;
 
         if (inlineDecorationsRef.current.length > 0) {
@@ -679,7 +679,7 @@ User Instruction: ${promptText}`;
           position.lineNumber,
           1,
           position.lineNumber,
-          ed.getModel()?.getLineMaxColumn(position.lineNumber),
+          ed.getModel()?.getLineMaxColumn(position.lineNumber) ?? 1,
         );
         ed.setSelection(selection);
       }
@@ -687,7 +687,7 @@ User Instruction: ${promptText}`;
 
     if (!selection) return;
 
-    const originalText = ed.getModel()?.getValueInRange(selection);
+    const originalText = ed.getModel()?.getValueInRange(selection) ?? "";
     inlineSessionRef.current = {
       startLine: selection.startLineNumber,
       endLine: selection.endLineNumber,

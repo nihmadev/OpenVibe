@@ -130,7 +130,7 @@ function FileChangeRow({ change, cwd }: { change: FileChangeInfo; cwd?: string }
         setDiffData({ original: oldStr, modified: newStr, lang });
         setLoading(false);
       });
-  }, [open, change.filePath, change.items, diffData, info?.ext, cwd.replace, cwd]);
+  }, [open, change.filePath, change.items, diffData, info?.ext, cwd?.replace, cwd]);
 
   return (
     <div className="changes-pill">

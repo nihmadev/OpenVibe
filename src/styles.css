@@ -70,8 +70,8 @@
 
   /* ── Elevation scale ── */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: var(--shadow-md);
-  --shadow-lg: var(--shadow-lg);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 6px 20px rgba(0, 0, 0, 0.45);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.45);
 
   /* ── Interaction states ── */

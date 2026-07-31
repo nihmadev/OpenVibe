@@ -296,17 +296,15 @@ class LspConnection {
       this.m.languages.registerRenameProvider(language, {
         provideRenameEdits: async (model, position, newName) =>
           this.workspaceEdit(await this.request("textDocument/rename", { ...params(model, position), newName })),
-        resolveRenameLocation: async (model, position) => ({
-          range: model.getWordAtPosition(position)
-            ? new this.m.Range(
-                position.lineNumber,
-                model.getWordAtPosition(position)?.startColumn,
-                position.lineNumber,
-                model.getWordAtPosition(position)?.endColumn,
-              )
-            : new this.m.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-          text: model.getWordAtPosition(position)?.word ?? "",
-        }),
+        resolveRenameLocation: async (model, position) => {
+          const word = model.getWordAtPosition(position);
+          return {
+            range: word
+              ? new this.m.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn)
+              : new this.m.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+            text: word?.word ?? "",
+          };
+        },
       });
     }
     if (this.capabilities.documentFormattingProvider) {
