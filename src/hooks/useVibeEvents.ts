@@ -45,6 +45,8 @@ export function useVibeEvents(onActivity: () => void) {
   const [busy, setBusy] = useState(false);
   const [streamingNow, setStreamingNow] = useState<string | null>(null);
   const streamingId = useRef<string | null>(null);
+  /** Accumulated tool-args streams by call id (deltas merged outside React state). */
+  const toolStreamAcc = useRef<Map<string, string>>(new Map());
   const pendingAttachments = useRef<HistoryItem["attachments"]>(undefined);
   const pendingMentions = useRef<FileMentionView[] | undefined>(undefined);
   const { schedule, flush } = useRafBatching();
@@ -164,6 +166,7 @@ export function useVibeEvents(onActivity: () => void) {
           break;
         }
         case "tool-call":
+          toolStreamAcc.current.delete(e.id);
           flush();
           setItems((prev) => [
             ...(prev ?? []),
@@ -177,24 +180,35 @@ export function useVibeEvents(onActivity: () => void) {
             },
           ]);
           break;
-        case "tool-chunk":
+        case "tool-chunk": {
+          // Delta events carry only the new fragment; accumulate outside of
+          // React state so multiple deltas per frame cost one string concat
+          // each, then commit (and JSON.parse) at most once per rAF.
+          const acc = toolStreamAcc.current;
+          const full = e.delta ? (acc.get(e.id) ?? "") + e.args : e.args;
+          acc.set(e.id, full);
           schedule(() => {
+            const latest = toolStreamAcc.current.get(e.id);
+            if (latest === undefined) return;
             setItems((prev) => {
               if (!prev) return prev;
               return prev.map((it) => {
                 if (it.id !== e.id || it.kind !== "tool") return it;
+                if (it.toolStream === latest) return it;
                 let parsed = it.toolArgs;
                 try {
-                  parsed = JSON.parse(e.args);
+                  parsed = JSON.parse(latest);
                 } catch {
-                  /* invalid JSON */
+                  /* invalid/partial JSON — keep previous parsed args */
                 }
-                return { ...it, toolArgs: parsed, toolStream: e.args };
+                return { ...it, toolArgs: parsed, toolStream: latest };
               });
             });
           });
           break;
+        }
         case "tool-result":
+          toolStreamAcc.current.delete(e.id);
           flush();
           {
             const completedAt = Date.now();
@@ -227,6 +241,7 @@ export function useVibeEvents(onActivity: () => void) {
         case "stopped": {
           const now = Date.now();
           setBusy(false);
+          toolStreamAcc.current.clear();
           flush();
           setStreamingNow(null);
           streamingId.current = null;
@@ -249,6 +264,7 @@ export function useVibeEvents(onActivity: () => void) {
           {
             const now = Date.now();
             setBusy(false);
+            toolStreamAcc.current.clear();
             flush();
             setStreamingNow(null);
             streamingId.current = null;

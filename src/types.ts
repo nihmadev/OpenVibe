@@ -20,7 +20,7 @@ export type VibeEvent =
   | { kind: "assistant-chunk"; text: string }
   | { kind: "assistant-end" }
   | { kind: "tool-call"; id: string; name: string; args: unknown }
-  | { kind: "tool-chunk"; id: string; args: string }
+  | { kind: "tool-chunk"; id: string; args: string; delta?: boolean }
   | { kind: "tool-result"; id: string; ok: boolean; text: string }
   | { kind: "tool-denied"; id: string; name: string }
   | { kind: "reasoning-start"; name?: string }

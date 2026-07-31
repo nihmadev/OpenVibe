@@ -84,6 +84,7 @@ export async function initVibeBridge() {
         kind: "tool-chunk",
         id: e.payload.id ?? "",
         args: e.payload.args ?? "",
+        delta: e.payload.delta === true,
       });
     }),
   );
