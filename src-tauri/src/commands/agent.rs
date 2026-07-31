@@ -321,19 +321,38 @@ pub async fn agent_set_provider(
     model: String,
     provider_id: Option<String>,
 ) -> Result<(), String> {
+    let mut warm_cfg: Option<config::Config> = None;
     if let Ok(mut config) = state.config.lock() {
         if let Some(ref mut c) = *config {
             c.api_key = api_key.clone();
             c.base_url = base_url.clone();
             c.model = model.clone();
             c.provider_id = provider_id.clone();
+            warm_cfg = Some(c.clone());
         }
     }
 
-    // Обновляем URL для connection warmer
-    {
-        let mut url = state.provider_url.lock().await;
-        *url = base_url.clone();
+    // Re-point the connection warmer at the new effective origin (proxy or
+    // direct provider) and establish the connection right away so the first
+    // message to the new provider skips the TLS handshake.
+    if let Some(mut cfg) = warm_cfg {
+        let use_proxy = state
+            .projects
+            .lock()
+            .map_err(|e| e.to_string())
+            .and_then(|p| p.get_state("settings:useRegionalProxy").map_err(|e| e.to_string()))
+            .unwrap_or(Some("true".to_string()))
+            .unwrap_or_else(|| "true".to_string());
+        if use_proxy != "true" {
+            cfg.api_url = None;
+        }
+        if let Some(origin) = agent::request::effective_origin(&cfg.to_agent_config().llm_config()) {
+            state.warmer.set_origin(origin).await;
+            let warmer = state.warmer.clone();
+            tauri::async_runtime::spawn(async move {
+                warmer.warm(std::time::Duration::from_secs(5)).await;
+            });
+        }
     }
 
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;

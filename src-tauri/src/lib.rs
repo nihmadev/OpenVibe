@@ -25,7 +25,7 @@ pub struct AppState {
     pub agent_cancel: Mutex<Option<Arc<AtomicBool>>>,
     pub todo_context: Mutex<Option<String>>,
     pub http_client: reqwest::Client,
-    pub provider_url: Arc<tokio::sync::Mutex<String>>,
+    pub warmer: Arc<http_client::ConnectionWarmer>,
     pub warmer_stop_tx: Mutex<Option<watch::Sender<bool>>>,
     pub mcp_manager: Arc<mcp::McpManager>,
     pub scg2_engine: Arc<scg2::Scg2Engine>,
@@ -217,11 +217,24 @@ pub fn run() {
 
             // Initialize optimized HTTP client pool (HTTP/2, TCP keep-alive, low latency)
             let shared_client = http_client::create_shared_client();
-            let provider_url = Arc::new(tokio::sync::Mutex::new(cfg.base_url.clone()));
+
+            // Warm the origin chat requests actually connect to: the regional
+            // proxy when enabled, the provider base URL otherwise.
+            let use_proxy = project_store
+                .get_state("settings:useRegionalProxy")
+                .unwrap_or(Some("true".to_string()))
+                .unwrap_or_else(|| "true".to_string());
+            let mut warm_cfg = cfg.clone();
+            if use_proxy != "true" {
+                warm_cfg.api_url = None;
+            }
+            let initial_origin =
+                agent::request::effective_origin(&warm_cfg.to_agent_config().llm_config()).unwrap_or_default();
+            let warmer = http_client::ConnectionWarmer::new(shared_client.clone(), initial_origin);
             let (warmer_stop_tx, warmer_stop_rx) = watch::channel(false);
 
             // Spawn background task to keep provider TCP/TLS connections warm
-            http_client::spawn_connection_warmer(shared_client.clone(), provider_url.clone(), warmer_stop_rx);
+            http_client::spawn_connection_warmer(warmer.clone(), warmer_stop_rx);
 
             // MCP Manager
             let mcp_config_path = mcp::resolve_config_path(&initial_cwd, &app_dir_str);
@@ -264,7 +277,7 @@ pub fn run() {
                 agent_cancel: Mutex::new(None),
                 todo_context: Mutex::new(None),
                 http_client: shared_client,
-                provider_url,
+                warmer,
                 warmer_stop_tx: Mutex::new(Some(warmer_stop_tx)),
                 mcp_manager,
                 scg2_engine,
@@ -393,6 +406,7 @@ pub fn run() {
             // LLM commands
             commands::llm::llm_stream,
             commands::llm::llm_abort,
+            commands::llm::llm_prewarm,
             commands::llm::estimate_context_tokens,
             // Tool commands
             commands::tools::tools_definitions,

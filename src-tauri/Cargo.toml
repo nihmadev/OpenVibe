@@ -29,7 +29,7 @@ dirs = "6"
 once_cell = "1"
 base64 = "0.22"
 regex = "1"
-reqwest = { version = "0.13", features = ["json", "http2"] }
+reqwest = { version = "0.13", features = ["json", "http2", "hickory-dns"] }
 search = { path = "../crates/search" }
 terminal = { path = "../crates/terminal" }
 agent = { path = "../crates/agent" }

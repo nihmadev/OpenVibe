@@ -94,3 +94,13 @@ pub fn llm_abort(state: State<AppState>, session_id: String) -> Result<(), Strin
     }
     Ok(())
 }
+
+/// On-demand connection pre-warm, fired from the frontend on user intent
+/// signals (prompt input focus / typing). Establishes the pooled TCP+TLS
+/// connection to the effective chat origin so the actual request skips the
+/// handshake. Throttled internally; safe to call often.
+#[tauri::command]
+pub async fn llm_prewarm(state: State<'_, AppState>) -> Result<(), String> {
+    state.warmer.warm(std::time::Duration::from_secs(20)).await;
+    Ok(())
+}

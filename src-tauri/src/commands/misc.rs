@@ -211,8 +211,31 @@ pub fn state_get(state: State<AppState>, key: String) -> Result<Option<String>, 
 
 #[tauri::command]
 pub fn state_set(state: State<AppState>, key: String, value: String) -> Result<(), String> {
-    let store = state.projects.lock().map_err(|e| e.to_string())?;
-    store.set_state(&key, &value).map_err(|e| e.to_string())?;
+    {
+        let store = state.projects.lock().map_err(|e| e.to_string())?;
+        store.set_state(&key, &value).map_err(|e| e.to_string())?;
+    }
+
+    // Toggling the regional proxy changes which origin chat requests connect
+    // to — re-point the connection warmer and warm the new origin right away.
+    if key == "settings:useRegionalProxy" {
+        let cfg = {
+            let config_lock = state.config.lock().map_err(|e| e.to_string())?;
+            config_lock.as_ref().cloned()
+        };
+        if let Some(mut cfg) = cfg {
+            if value != "true" {
+                cfg.api_url = None;
+            }
+            if let Some(origin) = agent::request::effective_origin(&cfg.to_agent_config().llm_config()) {
+                let warmer = state.warmer.clone();
+                tauri::async_runtime::spawn(async move {
+                    warmer.set_origin(origin).await;
+                    warmer.warm(std::time::Duration::from_secs(5)).await;
+                });
+            }
+        }
+    }
     Ok(())
 }
 
