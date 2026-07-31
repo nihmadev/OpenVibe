@@ -116,20 +116,19 @@
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
     "lint-staged": "^17.0.8",
-
     "typescript": "^6.0.0",
     "typescript-eslint": "^8.63.0",
     "vite": "^8.1.4",
     "vitest": "^4.1.10"
   },
-    "lint-staged": {
-      "*.{ts,tsx,js,json,md,css}": [
-        "biome check --write --no-errors-on-unmatched"
-      ],
-      "*.rs": [
-        "rustfmt --edition 2021"
-      ]
-    },
+  "lint-staged": {
+    "*.{ts,tsx,js,json,md,css}": [
+      "biome check --write --no-errors-on-unmatched"
+    ],
+    "*.rs": [
+      "rustfmt --edition 2021"
+    ]
+  },
   "keywords": [
     "agent",
     "ai",
