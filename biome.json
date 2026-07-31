@@ -71,7 +71,8 @@
   },
   "files": {
     "includes": [
-      "src/**/*.{ts,tsx,js,jsx,json,css,md}",
+      "src/**/*.{ts,tsx,js,jsx,json,css}",
+      "!**/*.md",
       "!src/dist",
       "!node_modules",
       "!target",

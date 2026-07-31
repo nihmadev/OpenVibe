@@ -43,7 +43,7 @@ jobs:
       - name: Lint (ESLint)
         run: npm run lint
 
-      - name: Format check (Prettier)
+      - name: Format check (Biome)
         run: npm run format:check
 
       - name: Run JS/TS tests (Vitest)
