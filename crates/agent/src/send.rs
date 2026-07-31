@@ -185,16 +185,26 @@ impl Agent {
 
             emit("vibe:agent:assistant-start", serde_json::Value::Null);
 
+            // Coalesce streaming deltas. Leading edge: the very first chunk is
+            // emitted immediately (last_emit starts one debounce window in the
+            // past). A ticker in the select loop below flushes any residue, so
+            // text never stalls in the buffer when the model pauses or switches
+            // to tool calls mid-stream.
+            let debounce = Duration::from_millis(16);
+            let stream_epoch = std::time::Instant::now()
+                .checked_sub(debounce)
+                .unwrap_or_else(std::time::Instant::now);
             let chunk_buf = Arc::new(Mutex::new(SharedBuffer {
                 buf: String::new(),
-                last_emit: std::time::Instant::now(),
+                last_emit: stream_epoch,
             }));
             let reason_buf = Arc::new(Mutex::new(SharedBuffer {
                 buf: String::new(),
-                last_emit: std::time::Instant::now(),
+                last_emit: stream_epoch,
             }));
             let reason_name = Arc::new(Mutex::new(None::<String>));
-            let debounce = Duration::from_millis(100);
+            // Tool-call argument deltas, coalesced per call id (order-preserving).
+            let tool_buf: Arc<Mutex<Vec<(String, String)>>> = Arc::new(Mutex::new(Vec::new()));
 
             let cb_chunk = {
                 let chunk_buf = chunk_buf.clone();
@@ -270,7 +280,70 @@ impl Agent {
                 }
             };
 
-            let turn_result = stream_chat(
+            // Buffer tool-arg deltas; the ticker below flushes them. Merging
+            // consecutive deltas of the same call keeps one event per tick.
+            let cb_tool_args = {
+                let tool_buf = tool_buf.clone();
+                move |tool_id: &str, args: &str| {
+                    if let Ok(mut tb) = tool_buf.lock() {
+                        if let Some(last) = tb.last_mut() {
+                            if last.0 == tool_id {
+                                last.1.push_str(args);
+                                return;
+                            }
+                        }
+                        tb.push((tool_id.to_string(), args.to_string()));
+                    }
+                }
+            };
+
+            let flush_stream_buffers = {
+                let chunk_buf = chunk_buf.clone();
+                let reason_buf = reason_buf.clone();
+                let reason_name = reason_name.clone();
+                let tool_buf = tool_buf.clone();
+                move || {
+                    if let Ok(mut sb) = chunk_buf.lock() {
+                        if !sb.buf.is_empty() {
+                            let text = std::mem::take(&mut sb.buf);
+                            sb.last_emit = std::time::Instant::now();
+                            drop(sb);
+                            emit(
+                                "vibe:agent:assistant-chunk",
+                                serde_json::json!({"text": text}),
+                            );
+                        }
+                    }
+                    if let Ok(mut sb) = reason_buf.lock() {
+                        if !sb.buf.is_empty() {
+                            let text = std::mem::take(&mut sb.buf);
+                            sb.last_emit = std::time::Instant::now();
+                            drop(sb);
+                            let current_name = reason_name.lock().ok().and_then(|g| g.clone());
+                            let mut payload = serde_json::json!({"text": text});
+                            if let Some(ref n) = current_name {
+                                payload["name"] = serde_json::Value::String(n.clone());
+                            }
+                            emit("vibe:agent:reasoning-chunk", payload);
+                        }
+                    }
+                    let drained: Vec<(String, String)> = tool_buf
+                        .lock()
+                        .map(|mut tb| std::mem::take(&mut *tb))
+                        .unwrap_or_default();
+                    for (id, args) in drained {
+                        // `delta: true` — payload carries only the new fragment;
+                        // the frontend accumulates. Events without the flag
+                        // (e.g. sub-agent status) keep replace semantics.
+                        emit(
+                            "vibe:agent:tool-chunk",
+                            serde_json::json!({"id": id, "args": args, "delta": true}),
+                        );
+                    }
+                }
+            };
+
+            let stream_fut = stream_chat(
                 &llm_config,
                 self.messages.clone(),
                 tool_defs.clone(),
@@ -280,37 +353,19 @@ impl Agent {
                 &cb_reasoning,
                 &cb_reasoning_name,
                 &cb_reasoning_end,
-                &|tool_id: &str, args: &str| {
-                    emit(
-                        "vibe:agent:tool-chunk",
-                        serde_json::json!({"id": tool_id, "args": args}),
-                    );
-                },
-            )
-            .await;
+                &cb_tool_args,
+            );
+            tokio::pin!(stream_fut);
 
-            if let Ok(mut sb) = chunk_buf.lock() {
-                if !sb.buf.is_empty() {
-                    let text = std::mem::take(&mut sb.buf);
-                    drop(sb);
-                    emit(
-                        "vibe:agent:assistant-chunk",
-                        serde_json::json!({"text": text}),
-                    );
+            // Drive the stream and flush residue on a UI-frame cadence so text
+            // never sits in a buffer when the model pauses mid-stream.
+            let turn_result = loop {
+                tokio::select! {
+                    res = &mut stream_fut => break res,
+                    _ = tokio::time::sleep(debounce) => flush_stream_buffers(),
                 }
-            }
-            if let Ok(mut sb) = reason_buf.lock() {
-                if !sb.buf.is_empty() {
-                    let text = std::mem::take(&mut sb.buf);
-                    drop(sb);
-                    let current_name = reason_name.lock().ok().and_then(|g| g.clone());
-                    let mut payload = serde_json::json!({"text": text});
-                    if let Some(ref n) = current_name {
-                        payload["name"] = serde_json::Value::String(n.clone());
-                    }
-                    emit("vibe:agent:reasoning-chunk", payload);
-                }
-            }
+            };
+            flush_stream_buffers();
 
             let turn_result = match turn_result {
                 Ok(r) => r,

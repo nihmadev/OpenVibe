@@ -149,6 +149,31 @@ pub async fn parse_sse_stream(
 }
 
 fn append_utf8_chunk(bytes: &[u8], tail: &mut Vec<u8>, output: &mut String) {
+    // Fast path: no pending partial char from the previous chunk (the common
+    // case) — validate and append straight from the network buffer without
+    // the intermediate copy into `tail`.
+    if tail.is_empty() {
+        match std::str::from_utf8(bytes) {
+            Ok(text) => {
+                output.push_str(text);
+                return;
+            }
+            Err(error) if error.error_len().is_none() => {
+                let valid_up_to = error.valid_up_to();
+                output.push_str(
+                    std::str::from_utf8(&bytes[..valid_up_to])
+                        .expect("valid_up_to must end on a UTF-8 boundary"),
+                );
+                tail.extend_from_slice(&bytes[valid_up_to..]);
+                return;
+            }
+            Err(_) => {
+                output.push_str(&String::from_utf8_lossy(bytes));
+                return;
+            }
+        }
+    }
+
     tail.extend_from_slice(bytes);
     match std::str::from_utf8(tail) {
         Ok(text) => {
@@ -609,7 +634,9 @@ fn process_sse_line(
                 }
                 if let Some(args) = func.get("arguments").and_then(|v| v.as_str()) {
                     entry.arguments.push_str(args);
-                    on_tool_args(&entry.id, &entry.arguments);
+                    // Emit only the delta: sending the accumulated string made
+                    // IPC payloads grow O(n^2) over the course of a tool call.
+                    on_tool_args(&entry.id, args);
                 }
                 if let Some(fobj) = func.as_object() {
                     for (k, v) in fobj {
@@ -635,7 +662,7 @@ fn process_sse_line(
         }
         if let Some(args) = fc.get("arguments").and_then(|v| v.as_str()) {
             entry.arguments.push_str(args);
-            on_tool_args(&entry.id, &entry.arguments);
+            on_tool_args(&entry.id, args);
         }
         if let Some(fc_obj) = fc.as_object() {
             for (k, v) in fc_obj {

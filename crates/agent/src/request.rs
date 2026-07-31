@@ -34,35 +34,20 @@ pub async fn stream_chat(
 
     let max_retries = 3;
 
+    // Serialize the request body ONCE, before the retry loop. Cloning `Bytes`
+    // is a refcount bump, so retries reuse the same allocation instead of
+    // re-cloning the whole message history (including base64 images) and
+    // rebuilding/reserializing a serde_json::Value tree per attempt.
+    // Rebuilt only on the 413 path, where messages actually change.
+    let mut body_bytes = build_body_bytes(config, &current_messages, &tools)?;
+
     for attempt in 0..max_retries {
         if cancel.load(Ordering::Relaxed) {
             return Err("Aborted".to_string());
         }
 
-        let outbound_messages = if supports_vision(&config.model) {
-            current_messages.clone()
-        } else {
-            flatten_for_text_only(current_messages.clone())
-        };
-
         let (url, headers) = build_request(config);
-
-        let mut body = serde_json::json!({
-            "model": config.model,
-            "messages": messages_to_api_json_with_cache(
-                outbound_messages,
-                supports_prompt_caching(config),
-            ),
-            "stream": true,
-            "stream_options": { "include_usage": true },
-        });
-        apply_reasoning_params(config, &mut body);
-        if !tools.is_empty() {
-            body["tools"] = serde_json::json!(tools);
-            body["tool_choice"] = serde_json::json!("auto");
-        }
-
-        let req = client.post(&url).headers(headers).json(&body);
+        let req = client.post(&url).headers(headers).body(body_bytes.clone());
 
         let send_result = tokio::select! {
             biased;
@@ -94,6 +79,7 @@ pub async fn stream_chat(
                         }
                         if status_val == 413 {
                             current_messages = trim_messages(current_messages, 10);
+                            body_bytes = build_body_bytes(config, &current_messages, &tools)?;
                             cancellable_sleep(Duration::from_millis(1000), cancel).await?;
                             continue;
                         }
@@ -132,6 +118,14 @@ pub async fn stream_chat(
                         e
                     ));
                 }
+                // Stale pooled connection (server closed the idle socket
+                // between warmer probes): the request never reached the
+                // server, so retrying immediately is safe and almost always
+                // succeeds on a fresh connection. Waiting 1.5s here was the
+                // single biggest avoidable TTFT hit.
+                if attempt == 0 && is_connection_error(&e) {
+                    continue;
+                }
                 // Exponential backoff + jitter: 1.5s, 3s, 6s
                 let ms = 1500u64 * 2u64.pow(attempt as u32);
                 let jitter = (SystemTime::now()
@@ -145,6 +139,68 @@ pub async fn stream_chat(
     }
 
     Err("Rate limit: too many retries. Try again in a minute.".to_string())
+}
+
+/// Builds and serializes the chat-completions request body to bytes once.
+/// `reqwest::Body` accepts `Vec<u8>` via `bytes::Bytes`, cloned by refcount.
+fn build_body_bytes(
+    config: &LlmConfig,
+    current_messages: &[ChatMessage],
+    tools: &[ToolDefinition],
+) -> Result<bytes::Bytes, String> {
+    let outbound_messages = if supports_vision(&config.model) {
+        current_messages.to_vec()
+    } else {
+        flatten_for_text_only(current_messages.to_vec())
+    };
+
+    let mut body = serde_json::json!({
+        "model": config.model,
+        "messages": messages_to_api_json_with_cache(
+            outbound_messages,
+            supports_prompt_caching(config),
+        ),
+        "stream": true,
+        "stream_options": { "include_usage": true },
+    });
+    apply_reasoning_params(config, &mut body);
+    if !tools.is_empty() {
+        body["tools"] = serde_json::json!(tools);
+        body["tool_choice"] = serde_json::json!("auto");
+    }
+
+    serde_json::to_vec(&body)
+        .map(bytes::Bytes::from)
+        .map_err(|e| format!("Failed to serialize request body: {e}"))
+}
+
+/// True for transport-level failures where the request never reached the
+/// server (dead pooled connection, reset during send/connect). These are
+/// safe to retry immediately without backoff.
+fn is_connection_error(e: &reqwest::Error) -> bool {
+    if e.is_connect() || e.is_timeout() {
+        return true;
+    }
+    // Reset/close of a pooled connection surfaces as a hyper IncompleteMessage
+    // or a request error wrapping an io reset; match on the source chain.
+    let mut source = std::error::Error::source(e);
+    while let Some(err) = source {
+        if let Some(io) = err.downcast_ref::<std::io::Error>() {
+            return matches!(
+                io.kind(),
+                std::io::ErrorKind::ConnectionReset
+                    | std::io::ErrorKind::ConnectionAborted
+                    | std::io::ErrorKind::BrokenPipe
+                    | std::io::ErrorKind::UnexpectedEof
+            );
+        }
+        let msg = err.to_string();
+        if msg.contains("IncompleteMessage") || msg.contains("connection closed") {
+            return true;
+        }
+        source = std::error::Error::source(err);
+    }
+    false
 }
 
 /// Anthropic-only prompt caching gate. Other providers (OpenAI, Google, ...)
@@ -235,21 +291,16 @@ fn safe_header_val(val: &str) -> reqwest::header::HeaderValue {
         .unwrap_or_else(|_| reqwest::header::HeaderValue::from_static(""))
 }
 
-fn build_request(config: &LlmConfig) -> (String, reqwest::header::HeaderMap) {
-    let mut headers = reqwest::header::HeaderMap::new();
-    headers.insert(
-        reqwest::header::CONTENT_TYPE,
-        reqwest::header::HeaderValue::from_static("application/json"),
-    );
-
+/// Whether chat requests are routed through the regional proxy.
+///
+/// The regional proxy only supports the built-in provider routes and an
+/// allow-list of upstream hosts. Custom providers are stored with IDs such
+/// as `p_...`; routing those through /v3 would make the proxy reject valid
+/// arbitrary OpenAI-compatible endpoints with the misleading
+/// `x-provider-base-url header required` response. Keep custom endpoints
+/// direct (the models command already follows this behavior).
+fn should_route_via_proxy(config: &LlmConfig) -> bool {
     let is_github = config.base_url.contains("models.github.ai");
-
-    // The regional proxy only supports the built-in provider routes and an
-    // allow-list of upstream hosts. Custom providers are stored with IDs such
-    // as `p_...`; routing those through /v3 would make the proxy reject valid
-    // arbitrary OpenAI-compatible endpoints with the misleading
-    // `x-provider-base-url header required` response. Keep custom endpoints
-    // direct (the models command already follows this behavior).
     let proxy_provider = config.provider_id.as_deref().is_some_and(|id| {
         matches!(
             id,
@@ -288,9 +339,37 @@ fn build_request(config: &LlmConfig) -> (String, reqwest::header::HeaderMap) {
                 | "siliconcloud"
         )
     });
-    let should_proxy = !is_github && proxy_provider && config.api_url.is_some();
+    !is_github && proxy_provider && config.api_url.is_some()
+}
 
-    let url = if should_proxy {
+/// The origin (scheme://host[:port]) that chat completions actually connect
+/// to: the regional proxy when enabled, otherwise the provider base URL.
+/// Used to pre-warm the TCP/TLS connection before the user sends a message.
+pub fn effective_origin(config: &LlmConfig) -> Option<String> {
+    let base = if should_route_via_proxy(config) {
+        config.api_url.as_deref()?
+    } else {
+        &config.base_url
+    };
+    let rest = base
+        .strip_prefix("https://")
+        .map(|r| ("https://", r))
+        .or_else(|| base.strip_prefix("http://").map(|r| ("http://", r)))?;
+    let host = rest.1.split('/').next()?;
+    if host.is_empty() {
+        return None;
+    }
+    Some(format!("{}{}", rest.0, host))
+}
+
+fn build_request(config: &LlmConfig) -> (String, reqwest::header::HeaderMap) {
+    let mut headers = reqwest::header::HeaderMap::new();
+    headers.insert(
+        reqwest::header::CONTENT_TYPE,
+        reqwest::header::HeaderValue::from_static("application/json"),
+    );
+
+    let url = if should_route_via_proxy(config) {
         let base = config.api_url.as_ref().unwrap().trim_end_matches('/');
         let pid = config.provider_id.as_ref().unwrap();
         headers.insert("x-provider-base-url", safe_header_val(&config.base_url));
