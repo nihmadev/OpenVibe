@@ -3,8 +3,11 @@
 .scm-view {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   height: 100%;
   width: 100%;
+  min-width: 0;
+  min-height: 0;
   background-color: var(--bg);
   color: var(--fg);
   font-family: var(--sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
@@ -27,53 +30,69 @@
   border-bottom: 1px solid var(--line);
 }
 
-.monaco-list-row {
+.scm-list-row {
   display: flex;
+  flex: 0 0 22px;
   align-items: center;
   box-sizing: border-box;
   cursor: pointer;
   padding: 0 var(--space-2);
   height: 22px;
+  min-height: 22px;
+  min-width: 0;
   position: relative;
   top: auto;
   left: auto;
   width: 100%;
 }
 
-.scm-view .monaco-list {
+.scm-view .scm-list {
+  display: block;
   height: auto;
+  min-width: 0;
+  width: 100%;
 }
 
-.monaco-list-row:hover {
+.scm-list-row:hover {
   background-color: var(--bg-2);
 }
 
-.monaco-list-row.selected {
+.scm-list-row.selected {
   background-color: var(--bg-3);
   color: var(--fg);
 }
 
-.monaco-icon-label {
+.scm-icon-label {
   display: flex;
   align-items: center;
   width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
   line-height: 22px;
 }
 
-.monaco-icon-name-container {
-  flex: 1;
+.scm-icon-name {
+  flex: 1 1 auto;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.monaco-icon-description-container {
+.scm-icon-description {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 50%;
   font-size: var(--text-sm);
   opacity: 0.7;
   margin-left: var(--space-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.monaco-count-badge {
+.scm-count-badge {
   background-color: var(--fg);
   color: var(--bg);
   font-size: var(--text-xs);
@@ -114,6 +133,182 @@
   flex-grow: 1;
   width: 100%;
   overflow-y: auto;
+}
+
+.scm-body {
+  display: block;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.scm-section {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.scm-section > .scm-list,
+.scm-section > .scm-group-children,
+.scm-section .scm-group-children {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.scm-view .scm-provider {
+  display: flex;
+  flex-flow: row nowrap;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  height: 22px;
+  min-width: 0;
+  min-height: 22px;
+  align-items: center;
+  box-shadow: none;
+}
+
+.scm-view .resource,
+.scm-view .resource-group,
+.scm-view .history-item {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+}
+
+.scm-view .resource > .name,
+.scm-view .resource-group > .name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.scm-view .resource-group > .name {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scm-view .resource > .name > .scm-icon-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.scm-view .resource > .decoration-icon {
+  display: flex;
+  flex: 0 0 16px;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 100%;
+  margin-left: var(--space-2);
+}
+
+.scm-view .actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  min-width: 0;
+}
+
+.scm-view .scm-list-row {
+  line-height: 22px;
+  overflow: hidden;
+}
+
+.scm-view .scm-list-row.cursor-default {
+  cursor: default;
+}
+
+.scm-view .scm-list .scm-list-row .resource-group > .actions {
+  display: none;
+  max-width: fit-content;
+}
+
+.scm-view .scm-list .scm-list-row:hover .resource-group > .actions,
+.scm-view .scm-list .scm-list-row:focus-within .resource-group > .actions {
+  display: flex;
+}
+
+/* Commit rows contain fixed-height SVG graph segments. Do not let the list
+   flex layout shrink them into each other when the panel is narrow. */
+.scm-graph-item {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.scm-view .scm-graph-row {
+  display: flex;
+  flex: 1 1 auto;
+  height: 22px;
+  min-height: 22px;
+  min-width: 0;
+  width: 100%;
+  align-items: center;
+  overflow: hidden;
+}
+
+.scm-view .scm-graph-row > .graph-container {
+  flex: 0 0 auto;
+  height: 22px;
+  min-height: 22px;
+}
+
+.scm-graph-summary-wrap {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.scm-graph-summary {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scm-ref-list {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+  max-width: 240px;
+  margin-left: auto;
+  padding-right: var(--space-2);
+  gap: var(--space-2);
+  overflow: hidden;
+}
+
+.scm-view .scm-ref-list .scm-ref-pill {
+  display: inline-flex;
+  flex: 0 1 120px;
+  align-items: center;
+  min-width: 0;
+  max-width: 120px;
+  padding: 1px var(--space-3);
+  overflow: hidden;
+  white-space: nowrap;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background-color: var(--bg-3);
+  font-size: var(--text-2xs);
+}
+
+.scm-view .scm-ref-list .scm-ref-pill > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .scm-section-header {
@@ -212,7 +407,7 @@
   justify-content: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-6);
-  background-color: var(--primary);
+  background-color: var(--fg);
   border: none;
   border-radius: 4px;
   color: var(--bg);
@@ -226,6 +421,9 @@
 }
 .scm-action-button:hover {
   background-color: var(--fg-dim);
+}
+.scm-action-button:active {
+  background-color: var(--fg-muted);
 }
 .scm-action-button.disabled {
   background-color: var(--bg-3);
@@ -243,7 +441,7 @@
   align-items: center;
   margin: 0 var(--space-6) var(--space-6) var(--space-6);
   width: calc(100% - 24px);
-  background-color: var(--primary);
+  background-color: var(--fg);
   border-radius: 4px;
   overflow: hidden;
   box-sizing: border-box;
@@ -271,7 +469,7 @@
 }
 
 .scm-split-button-main:hover:not(:disabled) {
-  background-color: rgba(255, 255, 255, 0.18);
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .scm-split-button-main.disabled,
@@ -284,7 +482,7 @@
 .scm-split-button-separator {
   width: 1px;
   height: 18px;
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
 }
 
@@ -309,7 +507,7 @@
 }
 
 .scm-split-button-wand:hover:not(:disabled) {
-  background-color: rgba(255, 255, 255, 0.18);
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .scm-split-button-wand:active:not(:disabled) {
@@ -402,8 +600,8 @@
 .scm-view *,
 .scm-body,
 .scm-body *,
-.monaco-list,
-.monaco-list * {
+.scm-list,
+.scm-list * {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -412,8 +610,8 @@
 .scm-view *::-webkit-scrollbar,
 .scm-body::-webkit-scrollbar,
 .scm-body *::-webkit-scrollbar,
-.monaco-list::-webkit-scrollbar,
-.monaco-list *::-webkit-scrollbar {
+.scm-list::-webkit-scrollbar,
+.scm-list *::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;
@@ -470,14 +668,15 @@
   font-size: var(--text-md);
 }
 
-.scm-commit-tooltip-author-name {
+.scm-commit-tooltip .scm-commit-tooltip-author-name,
+.scm-commit-tooltip .scm-commit-tooltip-author-name:visited {
   font-weight: 600;
   color: var(--fg);
   text-decoration: none;
 }
 
-.scm-commit-tooltip-author-name:hover,
-.scm-commit-tooltip-author-name:hover > span {
+.scm-commit-tooltip .scm-commit-tooltip-author-name:hover,
+.scm-commit-tooltip .scm-commit-tooltip-author-name:hover > span {
   text-decoration: underline;
 }
 
@@ -509,21 +708,31 @@
   line-height: 1.4;
 }
 
-.scm-commit-tooltip-cmd {
+.scm-commit-tooltip button.scm-commit-tooltip-cmd {
+  appearance: none;
+  -webkit-appearance: none;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--cyan);
+  font: inherit;
+  line-height: inherit;
+  text-align: inherit;
   text-decoration: none;
   cursor: pointer;
 }
 
-.scm-commit-tooltip-cmd:hover {
+.scm-commit-tooltip button.scm-commit-tooltip-cmd:hover {
   text-decoration: none;
   color: var(--accent);
 }
 
-.scm-commit-tooltip-cmd:hover > span {
+.scm-commit-tooltip button.scm-commit-tooltip-cmd:hover > span {
   text-decoration: underline;
 }
 
@@ -602,7 +811,7 @@
 .commit-tooltip-markdown .markdown-body blockquote {
   margin: var(--space-2) 0;
   padding: var(--space-3) var(--space-6);
-  border-left: 3px solid var(--primary);
+  border-left: 3px solid var(--line-strong);
   background-color: rgba(255, 255, 255, 0.03);
   border-radius: 0 4px 4px 0;
   opacity: 0.9;

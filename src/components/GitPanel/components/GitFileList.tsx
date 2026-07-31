@@ -26,15 +26,15 @@ export function FileRow({ file, isStaged, onOpenFile, onStageFile, onUnstageFile
   const { t } = useI18n();
 
   return (
-    <div className="monaco-list-row" onClick={() => onOpenFile?.(file.path)}>
+    <div className="scm-list-row" onClick={() => onOpenFile?.(file.path)}>
       <div className="resource" style={{ width: "100%", display: "flex", alignItems: "center", height: "100%" }}>
         <div className="name" style={{ display: "flex", alignItems: "center", flex: 1, overflow: "hidden" }}>
-          <div className="monaco-icon-label">
+          <div className="scm-icon-label">
             <span style={{ display: "flex", alignItems: "center", marginRight: 6 }}>
               {isDirectory ? <FolderIcon open={false} name={fileName} /> : <FileIcon name={fileName} />}
             </span>
-            <div className="monaco-icon-name-container">{fileName}</div>
-            {dirPath && <div className="monaco-icon-description-container">{dirPath}</div>}
+            <div className="scm-icon-name">{fileName}</div>
+            {dirPath && <div className="scm-icon-description">{dirPath}</div>}
             <div className="actions" style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
               {isStaged ? (
                 <div className="action-label" title={t("unstageChanges")} onClick={(e) => onUnstageFile(file.path, e)}>
@@ -104,13 +104,13 @@ export function TreeFolder({
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
       <div
-        className="monaco-list-row"
+        className="scm-list-row"
         style={{ paddingLeft: `${depth * 14}px` }}
         onClick={() => onToggleFolder(folderData.path)}
       >
         <div className="resource" style={{ width: "100%", display: "flex", alignItems: "center", height: "100%" }}>
           <div className="name" style={{ display: "flex", alignItems: "center", flex: 1, overflow: "hidden" }}>
-            <div className="monaco-icon-label">
+            <div className="scm-icon-label">
               <i
                 className={`icon codicon codicon-chevron-${isExpanded ? "down" : "right"}`}
                 style={{ marginRight: 4 }}
@@ -118,7 +118,7 @@ export function TreeFolder({
               <span style={{ display: "flex", alignItems: "center", marginRight: 6 }}>
                 <FolderIcon open={isExpanded} name={folderName} />
               </span>
-              <div className="monaco-icon-name-container" style={{ fontWeight: 500 }}>
+              <div className="scm-icon-name" style={{ fontWeight: 500 }}>
                 {folderName}
               </div>
             </div>
@@ -180,15 +180,15 @@ export function CommitFileRow({ file, onOpenFile }: CommitFileRowProps) {
       : "";
   const statusChar = file.status;
   return (
-    <div className="monaco-list-row" onClick={() => onOpenFile?.(file.path)}>
+    <div className="scm-list-row" onClick={() => onOpenFile?.(file.path)}>
       <div className="resource" style={{ width: "100%", display: "flex", alignItems: "center", height: "100%" }}>
         <div className="name" style={{ display: "flex", alignItems: "center", flex: 1, overflow: "hidden" }}>
-          <div className="monaco-icon-label">
+          <div className="scm-icon-label">
             <span style={{ display: "flex", alignItems: "center", marginRight: 6 }}>
               {isDirectory ? <FolderIcon open={false} name={fileName} /> : <FileIcon name={fileName} />}
             </span>
-            <div className="monaco-icon-name-container">{fileName}</div>
-            {dirPath && <div className="monaco-icon-description-container">{dirPath}</div>}
+            <div className="scm-icon-name">{fileName}</div>
+            {dirPath && <div className="scm-icon-description">{dirPath}</div>}
           </div>
         </div>
         <div className="decoration-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -234,13 +234,13 @@ export function CommitTreeFolder({
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
       <div
-        className="monaco-list-row"
+        className="scm-list-row"
         style={{ paddingLeft: `${depth * 14}px` }}
         onClick={(e) => onToggleCommitFolder(folderData.path, e)}
       >
         <div className="resource" style={{ width: "100%", display: "flex", alignItems: "center", height: "100%" }}>
           <div className="name" style={{ display: "flex", alignItems: "center", flex: 1, overflow: "hidden" }}>
-            <div className="monaco-icon-label">
+            <div className="scm-icon-label">
               <i
                 className={`icon codicon codicon-chevron-${isExpanded ? "down" : "right"}`}
                 style={{ marginRight: 4 }}
@@ -248,7 +248,7 @@ export function CommitTreeFolder({
               <span style={{ display: "flex", alignItems: "center", marginRight: 6 }}>
                 <FolderIcon open={isExpanded} name={folderName} />
               </span>
-              <div className="monaco-icon-name-container" style={{ fontWeight: 500 }}>
+              <div className="scm-icon-name" style={{ fontWeight: 500 }}>
                 {folderName}
               </div>
             </div>

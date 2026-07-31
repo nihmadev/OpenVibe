@@ -81,11 +81,11 @@ export function GitBranchModal({
           </div>
 
           {/* Branch List */}
-          <div className="monaco-list" style={{ maxHeight: 200, overflowY: "auto" }}>
+          <div className="scm-list" style={{ maxHeight: 200, overflowY: "auto" }}>
             {branches.map((b) => (
               <div
                 key={b.name}
-                className={`monaco-list-row ${b.isHead ? "selected" : ""}`}
+                className={`scm-list-row ${b.isHead ? "selected" : ""}`}
                 onClick={() => onCheckoutBranch(b.name)}
                 style={{ height: 28 }}
               >

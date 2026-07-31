@@ -209,6 +209,7 @@ export function GitCommitTooltip({
         <hr className="scm-commit-tooltip-divider" />
         <div className="scm-commit-tooltip-commands">
           <button
+            type="button"
             className="scm-commit-tooltip-cmd"
             title={t("openCommit")}
             onClick={(e) => {
@@ -221,6 +222,7 @@ export function GitCommitTooltip({
           </button>
           <span className="scm-commit-tooltip-cmd-space">&nbsp;</span>
           <button
+            type="button"
             className="scm-commit-tooltip-cmd"
             title={t("copyCommitHash")}
             onClick={(e) => {
@@ -232,6 +234,7 @@ export function GitCommitTooltip({
           </button>
           <span className="scm-commit-tooltip-cmd-sep">&nbsp;&nbsp;|&nbsp;&nbsp;</span>
           <button
+            type="button"
             className="scm-commit-tooltip-cmd"
             title={t("openOnGitHub")}
             onClick={(e) => {

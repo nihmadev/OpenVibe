@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useI18n } from "../../hooks/useI18n.js";
 import { vibe } from "../../tauri-bridge.js";
 import "@vscode/codicons/dist/codicon.css";
-import "./scm.css";
 import "./GitPanel.css";
 import { GitBranchModal } from "./components/GitBranchModal.js";
 import { GitCommitTooltip } from "./components/GitCommitTooltip.js";
@@ -444,7 +443,7 @@ export function GitPanel({ cwd, onOpenFile, onClose: _onClose }: GitPanelProps) 
 
           {expanded.repos && (
             <div
-              className="monaco-list-row cursor-default"
+              className="scm-list-row cursor-default"
               onClick={() => setShowBranchModal(true)}
               style={{ height: 22 }}
             >
@@ -453,14 +452,11 @@ export function GitPanel({ cwd, onOpenFile, onClose: _onClose }: GitPanelProps) 
                 style={{ width: "100%", paddingLeft: 8, display: "flex", flexDirection: "row", alignItems: "center" }}
               >
                 <i className="icon codicon codicon-repo" style={{ marginRight: 6 }}></i>
-                <div className="monaco-icon-label" style={{ display: "flex", flex: 1, alignItems: "center" }}>
-                  <div className="monaco-icon-name-container" style={{ fontWeight: 600 }}>
+                <div className="scm-icon-label" style={{ display: "flex", flex: 1, alignItems: "center" }}>
+                  <div className="scm-icon-name" style={{ fontWeight: 600 }}>
                     {cwd.split(/[\\/]/).pop()}
                   </div>
-                  <div
-                    className="monaco-icon-description-container"
-                    style={{ display: "flex", alignItems: "center", opacity: 0.7 }}
-                  >
+                  <div className="scm-icon-description" style={{ display: "flex", alignItems: "center", opacity: 0.7 }}>
                     <i className="codicon codicon-git-branch" style={{ marginRight: 4, fontSize: 12 }}></i>
                     {currentBranch}
                   </div>
@@ -477,11 +473,11 @@ export function GitPanel({ cwd, onOpenFile, onClose: _onClose }: GitPanelProps) 
               <i className={`codicon codicon-chevron-${expanded.scm ? "down" : "right"}`}></i>
               <span>{t("sourceControl")}</span>
             </div>
-            {files.length > 0 && <span className="monaco-count-badge">{files.length}</span>}
+            {files.length > 0 && <span className="scm-count-badge">{files.length}</span>}
           </div>
 
           {expanded.scm && (
-            <div className="monaco-list">
+            <div className="scm-list">
               {/* Commit Input Box */}
               <div style={{ padding: "0 12px 12px 12px" }}>
                 <div
@@ -606,11 +602,11 @@ export function GitPanel({ cwd, onOpenFile, onClose: _onClose }: GitPanelProps) 
                   {t("noChangesDetected")}
                 </div>
               ) : (
-                <div className="monaco-list">
+                <div className="scm-list">
                   {/* STAGED CHANGES GROUP */}
                   {stagedFiles.length > 0 && (
                     <>
-                      <div className="monaco-list-row" onClick={() => toggleSection("staged")}>
+                      <div className="scm-list-row" onClick={() => toggleSection("staged")}>
                         <div
                           className="resource-group"
                           style={{
@@ -639,7 +635,7 @@ export function GitPanel({ cwd, onOpenFile, onClose: _onClose }: GitPanelProps) 
                               <i className="codicon codicon-remove"></i>
                             </div>
                           </div>
-                          <div className="count monaco-count-badge">{stagedFiles.length}</div>
+                          <div className="count scm-count-badge">{stagedFiles.length}</div>
                         </div>
                       </div>
 
@@ -695,7 +691,7 @@ export function GitPanel({ cwd, onOpenFile, onClose: _onClose }: GitPanelProps) 
                   {/* CHANGES GROUP */}
                   {changesFiles.length > 0 && (
                     <>
-                      <div className="monaco-list-row" onClick={() => toggleSection("changes")}>
+                      <div className="scm-list-row" onClick={() => toggleSection("changes")}>
                         <div
                           className="resource-group"
                           style={{
@@ -722,7 +718,7 @@ export function GitPanel({ cwd, onOpenFile, onClose: _onClose }: GitPanelProps) 
                               <i className="codicon codicon-add"></i>
                             </div>
                           </div>
-                          <div className="count monaco-count-badge">{changesFiles.length}</div>
+                          <div className="count scm-count-badge">{changesFiles.length}</div>
                         </div>
                       </div>
 
@@ -787,11 +783,11 @@ export function GitPanel({ cwd, onOpenFile, onClose: _onClose }: GitPanelProps) 
               <i className={`codicon codicon-chevron-${expanded.graph ? "down" : "right"}`}></i>
               <span>{t("graph")}</span>
             </div>
-            {graphNodes.length > 0 && <span className="monaco-count-badge">{graphNodes.length}</span>}
+            {graphNodes.length > 0 && <span className="scm-count-badge">{graphNodes.length}</span>}
           </div>
 
           {expanded.graph && (
-            <div className="monaco-list">
+            <div className="scm-list">
               {viewModels.length === 0 ? (
                 <div style={{ padding: "16px 12px", textAlign: "center", opacity: 0.6, fontSize: "12px" }}>
                   {t("noCommitsInGraph")}
@@ -802,9 +798,9 @@ export function GitPanel({ cwd, onOpenFile, onClose: _onClose }: GitPanelProps) 
                   const isSelected = selectedCommit?.id === node.id;
 
                   return (
-                    <div key={node.id} style={{ display: "flex", flexDirection: "column" }}>
+                    <div key={node.id} className="scm-graph-item">
                       <div
-                        className={`monaco-list-row ${isSelected ? "selected" : ""}`}
+                        className={`scm-list-row ${isSelected ? "selected" : ""}`}
                         onMouseEnter={(e) => handleCommitHover(node, e)}
                         onMouseLeave={handleCommitLeave}
                         onClick={async () => {
@@ -820,10 +816,11 @@ export function GitPanel({ cwd, onOpenFile, onClose: _onClose }: GitPanelProps) 
                         }}
                         style={{ paddingLeft: 4, paddingRight: 4 }}
                       >
-                        <div className="history-item" style={{ display: "flex", width: "100%", alignItems: "center" }}>
+                        <div className="history-item scm-graph-row">
                           <GraphRow viewModel={vm} />
 
                           <div
+                            className="scm-graph-summary-wrap"
                             style={{
                               display: "flex",
                               alignItems: "center",
@@ -834,6 +831,7 @@ export function GitPanel({ cwd, onOpenFile, onClose: _onClose }: GitPanelProps) 
                             }}
                           >
                             <span
+                              className="scm-graph-summary"
                               style={{
                                 flex: 1,
                                 whiteSpace: "nowrap",
@@ -847,51 +845,12 @@ export function GitPanel({ cwd, onOpenFile, onClose: _onClose }: GitPanelProps) 
                           </div>
 
                           {/* Ref Tags */}
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              marginLeft: "auto",
-                              flexShrink: 0,
-                              gap: 4,
-                              paddingRight: 4,
-                              maxWidth: "240px",
-                              overflow: "hidden",
-                            }}
-                          >
-                            {node.isHead && (
-                              <span
-                                className="scm-ref-pill head"
-                                title={currentBranch}
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  padding: "1px 6px",
-                                  fontSize: 10,
-                                  borderRadius: 10,
-                                  backgroundColor: "var(--bg-3)",
-                                  color: "var(--fg)",
-                                  border: "1px solid var(--line)",
-                                  maxWidth: "120px",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                <i
-                                  className="codicon codicon-target"
-                                  style={{ fontSize: 10, marginRight: 2, color: "#68d391", flexShrink: 0 }}
-                                ></i>
-                                <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{currentBranch}</span>
-                              </span>
-                            )}
-                            {node.refNames.map((ref) => {
-                              if (ref.includes(currentBranch) && node.isHead) return null;
-                              const isRemote = ref.startsWith("origin/") || ref.includes("/");
-                              return (
+                          {(node.isHead || node.refNames.length > 0) && (
+                            <div className="scm-ref-list">
+                              {node.isHead && (
                                 <span
-                                  key={ref}
-                                  title={ref}
+                                  className="scm-ref-pill head"
+                                  title={currentBranch}
                                   style={{
                                     display: "inline-flex",
                                     alignItems: "center",
@@ -899,7 +858,7 @@ export function GitPanel({ cwd, onOpenFile, onClose: _onClose }: GitPanelProps) 
                                     fontSize: 10,
                                     borderRadius: 10,
                                     backgroundColor: "var(--bg-3)",
-                                    color: isRemote ? "#b794f4" : "#63b3ed",
+                                    color: "var(--fg)",
                                     border: "1px solid var(--line)",
                                     maxWidth: "120px",
                                     overflow: "hidden",
@@ -908,14 +867,32 @@ export function GitPanel({ cwd, onOpenFile, onClose: _onClose }: GitPanelProps) 
                                   }}
                                 >
                                   <i
-                                    className="codicon codicon-git-branch"
-                                    style={{ fontSize: 10, marginRight: 2, flexShrink: 0 }}
+                                    className="codicon codicon-target"
+                                    style={{ fontSize: 10, marginRight: 2, color: "#68d391", flexShrink: 0 }}
                                   ></i>
-                                  <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{ref}</span>
+                                  <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{currentBranch}</span>
                                 </span>
-                              );
-                            })}
-                          </div>
+                              )}
+                              {node.refNames.map((ref) => {
+                                if (ref.includes(currentBranch) && node.isHead) return null;
+                                const isRemote = ref.startsWith("origin/") || ref.includes("/");
+                                return (
+                                  <span
+                                    key={ref}
+                                    className="scm-ref-pill"
+                                    title={ref}
+                                    style={{ color: isRemote ? "#b794f4" : "#63b3ed" }}
+                                  >
+                                    <i
+                                      className="codicon codicon-git-branch"
+                                      style={{ fontSize: 10, marginRight: 2, flexShrink: 0 }}
+                                    ></i>
+                                    <span>{ref}</span>
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       </div>
 

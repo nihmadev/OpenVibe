@@ -204,7 +204,9 @@ pub async fn generate_commit_message(state: tauri::State<'_, crate::AppState>, p
 
     let llm_config = cfg.to_agent_config().llm_config();
     let cancel = std::sync::atomic::AtomicBool::new(false);
-    let client = reqwest::Client::new();
+    // Reuse the shared pooled client: a fresh Client here paid a full
+    // DNS + TCP + TLS handshake on every commit-message generation.
+    let client = state.http_client.clone();
 
     let system_prompt = "You are an expert Git commit message generator. Analyze the provided git diff of staged changes and generate a concise conventional commit message (e.g. feat(scope): message, fix(scope): message, docs: message, etc.).\nRULES:\n1. Return ONLY the raw commit message text.\n2. Do NOT wrap in markdown backticks or code blocks.\n3. Do NOT add explanation, greetings, or conversation.\n4. Keep the title line concise (under 72 chars).";
 
