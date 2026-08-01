@@ -270,24 +270,24 @@ jobs:
           git push --force origin "$TAG"
 
       - name: Download SHA256 summaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: sha256-*
 
       - name: Download Windows artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: openvibe-windows-x64
           path: release-binaries
 
       - name: Download Linux artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: openvibe-linux-x64
           path: release-binaries
 
       - name: Download macOS artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: openvibe-macos-arm64
           path: release-binaries
