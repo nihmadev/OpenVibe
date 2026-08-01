@@ -76,7 +76,7 @@ jobs:
           components: clippy, rustfmt
 
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        uses: mozilla-actions/sccache-action@v0.0.11
 
       - name: Cache Cargo artifacts
         uses: Swatinem/rust-cache@v2
@@ -146,7 +146,7 @@ jobs:
           target: ${{ matrix.target }}
 
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        uses: mozilla-actions/sccache-action@v0.0.11
 
       - name: Cache Cargo artifacts
         uses: Swatinem/rust-cache@v2
