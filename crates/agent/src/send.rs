@@ -163,7 +163,6 @@ impl Agent {
         if self.cancel.load(Ordering::Relaxed) {
             self.cancel.store(false, Ordering::Relaxed);
             emit("vibe:agent:stopped", serde_json::Value::Null);
-            emit("vibe:agent:busy", serde_json::json!({"busy": false}));
             return;
         }
 
@@ -602,13 +601,19 @@ impl Agent {
                     let is_ok = result.is_ok();
                     let result_text = result.unwrap_or_else(tool_error_hint);
 
-                    // Store snapshot if file was modified
-                    if let Some(snap) = snapshot {
-                        let msg_idx = self.messages.len();
-                        self.file_snapshots.push(crate::snapshot::SnapshotEntry {
-                            message_index: msg_idx,
-                            snapshot: snap,
-                        });
+                    // Keep the exact before/after pair for the review UI.
+                    if is_ok {
+                        if let Some(snap) = snapshot {
+                            let after_content = std::fs::read_to_string(&snap.path).ok();
+                            let msg_idx = self.messages.len();
+                            self.file_snapshots.push(crate::snapshot::SnapshotEntry {
+                                message_index: msg_idx,
+                                tool_call_id: call.id.clone(),
+                                snapshot: snap,
+                                after_content,
+                                status: crate::snapshot::AgentChangeStatus::Pending,
+                            });
+                        }
                     }
 
                     emit(
@@ -634,6 +639,5 @@ impl Agent {
 
         // Reset cancel flag for the next send cycle
         self.cancel.store(false, Ordering::Relaxed);
-        emit("vibe:agent:busy", serde_json::json!({"busy": false}));
     }
 }

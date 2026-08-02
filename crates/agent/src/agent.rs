@@ -144,6 +144,12 @@ impl Agent {
         self.messages = new_msgs;
     }
 
+    pub fn set_chat_state(&mut self, msgs: Vec<ChatMessage>, file_snapshots: Vec<SnapshotEntry>) {
+        self.set_messages(msgs);
+        self.file_snapshots = file_snapshots;
+        self.undo_state = None;
+    }
+
     pub fn get_messages(&self) -> &[ChatMessage] {
         &self.messages
     }

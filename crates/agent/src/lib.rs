@@ -25,5 +25,7 @@ pub use events::{
     BusyEvent, ChunkEvent, ErrorEvent, ToolCallEvent, ToolDeniedEvent, ToolResultEvent, UserEvent,
 };
 pub use executor::ToolExecutor;
-pub use snapshot::{FileSnapshot, RollbackPreview, SnapshotEntry, UndoState};
+pub use snapshot::{
+    AgentChangeStatus, AgentFileChange, FileSnapshot, RollbackPreview, SnapshotEntry, UndoState,
+};
 pub use sub_trace::{get_sub_trace, store_sub_event, SubTraceEvent};
