@@ -1,0 +1,299 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { modelsGateway, providersGateway } from "@/features/providers/infrastructure/providersGateway";
+import type { Provider } from "@/features/providers/model/provider";
+import { getProviderIconPath, PROVIDER_TEMPLATES } from "@/features/providers/model/providerTemplates";
+import { useI18n } from "@/shared/i18n/useI18n";
+import { AttachPlusIcon, CheckIcon, ChevronDownIcon, FilterIcon, SearchMiniIcon } from "@/shared/icons/icons";
+import { useTheme } from "@/shared/themes/useTheme";
+import { Input, List, ListGroup, ListItem } from "@/shared/ui/kit";
+
+interface ModelEntry {
+  id: string;
+  name: string;
+  providerDbId: string;
+}
+
+interface ModelGroup {
+  providerDbId: string;
+  providerId: string;
+  providerName: string;
+  providerApiKey: string;
+  providerBaseUrl: string;
+  models: ModelEntry[];
+}
+
+interface ModelSelectorProps {
+  currentModel: string;
+  onPickModel: (id: string, providerDbId?: string) => void;
+  onOpenSettings: (tab?: string) => void;
+}
+
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes — model lists rarely change
+const CACHE_KEY_PREFIX = "models:";
+
+function loadCache(): Map<string, { models: { id: string; name: string }[]; expires: number }> {
+  const cache = new Map<string, { models: { id: string; name: string }[]; expires: number }>();
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(CACHE_KEY_PREFIX)) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          cache.set(key.slice(CACHE_KEY_PREFIX.length), parsed);
+        }
+      }
+    }
+  } catch {
+    /* ignore corrupt localStorage */
+  }
+  return cache;
+}
+
+function saveCache(key: string, models: { id: string; name: string }[], expires: number): void {
+  try {
+    localStorage.setItem(CACHE_KEY_PREFIX + key, JSON.stringify({ models, expires }));
+  } catch {
+    /* localStorage full or unavailable */
+  }
+}
+
+const memCache = new Map<string, { models: { id: string; name: string }[]; expires: number }>();
+let diskCacheLoaded = false;
+
+function useModelGroups() {
+  const [groups, setGroups] = useState<ModelGroup[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Load localStorage cache on first fetch
+      if (!diskCacheLoaded) {
+        const disk = loadCache();
+        for (const [k, v] of disk) memCache.set(k, v);
+        diskCacheLoaded = true;
+      }
+
+      const [providers, enabledIds] = await Promise.all([
+        providersGateway.list() as Promise<Provider[]>,
+        modelsGateway.listEnabled() as Promise<string[]>,
+      ]);
+      const enabled = new Set(enabledIds);
+      const connected = providers.filter((p) => p.apiKey);
+      if (connected.length === 0 || enabled.size === 0) {
+        setGroups([]);
+        return;
+      }
+
+      const now = Date.now();
+      const results: ModelGroup[] = [];
+      await Promise.allSettled(
+        connected.map(async (p) => {
+          const template = PROVIDER_TEMPLATES.find(
+            (t) => p.baseUrl && t.baseUrl && p.baseUrl.startsWith(t.baseUrl.replace(/\/+$/, "")),
+          );
+          const providerId = template?.id ?? p.id;
+          const providerName = template?.name ?? p.name;
+          const providerDbId = p.id;
+          const cacheKey = `${providerId}:${p.baseUrl}`;
+
+          let models: { id: string; name: string }[];
+          const cached = memCache.get(cacheKey);
+          if (cached && cached.expires > now) {
+            models = cached.models;
+          } else {
+            const res = await modelsGateway.fetch(p.baseUrl, p.apiKey, providerId);
+            if (!res.ok) return;
+            models = res.models;
+            const expires = now + CACHE_TTL;
+            memCache.set(cacheKey, { models, expires });
+            saveCache(cacheKey, models, expires);
+          }
+
+          // Filter to only show models enabled for THIS specific provider
+          const enabledModels: ModelEntry[] = models
+            .filter((m) => enabled.has(`${providerDbId}::${m.id}`) || enabled.has(m.id))
+            .map((m) => ({ ...m, providerDbId }));
+          if (enabledModels.length > 0) {
+            results.push({
+              providerDbId,
+              providerId,
+              providerName,
+              providerApiKey: p.apiKey,
+              providerBaseUrl: p.baseUrl,
+              models: enabledModels,
+            });
+          }
+        }),
+      );
+      setGroups(results);
+    } catch {
+      setGroups([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { groups, loading, fetch };
+}
+
+export function ModelSelector({ currentModel, onPickModel, onOpenSettings }: ModelSelectorProps) {
+  const { t } = useI18n();
+  const { resolvedScheme } = useTheme();
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const { groups, loading, fetch } = useModelGroups();
+  const selRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  useEffect(() => {
+    if (open) {
+      fetch().then(() => {
+        inputRef.current?.focus();
+      });
+    } else {
+      setSearch("");
+    }
+  }, [open, fetch]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (selRef.current && !selRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    document.addEventListener("keydown", keyHandler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("keydown", keyHandler);
+    };
+  }, [open]);
+
+  const filtered = useMemo(() => {
+    if (!search) return groups;
+    const q = search.toLowerCase();
+    return groups
+      .map((g) => ({
+        ...g,
+        models: g.models.filter((m) => m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q)),
+      }))
+      .filter((g) => g.models.length > 0);
+  }, [groups, search]);
+
+  function toggleGroupCollapse(key: string): void {
+    setCollapsedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  const activeModelName = useMemo(() => {
+    for (const g of groups) {
+      const m = g.models.find((m) => m.id === currentModel);
+      if (m) return m.name;
+    }
+    return currentModel || t("selectModelFallback");
+  }, [groups, currentModel, t]);
+
+  return (
+    <div className="model-selector" ref={selRef}>
+      <button type="button" className="model-selector__trigger" onClick={() => setOpen((v) => !v)}>
+        <span className="model-selector__trigger-name">{activeModelName}</span>
+        <ChevronDownIcon />
+      </button>
+
+      {open && (
+        <div className="model-selector__popup" style={{ width: 260 }}>
+          <div className="model-selector__header">
+            <div className="model-selector__search" style={{ flex: 1, marginRight: 8 }}>
+              <Input
+                ref={inputRef}
+                type="text"
+                icon={<SearchMiniIcon />}
+                placeholder={t("searchModelPlaceholder")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="model-selector__actions">
+              <button
+                className="model-selector__action-btn"
+                title={t("addProvider")}
+                onClick={() => {
+                  setOpen(false);
+                  onOpenSettings("providers");
+                }}
+              >
+                <AttachPlusIcon />
+              </button>
+              <button
+                className="model-selector__action-btn"
+                title={t("configureModels")}
+                onClick={() => {
+                  setOpen(false);
+                  onOpenSettings("models");
+                }}
+              >
+                <FilterIcon />
+              </button>
+            </div>
+          </div>
+
+          <div className="model-selector__body">
+            {loading ? (
+              <div className="model-selector__empty">{t("loadingModels")}</div>
+            ) : filtered.length === 0 ? (
+              <div className="model-selector__empty">{search ? t("noModelsFound") : t("noModelsEnabled")}</div>
+            ) : (
+              <List>
+                {filtered.map((group) => {
+                  const isCollapsed = !!collapsedGroups[group.providerDbId];
+                  const tmpl = PROVIDER_TEMPLATES.find((t) => t.id === group.providerId);
+                  const groupIcon = tmpl ? (
+                    <img
+                      src={getProviderIconPath(tmpl.icon, resolvedScheme === "light")}
+                      style={{ width: 14, height: 14 }}
+                      alt=""
+                    />
+                  ) : undefined;
+
+                  return (
+                    <ListGroup
+                      key={group.providerDbId}
+                      title={group.providerName}
+                      icon={groupIcon}
+                      expanded={!isCollapsed}
+                      onToggle={() => toggleGroupCollapse(group.providerDbId)}
+                    >
+                      {group.models.map((m) => (
+                        <ListItem
+                          key={`${group.providerDbId}::${m.id}`}
+                          active={m.id === currentModel}
+                          onClick={() => {
+                            onPickModel(m.id, group.providerDbId);
+                            setOpen(false);
+                          }}
+                          rightIcon={m.id === currentModel ? <CheckIcon /> : undefined}
+                        >
+                          {m.name}
+                        </ListItem>
+                      ))}
+                    </ListGroup>
+                  );
+                })}
+              </List>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
