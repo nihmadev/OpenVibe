@@ -7,7 +7,8 @@
 <p align="center">
   <a href="https://github.com/nihmadev/OpenVibe">GitHub</a> ·
   <a href="mailto:lolz@nihmadev.fun">lolz@nihmadev.fun</a> ·
-  <a href="README.md">English Version</a>
+  <a href="README.md">English</a> ·
+  <a href="README-ZH-TW.md">繁體中文</a>
 </p>
 
 <p align="center">
