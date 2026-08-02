@@ -1,0 +1,42 @@
+.fatal-error {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.fatal-error__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: var(--space-8);
+}
+
+.fatal-error__title {
+  color: var(--fg);
+  font-size: var(--text-lg);
+  font-weight: 500;
+}
+
+.fatal-error__message {
+  color: var(--fg-dim);
+  max-width: 540px;
+  white-space: pre-wrap;
+  font-size: var(--text-sm);
+}
+
+.fatal-error__hint {
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+}
+
+.fatal-error__code {
+  color: var(--fg);
+  border: 1px solid var(--line);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-xs);
+}
