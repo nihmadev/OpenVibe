@@ -1,28 +1,20 @@
-import type { VibeEvent } from "../types.js";
+import type { AgentEvent } from "@/features/agent/model/agentEvents";
+import type { VibeConfig } from "@/features/providers/model/provider";
 
 export let activeChatId: string | null = null;
 export function setActiveChatId(id: string | null) {
   activeChatId = id;
 }
 
-export let currentConfig: {
-  model: string;
-  baseUrl: string;
-  cwd: string;
-  autoApprove: boolean;
-  apiKey: string;
-  apiUrl?: string;
-  providerId?: string;
-  reasoningEffort?: string;
-} | null = null;
-export function setCurrentConfig(cfg: typeof currentConfig) {
+export let currentConfig: VibeConfig | null = null;
+export function setCurrentConfig(cfg: VibeConfig | null) {
   currentConfig = cfg;
 }
 
-export const eventListeners: Array<(e: VibeEvent) => void> = [];
+export const eventListeners: Array<(e: AgentEvent) => void> = [];
 export const busyListeners: Array<(b: boolean) => void> = [];
 
-export function emitEvent(e: VibeEvent) {
+export function emitEvent(e: AgentEvent) {
   for (const cb of eventListeners) cb(e);
 }
 export function emitBusy(b: boolean) {
