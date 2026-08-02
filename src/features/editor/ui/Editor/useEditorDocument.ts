@@ -1,0 +1,178 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { fsApi } from "@/features/files/infrastructure/fsGateway";
+import { getLanguage } from "@/shared/icons/utils";
+import type { MonacoLspSession } from "../../infrastructure/monacoLspClient";
+import { scg2Tracker } from "../../infrastructure/scg2Tracker";
+import { loadTypeDefinitions, MODEL_CACHE, preloadLocalImports } from "./editorModels";
+import type { EditorRefs } from "./editorTypes";
+
+interface DocumentOptions {
+  path: string;
+  cwd?: string;
+  onDirtyChange?: (dirty: boolean) => void;
+  cleanupInlineSession: () => void;
+  refs: EditorRefs;
+  lspSessionRef: React.MutableRefObject<MonacoLspSession | null>;
+}
+
+export function useEditorDocument({
+  path,
+  cwd,
+  onDirtyChange,
+  cleanupInlineSession,
+  refs,
+  lspSessionRef,
+}: DocumentOptions) {
+  const initialCached = MODEL_CACHE.get(path);
+  const [content, setContent] = useState<string | null>(() => initialCached?.model.getValue() ?? null);
+  const [original, setOriginal] = useState(() => initialCached?.originalContent ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const dirty = content !== null && content !== original;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      setError(null);
+      cleanupInlineSession();
+      const cached = MODEL_CACHE.get(path);
+
+      if (cached) {
+        setContent(cached.model.getValue());
+        setOriginal(cached.originalContent);
+        if (refs.editor.current && refs.editor.current.getModel() !== cached.model) {
+          refs.editor.current.setModel(cached.model);
+        }
+      }
+
+      const result = await fsApi.read(path);
+      if (cancelled) return;
+      if (!result.ok) {
+        if (!cached) setError(result.error);
+        return;
+      }
+
+      const m = refs.monaco.current;
+      const uri = m?.Uri.file(path.replace(/\\/g, "/"));
+      let model = uri ? m?.editor.getModel(uri) : null;
+      if (m && uri && !model) {
+        try {
+          model = m.editor.createModel(result.content, getLanguage(path), uri);
+        } catch {
+          model = m.editor.getModel(uri);
+        }
+      }
+
+      if (model) {
+        MODEL_CACHE.set(path, { model, originalContent: result.content });
+        if (refs.editor.current && refs.editor.current.getModel() !== model) refs.editor.current.setModel(model);
+      }
+
+      if (!cached) {
+        setContent(result.content);
+        setOriginal(result.content);
+      } else if (cached.model.getValue() === cached.originalContent && cached.originalContent !== result.content) {
+        cached.originalContent = result.content;
+        cached.model.setValue(result.content);
+        setContent(result.content);
+        setOriginal(result.content);
+      }
+
+      if (m && cwd) {
+        void loadTypeDefinitions(m, cwd);
+        void preloadLocalImports(m, result.content, path);
+      }
+      scg2Tracker.updateActivePath(path);
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [path, cwd, cleanupInlineSession, refs]);
+
+  useEffect(() => {
+    const handleAgentFileChanged = (event: Event) => {
+      if ((event as CustomEvent<string>).detail !== path) return;
+      void fsApi.read(path).then((result) => {
+        if (!result.ok) return;
+        const cached = MODEL_CACHE.get(path);
+        if (cached && cached.model.getValue() !== cached.originalContent) return;
+        if (cached) {
+          cached.originalContent = result.content;
+          cached.model.setValue(result.content);
+        }
+        setContent(result.content);
+        setOriginal(result.content);
+      });
+    };
+    window.addEventListener("vibe:agent-file-changed", handleAgentFileChanged);
+    return () => window.removeEventListener("vibe:agent-file-changed", handleAgentFileChanged);
+  }, [path]);
+
+  const previousDirty = useRef(false);
+  useEffect(() => {
+    if (previousDirty.current !== dirty) {
+      previousDirty.current = dirty;
+      onDirtyChange?.(dirty);
+    }
+  }, [dirty, onDirtyChange]);
+
+  const save = useCallback(async () => {
+    if (content === null || saving || !dirty) return;
+    setSaving(true);
+    try {
+      const result = await fsApi.write(path, content);
+      if (!result.ok) setError(result.error);
+      else {
+        const cached = MODEL_CACHE.get(path);
+        if (cached) cached.originalContent = content;
+        setOriginal(content);
+        lspSessionRef.current?.didSave();
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Failed to save file");
+    } finally {
+      setSaving(false);
+    }
+  }, [content, dirty, lspSessionRef, path, saving]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && (event.key.toLowerCase() === "s" || event.code === "KeyS")) {
+        event.preventDefault();
+        void save();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [save]);
+
+  const retry = useCallback(() => {
+    setError(null);
+    setContent(null);
+  }, []);
+
+  return { content, original, error, setContent, retry };
+}
+
+export function useEditorNavigation(
+  refs: EditorRefs,
+  gotoLine?: number,
+  gotoColumn?: number,
+  gotoMatchLength?: number,
+): void {
+  useEffect(() => {
+    const editor = refs.editor.current;
+    const m = refs.monaco.current;
+    if (!editor || gotoLine === undefined) return;
+    const column = gotoColumn ?? 1;
+    editor.revealLineInCenter(gotoLine);
+    editor.setPosition({ lineNumber: gotoLine, column });
+    if (m && gotoColumn !== undefined && gotoMatchLength !== undefined) {
+      editor.setSelection(new m.Range(gotoLine, column, gotoLine, column + gotoMatchLength));
+    }
+    editor.focus();
+  }, [refs, gotoLine, gotoColumn, gotoMatchLength]);
+}
