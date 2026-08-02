@@ -1,0 +1,164 @@
+.ftree {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-size: var(--text-sm);
+}
+
+.ftree__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--line);
+  gap: var(--space-4);
+}
+
+.ftree__root {
+  color: var(--fg);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ftree__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ftree__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2) 0;
+  scrollbar-width: none;
+}
+
+.ftree__body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.ftree__error {
+  color: var(--red);
+  padding: var(--space-4);
+}
+
+.ftree__loading {
+  color: var(--fg-muted);
+  padding: var(--space-4);
+  font-style: italic;
+  animation: pulse 2s infinite;
+}
+
+.ftree__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-4);
+  cursor: pointer;
+  user-select: none;
+  color: var(--fg-dim);
+  white-space: nowrap;
+  transition:
+    background var(--duration-fast),
+    color var(--duration-fast);
+  position: relative;
+}
+
+.ftree__row:hover {
+  background: var(--bg-2);
+  color: var(--fg);
+}
+
+.ftree__row--active {
+  background: var(--bg-2);
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.ftree__row--cut {
+  opacity: 0.4;
+}
+
+.ftree__row--drop {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ftree__chev {
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ftree__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ftree__name--dir {
+  font-weight: 500;
+}
+
+.ftree__compact-segment {
+  cursor: pointer;
+}
+
+.ftree__compact-segment:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ftree__rename-control {
+  flex: 1;
+  min-width: 0;
+}
+.ftree__rename-wrap {
+  min-width: 0;
+  padding: 1px var(--space-2);
+  border-radius: 2px;
+  background: var(--bg-2);
+  border-color: var(--line-strong);
+}
+.ftree__rename-wrap .ui-input-icon {
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.ftree__rename {
+  min-width: 0;
+  font: inherit;
+  background: transparent;
+}
+
+.ftree__subtree {
+  display: none;
+}
+
+.ftree__subtree--open {
+  display: block;
+}
+
+.ftree__subtree-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.ftree__line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  z-index: 1;
+}
+
+.ftree__line--active {
+  background: rgba(255, 255, 255, 0.15);
+}
