@@ -1,0 +1,41 @@
+.fbadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-md);
+  color: var(--fg-dim);
+  font-family: var(--mono);
+}
+
+.fbadge__icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  user-select: none;
+  opacity: 0.75;
+}
+
+.fbadge__dir {
+  font-size: var(--text-md);
+  line-height: 1;
+  opacity: 0.75;
+}
+
+.fbadge__name {
+  font-size: var(--text-md);
+}
+
+.fbadge--clickable {
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  transition:
+    color var(--duration-fast),
+    background var(--duration-fast);
+}
+
+.fbadge--clickable:hover,
+.fbadge--clickable:focus-visible {
+  color: var(--fg);
+  background: var(--bg-3);
+  outline: none;
+}

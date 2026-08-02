@@ -1,0 +1,426 @@
+import type React from "react";
+import { useEffect, useMemo, useState } from "react";
+import { resolveMonacoLang } from "@/features/editor/ui/CodeBlock/CodeBlock";
+import { DiffEditor } from "@/features/editor/ui/DiffEditor/DiffEditor";
+import { fsApi } from "@/features/files/infrastructure/fsGateway";
+import { writeClipboard } from "@/infrastructure/clipboard";
+import { useI18n } from "@/shared/i18n/useI18n";
+import { FileIcon } from "@/shared/icons/file-icons";
+import { CheckCircleIcon, ChevronRightIcon, CircularProgress, CopyCheckIcon, DiffIcon } from "@/shared/icons/icons";
+import { ContextMenu } from "@/shared/ui/ContextMenu/ContextMenu";
+import { Tooltip } from "@/shared/ui/Tooltip/Tooltip";
+import { agentGateway } from "../../../infrastructure/agentGateway";
+import type { HistoryItem } from "../../../model/history";
+import { getEditStrings, getFilePathFromArgs, pickFile, toRelativePath } from "../../../model/historyUtils";
+
+interface FileChangeInfo {
+  filePath: string;
+  added: number;
+  removed: number;
+  items: HistoryItem[];
+}
+
+function getFileChanges(items: HistoryItem[], currentId: string): FileChangeInfo[] {
+  const idx = items.findIndex((it) => it.id === currentId);
+  if (idx <= 0) return [];
+
+  const changesMap = new Map<string, FileChangeInfo>();
+
+  for (let i = idx - 1; i >= 0; i--) {
+    const it = items[i]!;
+    if (it.kind === "user") break;
+    if (it.kind !== "tool" || it.ok !== true) continue;
+
+    const path = getFilePathFromArgs(it.toolArgs);
+    if (!path) continue;
+
+    const { oldStr, newStr } = getEditStrings(it.toolArgs);
+    const isWrite = it.toolName === "write_file" || it.toolName === "write_to_file";
+    const isEdit =
+      it.toolName === "edit_file" ||
+      it.toolName === "replace_file_content" ||
+      it.toolName === "multi_replace_file_content";
+    if (!isWrite && !isEdit && !oldStr && !newStr) continue;
+
+    const added = newStr.split("\n").filter(Boolean).length;
+    const removed = isWrite ? 0 : oldStr.split("\n").filter(Boolean).length;
+
+    const existing = changesMap.get(path);
+    if (existing) {
+      existing.added += added;
+      existing.removed += removed;
+      existing.items.push(it);
+    } else {
+      changesMap.set(path, {
+        filePath: path,
+        added,
+        removed,
+        items: [it],
+      });
+    }
+  }
+
+  const result = Array.from(changesMap.values()).reverse();
+  for (const change of result) {
+    change.items.reverse();
+  }
+  return result;
+}
+
+function FileChangeRow({
+  change,
+  cwd,
+  onOpenAgentDiff,
+}: {
+  change: FileChangeInfo;
+  cwd?: string;
+  onOpenAgentDiff?: (toolCallId: string, path: string) => void;
+}) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const [diffData, setDiffData] = useState<{ original: string; modified: string; lang: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const relPath = toRelativePath(change.filePath, cwd);
+  const lastItem = change.items[change.items.length - 1];
+  const info = pickFile(lastItem?.toolArgs);
+  const handleOpen = () => {
+    if (onOpenAgentDiff && lastItem) {
+      onOpenAgentDiff(lastItem.id, change.filePath);
+    } else {
+      setOpen(!open);
+    }
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    if (diffData !== null) return;
+    setLoading(true);
+
+    const reverseItems = [...change.items].reverse();
+    const absPath =
+      cwd && !change.filePath.startsWith("/") && !change.filePath.includes(":")
+        ? `${cwd.replace(/\\/g, "/").replace(/\/$/, "")}/${change.filePath.replace(/\\/g, "/")}`
+        : change.filePath;
+
+    fsApi
+      .read(absPath)
+      .then((r) => {
+        if (r.ok) {
+          const modified = r.content;
+          let original = modified;
+
+          for (const item of reverseItems) {
+            const isWrite = item.toolName === "write_file" || item.toolName === "write_to_file";
+            if (isWrite) {
+              original = "";
+            } else {
+              const { oldStr, newStr } = getEditStrings(item.toolArgs);
+              if (newStr) {
+                const pos = original.lastIndexOf(newStr);
+                if (pos !== -1) {
+                  original = original.slice(0, pos) + oldStr + original.slice(pos + newStr.length);
+                } else if (oldStr) {
+                  const firstPos = original.indexOf(newStr);
+                  if (firstPos !== -1) {
+                    original = original.slice(0, firstPos) + oldStr + original.slice(firstPos + newStr.length);
+                  }
+                }
+              }
+            }
+          }
+
+          const lang = resolveMonacoLang(info?.ext || "plaintext");
+          setDiffData({ original, modified, lang });
+        } else {
+          const last = reverseItems[0];
+          const { oldStr, newStr } = getEditStrings(last?.toolArgs);
+          const lang = resolveMonacoLang(info?.ext || "plaintext");
+          setDiffData({ original: oldStr, modified: newStr, lang });
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        const last = reverseItems[0];
+        const { oldStr, newStr } = getEditStrings(last?.toolArgs);
+        const lang = resolveMonacoLang(info?.ext || "plaintext");
+        setDiffData({ original: oldStr, modified: newStr, lang });
+        setLoading(false);
+      });
+  }, [open, change.filePath, change.items, diffData, info?.ext, cwd?.replace, cwd]);
+
+  return (
+    <div className="changes-pill">
+      <div
+        className={`changes-pill__bar${open ? " changes-pill__bar--open" : ""}`}
+        role="button"
+        tabIndex={0}
+        onClick={handleOpen}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleOpen();
+          }
+        }}
+      >
+        <span className="changes-pill__icon">
+          <FileIcon name={relPath} />
+        </span>
+        <span className="changes-pill__path">{relPath}</span>
+        <span className="changes-pill__stats">
+          <span className="tool__diff-add">+{change.added}</span>
+          <span className="tool__diff-remove">−{change.removed}</span>
+        </span>
+        <span className="changes-pill__chevron">
+          <ChevronRightIcon open={open} />
+        </span>
+      </div>
+      {open && (
+        <div className="changes-pill__diff">
+          {loading && <div className="tool__diff-loading">{t("loadingDiff")}</div>}
+          {!loading && diffData && (
+            <DiffEditor original={diffData.original} modified={diffData.modified} language={diffData.lang} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FileChangesSummary({
+  items,
+  currentId,
+  cwd,
+  onOpenAgentDiff,
+}: {
+  items: HistoryItem[];
+  currentId: string;
+  cwd?: string;
+  onOpenAgentDiff?: (toolCallId: string, path: string) => void;
+}) {
+  const { t } = useI18n();
+  const changes = useMemo(() => getFileChanges(items, currentId), [items, currentId]);
+
+  if (changes.length === 0) return null;
+
+  const totalAdded = changes.reduce((sum, c) => sum + c.added, 0);
+  const totalRemoved = changes.reduce((sum, c) => sum + c.removed, 0);
+
+  return (
+    <div className="changes-summary">
+      <div className="changes-summary__header">
+        <span>{t("filesChanged", { count: changes.length })}</span>
+        <span className="changes-summary__total">
+          <span className="tool__diff-add">+{totalAdded}</span>
+          <span className="tool__diff-remove">−{totalRemoved}</span>
+        </span>
+      </div>
+      <div className="changes-table">
+        {changes.map((change) => (
+          <FileChangeRow key={change.filePath} change={change} cwd={cwd} onOpenAgentDiff={onOpenAgentDiff} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Keep the normal copy action readable while Raw preserves the exact model output. */
+function toPlainText(markdown: string): string {
+  return markdown
+    .replace(/^\s*```[^\n]*\n/gm, "")
+    .replace(/^\s*```\s*$/gm, "")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/`([^`\n]+)`/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, "$1")
+    .replace(/(?<!_)_([^_\n]+)_(?!_)/g, "$1");
+}
+
+function formatRawTrace(items: HistoryItem[]): string {
+  return items
+    .map((entry) => {
+      if (entry.kind === "user") {
+        const sections = [`## User message: ${entry.id}`];
+        if (entry.text) sections.push(entry.text);
+        if (entry.attachments?.length) {
+          sections.push(`attachments: ${entry.attachments.map((a) => a.name).join(", ")}`);
+        }
+        return sections.join("\n");
+      }
+
+      if (entry.kind === "tool") {
+        const args = entry.toolArgs ?? (entry.toolStream ? entry.toolStream : undefined);
+        const argsText = typeof args === "string" ? args : JSON.stringify(args ?? {}, null, 2);
+        const sections = [
+          `## Tool call: ${entry.toolName ?? "unknown"}`,
+          `id: ${entry.id}`,
+          `status: ${entry.ok === false ? "failed" : entry.ok === true ? "ok" : "pending"}`,
+        ];
+        if (entry.startedAt) sections.push(`startedAt: ${entry.startedAt}`);
+        if (entry.completedAt) sections.push(`completedAt: ${entry.completedAt}`);
+        sections.push("arguments:", "```json", argsText, "```");
+        if (entry.text) {
+          sections.push("result:", entry.text);
+        } else {
+          sections.push("result: (empty)");
+        }
+        return sections.join("\n");
+      }
+
+      if (entry.kind === "assistant") {
+        const sections = [`## Assistant message: ${entry.id}`];
+        if (entry.reasoningName) sections.push(`reasoning name: ${entry.reasoningName}`);
+        if (entry.reasoning) sections.push(`<thinking>\n${entry.reasoning}\n</thinking>`);
+        if (entry.text) sections.push(entry.text);
+        return sections.join("\n\n");
+      }
+
+      if (entry.kind === "error") {
+        return [`## Error: ${entry.id}`, entry.text].join("\n");
+      }
+
+      if (entry.kind === "info") {
+        return [`## Info: ${entry.id}`, entry.text].join("\n");
+      }
+
+      return `## ${entry.kind}: ${entry.id}\n${entry.text}`;
+    })
+    .join("\n\n---\n\n");
+}
+
+export function MessageFooter({
+  item,
+  items,
+  runItems,
+  onRegenerate,
+  cwd,
+  onOpenAgentDiff,
+}: {
+  item: HistoryItem;
+  items: HistoryItem[];
+  runItems: HistoryItem[];
+  onRegenerate?: (id: string) => void;
+  cwd?: string;
+  onOpenAgentDiff?: (toolCallId: string, path: string) => void;
+}): React.ReactElement {
+  const { t } = useI18n();
+  const [copied, setCopied] = useState(false);
+  const [copyMenu, setCopyMenu] = useState<{ x: number; y: number } | null>(null);
+  const hasDiff = useMemo(() => {
+    const idx = items.findIndex((it) => it.id === item.id);
+    if (idx <= 0) return false;
+    for (let i = idx - 1; i >= 0; i--) {
+      const it = items[i]!;
+      if (it.kind === "user") break;
+      if (it.kind === "tool" && (it.toolName === "edit_file" || it.toolName === "write_file")) {
+        return true;
+      }
+    }
+    return false;
+  }, [item.id, items]);
+
+  const [contextUsage, setContextUsage] = useState(1);
+
+  useEffect(() => {
+    let cancelled = false;
+    agentGateway
+      .estimateContextTokens()
+      .then((result) => {
+        if (!cancelled) setContextUsage(result.percent);
+      })
+      .catch(() => {
+        if (!cancelled) setContextUsage(1);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const copyText = async (text: string) => {
+    const ok = await writeClipboard(text);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const openCopyMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setCopyMenu({ x: rect.right - 4, y: rect.bottom + 4 });
+  };
+
+  return (
+    <div className="msg__footer">
+      <div className="msg__separator" />
+      <FileChangesSummary items={items} currentId={item.id} cwd={cwd} onOpenAgentDiff={onOpenAgentDiff} />
+      <div className="msg__footer-content">
+        <div className="msg__footer-left">
+          <div className="msg__footer-item msg__footer-item--green">
+            <CheckCircleIcon />
+            <span>{t("completed")}</span>
+          </div>
+          <span className="msg__footer-sep">|</span>
+          {hasDiff && (
+            <>
+              <div className="msg__footer-item">
+                <DiffIcon />
+                <span>{t("diff")}</span>
+              </div>
+              <span className="msg__footer-sep">|</span>
+            </>
+          )}
+          <div className="msg__footer-item">
+            <div className="context-usage">
+              <CircularProgress percent={contextUsage} />
+              <span>{contextUsage}%</span>
+            </div>
+          </div>
+        </div>
+        <div className="msg__footer-right">
+          <Tooltip text={t("copy")}>
+            <button
+              className="ui-icon-btn ui-icon-btn--md msg__footer-btn"
+              onClick={openCopyMenu}
+              aria-label={t("copy")}
+              aria-haspopup="menu"
+              aria-expanded={copyMenu !== null}
+            >
+              <CopyCheckIcon copied={copied} />
+            </button>
+          </Tooltip>
+          <Tooltip text={t("regenerate")}>
+            <button className="ui-icon-btn ui-icon-btn--md msg__footer-btn" onClick={() => onRegenerate?.(item.id)}>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+            </button>
+          </Tooltip>
+        </div>
+      </div>
+      {copyMenu && (
+        <ContextMenu
+          x={copyMenu.x}
+          y={copyMenu.y}
+          onClose={() => setCopyMenu(null)}
+          items={[
+            { label: t("copyFormatted"), onClick: () => copyText(toPlainText(item.text)) },
+            { label: t("copyRaw"), onClick: () => copyText(formatRawTrace(runItems)) },
+          ]}
+        />
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,65 @@
+.subagent-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.subagent-view__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6) var(--space-7);
+}
+
+.subagent-view__chunk {
+  padding: var(--space-4) 0;
+  font-size: var(--text-lg);
+  color: var(--fg);
+  line-height: 1.5;
+}
+
+.subagent-view__info {
+  padding: var(--space-2) 0;
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+  font-style: italic;
+}
+
+.subagent-view__footer {
+  flex-shrink: 0;
+  padding: var(--space-4) var(--space-6);
+  background: var(--bg);
+}
+
+.subagent-view__bar {
+  display: flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--bg-2);
+}
+
+.subagent-view__bar-text {
+  font-size: var(--text-md);
+  color: #fff;
+}
+
+.subagent-view__bar-link {
+  display: inline;
+  padding: 0 0 0 var(--space-2);
+  border: none;
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+  font-size: var(--text-md);
+  font-family: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--fg-muted);
+  transition: color var(--duration-fast);
+}
+
+.subagent-view__bar-link:hover {
+  color: var(--fg);
+  text-decoration-color: var(--fg);
+}
