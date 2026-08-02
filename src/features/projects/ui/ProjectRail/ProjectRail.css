@@ -1,0 +1,248 @@
+.project-rail {
+  width: 52px;
+  min-width: 52px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: stretch;
+  padding: var(--space-5) 0;
+  gap: var(--space-3);
+  background: var(--bg);
+  z-index: 80;
+}
+
+.project-rail__top {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--fg-muted);
+  border-radius: var(--radius-md);
+  padding: 0;
+  margin-bottom: var(--space-2);
+  transition:
+    color calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1)) var(--anim-buttons-easing, ease),
+    background calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1))
+    var(--anim-buttons-easing, ease);
+}
+
+.project-rail__top:hover {
+  color: var(--fg);
+  background: var(--bg-2);
+}
+
+.project-rail__top--active {
+  color: var(--fg);
+  background: var(--bg-2);
+}
+
+.project-rail__list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.project-rail__list::-webkit-scrollbar {
+  display: none;
+}
+
+.project-rail__tile {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform calc(var(--anim-project-hover-duration, 0.15s) * var(--anim-project-hover-enabled, 1))
+    var(--anim-project-hover-easing, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+.project-rail__tile:hover {
+  transform: scale(1.08);
+}
+
+.project-rail__tile:active {
+  transform: scale(0.93);
+  transition-duration: var(--duration-instant);
+}
+
+.project-rail__tile::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%) scaleY(0);
+  width: 3px;
+  height: 18px;
+  background: var(--fg);
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  transition: transform calc(var(--anim-project-hover-duration, 0.18s) * var(--anim-project-hover-enabled, 1))
+    var(--anim-project-hover-easing, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+.project-rail__tile:hover::before {
+  transform: translateY(-50%) scaleY(0.6);
+}
+
+.project-rail__tile--active::before {
+  transform: translateY(-50%) scaleY(1);
+  height: 24px;
+  transition:
+    transform calc(var(--anim-project-hover-duration, 0.22s) * var(--anim-project-hover-enabled, 1))
+    var(--anim-project-hover-easing, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    height calc(var(--anim-project-hover-duration, 0.22s) * var(--anim-project-hover-enabled, 1))
+    var(--anim-project-hover-easing, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+.project-rail__avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--avatar-bg);
+  color: color-mix(in srgb, var(--avatar-bg) 35%, white 65%);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  transition:
+    border-radius calc(var(--anim-project-hover-duration, 0.18s) * var(--anim-project-hover-enabled, 1))
+    var(--anim-project-hover-easing, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    border-color calc(var(--anim-project-hover-duration, 0.18s) * var(--anim-project-hover-enabled, 1)) ease,
+    box-shadow calc(var(--anim-project-hover-duration, 0.18s) * var(--anim-project-hover-enabled, 1)) ease;
+  border: 2px solid transparent;
+}
+
+.project-rail__tile:hover .project-rail__avatar {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.project-rail__tile--active .project-rail__avatar {
+  border-radius: var(--radius-lg);
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--avatar-bg) 40%, transparent 60%);
+}
+
+.project-rail__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.project-rail__avatar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  filter: saturate(0.7) brightness(0.55);
+  z-index: -1;
+  border-radius: inherit;
+}
+
+.project-rail__add {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--line);
+  background: transparent;
+  color: var(--fg-muted);
+  border-radius: var(--radius-md);
+  font-size: var(--text-2xl);
+  transition:
+    border-color calc(var(--anim-project-hover-duration, 0.2s) * var(--anim-project-hover-enabled, 1))
+    var(--anim-project-hover-easing, ease),
+    color calc(var(--anim-project-hover-duration, 0.2s) * var(--anim-project-hover-enabled, 1))
+    var(--anim-project-hover-easing, ease),
+    background calc(var(--anim-project-hover-duration, 0.2s) * var(--anim-project-hover-enabled, 1))
+    var(--anim-project-hover-easing, ease),
+    transform calc(var(--anim-project-hover-duration, 0.15s) * var(--anim-project-hover-enabled, 1))
+    var(--anim-project-hover-easing, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+.project-rail__add:hover {
+  border-color: var(--line-strong);
+  color: var(--fg);
+  background: var(--bg-2);
+  transform: scale(1.08);
+}
+
+.project-rail__add:active {
+  transform: scale(0.93);
+}
+
+.project-rail__bottom {
+  margin-top: auto;
+  padding-bottom: var(--space-2);
+}
+
+.project-rail__settings {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--fg-muted);
+  border-radius: var(--radius-md);
+  padding: 0;
+  transition:
+    color calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1)) var(--anim-buttons-easing, ease),
+    background calc(var(--anim-buttons-duration, 0.2s) * var(--anim-buttons-enabled, 1))
+    var(--anim-buttons-easing, ease);
+}
+
+.project-rail__settings:hover {
+  color: var(--fg);
+  background: var(--bg-2);
+}
+
+/* ── Removing animation (missing folder) ── */
+
+@keyframes tile-fade-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    max-height: 42px;
+    margin-bottom: 0;
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+    max-height: 42px;
+    margin-bottom: 0;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
+    max-height: 0;
+    margin-bottom: calc(-1 * var(--space-3));
+  }
+}
+
+.project-rail__tile--removing {
+  animation: tile-fade-out 0.35s ease-in-out forwards;
+  pointer-events: none;
+}
+
+.project-rail__tile--removing .project-rail__avatar {
+  filter: grayscale(1) brightness(0.6);
+}
