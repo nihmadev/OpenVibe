@@ -60,6 +60,7 @@ pub fn chats_new(state: State<AppState>) -> Result<Option<serde_json::Value>, St
         created_at: now,
         updated_at: now,
         messages: vec![],
+        file_snapshots: vec![],
     };
 
     {
@@ -131,6 +132,7 @@ pub fn chats_clear(state: State<AppState>, id: String) -> Result<(), String> {
     if let Some(ref mut store) = *chat {
         if let Some(mut record) = store.get(&id).map_err(|e| e.to_string())? {
             record.messages = vec![];
+            record.file_snapshots = vec![];
             record.updated_at = chrono_now();
             store.save(&record).map_err(|e| e.to_string())?;
         }

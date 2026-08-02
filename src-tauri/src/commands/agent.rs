@@ -4,10 +4,32 @@ use tauri::{AppHandle, Emitter, State};
 
 use crate::AppState;
 use agent::chat::ChatMessage;
-use agent::snapshot::RollbackPreview;
+use agent::snapshot::{AgentFileChange, RollbackPreview, SnapshotEntry};
 use agent::sub_trace::{get_sub_trace, SubTraceEvent};
 use agent::Agent;
 use config::Config;
+
+fn persist_agent_chat_state(
+    state: &AppState,
+    messages: Vec<ChatMessage>,
+    file_snapshots: Vec<SnapshotEntry>,
+) -> Result<(), String> {
+    let active_id = state.active_chat_id.lock().map_err(|e| e.to_string())?.clone();
+    let Some(active_id) = active_id else {
+        return Ok(());
+    };
+    let mut chat_store = state.chat_store.lock().map_err(|e| e.to_string())?;
+    let Some(store) = chat_store.as_mut() else {
+        return Ok(());
+    };
+    if let Some(mut record) = store.get(&active_id).map_err(|e| e.to_string())? {
+        record.messages = messages;
+        record.file_snapshots = file_snapshots;
+        record.updated_at = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as i64;
+        store.save(&record).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
 
 #[tauri::command]
 pub async fn agent_new(state: State<'_, AppState>, cwd: String) -> Result<(), String> {
@@ -116,6 +138,7 @@ pub async fn agent_send(
             if let Some(ref mut store) = *chat_store {
                 if let Ok(Some(mut record)) = store.get(id) {
                     record.messages = msgs.clone();
+                    record.file_snapshots = agent.file_snapshots.clone();
                     record.updated_at = ts;
                     let _ = store.save(&record);
                 }
@@ -159,6 +182,7 @@ pub async fn agent_send(
                 if let Ok(Some(mut record)) = store.get(id) {
                     is_new = record.title == "New chat" || record.title.trim().is_empty();
                     record.messages = msgs.clone();
+                    record.file_snapshots = agent.file_snapshots.clone();
                     record.updated_at = ts;
                     let _ = store.save(&record);
                 }
@@ -209,6 +233,9 @@ pub async fn agent_send(
     *agent_lock = Some(agent);
     drop(agent_lock);
 
+    // Publish the idle state only after the agent, including its file snapshots,
+    // is available to commands opened from the completed run UI.
+    let _ = app_handle.emit("vibe:agent:busy", serde_json::json!({"busy": false}));
     let _ = app_handle.emit("vibe:agent:send-complete", ());
 
     Ok(())
@@ -271,6 +298,19 @@ pub async fn agent_set_messages(state: State<'_, AppState>, messages: Vec<ChatMe
 }
 
 #[tauri::command]
+pub async fn agent_set_chat_state(
+    state: State<'_, AppState>,
+    messages: Vec<ChatMessage>,
+    file_snapshots: Vec<SnapshotEntry>,
+) -> Result<(), String> {
+    let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
+    if let Some(ref mut agent) = *agent_lock {
+        agent.set_chat_state(messages, file_snapshots);
+    }
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn agent_get_messages(state: State<'_, AppState>) -> Result<Vec<ChatMessage>, String> {
     let agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     let agent = agent_lock.as_ref().ok_or_else(|| "No agent".to_string())?;
@@ -293,14 +333,60 @@ pub async fn agent_revert_preview(state: State<'_, AppState>, index: usize) -> R
 pub async fn agent_instant_revert(state: State<'_, AppState>, index: usize) -> Result<RollbackPreview, String> {
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     let agent = agent_lock.as_mut().ok_or_else(|| "No agent".to_string())?;
-    agent.instant_revert(index)
+    let result = agent.instant_revert(index)?;
+    let messages = agent.messages.clone();
+    let file_snapshots = agent.file_snapshots.clone();
+    drop(agent_lock);
+    persist_agent_chat_state(&state, messages, file_snapshots)?;
+    Ok(result)
 }
 
 #[tauri::command]
 pub async fn agent_revert_undo(state: State<'_, AppState>) -> Result<(), String> {
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     let agent = agent_lock.as_mut().ok_or_else(|| "No agent".to_string())?;
-    agent.undo_revert()
+    agent.undo_revert()?;
+    let messages = agent.messages.clone();
+    let file_snapshots = agent.file_snapshots.clone();
+    drop(agent_lock);
+    persist_agent_chat_state(&state, messages, file_snapshots)
+}
+
+#[tauri::command]
+pub async fn agent_file_change(state: State<'_, AppState>, tool_call_id: String) -> Result<AgentFileChange, String> {
+    let agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
+    let agent = agent_lock.as_ref().ok_or_else(|| "No agent".to_string())?;
+    agent.get_file_change(&tool_call_id)
+}
+
+#[tauri::command]
+pub async fn agent_accept_file_change(
+    state: State<'_, AppState>,
+    tool_call_id: String,
+) -> Result<AgentFileChange, String> {
+    let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
+    let agent = agent_lock.as_mut().ok_or_else(|| "No agent".to_string())?;
+    let result = agent.accept_file_change(&tool_call_id)?;
+    let messages = agent.messages.clone();
+    let file_snapshots = agent.file_snapshots.clone();
+    drop(agent_lock);
+    persist_agent_chat_state(&state, messages, file_snapshots)?;
+    Ok(result)
+}
+
+#[tauri::command]
+pub async fn agent_reject_file_change(
+    state: State<'_, AppState>,
+    tool_call_id: String,
+) -> Result<AgentFileChange, String> {
+    let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
+    let agent = agent_lock.as_mut().ok_or_else(|| "No agent".to_string())?;
+    let result = agent.reject_file_change(&tool_call_id)?;
+    let messages = agent.messages.clone();
+    let file_snapshots = agent.file_snapshots.clone();
+    drop(agent_lock);
+    persist_agent_chat_state(&state, messages, file_snapshots)?;
+    Ok(result)
 }
 
 #[tauri::command]
