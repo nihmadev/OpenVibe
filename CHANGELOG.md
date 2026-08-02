@@ -5,6 +5,42 @@ All notable changes to OpenVibe will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.8](https://github.com/nihmadev/OpenVibe/compare/v1.3.7...v1.3.8) (2026-08-02)
+
+This release gives agent edits a reviewable lifecycle, improves streaming responsiveness and prompt assistance, and reorganizes the frontend into feature-oriented modules with shared infrastructure.
+
+### Added
+
+- **Agent file-change review**
+  - Added before/after file snapshots for successful agent edits, with pending, accepted, and rejected states.
+  - Added an inline Monaco diff viewer with Accept and Reject actions for reviewing agent changes.
+  - Added safe rejection restores that refuse to overwrite newer edits, including removal of files created by the agent.
+  - Persisted file snapshots in chat records and exposed Tauri commands for loading, accepting, rejecting, and restoring agent changes.
+
+- **Agent tools and prompt input**
+  - Added paginated file reads to keep large file results bounded and easier to consume.
+  - Added contextual prompt suggestions and improved placeholder behavior.
+  - Added streaming tool-argument deltas so tool calls can be rendered as arguments arrive.
+
+### Improved
+
+- **Streaming and network performance**
+  - Optimized LLM request streaming and Markdown streaming renders.
+  - Added provider connection prewarming to reduce latency before the first request.
+
+- **Editor and interface reliability**
+  - Hardened editor and panel interactions and synchronized code blocks with viewer imports.
+  - Refined file-tree and Settings controls, and polished desktop updater output.
+  - Updated Monaco language bundles and workers.
+
+### Changed
+
+- Reorganized the frontend into feature modules for the agent, chats, editor, files, Git, MCP, onboarding, projects, providers, search, settings, shortcuts, and terminal workflows.
+- Centralized Tauri bridges and service gateways, extracted the application bootstrap and workspace shell, and consolidated shared UI, icons, themes, and utilities.
+- Replaced Prettier formatting checks with Biome and updated CI and lint-staged configuration accordingly.
+- Updated documentation, repository configuration, generated schemas, and license metadata.
+- Bumped the application and desktop package versions to `1.3.8`.
+
 ## [1.3.7](https://github.com/nihmadev/OpenVibe/compare/v1.3.6...v1.3.7) (2026-07-27)
 
 This release makes long-running agent sessions more capable and efficient with automatic context compaction, native reasoning round-trips, prompt caching, web research tools, and token usage tracking. It also expands theme and provider customization, redesigns the agent and Git workflows, and introduces a shared design-token and icon foundation across the interface.
