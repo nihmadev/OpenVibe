@@ -66,6 +66,8 @@
     background var(--duration-fast),
     color var(--duration-fast);
   position: relative;
+  margin: 0 var(--space-2);
+  border-radius: var(--radius-md);
 }
 
 .ftree__row:hover {
@@ -108,9 +110,13 @@
 
 .ftree__compact-segment {
   cursor: pointer;
+  border-radius: var(--radius-xs);
+  padding: 1px var(--space-1);
+  margin: 0 calc(-1 * var(--space-1));
 }
 
 .ftree__compact-segment:hover {
+  background: var(--bg-2);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
