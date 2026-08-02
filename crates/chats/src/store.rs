@@ -15,7 +15,8 @@ impl ChatStore {
                 id         TEXT PRIMARY KEY,
                 title      TEXT NOT NULL DEFAULT 'New chat',
                 created_at INTEGER NOT NULL,
-                updated_at INTEGER NOT NULL
+                updated_at INTEGER NOT NULL,
+                file_snapshots TEXT NOT NULL DEFAULT '[]'
             )",
         )?;
         conn.execute_batch(
@@ -34,6 +35,9 @@ impl ChatStore {
         )?;
         conn.execute_batch("CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id)")?;
         let _ = conn.execute_batch("ALTER TABLE messages ADD COLUMN reasoning_name TEXT");
+        let _ = conn.execute_batch(
+            "ALTER TABLE chats ADD COLUMN file_snapshots TEXT NOT NULL DEFAULT '[]'",
+        );
 
         migration::run(&mut conn)?;
 
@@ -61,9 +65,9 @@ impl ChatStore {
     }
 
     pub fn get(&self, id: &str) -> SqlResult<Option<ChatRecord>> {
-        let mut stmt = self
-            .conn
-            .prepare("SELECT id, title, created_at, updated_at FROM chats WHERE id = ?")?;
+        let mut stmt = self.conn.prepare(
+            "SELECT id, title, created_at, updated_at, file_snapshots FROM chats WHERE id = ?",
+        )?;
 
         let record_opt = stmt
             .query_row(params![id], |row| {
@@ -73,6 +77,8 @@ impl ChatStore {
                     created_at: row.get(2)?,
                     updated_at: row.get(3)?,
                     messages: Vec::new(),
+                    file_snapshots: serde_json::from_str(&row.get::<_, String>(4)?)
+                        .unwrap_or_default(),
                 })
             })
             .optional()?;
@@ -133,17 +139,21 @@ impl ChatStore {
 
     pub fn save(&mut self, record: &ChatRecord) -> SqlResult<()> {
         let tx = self.conn.transaction()?;
+        let file_snapshots = serde_json::to_string(&record.file_snapshots)
+            .map_err(|error| rusqlite::Error::ToSqlConversionFailure(Box::new(error)))?;
 
         tx.execute(
-            "INSERT INTO chats (id, title, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4)
+            "INSERT INTO chats (id, title, created_at, updated_at, file_snapshots)
+             VALUES (?1, ?2, ?3, ?4, ?5)
              ON CONFLICT(id) DO UPDATE SET
-               title = excluded.title, updated_at = excluded.updated_at",
+               title = excluded.title, updated_at = excluded.updated_at,
+               file_snapshots = excluded.file_snapshots",
             params![
                 record.id,
                 record.title,
                 record.created_at,
-                record.updated_at
+                record.updated_at,
+                file_snapshots,
             ],
         )?;
 
@@ -192,5 +202,70 @@ impl ChatStore {
 
     pub fn close(self) -> SqlResult<()> {
         self.conn.close().map_err(|(_conn, e)| e)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agent::snapshot::{AgentChangeStatus, FileSnapshot, SnapshotEntry};
+
+    fn record_with_snapshot() -> ChatRecord {
+        ChatRecord {
+            id: "chat-1".to_string(),
+            title: "Review".to_string(),
+            created_at: 1,
+            updated_at: 2,
+            messages: Vec::new(),
+            file_snapshots: vec![SnapshotEntry {
+                message_index: 3,
+                tool_call_id: "call-1".to_string(),
+                snapshot: FileSnapshot {
+                    path: "src/file.ts".to_string(),
+                    content: Some("before".to_string()),
+                },
+                after_content: Some("after".to_string()),
+                status: AgentChangeStatus::Accepted,
+            }],
+        }
+    }
+
+    #[test]
+    fn snapshots_round_trip() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut store = ChatStore::new(dir.path().join("chats.db").to_str().unwrap()).unwrap();
+        store.save(&record_with_snapshot()).unwrap();
+
+        let restored = store.get("chat-1").unwrap().unwrap();
+
+        assert_eq!(restored.file_snapshots.len(), 1);
+        assert_eq!(restored.file_snapshots[0].tool_call_id, "call-1");
+        assert_eq!(
+            restored.file_snapshots[0].status,
+            AgentChangeStatus::Accepted
+        );
+    }
+
+    #[test]
+    fn existing_database_gets_empty_snapshot_column() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("old.db");
+        let conn = Connection::open(&path).unwrap();
+        conn.execute_batch(
+            "CREATE TABLE chats (
+                id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            );
+            INSERT INTO chats VALUES ('old', 'Old chat', 1, 1);",
+        )
+        .unwrap();
+        drop(conn);
+
+        let store = ChatStore::new(path.to_str().unwrap()).unwrap();
+        let restored = store.get("old").unwrap().unwrap();
+
+        assert!(restored.file_snapshots.is_empty());
     }
 }

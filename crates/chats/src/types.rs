@@ -1,4 +1,5 @@
 use agent::chat::ChatMessage;
+use agent::snapshot::SnapshotEntry;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -19,4 +20,6 @@ pub struct ChatRecord {
     pub created_at: i64,
     pub updated_at: i64,
     pub messages: Vec<ChatMessage>,
+    #[serde(default)]
+    pub file_snapshots: Vec<SnapshotEntry>,
 }
