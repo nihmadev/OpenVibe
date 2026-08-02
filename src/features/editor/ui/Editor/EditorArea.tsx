@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from "react";
-import { ImageViewer, isImageFile } from "@/features/files/ui/viewers/ImageViewer";
-import { isVideoFile, VideoViewer } from "@/features/files/ui/viewers/VideoViewer";
+import { ImageViewer, isImageFile } from "@/features/files/ui/Viewers/ImageViewer";
+import { isVideoFile, VideoViewer } from "@/features/files/ui/Viewers/VideoViewer";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { FileIcon, FolderIcon } from "@/shared/icons";
 import { basename } from "@/shared/lib/paths";

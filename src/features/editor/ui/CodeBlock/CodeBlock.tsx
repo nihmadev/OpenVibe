@@ -327,7 +327,7 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
     if (!ed) return;
     const model = ed.getModel();
     if (!model || model.isDisposed?.()) return;
-    const latestCode = codeRef.current;
+    const latestCode = displayCode;
     const currentValue = model.getValue();
     if (currentValue !== latestCode) {
       const prevScrollTop = ed.getScrollTop();
@@ -369,7 +369,7 @@ export const CodeBlock = React.memo(function CodeBlock({ language, code, decorat
         // editor might be disposed during rapid streaming
       }
     }
-  }, []);
+  }, [displayCode]);
 
   useEffect(() => {
     const m = monacoRef.current;
