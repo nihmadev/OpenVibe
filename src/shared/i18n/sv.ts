@@ -349,7 +349,7 @@ export const sv: Partial<Translations> = {
   zoomDefaultDesc: "Zoomnivå när du trycker på Ctrl+0",
   terminalShell: "Terminalskal",
   appName: "OpenVibe Desktop",
-  appVersion: "v1.3.7",
+  appVersion: "v1.3.8",
   shell: "Skal",
   langRussian: "ryska",
   langEnglish: "engelska",

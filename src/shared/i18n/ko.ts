@@ -349,7 +349,7 @@ export const ko: Partial<Translations> = {
   zoomDefaultDesc: "Ctrl+0을 누를 때의 확대/축소 수준",
   terminalShell: "터미널 쉘",
   appName: "오픈바이브 데스크탑",
-  appVersion: "v1.3.7",
+  appVersion: "v1.3.8",
   shell: "껍데기",
   langRussian: "러시아인",
   langEnglish: "영어",

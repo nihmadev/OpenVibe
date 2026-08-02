@@ -349,7 +349,7 @@ export const fa: Partial<Translations> = {
   zoomDefault: "بزرگنمایی پیش فرض",
   zoomDefaultDesc: "سطح زوم هنگام فشار دادن Ctrl+0",
   appName: "OpenVibe Desktop",
-  appVersion: "نسخه 1.3.7",
+  appVersion: "نسخه 1.3.8",
   shell: "پوسته",
   langRussian: "روسی",
   langEnglish: "انگلیسی",

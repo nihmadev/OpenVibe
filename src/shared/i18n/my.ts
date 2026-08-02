@@ -349,7 +349,7 @@ export const my: Partial<Translations> = {
   zoomDefault: "ပုံသေချဲမ်",
   zoomDefaultDesc: "Ctrl+0 ကိုနှိပ်သောအခါ ဇူးမ်အဆင့်",
   appName: "OpenVibe Desktop",
-  appVersion: "v1.3.7",
+  appVersion: "v1.3.8",
   shell: "အခွံ",
   langRussian: "ရုရှ",
   langEnglish: "အင်္ဂလိပ်စာ",

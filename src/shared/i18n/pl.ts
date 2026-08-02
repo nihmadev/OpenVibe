@@ -351,7 +351,7 @@ export const pl: Partial<Translations> = {
   zoomDefaultDesc: "Poziom powiększenia po naciśnięciu Ctrl+0",
   terminalShell: "Powłoka terminala",
   appName: "Pulpit OpenVibe",
-  appVersion: "v1.3.7",
+  appVersion: "v1.3.8",
   shell: "Powłoka",
   langRussian: "rosyjski",
   langEnglish: "angielski",

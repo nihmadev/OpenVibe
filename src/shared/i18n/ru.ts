@@ -372,7 +372,7 @@ export const ru = {
   closeProjectHotkey: "Закрыть проект",
   closeFileHotkey: "Закрыть файл",
   appName: "OpenVibe Desktop",
-  appVersion: "v1.3.7",
+  appVersion: "v1.3.8",
   manuallyStopped: "Остановлено пользователем",
 
   // Design / Animation settings

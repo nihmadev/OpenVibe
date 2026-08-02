@@ -350,7 +350,7 @@ export const id: Partial<Translations> = {
   zoomDefaultDesc: "Tingkat zoom saat menekan Ctrl+0",
   terminalShell: "Cangkang Terminal",
   appName: "Desktop OpenVibe",
-  appVersion: "v1.3.7",
+  appVersion: "v1.3.8",
   shell: "Kerang",
   langRussian: "Rusia",
   langEnglish: "Bahasa inggris",

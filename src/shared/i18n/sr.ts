@@ -351,7 +351,7 @@ export const sr: Partial<Translations> = {
   zoomDefaultDesc: "Ниво зумирања када притиснете Цтрл+0",
   terminalShell: "Терминал Схелл",
   appName: "ОпенВибе Десктоп",
-  appVersion: "в1.3.7",
+  appVersion: "в1.3.8",
   shell: "Схелл",
   langRussian: "руски",
   langEnglish: "енглески",

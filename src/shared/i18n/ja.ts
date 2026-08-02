@@ -351,7 +351,7 @@ export const ja: Partial<Translations> = {
   zoomDefault: "デフォルトのズーム",
   zoomDefaultDesc: "Ctrl+0を押したときのズームレベル",
   appName: "OpenVibe デスクトップ",
-  appVersion: "v1.3.7",
+  appVersion: "v1.3.8",
   langRussian: "ロシア",
   langEnglish: "英語",
   langChinese: "中文 (繁體)",

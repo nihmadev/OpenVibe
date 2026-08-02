@@ -350,7 +350,7 @@ export const el: Partial<Translations> = {
   zoomDefaultDesc: "Επίπεδο ζουμ όταν πατάτε Ctrl+0",
   terminalShell: "Terminal Shell",
   appName: "OpenVibe Desktop",
-  appVersion: "v1.3.7",
+  appVersion: "v1.3.8",
   shell: "Κέλυφος",
   langRussian: "ρωσικός",
   langEnglish: "αγγλικός",

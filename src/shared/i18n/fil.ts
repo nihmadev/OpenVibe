@@ -350,7 +350,7 @@ export const fil: Partial<Translations> = {
   zoomDefault: "Default na pag-zoom",
   zoomDefaultDesc: "Mag-zoom level kapag pinindot ang Ctrl+0",
   appName: "OpenVibe Desktop",
-  appVersion: "v1.3.7",
+  appVersion: "v1.3.8",
   shell: "Shell",
   langRussian: "Ruso",
   langEnglish: "Ingles",
