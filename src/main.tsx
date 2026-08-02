@@ -1,12 +1,10 @@
-import "./tauri-bridge.js";
 import { createRoot } from "react-dom/client";
-import { App } from "./components/App/App.js";
-import "./scrollbar.css";
-import "./components/App/App.css";
-import "./types.js";
-import { invoke } from "@tauri-apps/api/core";
-import { initFonts } from "./fonts.js";
-import { initZoomConfig, zoomDefault, zoomStep } from "./zoomConfig.js";
+import { App } from "@/app/App";
+import "@/scrollbar.css";
+import "@/app/App.css";
+import { initFonts } from "@/app/fonts";
+import { initZoomConfig, zoomDefault, zoomStep } from "@/app/zoomConfig";
+import { windowApi } from "@/infrastructure/tauri/windowApi";
 
 initFonts();
 initZoomConfig();
@@ -18,15 +16,15 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "=" || e.key === "+") {
     e.preventDefault();
     zoomFactor = Math.min(3.0, zoomFactor + zoomStep);
-    invoke("window_zoom", { factor: zoomFactor });
+    windowApi.zoom(zoomFactor);
   } else if (e.key === "-") {
     e.preventDefault();
     zoomFactor = Math.max(0.2, zoomFactor - zoomStep);
-    invoke("window_zoom", { factor: zoomFactor });
+    windowApi.zoom(zoomFactor);
   } else if (e.key === "0") {
     e.preventDefault();
     zoomFactor = zoomDefault;
-    invoke("window_zoom", { factor: zoomFactor });
+    windowApi.zoom(zoomFactor);
   }
 });
 
