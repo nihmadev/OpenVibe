@@ -533,6 +533,16 @@ export const ko: Partial<Translations> = {
   activityGroupTodoN: "계획 — {count}개 작업",
   activityGroupTodoN_few: "계획 — {count} 건",
   activityGroupTodoN_one: "계획 — {count}개 작업",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "생각하는 중…",
+  flowThought: "사고 과정",
+  flowAnalysis: "분석",
+  flowCountRead: "읽기 {count}회",
+  flowCountSearch: "검색 {count}회",
+  flowCountBrowse: "폴더 조회 {count}회",
+  flowCountWeb: "웹 검색 {count}회",
+  flowCountGit: "git 작업 {count}회",
   activityGroupToolsN: "{count}개 작업",
   activityGroupToolsN_few: "{count} 일",
   activityGroupToolsN_one: "{count}개 작업",

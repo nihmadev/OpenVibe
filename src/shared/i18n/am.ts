@@ -533,6 +533,16 @@ export const am: Partial<Translations> = {
   activityGroupTodoN: "እቅድ ማውጣት - ተግባራትን {count}",
   activityGroupTodoN_few: "Планирование — {መቁጠር} задачи",
   activityGroupTodoN_one: "እቅድ ማውጣት - ተግባር {count}",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "እያሰበ ነው…",
+  flowThought: "የማሰብ ሂደት",
+  flowAnalysis: "ትንተና",
+  flowCountRead: "{count} ንባቦች",
+  flowCountSearch: "{count} ፍለጋዎች",
+  flowCountBrowse: "{count} የአቃፊ እይታዎች",
+  flowCountWeb: "{count} የድር ፍለጋዎች",
+  flowCountGit: "{count} የgit ክንውኖች",
   activityGroupToolsN: "እርምጃዎች {count}",
   activityGroupToolsN_few: "{count} действия",
   activityGroupToolsN_one: "እርምጃ {count}",

@@ -534,6 +534,16 @@ export const ms: Partial<Translations> = {
   activityGroupTodoN: "Perancangan — {count} tugasan",
   activityGroupTodoN_few: "Планирование — {count} задачи",
   activityGroupTodoN_one: "Perancangan — {count} tugasan",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "Sedang berfikir…",
+  flowThought: "Proses pemikiran",
+  flowAnalysis: "Analisis",
+  flowCountRead: "{count} bacaan",
+  flowCountSearch: "{count} carian",
+  flowCountBrowse: "{count} paparan folder",
+  flowCountWeb: "{count} carian web",
+  flowCountGit: "{count} operasi git",
   activityGroupToolsN: "{count} tindakan",
   activityGroupToolsN_few: "{count} действия",
   activityGroupToolsN_one: "{count} tindakan",

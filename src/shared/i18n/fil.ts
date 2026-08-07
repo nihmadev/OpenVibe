@@ -536,6 +536,16 @@ export const fil: Partial<Translations> = {
   activityGroupTodoN: "Pagpaplano — {count} mga gawain",
   activityGroupTodoN_few: "Планирование — {bilang} задачи",
   activityGroupTodoN_one: "Pagpaplano — {count} gawain",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "Nag-iisip…",
+  flowThought: "Proseso ng pag-iisip",
+  flowAnalysis: "Pagsusuri",
+  flowCountRead: "{count} pagbasa",
+  flowCountSearch: "{count} paghahanap",
+  flowCountBrowse: "{count} pagtingin sa folder",
+  flowCountWeb: "{count} paghahanap sa web",
+  flowCountGit: "{count} git na operasyon",
   activityGroupToolsN: "{count} mga aksyon",
   activityGroupToolsN_few: "{count} действия",
   activityGroupToolsN_one: "{count} pagkilos",

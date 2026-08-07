@@ -534,6 +534,16 @@ export const fa: Partial<Translations> = {
   activityGroupTodoN: "برنامه ریزی — {count} کار",
   activityGroupTodoN_few: "برنامه ریزی - {count} وظایف",
   activityGroupTodoN_one: "برنامه ریزی — {count} کار",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "در حال فکر کردن…",
+  flowThought: "فرآیند تفکر",
+  flowAnalysis: "تحلیل",
+  flowCountRead: "{count} خواندن",
+  flowCountSearch: "{count} جستجو",
+  flowCountBrowse: "{count} مشاهده پوشه",
+  flowCountWeb: "{count} جستجوی وب",
+  flowCountGit: "{count} عملیات git",
   activityGroupToolsN: "{count} اقدام",
   activityGroupToolsN_few: "{count}",
   activityGroupToolsN_one: "{count} اقدام",

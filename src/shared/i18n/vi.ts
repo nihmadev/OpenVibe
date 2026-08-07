@@ -485,6 +485,16 @@ export const vi: Partial<Translations> = {
   activityGroupTodoN: "Lập kế hoạch — {count} nhiệm vụ",
   activityGroupTodoN_few: "Планирование — {count} задачи",
   activityGroupTodoN_one: "Lập kế hoạch — nhiệm vụ {count}",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "Đang suy nghĩ…",
+  flowThought: "Quá trình suy nghĩ",
+  flowAnalysis: "Phân tích",
+  flowCountRead: "{count} lượt đọc",
+  flowCountSearch: "{count} lượt tìm kiếm",
+  flowCountBrowse: "{count} lượt xem thư mục",
+  flowCountWeb: "{count} lượt tìm kiếm web",
+  flowCountGit: "{count} thao tác git",
   activityGroupTools: "hành động",
   activityGroupToolsN: "{đếm} hành động",
   activityGroupToolsN_few: "{count} действия",

@@ -535,6 +535,16 @@ export const az: Partial<Translations> = {
   activityGroupTodoN: "Planlaşdırma — {count} tapşırıq",
   activityGroupTodoN_few: "Планирование — {count} задачи",
   activityGroupTodoN_one: "Planlaşdırma — {count} tapşırıq",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "Düşünür…",
+  flowThought: "Düşüncə prosesi",
+  flowAnalysis: "Analiz",
+  flowCountRead: "{count} oxuma",
+  flowCountSearch: "{count} axtarış",
+  flowCountBrowse: "{count} qovluq baxışı",
+  flowCountWeb: "{count} veb axtarışı",
+  flowCountGit: "{count} git əməliyyatı",
   activityGroupToolsN: "{count} əməliyyat",
   activityGroupToolsN_few: "{count} hərəkət",
   activityGroupToolsN_one: "{count} hərəkət",

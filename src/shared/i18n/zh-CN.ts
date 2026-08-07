@@ -484,6 +484,16 @@ export const zhCN: Partial<Translations> = {
   activityGroupTodoN: "计划 — {count} 项任务",
   activityGroupTodoN_few: "Планирование — {count} задачи",
   activityGroupTodoN_one: "计划 — {count} 项任务",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "思考中…",
+  flowThought: "思考过程",
+  flowAnalysis: "分析",
+  flowCountRead: "{count} 次读取",
+  flowCountSearch: "{count} 次搜索",
+  flowCountBrowse: "{count} 次浏览目录",
+  flowCountWeb: "{count} 次网络搜索",
+  flowCountGit: "{count} 次 git 操作",
   activityGroupTools: "行动",
   activityGroupToolsN: "{count} 次操作",
   activityGroupToolsN_few: "{count} действия",

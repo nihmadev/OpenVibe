@@ -458,6 +458,21 @@ export const en: Partial<Translations> = {
   activityGroupTodoN_one: "Planning — {count} task",
   activityGroupTodoN: "Planning — {count} tasks",
 
+  // Agent flow (linear run redesign)
+  flowThinking: "Thinking…",
+  flowThought: "Thought process",
+  flowAnalysis: "Analysis",
+  flowCountRead_one: "{count} read",
+  flowCountRead: "{count} reads",
+  flowCountSearch_one: "{count} search",
+  flowCountSearch: "{count} searches",
+  flowCountBrowse_one: "{count} folder view",
+  flowCountBrowse: "{count} folder views",
+  flowCountWeb_one: "{count} web search",
+  flowCountWeb: "{count} web searches",
+  flowCountGit_one: "{count} git operation",
+  flowCountGit: "{count} git operations",
+
   // Legacy thinking block
 
   // VideoViewer

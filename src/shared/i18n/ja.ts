@@ -535,6 +535,16 @@ export const ja: Partial<Translations> = {
   activityGroupTodoN: "計画 — {count} 個のタスク",
   activityGroupTodoN_few: "Планирование — {count} 件",
   activityGroupTodoN_one: "計画 — {count} タスク",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "思考中…",
+  flowThought: "思考プロセス",
+  flowAnalysis: "分析",
+  flowCountRead: "読み取り {count} 件",
+  flowCountSearch: "検索 {count} 件",
+  flowCountBrowse: "フォルダー参照 {count} 件",
+  flowCountWeb: "ウェブ検索 {count} 件",
+  flowCountGit: "git 操作 {count} 件",
   activityGroupToolsN: "{count} 個のアクション",
   activityGroupToolsN_few: "{count} 日",
   activityGroupToolsN_one: "{count} 個のアクション",

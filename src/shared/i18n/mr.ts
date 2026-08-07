@@ -533,6 +533,16 @@ export const mr: Partial<Translations> = {
   activityGroupTodoN: "नियोजन — {count} कार्ये",
   activityGroupTodoN_few: "प्लॅनिरोवानिये — {count} задачи",
   activityGroupTodoN_one: "नियोजन — {count} कार्य",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "विचार करत आहे…",
+  flowThought: "विचार प्रक्रिया",
+  flowAnalysis: "विश्लेषण",
+  flowCountRead: "{count} वाचने",
+  flowCountSearch: "{count} शोध",
+  flowCountBrowse: "{count} फोल्डर दृश्ये",
+  flowCountWeb: "{count} वेब शोध",
+  flowCountGit: "{count} git ऑपरेशन्स",
   activityGroupToolsN: "{count} क्रिया",
   activityGroupToolsN_few: "{count} действия",
   activityGroupToolsN_one: "{count} क्रिया",

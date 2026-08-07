@@ -535,6 +535,16 @@ export const kk: Partial<Translations> = {
   activityGroupTodoN: "Жоспарлау — {count} тапсырма",
   activityGroupTodoN_few: "Планирование — {count} задачи",
   activityGroupTodoN_one: "Жоспарлау — {count} тапсырма",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "Ойлануда…",
+  flowThought: "Ойлау барысы",
+  flowAnalysis: "Талдау",
+  flowCountRead: "{count} оқу",
+  flowCountSearch: "{count} іздеу",
+  flowCountBrowse: "{count} қалта қарау",
+  flowCountWeb: "{count} веб-іздеу",
+  flowCountGit: "{count} git операциясы",
   activityGroupToolsN: "{count} әрекет",
   activityGroupToolsN_few: "{count} іс-әрекет",
   activityGroupToolsN_one: "{count} әрекет",

@@ -567,6 +567,26 @@ export const ru = {
   activityGroupTodoN_few: "Планирование — {count} задачи",
   activityGroupTodoN: "Планирование — {count} задач",
 
+  // Agent flow (linear run redesign)
+  flowThinking: "Размышляет…",
+  flowThought: "Ход размышлений",
+  flowAnalysis: "Анализ",
+  flowCountRead_one: "{count} чтение",
+  flowCountRead_few: "{count} чтения",
+  flowCountRead: "{count} чтений",
+  flowCountSearch_one: "{count} поиск",
+  flowCountSearch_few: "{count} поиска",
+  flowCountSearch: "{count} поисков",
+  flowCountBrowse_one: "{count} просмотр папок",
+  flowCountBrowse_few: "{count} просмотра папок",
+  flowCountBrowse: "{count} просмотров папок",
+  flowCountWeb_one: "{count} веб-поиск",
+  flowCountWeb_few: "{count} веб-поиска",
+  flowCountWeb: "{count} веб-поисков",
+  flowCountGit_one: "{count} git-операция",
+  flowCountGit_few: "{count} git-операции",
+  flowCountGit: "{count} git-операций",
+
   // Legacy thinking block
 
   // VideoViewer

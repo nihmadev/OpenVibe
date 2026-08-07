@@ -533,6 +533,16 @@ export const my: Partial<Translations> = {
   activityGroupTodoN: "စီစဉ်ခြင်း — လုပ်ဆောင်စရာ {count} ခု",
   activityGroupTodoN_few: "Планирование — {count} задачи",
   activityGroupTodoN_one: "စီစဉ်ခြင်း — {count} အလုပ်",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "စဉ်းစားနေသည်…",
+  flowThought: "စဉ်းစားမှုလုပ်ငန်းစဉ်",
+  flowAnalysis: "ခွဲခြမ်းစိတ်ဖြာမှု",
+  flowCountRead: "ဖတ်ရှုမှု {count} ကြိမ်",
+  flowCountSearch: "ရှာဖွေမှု {count} ကြိမ်",
+  flowCountBrowse: "ဖိုင်တွဲကြည့်ရှုမှု {count} ကြိမ်",
+  flowCountWeb: "ဝဘ်ရှာဖွေမှု {count} ကြိမ်",
+  flowCountGit: "git လုပ်ဆောင်မှု {count} ကြိမ်",
   activityGroupToolsN: "{count} လုပ်ဆောင်ချက်",
   activityGroupToolsN_few: "{count} действия",
   activityGroupToolsN_one: "{count} လုပ်ဆောင်ချက်",

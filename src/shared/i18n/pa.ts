@@ -533,6 +533,16 @@ export const pa: Partial<Translations> = {
   activityGroupTodoN: "ਯੋਜਨਾਬੰਦੀ — {count} ਕਾਰਜ",
   activityGroupTodoN_few: "ਪਲੈਨੀਰੋਵੈਨਿਏ — {count} задачи",
   activityGroupTodoN_one: "ਯੋਜਨਾਬੰਦੀ — {count} ਕਾਰਜ",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "ਸੋਚ ਰਿਹਾ ਹੈ…",
+  flowThought: "ਸੋਚ ਦੀ ਪ੍ਰਕਿਰਿਆ",
+  flowAnalysis: "ਵਿਸ਼ਲੇਸ਼ਣ",
+  flowCountRead: "{count} ਪੜ੍ਹਤਾਂ",
+  flowCountSearch: "{count} ਖੋਜਾਂ",
+  flowCountBrowse: "{count} ਫੋਲਡਰ ਝਲਕਾਂ",
+  flowCountWeb: "{count} ਵੈੱਬ ਖੋਜਾਂ",
+  flowCountGit: "{count} git ਕਾਰਵਾਈਆਂ",
   activityGroupToolsN: "{count} ਕਾਰਵਾਈਆਂ",
   activityGroupToolsN_few: "{count} действия",
   activityGroupToolsN_one: "{count} ਕਾਰਵਾਈ",

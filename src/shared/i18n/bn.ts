@@ -533,6 +533,16 @@ export const bn: Partial<Translations> = {
   activityGroupTodoN: "পরিকল্পনা — {count}টি কাজ",
   activityGroupTodoN_few: "প্ল্যানিরোভানি - {গণনা} задачи",
   activityGroupTodoN_one: "পরিকল্পনা — {count} টাস্ক",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "ভাবছে…",
+  flowThought: "চিন্তার প্রক্রিয়া",
+  flowAnalysis: "বিশ্লেষণ",
+  flowCountRead: "{count}টি পড়া",
+  flowCountSearch: "{count}টি অনুসন্ধান",
+  flowCountBrowse: "{count}টি ফোল্ডার দেখা",
+  flowCountWeb: "{count}টি ওয়েব অনুসন্ধান",
+  flowCountGit: "{count}টি git অপারেশন",
   activityGroupToolsN: "{count}টি অ্যাকশন",
   activityGroupToolsN_few: "{গণনা} দিন",
   activityGroupToolsN_one: "{count} অ্যাকশন",

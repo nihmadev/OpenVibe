@@ -483,6 +483,16 @@ export const th: Partial<Translations> = {
   activityGroupTodoN: "การวางแผน — {count} งาน",
   activityGroupTodoN_few: "Планирование — {count} задачи",
   activityGroupTodoN_one: "การวางแผน — {count} งาน",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "กำลังคิด…",
+  flowThought: "กระบวนการคิด",
+  flowAnalysis: "การวิเคราะห์",
+  flowCountRead: "อ่าน {count} ครั้ง",
+  flowCountSearch: "ค้นหา {count} ครั้ง",
+  flowCountBrowse: "ดูโฟลเดอร์ {count} ครั้ง",
+  flowCountWeb: "ค้นหาเว็บ {count} ครั้ง",
+  flowCountGit: "คำสั่ง git {count} ครั้ง",
   activityGroupTools: "การกระทำ",
   activityGroupToolsN: "การกระทำ {count}",
   activityGroupToolsN_few: "{count} วัน",

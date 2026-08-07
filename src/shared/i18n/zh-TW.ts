@@ -484,6 +484,16 @@ export const zhTW: Partial<Translations> = {
   activityGroupTodoN: "計劃 — {count} 項任務",
   activityGroupTodoN_few: "Планирование — {count} задачи",
   activityGroupTodoN_one: "計劃 — {count} 項任務",
+
+  // Agent flow (linear run redesign)
+  flowThinking: "思考中…",
+  flowThought: "思考過程",
+  flowAnalysis: "分析",
+  flowCountRead: "{count} 次讀取",
+  flowCountSearch: "{count} 次搜尋",
+  flowCountBrowse: "{count} 次瀏覽目錄",
+  flowCountWeb: "{count} 次網路搜尋",
+  flowCountGit: "{count} 次 git 操作",
   activityGroupTools: "行動",
   activityGroupToolsN: "{count} 次操作",
   activityGroupToolsN_few: "{count} действия",
