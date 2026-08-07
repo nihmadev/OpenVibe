@@ -1,8 +1,6 @@
-<p align="center">
-  <img src="public/icons/etc/icon.png" width="100" alt="Openvibe" />
+<p align="center" style="margin:0">
+  <img src="public/icons/etc/preview.png" width="80%" alt="Openvibe" />
 </p>
-
-<h1 align="center">Openvibe</h1>
 
 <p align="center">
   <a href="https://github.com/nihmadev/OpenVibe">GitHub</a> ·
