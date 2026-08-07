@@ -125,6 +125,13 @@ pub async fn search_content_with_vector(
     }
 
     let vec_root = resolve_path(cwd, root);
+    // Never build the vector index synchronously on this path: the first
+    // build embeds the entire repo (plus a one-time model download) and can
+    // block for minutes. Warm it in the background and answer now.
+    if !crate::vector_search::has_index(&vec_root) {
+        crate::vector_search::ensure_index_background(&vec_root);
+        return Ok("(no matches)".to_string());
+    }
     let vec_query = query.to_string();
     let additional = tokio::task::spawn_blocking(move || -> Vec<String> {
         match crate::vector_search::search_codebase_vector(&vec_query, &vec_root, max_results) {

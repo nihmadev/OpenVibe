@@ -1,6 +1,6 @@
 use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
 use once_cell::sync::Lazy;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
 
 use crate::config::{should_skip, MAX_FILE_BYTES};
@@ -20,6 +20,46 @@ static MODEL: Lazy<Mutex<Option<TextEmbedding>>> = Lazy::new(|| Mutex::new(None)
 
 static INDEX_CACHE: Lazy<Mutex<HashMap<String, Vec<IndexEntry>>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
+
+/// Roots whose index build is currently running (or queued) in the
+/// background. Prevents duplicate concurrent builds.
+static BUILDING: Lazy<Mutex<HashSet<String>>> = Lazy::new(|| Mutex::new(HashSet::new()));
+
+/// True when a vector search for `root` can answer immediately.
+pub fn has_index(root: &str) -> bool {
+    INDEX_CACHE
+        .lock()
+        .map(|c| c.contains_key(root))
+        .unwrap_or(false)
+}
+
+/// Kick off an index build for `root` on a background thread if one is not
+/// cached and not already building. Returns immediately. The first ever call
+/// also downloads the embedding model, which is exactly the multi-minute
+/// stall this must keep OFF the agent's tool-call path.
+pub fn ensure_index_background(root: &str) {
+    if has_index(root) {
+        return;
+    }
+    {
+        let mut building = match BUILDING.lock() {
+            Ok(b) => b,
+            Err(_) => return,
+        };
+        if !building.insert(root.to_string()) {
+            return; // already building
+        }
+    }
+    let root = root.to_string();
+    std::thread::spawn(move || {
+        if let Err(e) = build_index(&root) {
+            eprintln!("Background vector index build failed for {root}: {e}");
+        }
+        if let Ok(mut building) = BUILDING.lock() {
+            building.remove(&root);
+        }
+    });
+}
 
 pub fn ensure_model() -> Result<(), String> {
     let mut guard = MODEL.lock().map_err(|e| e.to_string())?;

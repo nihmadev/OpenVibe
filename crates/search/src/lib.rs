@@ -21,7 +21,7 @@ pub use types::{
 };
 pub use utils::{clip, compile_patterns, glob_to_regex, matches_any};
 pub use vector_search::{
-    build_index, clear_all_caches, clear_cache, cosine_similarity, embed_texts, ensure_model,
-    search_codebase_vector,
+    build_index, clear_all_caches, clear_cache, cosine_similarity, embed_texts,
+    ensure_index_background, ensure_model, has_index, search_codebase_vector,
 };
 pub use walker::{find_all, find_files};
