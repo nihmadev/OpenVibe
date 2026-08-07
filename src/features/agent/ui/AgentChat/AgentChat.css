@@ -719,143 +719,128 @@
   transform: rotate(-90deg);
 }
 
-/* ═══ Run graph ═══════════════════════════════════════════════════════════ */
-/* One continuous vertical line runs down through every node marker. At the
-   very top the line enters with a single soft └ curve from the header; after
-   that it's just a straight trunk (VS Code Copilot style). */
-.agent-graph {
-  position: relative;
-  margin: var(--space-6) 0 var(--space-2);
-  /* Roomy left gutter so tool rows aren't cramped against the timeline. */
-  padding-left: var(--space-10);
-  /* A thin graph line that stays visible across themes (incl. borderless,
-     where --line is fully transparent). */
-  --graph-line: color-mix(in srgb, var(--fg) 16%, transparent);
-  /* Trunk x — node markers are centered on this. */
-  --graph-x: 14px;
-  /* Where the entry curve starts — well left of the trunk for a wide, smooth arc. */
-  --graph-entry-x: 2px;
-}
-
-/* The main trunk line, running straight down through every marker. It starts
-   below the first marker so the entry curve connects to it from the left. */
-.agent-graph::before {
-  content: "";
-  position: absolute;
-  left: var(--graph-x);
-  top: 20px;
-  bottom: 14px;
-  width: 1px;
-  background: var(--graph-line);
-  z-index: 0;
-}
-
-/* Entry curve: drops down from the header then sweeps right into the first
-   marker with a generous radius — a smooth ╰ arc, not a sharp corner. */
-.agent-graph::after {
-  content: "";
-  position: absolute;
-  left: var(--graph-entry-x);
-  top: -16px;
-  width: calc(var(--graph-x) - var(--graph-entry-x));
-  height: 31px;
-  border-left: 1px solid var(--graph-line);
-  border-bottom: 1px solid var(--graph-line);
-  border-bottom-left-radius: 12px;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.agent-graph__node {
-  position: relative;
+/* ═══ Run flow (linear, OpenCode style) ════════════════════════════════════
+   The whole turn reads top-to-bottom as a plain chat flow: ghost-text
+   thinking, compact tool rows, folded "Analysis" groups for research bursts,
+   and inline narration between the steps. */
+.agent-flow {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-4);
-  min-height: 30px;
-  padding: var(--space-2) 0;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: var(--space-5) 0 var(--space-2);
 }
 
-/* Marker sits centered on the trunk line (center lands exactly on --graph-x). */
-.agent-graph__marker {
-  position: relative;
-  z-index: 1;
-  flex: 0 0 16px;
-  width: 16px;
-  height: 20px;
-  /* padding-left(30) - margin brings marker's left edge to (graph-x - 8). */
-  margin-left: calc(var(--graph-x) - 8px - 30px);
+/* ── Thinking: ghost text in the flow, folded behind a one-line header ── */
+.flow-thinking {
+  min-width: 0;
+}
+
+.flow-thinking__head {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  margin-left: -3px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--text-md);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: color var(--duration-fast) ease;
+}
+
+.flow-thinking__head:hover {
   color: var(--fg-dim);
 }
 
-.agent-graph__marker--icon svg,
-.agent-graph__marker--icon img {
-  width: 14px;
-  height: 14px;
-  stroke-width: 1.7;
-  /* Punch the node icon out of the trunk line so it reads as a graph node. */
-  background: var(--bg);
-  box-shadow: 0 0 0 3px var(--bg);
-  border-radius: 3px;
+.flow-thinking__chevron {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fg-muted);
 }
 
-.agent-graph__marker--dot::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--fg-dim);
-  box-shadow: 0 0 0 3px var(--bg);
+.flow-thinking__title {
+  font-style: italic;
 }
 
-.agent-graph__marker--active::before {
-  background: var(--fg);
-  box-shadow:
-    0 0 0 3px var(--bg),
-    0 0 6px var(--fg-dim);
+.flow-thinking__title--active {
+  background-image:
+    linear-gradient(90deg, transparent 0px, transparent 20px, var(--fg) 60px, transparent 100px, transparent 160px),
+    linear-gradient(var(--fg-dim), var(--fg-dim));
+  background-size:
+    160px 100%,
+    100% 100%;
+  background-repeat: no-repeat, no-repeat;
+  background-position:
+    -160px center,
+    0 0;
+  -webkit-background-clip: text, text;
+  background-clip: text, text;
+  -webkit-text-fill-color: transparent;
+  animation: tool-shimmer var(--shimmer-duration, 3s) linear infinite;
 }
 
-.agent-graph__marker--err::before {
-  background: var(--red);
+/* Ghost text: the model's raw thoughts, visually receded behind the chat. */
+.flow-ghost {
+  margin: var(--space-1) 0 var(--space-2);
+  padding-left: calc(var(--space-5) + 1px);
+  border-left: 2px solid color-mix(in srgb, var(--fg) 10%, transparent);
+  color: var(--fg-muted);
+  font-size: var(--text-md);
+  line-height: 1.55;
+  opacity: 0.85;
 }
 
-.agent-graph__body {
-  flex: 1;
+.flow-ghost .markdown-body,
+.flow-ghost .markdown-body p,
+.flow-ghost .markdown-body li {
+  color: inherit;
+  font-size: inherit;
+}
+
+.flow-ghost .markdown-body p {
+  margin: 0 0 var(--space-3);
+}
+
+.flow-ghost .markdown-body > :last-child {
+  margin-bottom: 0;
+}
+
+/* ── Tool row: compact single line, flush with the flow ── */
+.flow-tool {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
   min-width: 0;
 }
 
-/* ── Tool node: reuse AgentToolView but hide its own icon (the graph marker
-      already carries the activity icon). ── */
-.agent-graph__tool {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-}
-
-.agent-graph__tool .tool {
+.flow-tool .tool {
   flex: 1;
   min-width: 0;
   margin: 0;
-  padding: 0;
+  padding: var(--space-1) 0;
+  gap: var(--space-2);
   font-size: var(--text-md);
   color: var(--fg);
 }
 
-.agent-graph__tool .tool__icon {
-  display: none;
+.flow-tool .tool__icon {
+  color: var(--fg-muted);
+  width: 16px;
+  display: inline-flex;
+  justify-content: center;
 }
 
-.agent-graph__tool .tool__verb {
+.flow-tool .tool__verb {
   color: var(--fg);
 }
 
-.agent-graph__tool .tool__suffix {
+.flow-tool .tool__suffix {
   color: var(--fg-dim);
 }
 
-.agent-graph__repeat {
+.flow-tool__repeat {
   flex-shrink: 0;
   align-self: center;
   padding: 0 var(--space-2);
@@ -868,73 +853,129 @@
   user-select: none;
 }
 
-.agent-graph__tool .fbadge img {
+.flow-tool .fbadge img {
   display: none;
 }
 
-.agent-graph__tool .fbadge__name {
+.flow-tool .fbadge__name {
   text-decoration: underline;
   text-decoration-color: var(--line-strong);
   text-decoration-style: dotted;
   text-underline-offset: 2px;
 }
 
-.agent-graph__tool .tool--agent {
+.flow-tool .tool--agent {
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 0;
+  padding: var(--space-1) 0;
   border: 0;
   background: transparent;
 }
 
-.agent-graph__tool .tool--agent:hover {
+.flow-tool .tool--agent:hover {
   border-color: transparent;
   background: transparent;
 }
 
-/* ── Reasoning node: dot + full text on the same line (no accordion). ── */
-.agent-graph__node--reasoning {
-  align-items: baseline;
+/* ── Analysis group: a burst of research calls folded into one block ── */
+.flow-analysis {
+  min-width: 0;
 }
 
-.agent-graph__node--reasoning .agent-graph__marker {
-  align-self: flex-start;
-  height: 22px;
-}
-
-.agent-graph__reasoning {
-  color: var(--fg-dim);
+.flow-analysis__head {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 100%;
+  min-width: 0;
+  padding: var(--space-1) 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
   font-size: var(--text-md);
-  line-height: 1.5;
-}
-
-.agent-graph__reasoning-title {
   color: var(--fg);
-  font-weight: 500;
-  margin-right: var(--space-3);
+  cursor: pointer;
+  text-align: left;
 }
 
-.agent-graph__reasoning .markdown-body,
-.agent-graph__reasoning .markdown-body p {
-  display: inline;
-  margin: 0;
-  color: var(--fg-dim);
+.flow-analysis__title {
+  flex-shrink: 0;
+  color: var(--fg);
 }
 
-/* ── Narration node ── */
-.agent-graph__narration {
+/* Counts read slightly dimmer than the "Analysis" label so the kinds
+   (reads, searches…) are visually secondary — but a touch brighter than
+   plain --fg-dim to stay comfortably readable. */
+.flow-analysis__counts {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--fg-dim) 40%, var(--fg));
+}
+
+.flow-analysis__title--active {
+  background-image:
+    linear-gradient(90deg, transparent 0px, transparent 20px, var(--fg) 60px, transparent 100px, transparent 160px),
+    linear-gradient(var(--fg-dim), var(--fg-dim));
+  background-size:
+    160px 100%,
+    100% 100%;
+  background-repeat: no-repeat, no-repeat;
+  background-position:
+    -160px center,
+    0 0;
+  -webkit-background-clip: text, text;
+  background-clip: text, text;
+  -webkit-text-fill-color: transparent;
+  animation: tool-shimmer var(--shimmer-duration, 3s) linear infinite;
+}
+
+.flow-analysis__chevron {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--fg-muted);
+  opacity: 0;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.flow-analysis__head:hover .flow-analysis__chevron,
+.flow-analysis__head:focus-visible .flow-analysis__chevron,
+.flow-analysis--open .flow-analysis__chevron {
+  opacity: 1;
+}
+
+.flow-analysis__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  padding-left: calc(var(--space-5) + 1px);
+  border-left: 2px solid color-mix(in srgb, var(--fg) 10%, transparent);
+}
+
+/* ── Narration between steps ── */
+.flow-narration {
   color: var(--fg);
   font-size: var(--text-lg);
   line-height: 1.55;
+  padding: var(--space-1) 0;
 }
 
-.agent-graph__narration .markdown-body p {
+.flow-narration .markdown-body p {
   margin: 0 0 var(--space-3);
 }
 
-.agent-graph__narration .markdown-body > :last-child {
+.flow-narration .markdown-body > :last-child {
   margin-bottom: 0;
+}
+
+.flow-error,
+.flow-info {
+  padding: var(--space-1) 0;
 }
 
 .agent-run__notice {

@@ -120,6 +120,16 @@
   display: block;
 }
 
+/* Line-range badge for read_file (e.g. "#L120-L180"), rendered right of the file name. */
+.tool__lines {
+  color: var(--fg-dim);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: calc(var(--text-lg) * 0.85);
+  flex: 0 0 auto;
+  white-space: nowrap;
+  opacity: 0.85;
+}
+
 /* ── diff stats inline ── */
 
 @keyframes loader2-spin {

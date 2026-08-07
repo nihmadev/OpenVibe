@@ -1,19 +1,15 @@
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/shared/i18n/useI18n";
+import { ChevronDownStrokeIcon, ChevronRightIcon } from "@/shared/icons/icons";
 import {
-  BookOpenIcon,
-  BotIcon,
-  ChevronDownStrokeIcon,
-  FolderOpenStrokeIcon,
-  GlobeIcon,
-  PencilIcon,
-  SearchStrokeIcon,
-  ServerIcon,
-  SquareTerminalIcon,
-  WrenchIcon,
-} from "@/shared/icons/icons";
-import { buildRunTimeline, formatRunDurationLabel, getRunTiming, type ToolActivityKind } from "../../../model/agentRun";
+  analysisKindCounts,
+  buildRunTimeline,
+  formatRunDurationLabel,
+  getRunTiming,
+  type RunFlowTool,
+  type ToolActivityKind,
+} from "../../../model/agentRun";
 import type { HistoryItem } from "../../../model/history";
 import { AgentToolView } from "../../AgentToolView/AgentToolView";
 import { Markdown } from "../../Markdown/Markdown";
@@ -33,55 +29,134 @@ interface AgentRunProps {
   onOpenAgentDiff?: (toolCallId: string, path: string) => void;
 }
 
-function ToolKindMarker({ kind }: { kind: ToolActivityKind }): React.ReactElement {
-  const props = { size: 14, strokeWidth: 1.7, "aria-hidden": true } as const;
-  switch (kind) {
-    case "git":
-      return <img src="/icons/providers/github.svg" width={14} height={14} alt="" aria-hidden="true" />;
-    case "search":
-      return <SearchStrokeIcon {...props} />;
-    case "web":
-      return <GlobeIcon {...props} />;
-    case "read":
-      return <BookOpenIcon {...props} />;
-    case "edit":
-      return <PencilIcon {...props} />;
-    case "command":
-      return <SquareTerminalIcon {...props} />;
-    case "browse":
-      return <FolderOpenStrokeIcon {...props} />;
-    case "agent":
-      return <BotIcon {...props} />;
-    case "external":
-      return <ServerIcon {...props} />;
-    default:
-      return <WrenchIcon {...props} />;
-  }
-}
-
 /**
- * Reasoning shown as a graph node: a small dot on the timeline with the full
- * thought text right beside it (no accordion), matching the Copilot layout.
+ * Model thinking rendered OpenCode-style: while the model is reasoning the
+ * text streams as ghost text right in the chat flow; once done it folds into
+ * a one-line "Thought process" header that expands on click.
  */
-function ReasoningNode({ item, runActive }: { item: HistoryItem; runActive: boolean }): React.ReactElement {
+function ThinkingBlock({ item, runActive }: { item: HistoryItem; runActive: boolean }): React.ReactElement | null {
+  const { t } = useI18n();
   const isDone = !runActive || item.reasoningDone === true || item.completedAt !== undefined;
+  // null = automatic (open while streaming, folded when done); boolean = user override.
+  const [manualOpen, setManualOpen] = useState<boolean | null>(null);
+  const open = manualOpen ?? !isDone;
+
   const body = item.reasoning?.trim() ?? "";
-  const title = item.reasoningName?.trim() ?? "";
+  const title = item.reasoningName?.trim() || t(isDone ? "flowThought" : "flowThinking");
+  if (!body && !item.reasoningName) return null;
 
   return (
-    <div className="agent-graph__node agent-graph__node--reasoning">
-      <span
-        className={`agent-graph__marker agent-graph__marker--dot${!isDone ? " agent-graph__marker--active" : ""}`}
-        aria-hidden="true"
-      />
-      <div className="agent-graph__body agent-graph__reasoning">
-        {title && <span className="agent-graph__reasoning-title">{title}</span>}
-        {body && (
-          <span className="agent-graph__reasoning-text">
-            <Markdown content={body} isAssistant={true} noFileIcons={true} isStreaming={!isDone} />
-          </span>
-        )}
-      </div>
+    <div className={`flow-thinking${open ? " flow-thinking--open" : ""}`}>
+      <button type="button" className="flow-thinking__head" onClick={() => setManualOpen(!open)} aria-expanded={open}>
+        <span className="flow-thinking__chevron">
+          <ChevronRightIcon open={open} />
+        </span>
+        <span className={`flow-thinking__title${!isDone ? " flow-thinking__title--active" : ""}`}>{title}</span>
+      </button>
+      {open && body && (
+        <div className="flow-ghost">
+          <Markdown content={body} isAssistant={true} noFileIcons={true} isStreaming={!isDone} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function toolIsPending(tool: RunFlowTool): boolean {
+  return tool.items.some((item) => item.ok === undefined);
+}
+
+function FlowToolRow({
+  tool,
+  cwd,
+  onDrillDown,
+  onOpenAgentDiff,
+}: {
+  tool: RunFlowTool;
+  cwd?: string;
+  onDrillDown?: (id: string) => void;
+  onOpenAgentDiff?: (toolCallId: string, path: string) => void;
+}): React.ReactElement {
+  const { t } = useI18n();
+  const displayItem = tool.items[tool.items.length - 1]!;
+  const repeats = tool.items.length;
+
+  return (
+    <div className="flow-tool">
+      <AgentToolView item={displayItem} cwd={cwd} onDrillDown={onDrillDown} onOpenAgentDiff={onOpenAgentDiff} />
+      {repeats > 1 && (
+        <span className="flow-tool__repeat" title={t("activityRepeatedCalls", { count: repeats })}>
+          ×{repeats}
+        </span>
+      )}
+    </div>
+  );
+}
+
+const ANALYSIS_COUNT_KEYS: Partial<Record<ToolActivityKind, string>> = {
+  read: "flowCountRead",
+  search: "flowCountSearch",
+  browse: "flowCountBrowse",
+  web: "flowCountWeb",
+  git: "flowCountGit",
+};
+
+/**
+ * A burst of consecutive read-only research calls (reads, searches, folder
+ * listing, web, git) folded into a single "Analysis" group. It stays open
+ * while the agent is still researching and folds into one summary row once
+ * the burst is finished.
+ */
+function AnalysisGroup({
+  node,
+  runActive,
+  cwd,
+  onDrillDown,
+  onOpenAgentDiff,
+}: {
+  node: { id: string; tools: RunFlowTool[] };
+  runActive: boolean;
+  cwd?: string;
+  onDrillDown?: (id: string) => void;
+  onOpenAgentDiff?: (toolCallId: string, path: string) => void;
+}): React.ReactElement {
+  const { t } = useI18n();
+  const anyPending = runActive && node.tools.some(toolIsPending);
+  const [manualOpen, setManualOpen] = useState<boolean | null>(null);
+  const open = manualOpen ?? anyPending;
+
+  const summary = useMemo(
+    () =>
+      analysisKindCounts(node.tools)
+        .map(([kind, count]) => t(ANALYSIS_COUNT_KEYS[kind] ?? "activityGroupToolsN", { count }))
+        .join(", "),
+    [node.tools, t],
+  );
+
+  return (
+    <div className={`flow-analysis${open ? " flow-analysis--open" : ""}`}>
+      <button type="button" className="flow-analysis__head" onClick={() => setManualOpen(!open)} aria-expanded={open}>
+        <span className={`flow-analysis__title${anyPending ? " flow-analysis__title--active" : ""}`}>
+          {t("flowAnalysis")}
+        </span>
+        <span className="flow-analysis__counts">{summary}</span>
+        <span className="flow-analysis__chevron">
+          <ChevronRightIcon open={open} />
+        </span>
+      </button>
+      {open && (
+        <div className="flow-analysis__body">
+          {node.tools.map((tool) => (
+            <FlowToolRow
+              key={tool.id}
+              tool={tool}
+              cwd={cwd}
+              onDrillDown={onDrillDown}
+              onOpenAgentDiff={onOpenAgentDiff}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -140,64 +215,51 @@ export function AgentRun({
       </div>
 
       {hasNodes && expanded && (
-        <div className="agent-graph">
+        <div className="agent-flow">
           {visibleNodes.map((node) => {
             switch (node.type) {
               case "reasoning":
-                return <ReasoningNode key={`reasoning-${node.id}`} item={node.item} runActive={isActive} />;
+                return <ThinkingBlock key={`reasoning-${node.id}`} item={node.item} runActive={isActive} />;
               case "narration":
                 return (
-                  <div className="agent-graph__node agent-graph__node--narration" key={`narration-${node.id}`}>
-                    <span className="agent-graph__marker agent-graph__marker--dot" aria-hidden="true" />
-                    <div className="agent-graph__body agent-graph__narration">
-                      <Markdown content={node.item.text} isAssistant={true} noFileIcons={true} />
-                    </div>
+                  <div className="flow-narration" key={`narration-${node.id}`}>
+                    <Markdown content={node.item.text} isAssistant={true} noFileIcons={true} />
                   </div>
                 );
-              case "tool": {
-                const displayItem = node.items[node.items.length - 1]!;
-                const repeats = node.items.length;
+              case "analysis":
                 return (
-                  <div className="agent-graph__node agent-graph__node--tool" key={`tool-${node.id}`}>
-                    <span className="agent-graph__marker agent-graph__marker--icon" aria-hidden="true">
-                      <ToolKindMarker kind={node.kind} />
-                    </span>
-                    <div className="agent-graph__body agent-graph__tool">
-                      <AgentToolView
-                        item={displayItem}
-                        cwd={cwd}
-                        onDrillDown={onDrillDown}
-                        onOpenAgentDiff={onOpenAgentDiff}
-                      />
-                      {repeats > 1 && (
-                        <span className="agent-graph__repeat" title={t("activityRepeatedCalls", { count: repeats })}>
-                          ×{repeats}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  <AnalysisGroup
+                    key={`analysis-${node.id}`}
+                    node={node}
+                    runActive={isActive}
+                    cwd={cwd}
+                    onDrillDown={onDrillDown}
+                    onOpenAgentDiff={onOpenAgentDiff}
+                  />
                 );
-              }
+              case "tool":
+                return (
+                  <FlowToolRow
+                    key={`tool-${node.id}`}
+                    tool={{ id: node.id, kind: node.kind, items: node.items }}
+                    cwd={cwd}
+                    onDrillDown={onDrillDown}
+                    onOpenAgentDiff={onOpenAgentDiff}
+                  />
+                );
               case "error":
                 return (
-                  <div className="agent-graph__node agent-graph__node--error" key={`error-${node.id}`}>
-                    <span
-                      className="agent-graph__marker agent-graph__marker--dot agent-graph__marker--err"
-                      aria-hidden="true"
+                  <div className="flow-error" key={`error-${node.id}`}>
+                    <ErrorNotice
+                      text={node.item.text}
+                      onRetry={onRegenerate && finalItem ? () => onRegenerate(finalItem.id) : undefined}
                     />
-                    <div className="agent-graph__body">
-                      <ErrorNotice
-                        text={node.item.text}
-                        onRetry={onRegenerate && finalItem ? () => onRegenerate(finalItem.id) : undefined}
-                      />
-                    </div>
                   </div>
                 );
               case "info":
                 return (
-                  <div className="agent-graph__node agent-graph__node--info" key={`info-${node.id}`}>
-                    <span className="agent-graph__marker agent-graph__marker--dot" aria-hidden="true" />
-                    <div className="agent-graph__body agent-run__notice agent-run__notice--info">{node.item.text}</div>
+                  <div className="flow-info agent-run__notice agent-run__notice--info" key={`info-${node.id}`}>
+                    {node.item.text}
                   </div>
                 );
               default:

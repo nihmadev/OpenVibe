@@ -418,7 +418,7 @@ export function AgentToolView({
           </>
         )}
         {suffix ? (
-          <span className="tool__suffix" title={suffix}>
+          <span className={suffix.startsWith("#L") ? "tool__lines" : "tool__suffix"} title={suffix}>
             {" "}
             {suffix}
           </span>
