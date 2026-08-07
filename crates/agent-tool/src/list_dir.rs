@@ -1,5 +1,11 @@
 use std::path::Path;
 
+/// Cap on directory entries returned to the model. Uncapped listings of
+/// folders like node_modules can dump tens of thousands of names into the
+/// conversation, instantly blowing the context window and triggering lossy
+/// history compaction.
+const MAX_ENTRIES: usize = 500;
+
 pub async fn tool_list_dir(cwd: &str, args: &serde_json::Value) -> Result<String, String> {
     let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
 
@@ -42,6 +48,14 @@ pub async fn tool_list_dir(cwd: &str, args: &serde_json::Value) -> Result<String
 
     if names.is_empty() {
         Ok("(empty)".to_string())
+    } else if names.len() > MAX_ENTRIES {
+        let total = names.len();
+        names.truncate(MAX_ENTRIES);
+        let mut out = names.join("\n");
+        out.push_str(&format!(
+            "\n…[showing {MAX_ENTRIES} of {total} entries; directories listed first]"
+        ));
+        Ok(out)
     } else {
         Ok(names.join("\n"))
     }

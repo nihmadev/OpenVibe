@@ -6,11 +6,13 @@ pub fn build_tool_definitions() -> Vec<ToolDefinition> {
             type_: "function".to_string(),
             function: agent::ToolDefFunction {
                 name: "read_file".to_string(),
-                description: "Read a UTF-8 text file from the local filesystem. Use this to see file contents, configuration, or source code.".to_string(),
+                description: "Read a UTF-8 text file from the local filesystem. Use this to see file contents, configuration, or source code. Output is capped at ~16K chars; for large files read a slice with 'offset'/'limit' (line-based) and continue from the reported next offset.".to_string(),
                 parameters: serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "path": { "type": "string", "description": "Absolute or relative path to the file" }
+                        "path": { "type": "string", "description": "Absolute or relative path to the file" },
+                        "offset": { "type": "integer", "description": "1-based line number to start reading from" },
+                        "limit": { "type": "integer", "description": "Maximum number of lines to read" }
                     },
                     "required": ["path"]
                 }),
@@ -215,11 +217,13 @@ pub fn build_readonly_tool_definitions() -> Vec<ToolDefinition> {
             type_: "function".to_string(),
             function: agent::ToolDefFunction {
                 name: "read_file".to_string(),
-                description: "Read file contents.".to_string(),
+                description: "Read file contents. For large files use 'offset'/'limit' (line-based) to read slices.".to_string(),
                 parameters: serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "path": { "type": "string" }
+                        "path": { "type": "string" },
+                        "offset": { "type": "integer", "description": "1-based start line" },
+                        "limit": { "type": "integer", "description": "Max lines to read" }
                     },
                     "required": ["path"]
                 }),
