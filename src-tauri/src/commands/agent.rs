@@ -120,12 +120,21 @@ pub async fn agent_send(
     // 1. Add user message & emit immediately so UI shows it right away
     agent.add_user_message(input.clone(), content_parts, &emit);
 
+    // SCG2 is injected into the system prompt ONLY on the first turn of a
+    // chat. Rewriting the system message on every send changes the prompt
+    // prefix and invalidates provider-side prompt caches (Anthropic explicit
+    // cache_control and OpenAI implicit caching alike), which makes every
+    // turn of a long session re-process the full history from scratch.
+    let is_first_turn = agent.get_messages().iter().filter(|m| m.role == "user").count() <= 1;
+
     // 2. Run SCG2 in a blocking thread (file reads, git, AST parsing) in parallel
-    let scg2_handle = {
+    let scg2_handle = if is_first_turn {
         let engine = state.scg2_engine.clone();
         let cwd = cwd_buf;
         let inp = input.clone();
-        tokio::task::spawn_blocking(move || engine.get_smart_context(&cwd, Some(&inp)))
+        Some(tokio::task::spawn_blocking(move || engine.get_smart_context(&cwd, Some(&inp))))
+    } else {
+        None
     };
 
     // 3. Save chat state in parallel with SCG2
@@ -151,15 +160,28 @@ pub async fn agent_send(
     }
 
     // 4. Await SCG2 result with a 500ms timeout & update system prompt before LLM call
-    let scg2_context = match tokio::time::timeout(std::time::Duration::from_millis(500), scg2_handle).await {
-        Ok(Ok(ctx)) => ctx,
-        _ => String::new(),
-    };
-    if !scg2_context.trim().is_empty() {
-        agent.update_system_prompt(Some(&scg2_context));
+    if let Some(handle) = scg2_handle {
+        let scg2_context = match tokio::time::timeout(std::time::Duration::from_millis(500), handle).await {
+            Ok(Ok(ctx)) => ctx,
+            _ => String::new(),
+        };
+        if !scg2_context.trim().is_empty() {
+            agent.update_system_prompt(Some(&scg2_context));
+        }
     }
 
     agent.send(&executor, &state.http_client, &emit).await;
+
+    // The agent is temporarily removed from AppState while a request runs.
+    // A project switch can therefore update the shared config while
+    // agent_set_cwd cannot reach this instance. Reconcile before putting it
+    // back so the next request cannot use the previous project's cwd.
+    let current_cwd = state.config.lock().map_err(|e| e.to_string())?.as_ref().map(|config| config.cwd.clone());
+    if let Some(current_cwd) = current_cwd {
+        if current_cwd != agent.config().cwd {
+            agent.set_cwd(current_cwd);
+        }
+    }
 
     // Clean up cancel token now that send is done
     {
@@ -392,6 +414,13 @@ pub async fn agent_reject_file_change(
 #[tauri::command]
 pub async fn agent_set_cwd(state: State<'_, AppState>, cwd: String) -> Result<(), String> {
     *state.todo_context.lock().map_err(|e| e.to_string())? = None;
+
+    // Keep the authoritative config in sync even when the agent is busy and
+    // temporarily absent from AppState::agent.
+    if let Some(config) = state.config.lock().map_err(|e| e.to_string())?.as_mut() {
+        config.cwd = cwd.clone();
+    }
+
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     if let Some(ref mut agent) = *agent_lock {
         agent.set_cwd(cwd);
