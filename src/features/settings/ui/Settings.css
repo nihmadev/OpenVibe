@@ -1048,6 +1048,10 @@
   overflow: hidden;
 }
 
+.settings__models-group + .settings__models-group {
+  border-top: 1px solid var(--line);
+}
+
 .settings__models-group:first-child {
   border-top: 1px solid var(--line);
   border-radius: var(--radius-md) var(--radius-md) 0 0;
@@ -1065,8 +1069,8 @@
 
 .settings__models-group-header {
   background: var(--bg-3);
-  width: calc(100% - var(--space-2));
-  margin: 0 var(--space-1);
+  width: 100%;
+  box-sizing: border-box;
   padding: var(--space-4) var(--space-6);
   display: flex;
   align-items: center;
@@ -1076,7 +1080,6 @@
   color: var(--fg);
   cursor: pointer;
   user-select: none;
-  border-radius: var(--radius-sm);
 }
 
 .settings__models-group-header:hover {
