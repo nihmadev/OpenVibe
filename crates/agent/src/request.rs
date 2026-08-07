@@ -203,13 +203,23 @@ fn is_connection_error(e: &reqwest::Error) -> bool {
     false
 }
 
-/// Anthropic-only prompt caching gate. Other providers (OpenAI, Google, ...)
-/// either ignore or hard-error on the `cache_control` field, so it is only
-/// set when the request targets Anthropic (directly or through the proxy,
-/// which forwards the body verbatim).
+/// Prompt-caching gate for providers that accept `cache_control` markers:
+/// - Anthropic (native support, directly or through the proxy which
+///   forwards the body verbatim);
+/// - OpenRouter (documented passthrough: applies `cache_control` for
+///   Anthropic/Gemini models and strips it for providers that don't
+///   support it, so it is always safe to send).
+///
+/// Other providers (OpenAI, Google direct, ...) either ignore or hard-error
+/// on the field, so it is not set for them. (OpenAI caches long prompt
+/// prefixes implicitly — no markers needed.)
 fn supports_prompt_caching(config: &LlmConfig) -> bool {
     let pid = config.provider_id.as_deref().unwrap_or("");
-    pid == "anthropic" || config.base_url.to_lowercase().contains("api.anthropic.com")
+    let base = config.base_url.to_lowercase();
+    pid == "anthropic"
+        || base.contains("api.anthropic.com")
+        || pid == "openrouter"
+        || base.contains("openrouter.ai")
 }
 
 /// Providers whose OpenAI-compatible chat endpoint accepts the flat
@@ -299,6 +309,13 @@ fn safe_header_val(val: &str) -> reqwest::header::HeaderValue {
 /// arbitrary OpenAI-compatible endpoints with the misleading
 /// `x-provider-base-url header required` response. Keep custom endpoints
 /// direct (the models command already follows this behavior).
+///
+/// The proxy exists ONLY to reach providers that geo-block certain regions.
+/// Globally reachable providers (opencode Zen, OpenRouter, DeepSeek — all
+/// Cloudflare/global-edge fronted) are deliberately NOT routed: an extra
+/// VPS hop adds latency and caps streaming throughput at the VPS's capacity
+/// for zero benefit. `ollama` is a localhost endpoint and can never be
+/// proxied.
 fn should_route_via_proxy(config: &LlmConfig) -> bool {
     let is_github = config.base_url.contains("models.github.ai");
     let proxy_provider = config.provider_id.as_deref().is_some_and(|id| {
@@ -307,14 +324,10 @@ fn should_route_via_proxy(config: &LlmConfig) -> bool {
             "anthropic"
                 | "openai"
                 | "google"
-                | "deepseek"
                 | "groq"
-                | "openrouter"
-                | "ollama"
                 | "cerebras"
                 | "moonshot"
                 | "zai"
-                | "opencode"
                 | "github"
                 | "together"
                 | "fireworks"

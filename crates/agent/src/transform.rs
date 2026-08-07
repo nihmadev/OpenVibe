@@ -138,19 +138,25 @@ pub fn messages_to_api_json(messages: Vec<ChatMessage>) -> Vec<serde_json::Value
 /// Serialize the chat history to OpenAI-compatible message JSON.
 ///
 /// When `use_prompt_cache` is true (Anthropic only — other providers reject
-/// or ignore unknown fields), a `cache_control: {type: "ephemeral"}` marker
-/// is attached to the system message (or the first user message when no
-/// system message exists) so Anthropic caches the prompt prefix. Cache
-/// invalidation is implicit: `update_system_prompt()` changes the system
-/// content, which changes the cache key server-side — no purge needed.
+/// or ignore unknown fields), `cache_control: {type: "ephemeral"}` markers
+/// are attached to TWO points:
+/// 1. The system message (stable prefix — caches the system prompt), and
+/// 2. The LAST message with content (moving breakpoint — caches the entire
+///    conversation up to and including the current turn, so the next agent
+///    turn re-reads the whole growing history from cache instead of
+///    re-processing it from scratch; this is what keeps long agent sessions
+///    fast and cheap).
+///
+/// Cache invalidation is implicit: changing any earlier content changes the
+/// server-side cache key — no purge needed.
 pub fn messages_to_api_json_with_cache(
     messages: Vec<ChatMessage>,
     use_prompt_cache: bool,
 ) -> Vec<serde_json::Value> {
-    let cache_target = if use_prompt_cache {
-        find_cache_target(&messages)
+    let cache_targets = if use_prompt_cache {
+        find_cache_targets(&messages)
     } else {
-        None
+        Vec::new()
     };
 
     messages
@@ -184,7 +190,7 @@ pub fn messages_to_api_json_with_cache(
             }
 
             if let Some(content) = content_val {
-                let content = if cache_target == Some(idx) {
+                let content = if cache_targets.contains(&idx) {
                     with_cache_control(content)
                 } else {
                     content
@@ -211,13 +217,29 @@ pub fn messages_to_api_json_with_cache(
         .collect()
 }
 
-/// Index of the message that should carry the cache breakpoint: the system
-/// message when present, otherwise the first user message.
-fn find_cache_target(messages: &[ChatMessage]) -> Option<usize> {
-    messages
+/// Indices of the messages that should carry cache breakpoints:
+/// - the system message (or the first user message when no system exists) —
+///   a stable prefix breakpoint, and
+/// - the last message that has content — a moving breakpoint so the whole
+///   conversation history is served from cache on the next turn.
+fn find_cache_targets(messages: &[ChatMessage]) -> Vec<usize> {
+    let mut targets = Vec::with_capacity(2);
+    if let Some(prefix) = messages
         .iter()
         .position(|m| m.role == "system")
         .or_else(|| messages.iter().position(|m| m.role == "user"))
+    {
+        targets.push(prefix);
+    }
+    // cache_control can only be attached to content blocks, so the moving
+    // breakpoint must land on a message that actually carries content
+    // (assistant messages that are pure tool_calls have content: None).
+    if let Some(last) = messages.iter().rposition(|m| m.content.is_some()) {
+        if !targets.contains(&last) {
+            targets.push(last);
+        }
+    }
+    targets
 }
 
 /// Attach `cache_control: {type: "ephemeral"}` to message content.
@@ -419,11 +441,11 @@ mod tests {
             Some("ephemeral")
         );
 
-        // User message stays a plain string, no cache_control.
-        assert_eq!(
-            json_list[1].get("content").and_then(|v| v.as_str()),
-            Some("hi")
-        );
+        // Last message carries the moving breakpoint so the whole history is
+        // cached for the next agent turn.
+        let user_blocks = json_list[1].get("content").unwrap().as_array().unwrap();
+        assert_eq!(user_blocks[0].get("text").unwrap(), "hi");
+        assert!(user_blocks[0].get("cache_control").is_some());
     }
 
     #[test]
@@ -433,11 +455,53 @@ mod tests {
 
         let blocks = json_list[0].get("content").unwrap().as_array().unwrap();
         assert!(blocks[0].get("cache_control").is_some());
-        // Assistant untouched.
+        // Last message gets the moving breakpoint.
+        let last_blocks = json_list[1].get("content").unwrap().as_array().unwrap();
+        assert!(last_blocks[0].get("cache_control").is_some());
+    }
+
+    #[test]
+    fn test_cache_control_moving_breakpoint_on_last_content_message() {
+        use crate::chat::{ToolCall, ToolCallFunction};
+        // history: system, user, assistant(tool_calls only, no content), tool
+        let mut assistant = ChatMessage {
+            role: "assistant".to_string(),
+            content: None,
+            name: None,
+            tool_call_id: None,
+            tool_calls: None,
+            reasoning_content: None,
+            reasoning_name: None,
+            usage: None,
+        };
+        assistant.tool_calls = Some(vec![ToolCall {
+            id: "c1".to_string(),
+            type_: "function".to_string(),
+            function: ToolCallFunction {
+                name: "read_file".to_string(),
+                arguments: "{}".to_string(),
+                extra_fields: serde_json::Map::new(),
+            },
+            extra_fields: serde_json::Map::new(),
+        }]);
+        let mut tool = msg("tool", "file contents");
+        tool.tool_call_id = Some("c1".to_string());
+        let msgs = vec![msg("system", "sys"), msg("user", "task"), assistant, tool];
+        let json_list = messages_to_api_json_with_cache(msgs, true);
+
+        // System carries the prefix breakpoint.
+        let sys_blocks = json_list[0].get("content").unwrap().as_array().unwrap();
+        assert!(sys_blocks[0].get("cache_control").is_some());
+        // Middle user message untouched.
         assert_eq!(
             json_list[1].get("content").and_then(|v| v.as_str()),
-            Some("ok")
+            Some("task")
         );
+        // Assistant with no content must NOT get a breakpoint (no content field).
+        assert!(json_list[2].get("content").is_none());
+        // The tool result (last message with content) carries the moving breakpoint.
+        let tool_blocks = json_list[3].get("content").unwrap().as_array().unwrap();
+        assert!(tool_blocks[0].get("cache_control").is_some());
     }
 
     #[test]
