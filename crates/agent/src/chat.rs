@@ -66,4 +66,8 @@ pub struct AssistantTurn {
     pub reasoning_content: Option<String>,
     pub reasoning_name: Option<String>,
     pub usage: Option<TokenUsage>,
+    /// Provider-reported finish reason ("stop", "length", "tool_calls", ...).
+    /// "length" means the output was cut by the max-tokens limit — the turn
+    /// is incomplete and must not be treated as a finished answer.
+    pub finish_reason: Option<String>,
 }

@@ -7,7 +7,7 @@ use crate::chat::{ChatMessage, ToolCall, ToolCallFunction};
 use crate::executor::ToolExecutor;
 use crate::request::stream_chat;
 
-const MAX_TURNS: usize = 25;
+const MAX_TURNS: usize = 100;
 
 /// Keep tool failures useful to the model as a diagnostic hint. The UI filters
 /// messages carrying this marker instead of rendering raw error output.
@@ -29,51 +29,46 @@ fn clean_tool_calls(tool_calls: Vec<ToolCall>) -> Vec<ToolCall> {
                 return None;
             }
             let args_str = call.function.arguments.clone();
-            if args_str.trim().is_empty() {
-                return Some(ToolCall {
-                    id: call.id,
-                    type_: "function".to_string(),
-                    function: ToolCallFunction {
-                        name,
-                        arguments: args_str,
-                        extra_fields: call.function.extra_fields,
-                    },
-                    extra_fields: call.extra_fields,
-                });
-            }
-            match serde_json::from_str::<serde_json::Value>(&args_str) {
-                Ok(mut parsed) if parsed.is_object() => {
-                    if let Some(obj) = parsed.as_object_mut() {
-                        if obj.contains_key("done") {
+
+            // Strip the spurious `done` flag some models attach to tool
+            // arguments. IMPORTANT: only re-serialize when we actually
+            // removed something — serde_json::Map is a BTreeMap, so an
+            // unconditional round-trip would alphabetize argument keys and
+            // make the stored history diverge from what the model generated
+            // (which also breaks provider-side prompt-cache prefix matching).
+            let arguments = if args_str.trim().is_empty() {
+                args_str
+            } else {
+                match serde_json::from_str::<serde_json::Value>(&args_str) {
+                    Ok(mut parsed)
+                        if parsed
+                            .as_object()
+                            .is_some_and(|obj| obj.contains_key("done")) =>
+                    {
+                        if let Some(obj) = parsed.as_object_mut() {
                             obj.remove("done");
-                            if obj.is_empty() {
-                                return None;
-                            }
                         }
+                        // Never drop the call entirely: a `{"done": true}`-only
+                        // payload still names a real tool. Execute it with
+                        // empty args so argument validation gives the model a
+                        // useful error (or the tool's defaults apply), instead
+                        // of silently ending the whole run mid-task.
+                        serde_json::to_string(&parsed).unwrap_or(args_str)
                     }
-                    let cleaned = serde_json::to_string(&parsed).unwrap_or(args_str);
-                    Some(ToolCall {
-                        id: call.id,
-                        type_: "function".to_string(),
-                        function: ToolCallFunction {
-                            name,
-                            arguments: cleaned,
-                            extra_fields: call.function.extra_fields,
-                        },
-                        extra_fields: call.extra_fields,
-                    })
+                    _ => args_str,
                 }
-                _ => Some(ToolCall {
-                    id: call.id,
-                    type_: "function".to_string(),
-                    function: ToolCallFunction {
-                        name,
-                        arguments: args_str,
-                        extra_fields: call.function.extra_fields,
-                    },
-                    extra_fields: call.extra_fields,
-                }),
-            }
+            };
+
+            Some(ToolCall {
+                id: call.id,
+                type_: "function".to_string(),
+                function: ToolCallFunction {
+                    name,
+                    arguments,
+                    extra_fields: call.function.extra_fields,
+                },
+                extra_fields: call.extra_fields,
+            })
         })
         .collect()
 }
@@ -170,8 +165,15 @@ impl Agent {
         let cwd = self.config().cwd.clone();
         let llm_config = self.config().llm_config();
 
+        // True when the loop below ends because the turn budget ran out
+        // rather than because the model finished. Exhaustion must be
+        // reported explicitly — silently dropping an unfinished task looks
+        // to the user like the model "gave up halfway".
+        let mut turns_exhausted = true;
+
         for _turn in 0..MAX_TURNS {
             if self.cancel.load(Ordering::Relaxed) {
+                turns_exhausted = false;
                 emit("vibe:agent:stopped", serde_json::Value::Null);
                 break;
             }
@@ -342,6 +344,7 @@ impl Agent {
                 }
             };
 
+            let stream_started = std::time::Instant::now();
             let stream_fut = stream_chat(
                 &llm_config,
                 self.messages.clone(),
@@ -369,6 +372,7 @@ impl Agent {
             let turn_result = match turn_result {
                 Ok(r) => r,
                 Err(e) => {
+                    turns_exhausted = false;
                     if e == "Aborted" {
                         emit("vibe:agent:stopped", serde_json::Value::Null);
                     } else {
@@ -385,6 +389,16 @@ impl Agent {
                 // Anthropic prompt caching metrics (None on other providers).
                 self.last_cache_creation_tokens = u.cache_creation_input_tokens;
                 self.last_cache_read_tokens = u.cache_read_input_tokens;
+                // Whole-stream generation speed (includes TTFT, so slightly
+                // conservative). Surfaced so slow turns are diagnosable:
+                // low tok/s with high promptTokens and zero cacheRead points
+                // at cold-prefix re-processing, not network issues.
+                let elapsed = stream_started.elapsed().as_secs_f64();
+                let tokens_per_sec = if elapsed > 0.0 && u.completion_tokens > 0 {
+                    (u.completion_tokens as f64 / elapsed * 10.0).round() / 10.0
+                } else {
+                    0.0
+                };
                 emit(
                     "vibe:agent:usage",
                     serde_json::json!({
@@ -393,6 +407,8 @@ impl Agent {
                         "totalTokens": u.total_tokens,
                         "cacheCreationInputTokens": u.cache_creation_input_tokens,
                         "cacheReadInputTokens": u.cache_read_input_tokens,
+                        "tokensPerSec": tokens_per_sec,
+                        "streamSecs": (elapsed * 10.0).round() / 10.0,
                     }),
                 );
             }
@@ -440,6 +456,28 @@ impl Agent {
             });
 
             if cleaned_tool_calls.is_empty() {
+                // Output truncated by the provider's max-tokens limit: the
+                // answer is incomplete. Nudge the model to continue instead
+                // of presenting a cut-off message as the final answer.
+                if turn_result.finish_reason.as_deref() == Some("length") {
+                    self.messages.push(ChatMessage {
+                        role: "user".to_string(),
+                        content: Some(serde_json::Value::String(
+                            "[output-truncated] Your previous message was cut off by the \
+                             output token limit. Continue exactly where you stopped without \
+                             repeating what was already said."
+                                .to_string(),
+                        )),
+                        name: None,
+                        tool_call_id: None,
+                        tool_calls: None,
+                        reasoning_content: None,
+                        reasoning_name: None,
+                        usage: None,
+                    });
+                    continue;
+                }
+                turns_exhausted = false;
                 if !content_text.is_empty() {
                     emit("vibe:agent:done", serde_json::Value::Null);
                 } else if turn_result.content.trim().is_empty() {
@@ -635,6 +673,34 @@ impl Agent {
                     });
                 }
             }
+        }
+
+        if turns_exhausted && !self.cancel.load(Ordering::Relaxed) {
+            // The loop ran out of turns while the model was still working.
+            // Leave a marker in the history so the model knows why it was
+            // interrupted, and tell the user explicitly instead of silently
+            // ending the run mid-task.
+            self.messages.push(ChatMessage {
+                role: "user".to_string(),
+                content: Some(serde_json::Value::String(format!(
+                    "[turn-limit] The agent run was paused after reaching the limit of \
+                     {MAX_TURNS} consecutive tool-use turns. The task may be unfinished. \
+                     Summarize progress and continue when the user asks."
+                ))),
+                name: None,
+                tool_call_id: None,
+                tool_calls: None,
+                reasoning_content: None,
+                reasoning_name: None,
+                usage: None,
+            });
+            emit(
+                "vibe:agent:error",
+                serde_json::json!({"text": format!(
+                    "Turn limit reached ({MAX_TURNS} consecutive tool-use turns). \
+                     The task may be unfinished — send a message (e.g. \"continue\") to resume."
+                )}),
+            );
         }
 
         // Reset cancel flag for the next send cycle

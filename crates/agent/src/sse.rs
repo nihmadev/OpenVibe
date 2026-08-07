@@ -29,6 +29,7 @@ pub async fn parse_sse_stream(
     let mut thought_buf = String::new();
     let mut tool_acc: HashMap<usize, ToolCallAcc> = HashMap::new();
     let mut usage: Option<TokenUsage> = None;
+    let mut finish_reason: Option<String> = None;
     let mut buffer = String::with_capacity(4096);
     let mut utf8_tail = Vec::new();
 
@@ -63,6 +64,7 @@ pub async fn parse_sse_stream(
                         &mut thought_buf,
                         &mut tool_acc,
                         &mut usage,
+                        &mut finish_reason,
                         on_delta,
                         on_reasoning,
                         on_reasoning_name,
@@ -92,6 +94,7 @@ pub async fn parse_sse_stream(
                         &mut thought_buf,
                         &mut tool_acc,
                         &mut usage,
+                        &mut finish_reason,
                         on_delta,
                         on_reasoning,
                         on_reasoning_name,
@@ -145,6 +148,7 @@ pub async fn parse_sse_stream(
         reasoning_content,
         reasoning_name,
         usage,
+        finish_reason,
     })
 }
 
@@ -486,6 +490,7 @@ fn process_sse_line(
     thought_buf: &mut String,
     tool_acc: &mut HashMap<usize, ToolCallAcc>,
     usage: &mut Option<TokenUsage>,
+    finish_reason: &mut Option<String>,
     on_delta: &(dyn Fn(&str) + Send + Sync),
     on_reasoning: &(dyn Fn(&str) + Send + Sync),
     on_reasoning_name: &(dyn Fn(&str) + Send + Sync),
@@ -560,12 +565,21 @@ fn process_sse_line(
         }
     }
 
-    let delta = match event
+    let first_choice = event
         .get("choices")
         .and_then(|c| c.as_array())
-        .and_then(|c| c.first())
-        .and_then(|c| c.get("delta"))
+        .and_then(|c| c.first());
+
+    if let Some(fr) = first_choice
+        .and_then(|c| c.get("finish_reason"))
+        .and_then(|v| v.as_str())
     {
+        if !fr.is_empty() {
+            *finish_reason = Some(fr.to_string());
+        }
+    }
+
+    let delta = match first_choice.and_then(|c| c.get("delta")) {
         Some(d) => d,
         None => return,
     };
