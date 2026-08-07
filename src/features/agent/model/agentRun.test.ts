@@ -111,7 +111,7 @@ describe("agent run presentation", () => {
     expect(toolActivityGroupLabel("git", 1, t)).toBe("Git operations");
   });
 
-  it("lays the run out as one chronological graph, one node per event", () => {
+  it("lays the run out as one chronological flow, grouping research bursts", () => {
     const nodes = buildRunTimeline(
       [
         item({ id: "a1", kind: "assistant", reasoningName: "Inspecting matches" }),
@@ -128,21 +128,35 @@ describe("agent run presentation", () => {
 
     expect(nodes.map((node) => (node.type === "tool" ? `tool:${node.kind}` : node.type))).toEqual([
       "reasoning",
-      "tool:read",
-      "tool:read",
+      "analysis",
       "tool:edit",
       "narration",
       "tool:command",
     ]);
+    const analysis = nodes[1];
+    expect(analysis.type === "analysis" && analysis.tools.map((tool) => tool.id)).toEqual(["t1", "t2"]);
   });
 
-  it("collapses consecutive reads of the same file into one graph node", () => {
+  it("keeps a lone research call as a plain tool node", () => {
+    const nodes = buildRunTimeline([
+      item({ id: "t1", kind: "tool", toolName: "read_file", toolArgs: { path: "/app/a.ts" } }),
+      item({ id: "t2", kind: "tool", toolName: "edit_file" }),
+    ]);
+    expect(nodes.map((node) => (node.type === "tool" ? `tool:${node.kind}` : node.type))).toEqual([
+      "tool:read",
+      "tool:edit",
+    ]);
+  });
+
+  it("collapses consecutive reads of the same file into one step inside a group", () => {
     const nodes = buildRunTimeline([
       item({ id: "t1", kind: "tool", toolName: "read_file", toolArgs: { path: "/app/auth.ts" } }),
       item({ id: "t2", kind: "tool", toolName: "read_file", toolArgs: { path: "/app/auth.ts" } }),
       item({ id: "t3", kind: "tool", toolName: "read_file", toolArgs: { path: "/app/db.ts" } }),
     ]);
-    expect(nodes.map((node) => (node.type === "tool" ? node.items.map((it) => it.id) : node.type))).toEqual([
+    expect(nodes).toHaveLength(1);
+    const group = nodes[0];
+    expect(group.type === "analysis" && group.tools.map((tool) => tool.items.map((it) => it.id))).toEqual([
       ["t1", "t2"],
       ["t3"],
     ]);

@@ -113,6 +113,7 @@ export function AgentChat({
   const [isJumping, setIsJumping] = useState(false);
   const [jumpMetrics, setJumpMetrics] = useState({ duration: 800, dist: 10 });
   const scrollRafRef = useRef<number | null>(null);
+  const shouldFollowBottomRef = useRef(true);
 
   useEffect(() => {
     appState.get("settings:showThinking").then((val) => {
@@ -132,7 +133,9 @@ export function AgentChat({
   const handleScroll = useCallback(() => {
     const el = ref.current;
     if (!el) return;
-    const isFarFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight > 150;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const isFarFromBottom = distanceFromBottom > 150;
+    shouldFollowBottomRef.current = !isFarFromBottom;
     setShowScrollDown(isFarFromBottom);
   }, []);
 
@@ -200,8 +203,27 @@ export function AgentChat({
     const el = ref.current;
     if (!el) return;
     const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 150;
+    shouldFollowBottomRef.current = nearBottom;
     if (nearBottom) el.scrollTop = el.scrollHeight;
     handleScroll();
+
+    const followBottom = () => {
+      const currentEl = ref.current;
+      if (!currentEl || !shouldFollowBottomRef.current) return;
+      currentEl.scrollTop = currentEl.scrollHeight;
+      handleScroll();
+    };
+
+    const mutationObserver = new MutationObserver(followBottom);
+    mutationObserver.observe(el, { childList: true, subtree: true, characterData: true });
+
+    const resizeObserver = new ResizeObserver(followBottom);
+    resizeObserver.observe(el);
+
+    return () => {
+      mutationObserver.disconnect();
+      resizeObserver.disconnect();
+    };
   }, [handleScroll]);
 
   return (

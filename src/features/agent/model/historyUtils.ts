@@ -115,6 +115,25 @@ export function toRelativePath(filePath: string, cwd?: string): string {
   return filePath;
 }
 
+/**
+ * Line range badge for read_file calls, GitHub-style: "#L120-L180".
+ * Prefers the exact range reported by the tool result ("[showing lines X-Y of Z]"),
+ * falls back to the requested offset/limit args while the call is pending.
+ */
+export function readLineRange(item: HistoryItem): string {
+  // Completed call: the result text carries the authoritative range.
+  const m = item.text?.match(/\[showing lines (\d+)-(\d+) of \d+\]/);
+  if (m) return `#L${m[1]}-L${m[2]}`;
+
+  const args = item.toolArgs as { offset?: number; limit?: number } | undefined;
+  const offset = typeof args?.offset === "number" && args.offset >= 1 ? Math.floor(args.offset) : undefined;
+  const limit = typeof args?.limit === "number" && args.limit >= 1 ? Math.floor(args.limit) : undefined;
+  if (offset !== undefined && limit !== undefined) return `#L${offset}-L${offset + limit - 1}`;
+  if (offset !== undefined) return `#L${offset}-`;
+  if (limit !== undefined) return `#L1-L${limit}`;
+  return "";
+}
+
 type TodoActivity = { kind: "created" | "completed" | "blocked"; task?: TodoTask };
 
 function todoActivity(item: HistoryItem): TodoActivity | null {
@@ -164,7 +183,11 @@ export function describe(
       return { verb: label("todoCreated", "Created task plan"), file: null, suffix: "" };
     }
     case "read_file":
-      return { verb: pending ? label("reading", "Reading") : label("read", "Read"), file, suffix: "" };
+      return {
+        verb: pending ? label("reading", "Reading") : label("read", "Read"),
+        file,
+        suffix: readLineRange(item),
+      };
     case "write_file":
       return {
         verb:

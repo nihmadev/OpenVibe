@@ -226,13 +226,22 @@ export function hasMeaningfulReasoning(item: HistoryItem): boolean {
   return true;
 }
 
+/** One tool step in the flow: repeated same-file reads share a step (×N). */
+export interface RunFlowTool {
+  id: string;
+  kind: ToolActivityKind;
+  items: HistoryItem[];
+}
+
 /**
- * A single node in the run graph. The whole turn renders as one vertical
- * timeline (VS Code Copilot style): tool calls carry an activity icon, while
- * reasoning and narration sit on the same line as small dots.
+ * A single node in the run flow. The whole turn renders as a linear,
+ * chat-order list (OpenCode style): thinking is ghost text right in the flow,
+ * tool calls are compact rows, and bursts of read-only research calls
+ * (read/search/browse/web/git) collapse into a single "Analysis" group.
  */
 export type RunTimelineNode =
   | { type: "tool"; id: string; kind: ToolActivityKind; items: HistoryItem[] }
+  | { type: "analysis"; id: string; tools: RunFlowTool[] }
   | { type: "reasoning"; id: string; item: HistoryItem }
   | { type: "narration"; id: string; item: HistoryItem }
   | { type: "info"; id: string; item: HistoryItem }
@@ -242,10 +251,15 @@ function isReadTool(item: HistoryItem): boolean {
   return item.toolName === "read_file" || item.toolName === "view_file";
 }
 
+/** Read-only research activities that merge into an "Analysis" group. */
+const ANALYSIS_KINDS: ReadonlySet<ToolActivityKind> = new Set(["read", "search", "browse", "web", "git"]);
+
 /**
- * Lay the whole run out as one chronological graph. Every event is its own
- * node so the timeline reads top-to-bottom like a commit graph. Consecutive
- * reads of the same file collapse into a single node with a ×N badge.
+ * Lay the whole run out as one chronological, linear flow. Every event is its
+ * own node so the trace reads top-to-bottom exactly as it happened.
+ * Consecutive reads of the same file collapse into a single step with a ×N
+ * badge, and two or more consecutive research steps merge into one
+ * "Analysis" group node.
  */
 export function buildRunTimeline(items: HistoryItem[], finalItemId?: string): RunTimelineNode[] {
   const nodes: RunTimelineNode[] = [];
@@ -283,7 +297,44 @@ export function buildRunTimeline(items: HistoryItem[], finalItemId?: string): Ru
       nodes.push({ type: "info", id: item.id, item });
     }
   }
-  return nodes;
+
+  // Second pass: merge consecutive research steps into one Analysis group.
+  const grouped: RunTimelineNode[] = [];
+  let burst: RunFlowTool[] = [];
+
+  const flushBurst = () => {
+    if (burst.length === 0) return;
+    if (burst.length >= 2) {
+      grouped.push({ type: "analysis", id: burst[0]!.id, tools: burst });
+    } else {
+      const tool = burst[0]!;
+      grouped.push({ type: "tool", id: tool.id, kind: tool.kind, items: tool.items });
+    }
+    burst = [];
+  };
+
+  for (const node of nodes) {
+    if (node.type === "tool" && ANALYSIS_KINDS.has(node.kind)) {
+      burst.push({ id: node.id, kind: node.kind, items: node.items });
+      continue;
+    }
+    flushBurst();
+    grouped.push(node);
+  }
+  flushBurst();
+  return grouped;
+}
+
+/**
+ * Per-kind call counts of an analysis burst, in order of first appearance:
+ * [["read", 3], ["search", 2]] → "3 чтения, 2 поиска".
+ */
+export function analysisKindCounts(tools: RunFlowTool[]): [ToolActivityKind, number][] {
+  const counts = new Map<ToolActivityKind, number>();
+  for (const tool of tools) {
+    counts.set(tool.kind, (counts.get(tool.kind) ?? 0) + tool.items.length);
+  }
+  return [...counts.entries()];
 }
 
 export function getRunTiming(
