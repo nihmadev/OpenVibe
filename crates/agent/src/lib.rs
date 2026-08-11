@@ -6,6 +6,7 @@ pub mod config;
 pub mod definition;
 pub mod events;
 pub mod executor;
+pub mod project_tree;
 pub mod prompt;
 pub mod request;
 pub mod rollback;

@@ -28,7 +28,6 @@ pub struct AppState {
     pub warmer: Arc<http_client::ConnectionWarmer>,
     pub warmer_stop_tx: Mutex<Option<watch::Sender<bool>>>,
     pub mcp_manager: Arc<mcp::McpManager>,
-    pub scg2_engine: Arc<scg2::Scg2Engine>,
     pub lsp_manager: Arc<lsp::LspManager>,
     pub runtime_manager: Arc<lsp::runtime::RuntimeManager>,
 }
@@ -245,13 +244,6 @@ pub fn run() {
                 mcp_clone.init_and_autostart().await;
             });
 
-            // SCG2 Engine
-            let scg2_engine = Arc::new(scg2::Scg2Engine::new(scg2::Scg2Config::default()));
-            let scg2_clone = scg2_engine.clone();
-            tauri::async_runtime::spawn(async move {
-                scg2_clone.start_background_worker().await;
-            });
-
             // Pre-initialize agent if we have valid credentials to avoid first-request latency
             let initial_agent = if !cfg.api_key.is_empty() && !cfg.base_url.is_empty() {
                 Some(agent::Agent::new(cfg.to_agent_config()))
@@ -280,7 +272,6 @@ pub fn run() {
                 warmer,
                 warmer_stop_tx: Mutex::new(Some(warmer_stop_tx)),
                 mcp_manager,
-                scg2_engine,
                 lsp_manager,
                 runtime_manager,
             };
@@ -424,8 +415,6 @@ pub fn run() {
             commands::mcp::mcp_get_config,
             commands::mcp::mcp_save_config,
             commands::mcp::mcp_list_tools,
-            // SCG2 commands
-            commands::scg2::scg2_push_events,
             // LSP commands
             commands::lsp::get_lsp_servers,
             commands::lsp::lsp_start_server,

@@ -114,30 +114,10 @@ pub async fn agent_send(
         let _ = app_handle.emit(event, data);
     };
 
-    // Save cwd before mutably borrowing agent
-    let cwd_buf = std::path::PathBuf::from(&agent.config().cwd);
-
     // 1. Add user message & emit immediately so UI shows it right away
     agent.add_user_message(input.clone(), content_parts, &emit);
 
-    // SCG2 is injected into the system prompt ONLY on the first turn of a
-    // chat. Rewriting the system message on every send changes the prompt
-    // prefix and invalidates provider-side prompt caches (Anthropic explicit
-    // cache_control and OpenAI implicit caching alike), which makes every
-    // turn of a long session re-process the full history from scratch.
-    let is_first_turn = agent.get_messages().iter().filter(|m| m.role == "user").count() <= 1;
-
-    // 2. Run SCG2 in a blocking thread (file reads, git, AST parsing) in parallel
-    let scg2_handle = if is_first_turn {
-        let engine = state.scg2_engine.clone();
-        let cwd = cwd_buf;
-        let inp = input.clone();
-        Some(tokio::task::spawn_blocking(move || engine.get_smart_context(&cwd, Some(&inp))))
-    } else {
-        None
-    };
-
-    // 3. Save chat state in parallel with SCG2
+    // 2. Save chat state
     {
         let msgs = agent.messages.clone();
         let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as i64;
@@ -156,17 +136,6 @@ pub async fn agent_send(
         let app = state.app_handle.lock().map_err(|e| e.to_string())?;
         if let Some(ref handle) = *app {
             let _ = handle.emit("vibe:chats:updated", ());
-        }
-    }
-
-    // 4. Await SCG2 result with a 500ms timeout & update system prompt before LLM call
-    if let Some(handle) = scg2_handle {
-        let scg2_context = match tokio::time::timeout(std::time::Duration::from_millis(500), handle).await {
-            Ok(Ok(ctx)) => ctx,
-            _ => String::new(),
-        };
-        if !scg2_context.trim().is_empty() {
-            agent.update_system_prompt(Some(&scg2_context));
         }
     }
 

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { fsApi } from "@/features/files/infrastructure/fsGateway";
 import { getLanguage } from "@/shared/icons/utils";
 import type { MonacoLspSession } from "../../infrastructure/monacoLspClient";
-import { scg2Tracker } from "../../infrastructure/scg2Tracker";
 import { loadTypeDefinitions, MODEL_CACHE, preloadLocalImports } from "./editorModels";
 import type { EditorRefs } from "./editorTypes";
 
@@ -83,7 +82,6 @@ export function useEditorDocument({
         void loadTypeDefinitions(m, cwd);
         void preloadLocalImports(m, result.content, path);
       }
-      scg2Tracker.updateActivePath(path);
     }
 
     void load();

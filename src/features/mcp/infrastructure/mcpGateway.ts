@@ -32,29 +32,3 @@ export async function mcpSaveConfig(config: McpConfig): Promise<void> {
 export async function mcpListTools(serverName: string): Promise<string[]> {
   return invoke("mcp_list_tools", { serverName });
 }
-
-export interface SCG2EventBatch {
-  active_file?: string;
-  cursor?: { line: number; column: number };
-  visible_ranges: { start_line: number; end_line: number }[];
-  selection?: {
-    start_line: number;
-    start_column: number;
-    end_line: number;
-    end_column: number;
-    selected_text: string;
-  };
-  diagnostics?: {
-    message: string;
-    severity: string;
-    start_line: number;
-    end_line: number;
-    file_path?: string;
-  }[];
-  is_edit?: boolean;
-  timestamp_ms?: number;
-}
-
-export async function pushScg2Events(batch: SCG2EventBatch): Promise<void> {
-  await invoke("scg2_push_events", { batch }).catch(() => {});
-}

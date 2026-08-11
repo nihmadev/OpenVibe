@@ -15,10 +15,6 @@ pub struct Agent {
     pub file_snapshots: Vec<SnapshotEntry>,
     pub undo_state: Option<UndoState>,
     todo_context: Option<String>,
-    /// Last SCG2 editor context injected into the system prompt. Stored so
-    /// unrelated system-prompt rebuilds (e.g. todo updates) don't silently
-    /// drop it — and so rebuilds are idempotent for prompt-cache stability.
-    scg2_context: Option<String>,
     pub last_prompt_tokens: Option<usize>,
     /// Anthropic prompt caching: tokens written to the cache on the last turn.
     pub last_cache_creation_tokens: Option<usize>,
@@ -46,23 +42,15 @@ impl Agent {
             file_snapshots: Vec::new(),
             undo_state: None,
             todo_context: None,
-            scg2_context: None,
             last_prompt_tokens: None,
             last_cache_creation_tokens: None,
             last_cache_read_tokens: None,
         }
     }
 
-    /// Rebuild the system prompt. `scg2_context: Some(_)` sets/replaces the
-    /// stored editor context; `None` PRESERVES the previously stored one
-    /// (callers like `set_todo_context` must not wipe it — that would change
-    /// the prompt prefix and invalidate provider prompt caches mid-session).
-    pub fn update_system_prompt(&mut self, scg2_context: Option<&str>) {
-        if let Some(ctx) = scg2_context {
-            self.scg2_context = Some(ctx.to_string());
-        }
-        let mut system =
-            crate::prompt::system_prompt_with_scg2(&self.config.cwd, self.scg2_context.as_deref());
+    /// Rebuild the system prompt, preserving the todo context.
+    pub fn update_system_prompt(&mut self) {
+        let mut system = crate::prompt::system_prompt(&self.config.cwd);
         if let Some(todo) = &self.todo_context {
             system.push_str("\n\nCURRENT TODO CONTROL STATE (user-managed; follow it):\n");
             system.push_str(todo);
@@ -91,10 +79,11 @@ impl Agent {
             return; // idempotent: keep the system prompt byte-identical for prompt caches
         }
         self.todo_context = context;
-        self.update_system_prompt(None);
+        self.update_system_prompt();
     }
 
     pub fn reset(&mut self) {
+        crate::project_tree::invalidate_cache(None);
         let system = system_prompt(&self.config.cwd);
         self.messages = vec![ChatMessage {
             role: "system".to_string(),
@@ -111,13 +100,13 @@ impl Agent {
         self.file_snapshots.clear();
         self.undo_state = None;
         self.todo_context = None;
-        self.scg2_context = None;
         self.last_prompt_tokens = None;
         self.last_cache_creation_tokens = None;
         self.last_cache_read_tokens = None;
     }
 
     pub fn set_cwd(&mut self, cwd: String) {
+        crate::project_tree::invalidate_cache(Some(&self.config.cwd));
         self.config.cwd = cwd;
         let system = system_prompt(&self.config.cwd);
         self.messages = vec![ChatMessage {
@@ -135,7 +124,6 @@ impl Agent {
         self.file_snapshots.clear();
         self.undo_state = None;
         self.todo_context = None;
-        self.scg2_context = None;
         self.last_prompt_tokens = None;
         self.last_cache_creation_tokens = None;
         self.last_cache_read_tokens = None;

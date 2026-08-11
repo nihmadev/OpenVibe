@@ -41,6 +41,5 @@ git = { path = "../crates/git" }
 git2 = "0.19"
 mcp = { path = "../crates/mcp" }
 lsp = { path = "../crates/lsp" }
-scg2 = { path = "../crates/scg2" }
 tracing = "0.1"
 

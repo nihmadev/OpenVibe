@@ -2,7 +2,6 @@ import type * as monaco from "monaco-editor";
 import { useCallback, useRef } from "react";
 import { getLanguage } from "@/shared/icons/utils";
 import type { ThemeVars } from "@/shared/themes/themes";
-import { scg2Tracker } from "../../infrastructure/scg2Tracker";
 import { makeMonacoTheme } from "../monacoThemes";
 import { loadTypeDefinitions, MODEL_CACHE, preloadLocalImports } from "./editorModels";
 import { attachAgentQuickFixClick, registerAgentQuickFix } from "./editorQuickFix";
@@ -62,7 +61,6 @@ export function useEditorMount(options: MountOptions) {
         MODEL_CACHE.set(options.path, { model, originalContent: options.original });
         if (options.cwd) void loadTypeDefinitions(m, options.cwd);
         void preloadLocalImports(m, options.content, options.path);
-        scg2Tracker.attach(editor, options.path, m);
 
         editor.onDidChangeModelContent(() => {
           if (!options.loadingRef.current) options.setContent(editor.getValue());
