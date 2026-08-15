@@ -1,3 +1,4 @@
+import { Button, NumberInput, Select, Toggle } from "@zazaru/ui";
 import React, { Component, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { InlineAnimPreview } from "@/features/settings/ui/AnimationPreviewModal";
 import { languageOptions } from "@/shared/i18n";
@@ -6,10 +7,6 @@ import { type ThemeDef, themes } from "@/shared/themes/themes";
 import { useTheme } from "@/shared/themes/useTheme";
 import type { AnimKey, AnimStyle } from "@/shared/ui/animations/useAnimations";
 import { useAnimations } from "@/shared/ui/animations/useAnimations";
-import { Button } from "@/shared/ui/kit/Button";
-import { NumberInput } from "@/shared/ui/kit/NumberInput";
-import { Select } from "@/shared/ui/kit/Select";
-import { Toggle } from "@/shared/ui/kit/Toggle";
 import "./WelcomeScreen.css";
 import "@/features/settings/ui/Settings.css";
 import { getSystemUser } from "@/infrastructure/tauri/appState";
@@ -282,7 +279,7 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
       className={`welcome-screen ${isClosing ? "welcome-screen--closing" : ""} ${visible ? "welcome-screen--visible" : ""}`}
     >
       <div className="welcome-window-drag-region" onMouseDown={startWindowDrag} />
-      <div className={`ws-card ${step >= 3 ? "ws-card--settings" : ""}`}>
+      <div className={`welcome-content ${step >= 3 ? "welcome-content--settings" : ""}`}>
         <div className="ws-card-header">
           <div className="ws-progress-dots">
             <div className={`ws-dot ${step === 1 ? "ws-dot--active" : ""}`} onClick={() => goToStep(1)} />

@@ -1,7 +1,7 @@
+import { Toggle } from "@zazaru/ui";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Loader2Icon } from "@/shared/icons";
-import { Toggle } from "@/shared/ui/kit";
 import { lspGateway } from "../../infrastructure/lspGateway";
 import { type LspServerItem, lspStore } from "./lspStore";
 
@@ -65,28 +65,20 @@ export function LspTab(): React.ReactElement {
     }
   };
 
-  const isInstalling = servers.some((s) => s.status === "installing");
-
   const getStatusDotClass = (server: LspServerItem) => {
-    if (server.status === "error") return "titlebar__mcp-dot--red";
-    if (server.status === "running") return "titlebar__mcp-dot--green";
-    return "titlebar__mcp-dot--gray";
+    if (server.status === "error") return "error";
+    if (server.status === "running") return "running";
+    return "idle";
   };
 
   return (
-    <div className="servers-panel__lsp">
-      <div className={`titlebar__mcp-header ${isInstalling ? "installing" : ""}`}>
-        <div className="titlebar__mcp-header-title">
-          <span>LSP Servers ({servers.length})</span>
-        </div>
-      </div>
-
-      <div className="titlebar__mcp-server-list">
+    <div className="mcp-status-dropdown__lsp">
+      <div className="mcp-status-dropdown__list">
         {servers.map((server) => (
-          <div key={server.id} className="titlebar__mcp-server-item">
-            <div className="titlebar__mcp-server-info">
-              <span className={`titlebar__mcp-dot ${getStatusDotClass(server)}`} />
-              <span className="titlebar__mcp-server-name">{server.name}</span>
+          <div key={server.id} className="z-interactive-item mcp-status-dropdown__row">
+            <span className={`mcp-status-dropdown__dot mcp-status-dropdown__dot--${getStatusDotClass(server)}`} />
+            <div className="mcp-status-dropdown__server">
+              <span className="mcp-status-dropdown__name">{server.name}</span>
             </div>
 
             {server.status === "installing" ? (

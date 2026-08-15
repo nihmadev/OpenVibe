@@ -92,18 +92,18 @@
   line-height: 1.6;
 }
 
-.welcome__action.ui-button {
+.welcome__action.z-button {
   min-height: 36px;
   padding: var(--space-4) var(--space-7);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
 }
 
-.welcome__action.ui-button:hover:not(:disabled) {
+.welcome__action.z-button:hover:not(:disabled) {
   transform: translateY(-1px);
 }
 
-.welcome__action.ui-button:active:not(:disabled) {
+.welcome__action.z-button:active:not(:disabled) {
   transform: translateY(0) scale(0.98);
 }
 

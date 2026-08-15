@@ -1,7 +1,7 @@
+import { Button } from "@zazaru/ui";
 import type React from "react";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { FolderOpenStrokeIcon } from "@/shared/icons/icons";
-import { Button } from "@/shared/ui/kit/Button";
 import type { Project } from "../../model/project";
 import { ProjectRail } from "../ProjectRail/ProjectRail";
 import "./Welcome.css";

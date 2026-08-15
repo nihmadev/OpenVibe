@@ -1,9 +1,9 @@
+import { Button, Input } from "@zazaru/ui";
 import type React from "react";
 import { useCallback, useRef, useState } from "react";
 import { useI18n } from "@/shared/i18n/useI18n";
-import { EyeIcon, EyeOffIcon, PlusIcon, TrashIcon, UserIcon } from "@/shared/icons/icons";
+import { EyeIcon, EyeOffIcon, PlusIcon, TrashIcon } from "@/shared/icons/icons";
 import { useTheme } from "@/shared/themes/useTheme";
-import { Input } from "@/shared/ui/kit";
 import type { KeyValuePair, Provider } from "../../model/provider";
 import { getProviderIconPath, PROVIDER_TEMPLATES } from "../../model/providerTemplates";
 
@@ -161,32 +161,29 @@ export function ConnectPopup({
     <div className="connect-popup__overlay" onClick={onClose}>
       <div className={`connect-popup${custom ? " connect-popup--custom" : ""}`} onClick={(e) => e.stopPropagation()}>
         <div className="connect-popup__header">
-          <div className="connect-popup__icon-wrap">
-            {hasCustomIcon ? (
-              <img src={form.customIcon} className="connect-popup__icon" alt="" />
-            ) : editIcon ? (
-              <img
-                src={getProviderIconPath(editIcon, resolvedScheme === "light")}
-                className="connect-popup__icon"
-                alt=""
-              />
-            ) : template ? (
-              <img
-                src={getProviderIconPath(template.icon, resolvedScheme === "light")}
-                className="connect-popup__icon"
-                alt=""
-              />
-            ) : (
-              <div className="connect-popup__icon-placeholder">
-                <UserIcon />
-              </div>
-            )}
-          </div>
+          {(hasCustomIcon || editIcon || template) && (
+            <div className="connect-popup__icon-wrap">
+              {hasCustomIcon ? (
+                <img src={form.customIcon} className="connect-popup__icon" alt="" />
+              ) : editIcon ? (
+                <img
+                  src={getProviderIconPath(editIcon, resolvedScheme === "light")}
+                  className="connect-popup__icon"
+                  alt=""
+                />
+              ) : template ? (
+                <img
+                  src={getProviderIconPath(template.icon, resolvedScheme === "light")}
+                  className="connect-popup__icon"
+                  alt=""
+                />
+              ) : null}
+            </div>
+          )}
           <div className="connect-popup__heading">
             <h2 className="connect-popup__title">
               {isEditing ? editProvider?.name : custom ? t("customProviderTitle") : template?.name}
             </h2>
-            {isEditing && <p className="connect-popup__subtitle">{t("editProvider")}</p>}
           </div>
           <button className="connect-popup__close" onClick={onClose}>
             ×
@@ -242,7 +239,6 @@ export function ConnectPopup({
               )}
 
               <div className="connect-popup__section">
-                <label className="connect-popup__label">{t("apiKeyPlaceholder")}</label>
                 <Input
                   containerClassName="connect-popup__input"
                   type={showKey ? "text" : "password"}
@@ -355,16 +351,12 @@ export function ConnectPopup({
         </div>
 
         <div className="connect-popup__footer">
-          <button className="ui-button ui-button--outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose}>
             {t("cancel")}
-          </button>
-          <button
-            className="ui-button ui-button--primary"
-            onClick={handleConnect}
-            disabled={!form.apiKey.trim() || busy}
-          >
+          </Button>
+          <Button variant="primary" onClick={handleConnect} disabled={!form.apiKey.trim() || busy}>
             {busy ? "..." : isEditing ? t("save") : t("connect")}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

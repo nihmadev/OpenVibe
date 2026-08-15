@@ -1,8 +1,8 @@
+import { Toggle } from "@zazaru/ui";
 import type React from "react";
 import { useState } from "react";
 import { useTranslate } from "@/shared/i18n/useI18n";
 import { RefreshCwStrokeIcon, ServerIcon, SettingsIcon } from "@/shared/icons/icons";
-import { Toggle } from "@/shared/ui/kit";
 import type { McpServerStatus } from "../../model/mcp";
 import { LspTab } from "./LspTab";
 import "./ServersPanel.css";
