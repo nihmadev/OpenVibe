@@ -112,7 +112,7 @@ class LspConnection {
       await invoke("lsp_connect", { id: this.id });
       const result = await this.request("initialize", {
         processId: null,
-        clientInfo: { name: "OpenVibe", version: "1.3.8" },
+        clientInfo: { name: "OpenVibe", version: "1.3.9" },
         rootUri: this.rootUri,
         workspaceFolders: [{ uri: this.rootUri, name: this.rootUri.split("/").pop() || "workspace" }],
         capabilities: {

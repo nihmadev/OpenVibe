@@ -293,22 +293,22 @@ export function FileTree({ cwd, onOpenFile, activeFile, revealPath }: RootProps)
         </Tooltip>
         <div className="ftree__actions">
           <Tooltip text={t("newFileTooltip")}>
-            <button className="ui-icon-btn ui-icon-btn--sm" onClick={() => promptCreate(selectedDir, "file")}>
+            <button className="z-icon-button z-icon-button--compact" onClick={() => promptCreate(selectedDir, "file")}>
               <NewFileIcon />
             </button>
           </Tooltip>
           <Tooltip text={t("newFolderTooltip")}>
-            <button className="ui-icon-btn ui-icon-btn--sm" onClick={() => promptCreate(selectedDir, "dir")}>
+            <button className="z-icon-button z-icon-button--compact" onClick={() => promptCreate(selectedDir, "dir")}>
               <NewFolderIcon />
             </button>
           </Tooltip>
           <Tooltip text={t("refreshTooltip")}>
-            <button className="ui-icon-btn ui-icon-btn--sm" onClick={refreshAll}>
+            <button className="z-icon-button z-icon-button--compact" onClick={refreshAll}>
               <RefreshIcon />
             </button>
           </Tooltip>
           <Tooltip text={t("collapseAllTooltip")}>
-            <button className="ui-icon-btn ui-icon-btn--sm" onClick={collapseAll}>
+            <button className="z-icon-button z-icon-button--compact" onClick={collapseAll}>
               <CollapseAllIcon />
             </button>
           </Tooltip>

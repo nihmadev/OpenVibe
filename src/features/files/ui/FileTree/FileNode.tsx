@@ -1,8 +1,8 @@
+import { interactiveItemClassName } from "@zazaru/ui";
 import React, { useState } from "react";
 import { fsApi } from "@/features/files/infrastructure/fsGateway";
 import { ChevronRightIcon, FileIcon, FolderIcon } from "@/shared/icons";
 import { compactFolderPath, compactFolderSegments } from "@/shared/lib/paths";
-import { interactiveItemClassName } from "@/shared/ui/kit";
 import { RenameInput } from "./RenameInput";
 import type { NodeProps } from "./types";
 import { dirnameOf } from "./utils";

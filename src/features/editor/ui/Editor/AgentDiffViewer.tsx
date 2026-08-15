@@ -1,9 +1,9 @@
+import { Button } from "@zazaru/ui";
 import { useEffect, useState } from "react";
 import type { AgentFileChange } from "@/features/agent/model/fileChanges";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { CheckIcon, CloseIcon } from "@/shared/icons";
 import { getLanguage } from "@/shared/icons/utils";
-import { Button } from "@/shared/ui/kit";
 import { DiffEditor } from "../DiffEditor/DiffEditor";
 import "./AgentDiffViewer.css";
 import { agentGateway } from "@/features/agent/infrastructure/agentGateway";

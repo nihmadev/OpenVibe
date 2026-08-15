@@ -80,7 +80,7 @@
 }
 
 .ftree__row--renaming,
-.ui-interactive-item.ftree__row--renaming:hover {
+.z-interactive-item.ftree__row--renaming:hover {
   background: transparent;
 }
 
@@ -134,7 +134,7 @@
   background: var(--bg-2);
   border-color: var(--line-strong);
 }
-.ftree__rename-wrap .ui-input-icon {
+.ftree__rename-wrap .z-input-icon {
   flex-shrink: 0;
   pointer-events: none;
 }

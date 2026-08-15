@@ -1,8 +1,8 @@
+import { Button } from "@zazaru/ui";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, CheckIcon, CloseIcon, SpinIcon } from "@/shared/icons";
-import { Button } from "@/shared/ui/kit";
 
 interface InlinePromptProps {
   onSend: (prompt: string) => void;

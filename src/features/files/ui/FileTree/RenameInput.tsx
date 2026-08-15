@@ -1,6 +1,6 @@
+import { Input } from "@zazaru/ui";
 import React, { useEffect, useState } from "react";
 import { FileIcon, FolderIcon } from "@/shared/icons";
-import { Input } from "@/shared/ui/kit/Input";
 
 interface RenameInputProps {
   initial: string;
@@ -32,6 +32,7 @@ export function RenameInput({
     <div className="ftree__rename-control" onClick={(e) => e.stopPropagation()}>
       <Input
         ref={ref}
+        size="sm"
         className="ftree__rename"
         containerClassName="ftree__rename-wrap"
         icon={kind === "dir" ? <FolderIcon open={folderOpen} name={value.trim()} /> : <FileIcon name={value.trim()} />}
