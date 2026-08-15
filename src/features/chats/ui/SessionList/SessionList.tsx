@@ -4,6 +4,7 @@ import type { Project } from "@/features/projects/model/project";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { KebabMenuIcon, PlusSmallIcon } from "@/shared/icons/icons";
 import { ContextMenu } from "@/shared/ui/ContextMenu/ContextMenu";
+import { interactiveListClassName } from "@/shared/ui/kit";
 import type { ChatSummary } from "../../model/chat";
 import { SessionListItem } from "./SessionListItem";
 import "./SessionList.css";
@@ -179,7 +180,7 @@ export function SessionList({
           </button>
         </div>
 
-        <div className="session-list__list">
+        <div className={interactiveListClassName("session-list__list")}>
           {chats.length === 0 ? (
             <div className="session-list__empty">{t("noSessions")}</div>
           ) : (

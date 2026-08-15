@@ -1,6 +1,7 @@
 import type React from "react";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { CheckIcon, TrashIcon } from "@/shared/icons/icons";
+import { interactiveItemClassName } from "@/shared/ui/kit";
 import { Tooltip } from "@/shared/ui/Tooltip/Tooltip";
 import type { ChatSummary } from "../../model/chat";
 
@@ -22,11 +23,12 @@ export function SessionListItem({
   const { t } = useI18n();
   return (
     <div
-      className={
+      className={interactiveItemClassName(
+        active,
         "session-list__row" +
-        (active ? " session-list__row--active" : "") +
-        (selected ? " session-list__row--selected" : "")
-      }
+          (active ? " session-list__row--active" : "") +
+          (selected ? " session-list__row--selected" : ""),
+      )}
       onClick={(e) => {
         onPick(e.ctrlKey || e.metaKey);
       }}

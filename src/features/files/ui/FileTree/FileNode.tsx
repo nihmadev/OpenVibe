@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { fsApi } from "@/features/files/infrastructure/fsGateway";
 import { ChevronRightIcon, FileIcon, FolderIcon } from "@/shared/icons";
 import { compactFolderPath, compactFolderSegments } from "@/shared/lib/paths";
+import { interactiveItemClassName } from "@/shared/ui/kit";
 import { RenameInput } from "./RenameInput";
 import type { NodeProps } from "./types";
 import { dirnameOf } from "./utils";
@@ -165,12 +166,14 @@ export function FileNode(props: NodeProps): React.ReactElement {
   return (
     <>
       <div
-        className={
+        className={interactiveItemClassName(
+          isActive && !isRenaming,
           "ftree__row" +
-          (isActive ? " ftree__row--active" : "") +
-          (isCut ? " ftree__row--cut" : "") +
-          (dropOver ? " ftree__row--drop" : "")
-        }
+            (isActive ? " ftree__row--active" : "") +
+            (isRenaming ? " ftree__row--renaming" : "") +
+            (isCut ? " ftree__row--cut" : "") +
+            (dropOver ? " ftree__row--drop" : ""),
+        )}
         style={{ paddingLeft: 8 + depth * 12 }}
         onClick={onClick}
         onContextMenu={onContextMenu}
