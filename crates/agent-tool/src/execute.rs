@@ -12,6 +12,7 @@ pub async fn execute_tool(
     executor: &AgentToolExecutor,
 ) -> Result<String, String> {
     match name {
+        "tool_request" => tool_request(args),
         "read_file" => read::tool_read_file(cwd, args).await,
         "write_file" => write::tool_write_file(cwd, args).await,
         "edit_file" => edit::tool_edit_file(cwd, args).await,
@@ -39,5 +40,43 @@ pub async fn execute_tool(
         "git_worktrees" => git::worktrees(cwd, args).await,
         "git_submodules" => git::submodules(cwd, args).await,
         _ => Err(format!("Unknown tool: {name}")),
+    }
+}
+
+fn tool_request(args: &serde_json::Value) -> Result<String, String> {
+    let capabilities = args
+        .get("capabilities")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "tool_request requires a capabilities array".to_string())?;
+    let mut accepted = Vec::new();
+    for capability in capabilities {
+        let capability = capability
+            .as_str()
+            .ok_or_else(|| "tool_request capabilities must be strings".to_string())?;
+        if !matches!(capability, "git" | "web" | "research") {
+            return Err(format!("Unknown capability group: {capability}"));
+        }
+        accepted.push(capability);
+    }
+    Ok(format!(
+        "Capability group(s) {} unlocked for the next turn. Now call the concrete tool you need.",
+        accepted.join(", ")
+    ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::tool_request;
+
+    #[test]
+    fn pseudo_model_capability_request_is_accepted() {
+        let result = tool_request(&serde_json::json!({"capabilities": ["web", "git"]}));
+        assert!(result.unwrap().contains("web, git unlocked"));
+    }
+
+    #[test]
+    fn capability_request_rejects_unknown_groups() {
+        let result = tool_request(&serde_json::json!({"capabilities": ["shell_magic"]}));
+        assert_eq!(result.unwrap_err(), "Unknown capability group: shell_magic");
     }
 }

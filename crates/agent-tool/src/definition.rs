@@ -53,7 +53,7 @@ pub fn build_tool_definitions() -> Vec<ToolDefinition> {
             type_: "function".to_string(),
             function: agent::ToolDefFunction {
                 name: "list_dir".to_string(),
-                description: "List all files and directories in a given directory. Use this to explore the project structure.".to_string(),
+                description: "List a directory only when its contents or path are unknown. Do NOT use it to walk ancestor directories when the user already supplied a concrete file path, glob, crate, or directory; read or search that scope directly first.".to_string(),
                 parameters: serde_json::json!({
                     "type": "object",
                     "properties": {
@@ -203,6 +203,26 @@ pub fn build_tool_definitions() -> Vec<ToolDefinition> {
                         "url": { "type": "string", "description": "Target URL to fetch and read" }
                     },
                     "required": ["url"]
+                }),
+            },
+        },
+        ToolDefinition {
+            type_: "function".to_string(),
+            function: agent::ToolDefFunction {
+                name: "tool_request".to_string(),
+                description: "Unlock an additional capability group for the next turn when it is not currently available. This is language-independent capability discovery, not a task executor. Use only when the current tool list lacks what is needed.".to_string(),
+                parameters: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "capabilities": {
+                            "type": "array",
+                            "items": { "type": "string", "enum": ["git", "web", "research"] },
+                            "minItems": 1,
+                            "description": "Capability groups to unlock for the next agent turn"
+                        }
+                    },
+                    "required": ["capabilities"],
+                    "additionalProperties": false
                 }),
             },
         },
