@@ -1,7 +1,7 @@
+import { interactiveItemClassName } from "@zazaru/ui";
 import type React from "react";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { CheckIcon, TrashIcon } from "@/shared/icons/icons";
-import { interactiveItemClassName } from "@/shared/ui/kit";
 import { Tooltip } from "@/shared/ui/Tooltip/Tooltip";
 import type { ChatSummary } from "../../model/chat";
 

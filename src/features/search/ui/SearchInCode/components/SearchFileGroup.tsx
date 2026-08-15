@@ -1,7 +1,7 @@
+import { interactiveItemClassName } from "@zazaru/ui";
 import type React from "react";
 import type { FileGroupEntry } from "@/features/files/model/fs";
 import { ChevronRightIcon, FileIcon } from "@/shared/icons";
-import { interactiveItemClassName } from "@/shared/ui/kit";
 
 export interface SearchFileGroupProps {
   entry: FileGroupEntry;

@@ -1,6 +1,6 @@
+import { interactiveItemClassName } from "@zazaru/ui";
 import React from "react";
 import type { ContentMatch } from "@/features/files/model/fs";
-import { interactiveItemClassName } from "@/shared/ui/kit";
 import { getCachedHighlight } from "../../../highlighting/searchSyntax";
 
 export interface SearchMatchRowProps {

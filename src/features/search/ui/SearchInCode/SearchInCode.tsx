@@ -1,7 +1,7 @@
+import { interactiveItemClassName } from "@zazaru/ui";
 import type React from "react";
 import { useTranslate } from "@/shared/i18n/useI18n";
 import { ClearIcon, CollapseAllIcon, Loader2Icon, RefreshIcon } from "@/shared/icons";
-import { interactiveItemClassName } from "@/shared/ui/kit";
 import { Tooltip } from "@/shared/ui/Tooltip/Tooltip";
 import "@vscode/codicons/dist/codicon.css";
 import "./SearchInCode.css";

@@ -212,7 +212,7 @@
   color: var(--red);
 }
 
-/* Base look comes from .ui-icon-btn (ui.css) */
+/* Base look comes from .z-icon-button (zazaru-ui styles.css) */
 .session-list__menu-btn {
   margin-top: 1px;
 }

@@ -1,11 +1,11 @@
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./SearchPopup.css";
+import { interactiveItemClassName, interactiveListClassName } from "@zazaru/ui";
 import { fsApi } from "@/features/files/infrastructure/fsGateway";
 import type { FileMatch } from "@/features/files/model/fs";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { FileIcon, FolderIcon, SearchIcon } from "@/shared/icons";
-import { interactiveItemClassName, interactiveListClassName } from "@/shared/ui/kit";
 import { filterCommands } from "./commands";
 
 interface SearchPopupProps {

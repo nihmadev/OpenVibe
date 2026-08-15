@@ -1,7 +1,7 @@
+import { interactiveItemClassName } from "@zazaru/ui";
 import type React from "react";
 import { useTranslate } from "@/shared/i18n/useI18n";
 import { ChevronRightIcon, FileIcon, FolderIcon } from "@/shared/icons";
-import { interactiveItemClassName } from "@/shared/ui/kit";
 import { getCachedHighlight, getLanguageFromFilename } from "../../../highlighting/searchSyntax";
 import type { TreeNode } from "../../../model/searchTree";
 

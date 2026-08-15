@@ -43,7 +43,9 @@ export function TermPane({ id, visible }: Props): React.ReactElement {
 
   const activeTheme = previewTheme ?? currentTheme;
   const activeVars = resolvedScheme === "dark" ? activeTheme.darkVars : activeTheme.lightVars;
-  const bg = activeVars["--bg"] || "#161616";
+  // The terminal is rendered inside a panel surface, so its canvas must use
+  // the same panel colour rather than the darker application root background.
+  const bg = activeVars["--bg-2"] || activeVars["--bg"] || "#161616";
   const fg = activeVars["--fg"] || "#e6e6e6";
   const bgRef = useRef(bg);
   const fgRef = useRef(fg);

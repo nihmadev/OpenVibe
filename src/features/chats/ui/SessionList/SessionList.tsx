@@ -1,10 +1,10 @@
+import { IconButton, interactiveListClassName } from "@zazaru/ui";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import type { Project } from "@/features/projects/model/project";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { KebabMenuIcon, PlusSmallIcon } from "@/shared/icons/icons";
 import { ContextMenu } from "@/shared/ui/ContextMenu/ContextMenu";
-import { interactiveListClassName } from "@/shared/ui/kit";
 import type { ChatSummary } from "../../model/chat";
 import { SessionListItem } from "./SessionListItem";
 import "./SessionList.css";
@@ -152,13 +152,14 @@ export function SessionList({
             </div>
             {project ? (
               <div style={{ position: "relative", flexShrink: 0 }}>
-                <button
-                  className="ui-icon-btn ui-icon-btn--sm session-list__menu-btn"
+                <IconButton
+                  scale="compact"
+                  className="session-list__menu-btn"
                   onClick={handleMenuToggle}
                   aria-label="Project menu"
                 >
                   <KebabMenuIcon />
-                </button>
+                </IconButton>
                 {menuPos ? (
                   <ContextMenu
                     x={menuPos.x}
