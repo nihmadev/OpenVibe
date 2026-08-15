@@ -4,11 +4,11 @@ import type { FileMatch } from "@/features/files/model/fs";
 import { useI18n } from "@/shared/i18n/useI18n";
 import "./PromptInput.css";
 
+import { recipeSurfaceClassName } from "@zazaru/ui/recipes";
 import { fsApi } from "@/features/files/infrastructure/fsGateway";
 import { getReasoningEfforts } from "@/features/providers/model/providerTemplates";
 import { ArrowUpIcon, AttachPlusIcon, RefreshCwIcon, StopIcon } from "@/shared/icons/icons";
 import { getFileIconUrl, getFolderIconUrl } from "@/shared/icons/utils";
-import { surfaceClassName } from "@/shared/ui/kit";
 import { Tooltip } from "@/shared/ui/Tooltip/Tooltip";
 import { prewarmLlmConnection } from "../../infrastructure/prewarm";
 import { RollbackPill } from "../RollbackPill/RollbackPill";
@@ -906,7 +906,7 @@ export function PromptInput({
       {/* ── DockShellForm ── */}
       <form
         data-dock-surface="shell"
-        className={surfaceClassName("composer", `prompt-input${dragOver ? " prompt-input--drag" : ""}`)}
+        className={recipeSurfaceClassName("composer", `prompt-input${dragOver ? " prompt-input--drag" : ""}`)}
         onSubmit={(e) => {
           e.preventDefault();
           submit();

@@ -851,13 +851,13 @@
 }
 
 .model-selector__search:focus-within,
-.model-selector__search .ui-input-wrap:focus-within,
-.model-selector__search.ui-input-wrap:focus-within {
+.model-selector__search .z-input-wrap:focus-within,
+.model-selector__search.z-input-wrap:focus-within {
   border-color: transparent;
   box-shadow: none;
 }
 
-.model-selector__search .ui-input-wrap {
+.model-selector__search .z-input-wrap {
   background: transparent;
   border: none;
   padding: 0;
@@ -865,7 +865,7 @@
 }
 
 .model-selector__search-input,
-.model-selector__search .ui-input {
+.model-selector__search .z-input {
   flex: 1;
   border: 0;
   background: transparent;
@@ -877,7 +877,7 @@
 }
 
 .model-selector__search-input::placeholder,
-.model-selector__search .ui-input::placeholder {
+.model-selector__search .z-input::placeholder {
   color: var(--fg-muted);
 }
 

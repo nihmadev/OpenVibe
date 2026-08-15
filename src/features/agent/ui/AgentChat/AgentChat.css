@@ -35,7 +35,7 @@
   margin-top: var(--space-2);
 }
 
-/* Base look comes from .ui-icon-btn (ui.css) */
+/* Base look comes from .z-icon-button (zazaru-ui styles.css) */
 .msg__action-btn svg {
   width: 16px;
   height: 16px;
@@ -249,7 +249,7 @@
   gap: var(--space-2);
 }
 
-/* Base look comes from .ui-icon-btn (ui.css) */
+/* Base look comes from .z-icon-button (zazaru-ui styles.css) */
 .msg__footer-btn svg {
   width: 14px;
   height: 14px;

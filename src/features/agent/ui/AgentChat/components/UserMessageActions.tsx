@@ -27,7 +27,7 @@ export function UserMessageActions({
   return (
     <div className="msg--user-actions">
       <Tooltip text={t("revertToMessage")}>
-        <button className="ui-icon-btn ui-icon-btn--md msg__action-btn" onClick={() => onRevert?.(item.id)}>
+        <button className="z-icon-button z-icon-button--regular msg__action-btn" onClick={() => onRevert?.(item.id)}>
           <svg
             width="14"
             height="14"
@@ -44,7 +44,7 @@ export function UserMessageActions({
         </button>
       </Tooltip>
       <Tooltip text={t("copy")}>
-        <button className="ui-icon-btn ui-icon-btn--md msg__action-btn" onClick={onCopy}>
+        <button className="z-icon-button z-icon-button--regular msg__action-btn" onClick={onCopy}>
           <CopyCheckIcon copied={copied} />
         </button>
       </Tooltip>

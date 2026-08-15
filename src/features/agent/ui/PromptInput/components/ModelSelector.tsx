@@ -1,3 +1,4 @@
+import { Input, List, ListGroup, ListItem } from "@zazaru/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { modelsGateway, providersGateway } from "@/features/providers/infrastructure/providersGateway";
 import type { Provider } from "@/features/providers/model/provider";
@@ -5,7 +6,6 @@ import { getProviderIconPath, PROVIDER_TEMPLATES } from "@/features/providers/mo
 import { useI18n } from "@/shared/i18n/useI18n";
 import { AttachPlusIcon, CheckIcon, ChevronDownIcon, FilterIcon, SearchMiniIcon } from "@/shared/icons/icons";
 import { useTheme } from "@/shared/themes/useTheme";
-import { Input, List, ListGroup, ListItem } from "@/shared/ui/kit";
 
 interface ModelEntry {
   id: string;

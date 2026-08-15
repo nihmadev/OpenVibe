@@ -1,9 +1,9 @@
+import { interactiveItemClassName, interactiveListClassName } from "@zazaru/ui";
 import type React from "react";
 import { useLayoutEffect, useRef, useState } from "react";
 import type { FileMatch } from "@/features/files/model/fs";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { FileIcon, FolderIcon } from "@/shared/icons";
-import { interactiveItemClassName, interactiveListClassName } from "@/shared/ui/kit";
 import type { MentionState } from "../types";
 
 interface MentionPopupProps {

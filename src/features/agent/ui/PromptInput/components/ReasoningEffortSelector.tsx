@@ -1,7 +1,7 @@
+import { interactiveItemClassName, interactiveListClassName } from "@zazaru/ui";
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { LightbulbIcon } from "@/shared/icons/icons";
-import { interactiveItemClassName, interactiveListClassName } from "@/shared/ui/kit";
 
 interface EffortOption {
   value: string;

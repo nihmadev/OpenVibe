@@ -2,11 +2,11 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./AgentChat.css";
 import "./FBadge.css";
 
+import { recipeSurfaceClassName } from "@zazaru/ui/recipes";
 import { appState } from "@/shared/api/keyValueStore";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { FileIcon } from "@/shared/icons/file-icons";
 import { CheckStrokeIcon } from "@/shared/icons/icons";
-import { Surface } from "@/shared/ui/kit";
 import { Tooltip } from "@/shared/ui/Tooltip/Tooltip";
 import { buildChatEntries } from "../../model/agentRun";
 import { AgentRun } from "./components/AgentRun";
@@ -54,9 +54,9 @@ const StandaloneItem = React.memo(
     if (item.kind === "user") {
       return (
         <div className="msg msg--user-wrap">
-          <Surface tone="bubble" className="msg msg--user">
+          <div className={recipeSurfaceClassName("bubble", "msg msg--user")}>
             <UserMessageContent text={item.text} mentions={item.mentions} />
-          </Surface>
+          </div>
           <UserMessageActions item={item} onRevert={onRevert} />
           {item.attachments && item.attachments.length > 0 ? (
             <div className="msg__attachments">

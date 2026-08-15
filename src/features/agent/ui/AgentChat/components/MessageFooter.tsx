@@ -381,7 +381,7 @@ export function MessageFooter({
         <div className="msg__footer-right">
           <Tooltip text={t("copy")}>
             <button
-              className="ui-icon-btn ui-icon-btn--md msg__footer-btn"
+              className="z-icon-button z-icon-button--regular msg__footer-btn"
               onClick={openCopyMenu}
               aria-label={t("copy")}
               aria-haspopup="menu"
@@ -391,7 +391,10 @@ export function MessageFooter({
             </button>
           </Tooltip>
           <Tooltip text={t("regenerate")}>
-            <button className="ui-icon-btn ui-icon-btn--md msg__footer-btn" onClick={() => onRegenerate?.(item.id)}>
+            <button
+              className="z-icon-button z-icon-button--regular msg__footer-btn"
+              onClick={() => onRegenerate?.(item.id)}
+            >
               <svg
                 width="14"
                 height="14"
