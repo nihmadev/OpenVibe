@@ -1,5 +1,6 @@
 import type React from "react";
 import { useEffect, useRef } from "react";
+import { interactiveItemClassName, interactiveListClassName } from "@/shared/ui/kit";
 import "./ContextMenu.css";
 
 export interface MenuItem {
@@ -77,14 +78,14 @@ export function ContextMenu({ x, y, items, onClose }: Props): React.ReactElement
   }
 
   return (
-    <div className="ctxmenu" style={style} ref={ref} role="menu" onKeyDown={onMenuKeyDown}>
+    <div className={interactiveListClassName("ctxmenu")} style={style} ref={ref} role="menu" onKeyDown={onMenuKeyDown}>
       {items.map((item, i) => {
         if (!item.label) return <div className="ctxmenu__separator" role="separator" key={`separator-${i}`} />;
 
         return (
           <button
             key={`${item.label}-${i}`}
-            className={`ctxmenu__item${item.danger ? " ctxmenu__item--danger" : ""}`}
+            className={interactiveItemClassName(false, `ctxmenu__item${item.danger ? " ctxmenu__item--danger" : ""}`)}
             type="button"
             role={item.checked !== undefined ? "menuitemcheckbox" : "menuitem"}
             aria-checked={item.checked !== undefined ? item.checked : undefined}

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { interactiveItemClassName, interactiveListClassName } from "./InteractiveList";
 import "./ui.css";
 
 export interface ListProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -24,7 +25,7 @@ export function List({ children, className, stagger = true, ...props }: ListProp
     : children;
 
   return (
-    <div className={`ui-list ${className || ""}`.trim()} {...props}>
+    <div className={interactiveListClassName(`ui-list ${className || ""}`)} {...props}>
       {content}
     </div>
   );
@@ -98,7 +99,9 @@ export function ListGroup({
         </svg>
       </button>
       <div
-        className={`ui-list-group__content ${isExpanded ? "ui-list-group__content--expanded" : "ui-list-group__content--collapsed"}`}
+        className={interactiveListClassName(
+          `ui-list-group__content ${isExpanded ? "ui-list-group__content--expanded" : "ui-list-group__content--collapsed"}`,
+        )}
       >
         {children}
       </div>
@@ -122,7 +125,10 @@ export function ListItem({ children, active, leftIcon, rightIcon, index, classNa
   return (
     <button
       type="button"
-      className={`ui-list-item ${active ? "ui-list-item--active" : ""} ${className || ""}`.trim()}
+      className={interactiveItemClassName(
+        active,
+        `ui-list-item ${active ? "ui-list-item--active" : ""} ${className || ""}`,
+      )}
       style={computedStyle}
       {...props}
     >

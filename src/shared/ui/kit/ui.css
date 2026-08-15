@@ -1,5 +1,64 @@
 /* Generic UI Component Styles */
 
+/* --- Surface ---
+   Semantic surface roles keep layout components independent from the current
+   canvas treatment. Change these primitives to restyle the shell globally. */
+.ui-surface {
+  border: 1px solid var(--surface-border);
+}
+
+.ui-surface--chrome {
+  background: var(--surface-chrome);
+  border: 0;
+}
+
+.ui-surface--canvas {
+  background: var(--surface-canvas);
+  border-radius: var(--radius-surface);
+  box-shadow: var(--surface-shadow-canvas);
+}
+
+.ui-surface--panel {
+  background: var(--surface-panel);
+  border-radius: var(--radius-surface);
+  box-shadow: var(--surface-shadow-panel);
+}
+
+.ui-surface--composer {
+  background: var(--surface-raised);
+  border-radius: var(--radius-composer);
+  box-shadow: var(--surface-shadow-raised);
+}
+
+.ui-surface--bubble {
+  background: var(--surface-raised);
+  border-color: var(--surface-border-soft);
+  border-radius: var(--radius-bubble);
+}
+
+/* --- Interactive list --- */
+.ui-interactive-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--interactive-list-gap);
+}
+
+.ui-interactive-item {
+  border-radius: var(--interactive-item-radius);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.ui-interactive-item:hover:not(:disabled),
+.ui-interactive-item:focus-visible:not(:disabled) {
+  background: var(--interactive-item-hover);
+}
+
+.ui-interactive-item--active {
+  background: var(--interactive-item-active);
+}
+
 /* --- Button --- */
 .ui-button {
   display: inline-flex;
@@ -187,6 +246,10 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0;
+}
+.ui-control-action {
+  min-width: 0;
 }
 .ui-control-label {
   font-size: var(--text-sm);
@@ -203,14 +266,19 @@
 .ui-input-wrap {
   display: flex;
   align-items: center;
-  background-color: var(--bg-2);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius, 4px);
-  padding: var(--space-2) var(--space-4);
-  transition: border-color var(--duration-normal);
+  width: 100%;
+  height: var(--control-height);
+  background: color-mix(in srgb, var(--bg-2) 88%, var(--surface-canvas));
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-5);
+  transition:
+    background-color var(--duration-fast),
+    border-color var(--duration-fast);
 }
 .ui-input-wrap:focus-within {
-  border-color: var(--fg-dim);
+  background: var(--bg-2);
+  border-color: color-mix(in srgb, var(--fg) 24%, transparent);
 }
 .ui-input {
   width: 100%;
@@ -218,7 +286,9 @@
   background: transparent;
   outline: none;
   color: var(--fg);
-  font-size: var(--text-md);
+  font: inherit;
+  font-size: var(--text-sm);
+  line-height: 1;
   padding: 0;
 }
 .ui-input[type="password"]::-ms-reveal,
@@ -251,11 +321,25 @@
 /* --- Select --- */
 .ui-select {
   position: relative;
+  display: inline-grid;
   min-width: 100px;
+  max-width: 100%;
   transition:
     width var(--duration-normal) var(--ease-standard),
     min-width var(--duration-normal) var(--ease-standard);
   interpolate-size: allow-keywords;
+}
+.ui-select-sizer,
+.ui-select-trigger {
+  grid-area: 1 / 1;
+}
+.ui-select-sizer {
+  min-width: 100px;
+  padding: 0 32px 0 var(--space-5);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  visibility: hidden;
+  pointer-events: none;
 }
 .ui-select-trigger {
   display: flex;
@@ -263,21 +347,24 @@
   justify-content: space-between;
   gap: var(--space-4);
   width: 100%;
-  padding: var(--space-2) var(--space-5);
-  background: var(--bg-3);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm, 4px);
+  height: var(--control-height);
+  padding: 0 var(--space-5);
+  background: color-mix(in srgb, var(--bg-2) 88%, var(--surface-canvas));
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
   color: var(--fg);
   font-size: var(--text-sm);
   cursor: pointer;
   outline: none;
 }
 .ui-select-trigger:hover {
-  background: var(--line);
+  background: var(--bg-2);
+  border-color: color-mix(in srgb, var(--fg) 18%, transparent);
+}
+.ui-select-trigger:focus-visible {
+  border-color: color-mix(in srgb, var(--fg) 24%, transparent);
 }
 .ui-select-trigger span {
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
 }
@@ -289,10 +376,11 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: var(--bg-2);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm, 4px);
-  box-shadow: var(--shadow-md);
+  padding: var(--space-2);
+  background: var(--surface-panel);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
   z-index: 100;
   max-height: 200px;
   overflow-y: auto;
@@ -312,19 +400,16 @@
 .ui-select-item {
   width: 100%;
   text-align: left;
-  padding: var(--space-2) var(--space-5);
+  min-height: 28px;
+  padding: var(--space-2) var(--space-4);
   background: transparent;
   border: none;
   color: var(--fg);
   font-size: var(--text-sm);
   cursor: pointer;
 }
-.ui-select-item:hover {
-  background: var(--line);
-}
 .ui-select-item.active {
-  background: var(--bg-3);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--fg);
 }
 
@@ -332,9 +417,10 @@
 .ui-number-input-wrap {
   display: flex;
   align-items: center;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius, 6px);
-  background: var(--bg-3);
+  height: var(--control-height);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--bg-2) 88%, var(--surface-canvas));
   overflow: hidden;
 }
 .ui-number-btn {
@@ -342,7 +428,7 @@
   align-items: center;
   justify-content: center;
   width: 28px;
-  height: 28px;
+  height: 100%;
   background: transparent;
   border: none;
   color: var(--fg);
@@ -357,7 +443,7 @@
 }
 .ui-number-input {
   width: 48px;
-  height: 28px;
+  height: 100%;
   text-align: center;
   background: transparent;
   border: none;
@@ -387,9 +473,19 @@
 }
 
 .ui-list {
-  display: flex;
-  flex-direction: column;
   width: 100%;
+}
+
+.ui-list:has(> .ui-list-group) {
+  gap: 0;
+}
+
+.ui-list-group__content.ui-interactive-list {
+  gap: 0;
+}
+
+.ui-list-group__content .ui-interactive-item {
+  border-radius: 0;
 }
 
 .ui-list-group {
@@ -505,12 +601,7 @@
     color var(--duration-fast) ease;
 }
 
-.ui-list-item:hover {
-  background: var(--bg-3);
-}
-
 .ui-list-item--active {
-  background: var(--bg-3);
   color: var(--fg);
   font-weight: 600;
 }

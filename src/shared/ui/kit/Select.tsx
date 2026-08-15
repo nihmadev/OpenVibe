@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { interactiveItemClassName, interactiveListClassName } from "./InteractiveList";
 import "./ui.css";
 
 export interface Option {
@@ -23,7 +24,7 @@ function getContainerRect() {
 }
 
 function getDropHeight(optionCount: number) {
-  return Math.min(optionCount * 28 + 8, 148);
+  return Math.min(optionCount * 30 + 8, 158);
 }
 
 function clampDropdown(triggerRect: DOMRect, dropUp: boolean, dropHeight: number) {
@@ -32,8 +33,8 @@ function clampDropdown(triggerRect: DOMRect, dropUp: boolean, dropHeight: number
     return {
       left: triggerRect.left,
       width: triggerRect.width,
-      top: triggerRect.bottom,
-      bottom: window.innerHeight - triggerRect.top,
+      top: triggerRect.bottom + 4,
+      bottom: window.innerHeight - triggerRect.top + 4,
     };
   }
 
@@ -44,12 +45,12 @@ function clampDropdown(triggerRect: DOMRect, dropUp: boolean, dropHeight: number
   let bottom: number;
 
   if (dropUp) {
-    bottom = window.innerHeight - triggerRect.top;
+    bottom = window.innerHeight - triggerRect.top + 4;
     const maxBottom = window.innerHeight - (containerRect.top + 4 + dropHeight);
     bottom = Math.min(bottom, maxBottom);
     top = window.innerHeight - bottom - dropHeight;
   } else {
-    top = triggerRect.bottom;
+    top = triggerRect.bottom + 4;
     const maxTop = containerRect.bottom - 4 - dropHeight;
     top = Math.min(top, maxTop);
     bottom = window.innerHeight - top - dropHeight;
@@ -131,6 +132,10 @@ export function Select({ value, options, onChange, onHover, className }: SelectP
   }, [open, options.length]);
 
   const selected = options.find((o) => o.value === value);
+  const widestLabel = options.reduce(
+    (widest, option) => (option.label.length > widest.length ? option.label : widest),
+    "",
+  );
 
   const dropHeight = getDropHeight(options.length);
   const pos = rect ? clampDropdown(rect, dropUp, dropHeight) : null;
@@ -146,19 +151,17 @@ export function Select({ value, options, onChange, onHover, className }: SelectP
               left: pos.left,
               width: pos.width,
               ...(dropUp ? { bottom: pos.bottom, top: "auto" } : { top: pos.top, bottom: "auto" }),
-              borderRadius: dropUp
-                ? "var(--radius-sm, 4px) var(--radius-sm, 4px) 0 0"
-                : "0 0 var(--radius-sm, 4px) var(--radius-sm, 4px)",
-              borderTop: dropUp ? undefined : 0,
-              borderBottom: dropUp ? 0 : undefined,
             }}
           >
-            <div className="ui-select-dropdown-body">
+            <div className={interactiveListClassName("ui-select-dropdown-body")}>
               {options.map((o) => (
                 <button
                   key={o.value}
                   type="button"
-                  className={`ui-select-item ${o.value === value ? "active" : ""}`}
+                  className={interactiveItemClassName(
+                    o.value === value,
+                    `ui-select-item ${o.value === value ? "active" : ""}`,
+                  )}
                   onMouseEnter={() => onHover?.(o.value)}
                   onMouseLeave={() => onHover?.(null)}
                   onClick={() => {
@@ -178,20 +181,15 @@ export function Select({ value, options, onChange, onHover, className }: SelectP
 
   return (
     <div className={`ui-select ${className || ""}`.trim()}>
+      <span className="ui-select-sizer" aria-hidden="true">
+        {widestLabel}
+      </span>
       <button
         ref={triggerRef}
         type="button"
         className="ui-select-trigger"
         onClick={() => (open ? setOpen(false) : openDropdown())}
-        style={
-          open
-            ? {
-                borderRadius: dropUp
-                  ? "0 0 var(--radius-sm, 4px) var(--radius-sm, 4px)"
-                  : "var(--radius-sm, 4px) var(--radius-sm, 4px) 0 0",
-              }
-            : undefined
-        }
+        aria-expanded={open}
       >
         <span>{selected?.label ?? value}</span>
         <svg
