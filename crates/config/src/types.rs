@@ -22,6 +22,7 @@ impl Config {
             api_url: self.api_url.clone(),
             provider_id: self.provider_id.clone(),
             reasoning_effort: self.reasoning_effort.clone(),
+            prompt_cache_key: None,
         }
     }
 }
