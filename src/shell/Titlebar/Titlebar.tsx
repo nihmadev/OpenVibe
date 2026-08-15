@@ -5,7 +5,6 @@ import "./Titlebar.css";
 import { mcpGetServers, mcpStartServer, mcpStopServer } from "@/features/mcp/infrastructure/mcpGateway";
 import type { McpServerStatus } from "@/features/mcp/model/mcp";
 import { type LspServerItem, lspStore } from "@/features/mcp/ui/ServersPanel/lspStore";
-import { ServersPanel } from "@/features/mcp/ui/ServersPanel/ServersPanel";
 import { windowApi } from "@/infrastructure/tauri/windowApi";
 import { useI18n } from "@/shared/i18n/useI18n";
 import {
@@ -26,6 +25,7 @@ import {
 } from "@/shared/icons";
 import { ContextMenu, type MenuItem } from "@/shared/ui/ContextMenu/ContextMenu";
 import { Tooltip } from "@/shared/ui/Tooltip/Tooltip";
+import { McpStatusDropdown } from "./McpStatusDropdown";
 
 interface TitlebarProps {
   chatSideOpen?: boolean;
@@ -250,7 +250,7 @@ export function Titlebar({
   }
 
   function btnClasses(id: BtnId, extra = ""): string {
-    let cls = "ui-icon-btn ui-icon-btn--lg titlebar__action-btn";
+    let cls = "z-icon-button z-icon-button--large titlebar__action-btn";
     if (extra) cls += ` ${extra}`;
     if (hiding.has(id)) cls += " titlebar__action-btn--hiding";
     if (showing.has(id)) cls += " titlebar__action-btn--showing";
@@ -294,7 +294,7 @@ export function Titlebar({
       <div className="titlebar__left" onContextMenu={(e) => onSectionCtx(e, LEFT_BTNS)}>
         <Tooltip text={t("menu")} side="bottom">
           <button
-            className="ui-icon-btn ui-icon-btn--lg titlebar__action-btn"
+            className="z-icon-button z-icon-button--large titlebar__action-btn"
             aria-label={t("menu")}
             onContextMenu={(e) => {
               e.preventDefault();
@@ -390,14 +390,14 @@ export function Titlebar({
             </Tooltip>
             {mcpDropdownOpen && (
               <div className="titlebar__mcp-dropdown">
-                <ServersPanel
-                  mcpServers={mcpServers}
-                  onToggleMcpServer={handleToggleMcpServer}
+                <McpStatusDropdown
+                  servers={mcpServers}
+                  onToggleServer={handleToggleMcpServer}
                   onOpenSettings={() => {
                     setMcpDropdownOpen(false);
                     if (onOpenSettings) onOpenSettings("mcp");
                   }}
-                  onRefreshMcp={fetchMcpServers}
+                  onRefresh={fetchMcpServers}
                 />
               </div>
             )}

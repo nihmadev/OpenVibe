@@ -1,3 +1,4 @@
+import { surfaceClassName } from "@zazaru/ui";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRegenerate } from "@/features/agent/application/useRegenerate";
@@ -23,7 +24,6 @@ import { ProjectRail } from "@/features/projects/ui/ProjectRail/ProjectRail";
 import type { VibeConfig } from "@/features/providers/model/provider";
 import { SearchInCode } from "@/features/search/ui/SearchInCode/SearchInCode";
 import { Terminals } from "@/features/terminal/ui/Terminals/Terminals";
-import { surfaceClassName } from "@/shared/ui/kit";
 import { ResizeHandle } from "./panels/ResizeHandle";
 
 type ChatChangeCallback = (record: ChatRecord | null) => void | Promise<void>;
@@ -234,7 +234,7 @@ export function WorkspaceShell({
     <div className="app__body">
       {/* Left: project rail + chat sidebar */}
       <div
-        className={surfaceClassName("chrome", "sidebar-group")}
+        className={surfaceClassName("transparent", "sidebar-group")}
         onMouseLeave={() => {
           if (!chatSideSticky && !sidebarResizing) {
             setChatSideOpen(false);

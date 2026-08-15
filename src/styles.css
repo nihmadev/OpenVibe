@@ -1,3 +1,6 @@
+@import "@zazaru/ui/styles.css";
+@import "./shared/themes/zazaru-ui.css";
+
 :root {
   --bg: #161616;
   --bg-2: #1c1c1c;
@@ -35,6 +38,12 @@
   --interactive-item-radius: var(--radius-md);
   --interactive-item-hover: color-mix(in srgb, var(--fg) 5%, transparent);
   --interactive-item-active: color-mix(in srgb, var(--fg) 8%, transparent);
+  --scm-row-height: 24px;
+  --git-ref-head: #68d391;
+  --git-ref-local: #63b3ed;
+  --git-ref-remote: #b794f4;
+  --git-ref-local-surface: color-mix(in srgb, var(--git-ref-local) 15%, transparent);
+  --git-ref-remote-surface: color-mix(in srgb, var(--git-ref-remote) 15%, transparent);
   --surface-chrome: transparent;
   --surface-canvas: color-mix(in srgb, var(--bg-2) 58%, var(--bg));
   --surface-panel: var(--bg-2);
@@ -125,19 +134,19 @@ html.theme-borderless .app-sidebar {
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
 }
 
-html.theme-borderless .ui-surface {
+html.theme-borderless .z-surface {
   box-shadow: var(--surface-shadow-panel);
 }
 
-html.theme-borderless .ui-surface--chrome {
+html.theme-borderless .z-surface--chrome {
   box-shadow: none;
 }
 
-html.theme-borderless .ui-surface--canvas {
+html.theme-borderless .z-surface--canvas {
   box-shadow: var(--surface-shadow-canvas);
 }
 
-html.theme-borderless .ui-surface--composer {
+html.theme-borderless .z-surface--composer {
   box-shadow: var(--surface-shadow-raised);
 }
 

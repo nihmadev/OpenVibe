@@ -15,7 +15,7 @@
 .titlebar__left {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
   -webkit-app-region: no-drag;
   flex: 1;
   min-width: 200px;
@@ -35,7 +35,7 @@
 .titlebar__right {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 0;
   -webkit-app-region: no-drag;
   justify-content: flex-end;
   flex: 1;
@@ -46,11 +46,25 @@
   display: flex;
   align-items: center;
   gap: 0;
-  margin-left: var(--space-1);
+  margin-left: 0;
 }
 
-/* Base look comes from .ui-icon-btn (ui.css); only titlebar-specific
-   hide/show behavior lives here. */
+/* Base look comes from .z-icon-button (zazaru-ui styles.css); only
+   titlebar-specific hide/show behavior lives here. */
+.titlebar__action-btn {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+}
+
+.titlebar__action-btn > svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  overflow: visible;
+}
+
 .titlebar__action-btn--active {
   color: var(--fg);
   background: color-mix(in srgb, var(--fg) 5%, transparent);
@@ -86,7 +100,7 @@
   }
   to {
     opacity: 1;
-    width: 32px;
+    width: 30px;
     transform: scale(1);
   }
 }
@@ -123,6 +137,12 @@
   transform: scale(0.99);
 }
 
+.titlebar__search > svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
 .titlebar__search-text {
   flex: 1;
 }
@@ -155,6 +175,11 @@
   transition: all var(--duration-normal) ease;
 }
 
+.titlebar__btn > svg {
+  width: 12px;
+  height: 12px;
+}
+
 .titlebar__btn:hover {
   background: var(--bg-2);
   color: var(--fg);
@@ -176,14 +201,10 @@
   -webkit-app-region: no-drag;
 }
 
-.titlebar__mcp-btn svg {
-  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
-}
-
 .titlebar__mcp-badge {
   position: absolute;
-  top: 7px;
-  right: 6px;
+  top: 5px;
+  right: 4px;
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -236,17 +257,8 @@
   position: absolute;
   top: 36px;
   right: 0;
-  width: 260px;
-  background: var(--bg-2);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
   z-index: 100;
-
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  font-size: var(--text-sm);
 }
 
 /* The dropdown is rendered inside the native titlebar drag region. Every

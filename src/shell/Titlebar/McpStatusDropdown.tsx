@@ -1,9 +1,11 @@
+import { IconButton, interactiveItemClassName, Surface, Toggle } from "@zazaru/ui";
 import type React from "react";
+import { useState } from "react";
 import type { McpServerStatus } from "@/features/mcp/model/mcp";
+import { LspTab } from "@/features/mcp/ui/ServersPanel/LspTab";
 import { useTranslate } from "@/shared/i18n/useI18n";
-import { RefreshCwStrokeIcon, ServerIcon, SettingsIcon } from "@/shared/icons/icons";
-import { Toggle } from "@/shared/ui/kit";
-import "./Titlebar.css";
+import { RefreshCwStrokeIcon, SettingsIcon } from "@/shared/icons/icons";
+import "./McpStatusDropdown.css";
 
 interface McpStatusDropdownProps {
   servers: McpServerStatus[];
@@ -20,54 +22,79 @@ export function McpStatusDropdown({
 }: McpStatusDropdownProps): React.ReactElement {
   const t = useTranslate();
 
-  const getStatusDotClass = (server: McpServerStatus) => {
-    if (!server.enabled) return "titlebar__mcp-dot--gray";
-    if (server.status.type === "error") return "titlebar__mcp-dot--red";
-    if (server.status.type === "starting") return "titlebar__mcp-dot--starting";
-    if (server.status.type === "running") return "titlebar__mcp-dot--green";
-    if (server.status.type === "stopped") return "titlebar__mcp-dot--yellow";
-    return "titlebar__mcp-dot--gray";
+  const [activeTab, setActiveTab] = useState<"mcp" | "lsp">("mcp");
+
+  const getStatus = (server: McpServerStatus) => {
+    if (!server.enabled) return "idle";
+    return server.status.type;
   };
 
   return (
-    <div className="titlebar__mcp-dropdown">
-      <div className="titlebar__mcp-header">
-        <div className="titlebar__mcp-header-title">
-          <ServerIcon size={14} />
-          <span>{t("mcpServersCount", { count: String(servers.length) })}</span>
+    <Surface tone="panel" className="mcp-status-dropdown">
+      <header className="mcp-status-dropdown__header">
+        <div className="mcp-status-dropdown__tabs" role="tablist" aria-label={t("server")}>
+          {(["mcp", "lsp"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab}
+              className={`mcp-status-dropdown__tab ${activeTab === tab ? "mcp-status-dropdown__tab--active" : ""}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab.toUpperCase()}
+              {tab === "mcp" && <span>{servers.length}</span>}
+            </button>
+          ))}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-          <button className="titlebar__mcp-refresh-btn" onClick={onOpenSettings} title={t("mcpOpenSettings")}>
-            <SettingsIcon size={14} strokeWidth={2} />
-          </button>
-          <button className="titlebar__mcp-refresh-btn" onClick={onRefresh} title={t("mcpRefreshStatuses")}>
+        <div className="mcp-status-dropdown__actions">
+          <IconButton
+            scale="compact"
+            onClick={onRefresh}
+            title={t("mcpRefreshStatuses")}
+            aria-label={t("mcpRefreshStatuses")}
+          >
             <RefreshCwStrokeIcon size={14} />
-          </button>
+          </IconButton>
+          <IconButton
+            scale="compact"
+            onClick={onOpenSettings}
+            title={t("mcpOpenSettings")}
+            aria-label={t("mcpOpenSettings")}
+          >
+            <SettingsIcon size={14} strokeWidth={2} />
+          </IconButton>
         </div>
-      </div>
+      </header>
 
-      <div className="titlebar__mcp-server-list">
-        {servers.length === 0 ? (
-          <div className="titlebar__mcp-empty">{t("mcpNoServersConfigured")}</div>
+      <div className="mcp-status-dropdown__content">
+        {activeTab === "lsp" ? (
+          <LspTab />
+        ) : servers.length === 0 ? (
+          <div className="mcp-status-dropdown__empty">{t("mcpNoServersConfigured")}</div>
         ) : (
-          servers.map((server) => {
-            return (
-              <div key={server.name} className="titlebar__mcp-server-item">
-                <div className="titlebar__mcp-server-info">
-                  <span className={`titlebar__mcp-dot ${getStatusDotClass(server)}`} />
-                  <span className="titlebar__mcp-server-name">{server.name}</span>
+          <div className="mcp-status-dropdown__list">
+            {servers.map((server) => {
+              const status = getStatus(server);
+              return (
+                <div key={server.name} className={interactiveItemClassName(false, "mcp-status-dropdown__row")}>
+                  <span className={`mcp-status-dropdown__dot mcp-status-dropdown__dot--${status}`} aria-hidden="true" />
+                  <div className="mcp-status-dropdown__server">
+                    <span className="mcp-status-dropdown__name" title={server.name}>
+                      {server.name}
+                    </span>
+                  </div>
+                  <Toggle
+                    checked={server.enabled}
+                    onValueChange={(checked) => onToggleServer(server.name, checked)}
+                    title={server.enabled ? t("mcpStopServer") : t("mcpStartServer")}
+                  />
                 </div>
-
-                <Toggle
-                  checked={server.enabled}
-                  onValueChange={(checked) => onToggleServer(server.name, checked)}
-                  title={server.enabled ? t("mcpStopServer") : t("mcpStartServer")}
-                />
-              </div>
-            );
-          })
+              );
+            })}
+          </div>
         )}
       </div>
-    </div>
+    </Surface>
   );
 }
