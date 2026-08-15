@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::sync::atomic::AtomicU64;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
@@ -22,8 +23,20 @@ pub struct Agent {
     pub last_cache_read_tokens: Option<usize>,
 }
 
+static SESSION_KEY_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+fn new_prompt_cache_key() -> String {
+    let epoch_nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let sequence = SESSION_KEY_COUNTER.fetch_add(1, Ordering::Relaxed);
+    format!("openvibe-{epoch_nanos:x}-{sequence:x}")
+}
+
 impl Agent {
-    pub fn new(config: AgentConfig) -> Self {
+    pub fn new(mut config: AgentConfig) -> Self {
+        config.prompt_cache_key = Some(new_prompt_cache_key());
         let system = system_prompt(&config.cwd);
         Self {
             messages: vec![ChatMessage {
@@ -100,6 +113,7 @@ impl Agent {
         self.file_snapshots.clear();
         self.undo_state = None;
         self.todo_context = None;
+        self.config.prompt_cache_key = Some(new_prompt_cache_key());
         self.last_prompt_tokens = None;
         self.last_cache_creation_tokens = None;
         self.last_cache_read_tokens = None;
@@ -124,6 +138,7 @@ impl Agent {
         self.file_snapshots.clear();
         self.undo_state = None;
         self.todo_context = None;
+        self.config.prompt_cache_key = Some(new_prompt_cache_key());
         self.last_prompt_tokens = None;
         self.last_cache_creation_tokens = None;
         self.last_cache_read_tokens = None;

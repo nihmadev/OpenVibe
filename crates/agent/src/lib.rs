@@ -16,6 +16,7 @@ pub mod sse;
 pub mod sub_trace;
 pub mod summarize;
 pub mod token;
+pub mod tool_profile;
 pub mod transform;
 
 pub use agent::Agent;

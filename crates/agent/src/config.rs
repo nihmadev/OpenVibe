@@ -7,6 +7,9 @@ pub struct AgentConfig {
     pub api_url: Option<String>,
     pub provider_id: Option<String>,
     pub reasoning_effort: Option<String>,
+    /// Runtime-only stable identity for provider prefix caches. It is created
+    /// per chat session and deliberately never persisted with API settings.
+    pub prompt_cache_key: Option<String>,
 }
 
 impl AgentConfig {
@@ -18,6 +21,7 @@ impl AgentConfig {
             api_url: self.api_url.clone(),
             provider_id: self.provider_id.clone(),
             reasoning_effort: self.reasoning_effort.clone(),
+            prompt_cache_key: self.prompt_cache_key.clone(),
         }
     }
 }
@@ -31,4 +35,5 @@ pub struct LlmConfig {
     pub api_url: Option<String>,
     pub provider_id: Option<String>,
     pub reasoning_effort: Option<String>,
+    pub prompt_cache_key: Option<String>,
 }

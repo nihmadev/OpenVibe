@@ -155,19 +155,25 @@ fn build_body_bytes(
     };
 
     if is_direct_anthropic(config) {
-        return build_anthropic_body(config, &outbound_messages, tools);
+        return build_anthropic_body(config, &outbound_messages, tools, true);
     }
 
     let mut body = serde_json::json!({
         "model": config.model,
         "messages": messages_to_api_json_with_cache(
             outbound_messages,
-            supports_prompt_caching(config),
+            false,
+            provider_kind(config).round_trips_native_reasoning(),
         ),
         "stream": true,
         "stream_options": { "include_usage": true },
     });
     apply_reasoning_params(config, &mut body);
+    if supports_prompt_cache_key(config) {
+        if let Some(key) = config.prompt_cache_key.as_deref() {
+            body["prompt_cache_key"] = serde_json::json!(key);
+        }
+    }
     if !tools.is_empty() {
         body["tools"] = serde_json::json!(tools);
         body["tool_choice"] = serde_json::json!("auto");
@@ -186,16 +192,14 @@ fn build_anthropic_body(
     config: &LlmConfig,
     messages: &[ChatMessage],
     tools: &[ToolDefinition],
+    use_cache_markers: bool,
 ) -> Result<bytes::Bytes, String> {
     let mut system = Vec::new();
     let mut outbound: Vec<serde_json::Value> = Vec::new();
     for message in messages {
         if message.role == "system" {
             if let Some(content) = &message.content {
-                system.extend(anthropic_content_blocks(
-                    content,
-                    supports_prompt_caching(config),
-                )?);
+                system.extend(anthropic_content_blocks(content, use_cache_markers)?);
             }
             continue;
         }
@@ -266,6 +270,26 @@ fn build_anthropic_body(
         }));
     }
 
+    // Mirror OpenCode's cache placement for Anthropic: the static tools and
+    // system prefix, plus the latest user boundary that all intra-turn tool
+    // follow-ups share.
+    if use_cache_markers {
+        if let Some(last_user) = outbound
+            .iter_mut()
+            .rev()
+            .find(|message| message.get("role").and_then(serde_json::Value::as_str) == Some("user"))
+            .and_then(|message| message.get_mut("content"))
+            .and_then(serde_json::Value::as_array_mut)
+            .and_then(|blocks| blocks.last_mut())
+            .and_then(serde_json::Value::as_object_mut)
+        {
+            last_user.insert(
+                "cache_control".to_string(),
+                serde_json::json!({"type": "ephemeral"}),
+            );
+        }
+    }
+
     let mut body = serde_json::json!({
         "model": config.model,
         "messages": outbound,
@@ -276,18 +300,28 @@ fn build_anthropic_body(
         body["system"] = serde_json::Value::Array(system);
     }
     if !tools.is_empty() {
-        body["tools"] = serde_json::Value::Array(
-            tools
-                .iter()
-                .map(|tool| {
-                    serde_json::json!({
-                        "name": tool.function.name,
-                        "description": tool.function.description,
-                        "input_schema": tool.function.parameters,
-                    })
+        let mut native_tools: Vec<serde_json::Value> = tools
+            .iter()
+            .map(|tool| {
+                serde_json::json!({
+                    "name": tool.function.name,
+                    "description": tool.function.description,
+                    "input_schema": tool.function.parameters,
                 })
-                .collect(),
-        );
+            })
+            .collect();
+        if use_cache_markers {
+            if let Some(last_tool) = native_tools
+                .last_mut()
+                .and_then(serde_json::Value::as_object_mut)
+            {
+                last_tool.insert(
+                    "cache_control".to_string(),
+                    serde_json::json!({"type": "ephemeral"}),
+                );
+            }
+        }
+        body["tools"] = serde_json::Value::Array(native_tools);
     }
     serde_json::to_vec(&body)
         .map(bytes::Bytes::from)
@@ -388,23 +422,12 @@ fn is_connection_error(e: &reqwest::Error) -> bool {
     false
 }
 
-/// Prompt-caching gate for providers that accept `cache_control` markers:
-/// - Anthropic (native support, directly or through the proxy which
-///   forwards the body verbatim);
-/// - OpenRouter (documented passthrough: applies `cache_control` for
-///   Anthropic/Gemini models and strips it for providers that don't
-///   support it, so it is always safe to send).
-///
-/// Other providers (OpenAI, Google direct, ...) either ignore or hard-error
-/// on the field, so it is not set for them. (OpenAI caches long prompt
-/// prefixes implicitly — no markers needed.)
-fn supports_prompt_caching(config: &LlmConfig) -> bool {
-    let pid = config.provider_id.as_deref().unwrap_or("");
-    let base = config.base_url.to_lowercase();
-    pid == "anthropic"
-        || base.contains("api.anthropic.com")
-        || pid == "openrouter"
-        || base.contains("openrouter.ai")
+/// OpenRouter accepts the stable OpenAI-style session key on its chat route.
+/// The key lets it reuse a matching prefix without placing Anthropic-only
+/// `cache_control` objects into an OpenAI-compatible message body.
+fn supports_prompt_cache_key(config: &LlmConfig) -> bool {
+    config.provider_id.as_deref() == Some("openrouter")
+        || config.base_url.to_lowercase().contains("openrouter.ai")
 }
 
 /// Providers whose OpenAI-compatible chat endpoint accepts the flat
@@ -453,6 +476,18 @@ enum ReasoningTransport {
     DeepSeek,
     /// OpenRouter: `reasoning: { enabled: true, effort: ... }` object.
     OpenRouterReasoningObject,
+}
+
+impl ReasoningTransport {
+    /// Whether the provider requires an assistant's native reasoning field to
+    /// be replayed verbatim on a follow-up turn (notably after a tool call).
+    ///
+    /// This is a transport capability rather than an inference from a stream:
+    /// servers can emit reasoning deltas while rejecting `reasoning_content`
+    /// in messages sent back to them.
+    fn round_trips_native_reasoning(self) -> bool {
+        matches!(self, Self::DeepSeek)
+    }
 }
 
 fn apply_reasoning_params(config: &LlmConfig, body: &mut serde_json::Value) {
@@ -659,6 +694,7 @@ mod tests {
                 Some(provider_id.to_string())
             },
             reasoning_effort: effort.map(|e| e.to_string()),
+            prompt_cache_key: None,
         }
     }
 
@@ -710,6 +746,63 @@ mod tests {
     }
 
     #[test]
+    fn native_reasoning_history_follows_transport_capability() {
+        let messages = vec![ChatMessage {
+            role: "assistant".to_string(),
+            content: None,
+            name: None,
+            tool_call_id: None,
+            tool_calls: None,
+            reasoning_content: Some("private chain of thought".to_string()),
+            reasoning_name: None,
+            usage: None,
+        }];
+
+        let groq = cfg("groq", "https://api.groq.com/openai/v1", Some("medium"));
+        let groq_body: serde_json::Value =
+            serde_json::from_slice(&build_body_bytes(&groq, &messages, &[]).unwrap()).unwrap();
+        assert!(groq_body["messages"][0].get("reasoning_content").is_none());
+
+        let deepseek = cfg("deepseek", "https://api.deepseek.com/v1", Some("medium"));
+        let deepseek_body: serde_json::Value =
+            serde_json::from_slice(&build_body_bytes(&deepseek, &messages, &[]).unwrap()).unwrap();
+        assert_eq!(
+            deepseek_body["messages"][0]["reasoning_content"],
+            "private chain of thought"
+        );
+    }
+
+    #[test]
+    fn openai_compatible_requests_do_not_receive_anthropic_cache_markers() {
+        let custom = cfg("p_custom", "https://example.invalid/v1", None);
+        let messages = vec![ChatMessage {
+            role: "system".to_string(),
+            content: Some(serde_json::Value::String("stable prefix".to_string())),
+            name: None,
+            tool_call_id: None,
+            tool_calls: None,
+            reasoning_content: None,
+            reasoning_name: None,
+            usage: None,
+        }];
+
+        let body: serde_json::Value =
+            serde_json::from_slice(&build_body_bytes(&custom, &messages, &[]).unwrap()).unwrap();
+        assert_eq!(body["messages"][0]["content"], "stable prefix");
+        assert!(!body.to_string().contains("cache_control"));
+    }
+
+    #[test]
+    fn openrouter_receives_a_stable_prompt_cache_key() {
+        let mut config = cfg("openrouter", "https://openrouter.ai/api/v1", None);
+        config.prompt_cache_key = Some("openvibe-session-1".to_string());
+        let body: serde_json::Value =
+            serde_json::from_slice(&build_body_bytes(&config, &[], &[]).unwrap()).unwrap();
+        assert_eq!(body["prompt_cache_key"], "openvibe-session-1");
+        assert!(!body.to_string().contains("cache_control"));
+    }
+
+    #[test]
     fn direct_anthropic_uses_native_url_headers_and_body() {
         let config = cfg("anthropic", "https://api.anthropic.com/v1", None);
         let messages = vec![
@@ -738,6 +831,11 @@ mod tests {
         let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
         assert_eq!(body["system"][0]["text"], "system");
         assert_eq!(body["messages"][0]["content"][0]["text"], "hello");
+        assert_eq!(body["system"][0]["cache_control"]["type"], "ephemeral");
+        assert_eq!(
+            body["messages"][0]["content"][0]["cache_control"]["type"],
+            "ephemeral"
+        );
         assert!(body.get("stream_options").is_none());
 
         let (url, headers) = build_request(&config);

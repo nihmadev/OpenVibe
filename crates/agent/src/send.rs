@@ -184,6 +184,12 @@ impl Agent {
             // before the request is built.
             self.maybe_compact_context(client, emit).await;
 
+            // Profiles are derived from actual prior tool calls, never from
+            // language-specific keyword matching. A fresh session is full;
+            // later turns retain core tools plus used/unlocked capabilities.
+            let (_profile, turn_tool_defs) =
+                crate::tool_profile::select_tool_profile(&tool_defs, &self.messages);
+
             emit("vibe:agent:assistant-start", serde_json::Value::Null);
 
             // Coalesce streaming deltas. Leading edge: the very first chunk is
@@ -369,7 +375,7 @@ impl Agent {
             let stream_fut = stream_chat(
                 &llm_config,
                 self.messages.clone(),
-                tool_defs.clone(),
+                turn_tool_defs,
                 &self.cancel,
                 client,
                 &cb_chunk,

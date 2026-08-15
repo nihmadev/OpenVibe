@@ -132,7 +132,7 @@ pub fn trim_messages_to_budget(messages: Vec<ChatMessage>, max_tokens: usize) ->
 }
 
 pub fn messages_to_api_json(messages: Vec<ChatMessage>) -> Vec<serde_json::Value> {
-    messages_to_api_json_with_cache(messages, false)
+    messages_to_api_json_with_cache(messages, false, false)
 }
 
 /// Serialize the chat history to OpenAI-compatible message JSON.
@@ -152,6 +152,7 @@ pub fn messages_to_api_json(messages: Vec<ChatMessage>) -> Vec<serde_json::Value
 pub fn messages_to_api_json_with_cache(
     messages: Vec<ChatMessage>,
     use_prompt_cache: bool,
+    round_trip_native_reasoning: bool,
 ) -> Vec<serde_json::Value> {
     let cache_targets = if use_prompt_cache {
         find_cache_targets(&messages)
@@ -171,14 +172,11 @@ pub fn messages_to_api_json_with_cache(
 
             let content_val = m.content.clone();
 
-            // Native reasoning round-trip. Providers such as DeepSeek require
-            // the assistant's `reasoning_content` to be passed back VERBATIM
-            // as a top-level field on turns that performed tool calls
-            // (otherwise the API returns 400). Never synthesize placeholder
-            // reasoning ("Executing tool call.") and never re-encode native
-            // reasoning as <thought> text blocks — that corrupts the
-            // provider-side reasoning state and pollutes the history.
-            if m.role == "assistant" {
+            // Reasoning stays in the local transcript by default. Only a
+            // transport that explicitly requires native reasoning replay may
+            // put it back into the provider request: OpenAI-compatible APIs
+            // are not uniform here and many reject this unknown field.
+            if round_trip_native_reasoning && m.role == "assistant" {
                 if let Some(ref reasoning) = m.reasoning_content {
                     if !reasoning.trim().is_empty() {
                         obj.insert(
@@ -284,7 +282,7 @@ mod tests {
             usage: None,
         };
 
-        let json_list = messages_to_api_json(vec![msg]);
+        let json_list = messages_to_api_json_with_cache(vec![msg], false, true);
         assert_eq!(json_list.len(), 1);
         let obj = json_list[0].as_object().unwrap();
         // Native reasoning must be passed back verbatim as a top-level field
@@ -297,6 +295,23 @@ mod tests {
         let content = obj.get("content").unwrap().as_str().unwrap();
         assert_eq!(content, "Hello");
         assert!(!content.contains("<thought"));
+    }
+
+    #[test]
+    fn test_messages_to_api_json_keeps_reasoning_local_without_capability() {
+        let msg = ChatMessage {
+            role: "assistant".to_string(),
+            content: None,
+            name: None,
+            tool_call_id: None,
+            tool_calls: None,
+            reasoning_content: Some("Internal thinking".to_string()),
+            reasoning_name: None,
+            usage: None,
+        };
+
+        let obj = messages_to_api_json(vec![msg]).pop().unwrap();
+        assert!(obj.get("reasoning_content").is_none());
     }
 
     #[test]
@@ -322,7 +337,7 @@ mod tests {
             usage: None,
         };
 
-        let json_list = messages_to_api_json(vec![msg]);
+        let json_list = messages_to_api_json_with_cache(vec![msg], false, true);
         let obj = json_list[0].as_object().unwrap();
         // No fake "Executing tool call." reasoning must ever be synthesized.
         assert!(!obj.contains_key("reasoning_content"));
@@ -425,7 +440,7 @@ mod tests {
     #[test]
     fn test_cache_control_added_to_system_message_when_enabled() {
         let msgs = vec![msg("system", "You are helpful."), msg("user", "hi")];
-        let json_list = messages_to_api_json_with_cache(msgs, true);
+        let json_list = messages_to_api_json_with_cache(msgs, true, false);
 
         // System content promoted to a content-block array with cache_control.
         let system_content = json_list[0].get("content").unwrap();
@@ -451,7 +466,7 @@ mod tests {
     #[test]
     fn test_cache_control_falls_back_to_first_user_without_system() {
         let msgs = vec![msg("user", "task"), msg("assistant", "ok")];
-        let json_list = messages_to_api_json_with_cache(msgs, true);
+        let json_list = messages_to_api_json_with_cache(msgs, true, false);
 
         let blocks = json_list[0].get("content").unwrap().as_array().unwrap();
         assert!(blocks[0].get("cache_control").is_some());
@@ -487,7 +502,7 @@ mod tests {
         let mut tool = msg("tool", "file contents");
         tool.tool_call_id = Some("c1".to_string());
         let msgs = vec![msg("system", "sys"), msg("user", "task"), assistant, tool];
-        let json_list = messages_to_api_json_with_cache(msgs, true);
+        let json_list = messages_to_api_json_with_cache(msgs, true, false);
 
         // System carries the prefix breakpoint.
         let sys_blocks = json_list[0].get("content").unwrap().as_array().unwrap();
@@ -507,7 +522,7 @@ mod tests {
     #[test]
     fn test_cache_control_absent_when_disabled() {
         let msgs = vec![msg("system", "sys"), msg("user", "hi")];
-        let json_list = messages_to_api_json_with_cache(msgs.clone(), false);
+        let json_list = messages_to_api_json_with_cache(msgs.clone(), false, false);
         // Content stays a plain string for non-Anthropic providers.
         assert_eq!(
             json_list[0].get("content").and_then(|v| v.as_str()),
@@ -536,7 +551,7 @@ mod tests {
             reasoning_name: None,
             usage: None,
         }];
-        let json_list = messages_to_api_json_with_cache(msgs, true);
+        let json_list = messages_to_api_json_with_cache(msgs, true, false);
         let blocks = json_list[0].get("content").unwrap().as_array().unwrap();
         assert_eq!(blocks.len(), 2);
         assert!(blocks[0].get("cache_control").is_none());
@@ -564,7 +579,7 @@ mod tests {
             usage: None,
         };
 
-        let json_list = messages_to_api_json(vec![msg]);
+        let json_list = messages_to_api_json_with_cache(vec![msg], false, true);
         let content = json_list[0]
             .get("content")
             .and_then(|v| v.as_str())

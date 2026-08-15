@@ -1,8 +1,6 @@
 use std::fs;
 use std::path::Path;
 
-use crate::project_tree;
-
 const RULE_FILES: &[&str] = &[
     ".viberules",
     "AGENTS.md",
@@ -93,8 +91,11 @@ fn environment_info(cwd: &str) -> String {
 
 pub fn system_prompt(cwd: &str) -> String {
     let env_info = environment_info(cwd);
-    let tree = project_tree::generate_project_tree(cwd);
-    let base_prompt = [
+    // Keep the previous detailed prompt source below temporarily while the
+    // compact baseline is rolled out; it is not sent to the provider.
+    let tree = String::new();
+    let _legacy_prompt = if false {
+        [
         "You are openvibe, an advanced autonomous coding assistant and agent with direct access to the file system and development environment.",
         env_info.as_str(),
         "",
@@ -114,6 +115,7 @@ pub fn system_prompt(cwd: &str) -> String {
         "",
         "TOOL SELECTION & WORKFLOW:",
         "Prefer specific, structured tools for filesystem and git operations before generic shell commands:",
+        "TOOL PROFILES: After a tool-using turn, the current tool list may be focused to preserve response latency. Core workspace tools remain available. If you need a missing capability, call `tool_request` with one or more capability groups (`git`, `web`, `research`); on the next turn use the concrete newly available tool. Never claim a capability is unavailable before requesting it.",
         "1. TASK PLANNING (`todo`):",
         "   - For multi-step tasks, use `todo` to maintain a clear roadmap. Keep the single currently active step as `in_progress` and remaining steps as `pending`. Update status as work completes.",
         "2. FILE CREATION VS. MODIFICATION:",
@@ -153,6 +155,24 @@ pub fn system_prompt(cwd: &str) -> String {
         "- Use this exact format for visual trees:\n```tree\nproject/\n├── src/\n│   └── main.rs # Entry point\n└── README.md # Documentation\n```\nKeep tree outputs focused on relevant paths, using `├──`, `└──`, and `│` connectors. Annotate entries with `# comment` only, so UI tree renderers parse filenames cleanly.",
         "- Format user-facing responses in clean, structured GitHub-style markdown.",
     ]
+    .join("\n")
+    } else {
+        String::new()
+    };
+
+    // Match OpenCode's core approach: a stable, small baseline plus explicit
+    // environment facts. Filesystem discovery stays on-demand through tools,
+    // so the first request never includes a potentially large project tree.
+    let base_prompt = [
+        "You are openvibe, an autonomous coding agent. Complete software-engineering tasks by inspecting the workspace, making targeted changes, and verifying them with available tools.",
+        "<env>",
+        env_info.as_str(),
+        "</env>",
+        "Work end-to-end when the request is clear. Inspect before changing, preserve unrelated work, and verify conclusions against files or tool output. TOOL ROUTING: when the user names an existing file or a concrete glob/path (for example crates/mcp/src/*.rs), read those files directly or search inside that scope first. Use list_dir only when the path is unknown, a direct read/search failed, or directory names are needed to resolve the request. Never walk known ancestor directories one level at a time.",
+        "For multi-step tasks maintain todo. Prefer structured workspace and git tools; use run for builds, tests, and commands that need the environment. Do not print whole files unless asked. Never run destructive or interactive commands without explicit approval.",
+        "If a tool fails, diagnose it before retrying. If the current tool list is focused and a capability is absent, call tool_request with git, web, or research; then use the returned concrete tool on the next turn.",
+        "Keep user-facing responses in the user's language and concise Markdown. Keep internal reasoning and transport tags out of visible text.",
+    ]
     .join("\n");
 
     let full_prompt = if let Some(rules) = load_project_rules(cwd) {
@@ -186,6 +206,7 @@ pub fn agent_system_prompt(cwd: &str) -> String {
         "- Do NOT modify any project files.",
         "- Do NOT write out reasoning wrapped in <thought>/<thinking> tags in visible message text.",
         "- SCOPE: Keep investigation within the requested boundary. Inspect referenced external interfaces only when required to clarify types or contracts.",
+        "- TOOL ROUTING: A user-provided file path, glob, crate, or directory is already a scope hint. Read known files directly; for a glob/path such as `crates/mcp/src/*.rs`, use search_codebase scoped to that directory or read the matching files. Do not list the workspace, then ancestors, then the target directory merely to confirm a path the user supplied. Use list_dir only when resolving an unknown path or when a direct scoped search/read cannot answer the question.",
         "- SEARCH VERIFICATION: If search reports zero results for a symbol you expect to exist, verify with read_file before concluding it is absent.",
         "- BUDGET: Use targeted searches and read only the files necessary for a complete answer.",
         "- FINAL REPORT: Your last message is consumed by the main agent, not shown directly to a human. Return a dense factual report: findings with file paths and line references, and explicit answers to the assigned question. No pleasantries.",
@@ -204,7 +225,9 @@ mod tests {
         let dir = tempdir().unwrap();
         let prompt = system_prompt(dir.path().to_str().unwrap());
         assert!(!prompt.contains("USER PROJECT RULES"));
-        assert!(prompt.contains("<thought name=\"Concise action title\">"));
+        assert!(prompt.contains("<env>"));
+        assert!(!prompt.contains("PROJECT STRUCTURE"));
+        assert!(prompt.contains("Never walk known ancestor directories"));
     }
 
     #[test]

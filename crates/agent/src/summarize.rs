@@ -53,6 +53,7 @@ impl Agent {
             api_url: config.api_url.clone(),
             provider_id: config.provider_id.clone(),
             reasoning_effort: None,
+            prompt_cache_key: None,
         };
 
         let title_capture = title.clone();

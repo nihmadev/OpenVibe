@@ -203,6 +203,7 @@ mod tests {
             api_url: None,
             provider_id: None,
             reasoning_effort: None,
+            prompt_cache_key: None,
         })
     }
 
