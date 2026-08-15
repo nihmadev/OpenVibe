@@ -5,6 +5,7 @@ import { fsApi } from "@/features/files/infrastructure/fsGateway";
 import type { FileMatch } from "@/features/files/model/fs";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { FileIcon, FolderIcon, SearchIcon } from "@/shared/icons";
+import { interactiveItemClassName, interactiveListClassName } from "@/shared/ui/kit";
 import { filterCommands } from "./commands";
 
 interface SearchPopupProps {
@@ -163,14 +164,15 @@ export function SearchPopup({
 
         <div className="search-popup__body">
           {showingResults ? (
-            <>
+            <div className={interactiveListClassName("search-popup__results")}>
               {commandMatches.map((cmd, i) => (
                 <div
                   key={cmd.id}
-                  className={
+                  className={interactiveItemClassName(
+                    i === selectedIdx,
                     "search-popup__result-item search-popup__result-item--cmd" +
-                    (i === selectedIdx ? " search-popup__result-item--active" : "")
-                  }
+                      (i === selectedIdx ? " search-popup__result-item--active" : ""),
+                  )}
                   onMouseEnter={() => setSelectedIdx(i)}
                   onClick={() => {
                     onCommand?.(cmd.id);
@@ -187,7 +189,10 @@ export function SearchPopup({
                 return (
                   <div
                     key={m.path}
-                    className={`search-popup__result-item${idx === selectedIdx ? " search-popup__result-item--active" : ""}`}
+                    className={interactiveItemClassName(
+                      idx === selectedIdx,
+                      `search-popup__result-item${idx === selectedIdx ? " search-popup__result-item--active" : ""}`,
+                    )}
                     onMouseEnter={() => setSelectedIdx(idx)}
                     onClick={() => {
                       if (m.isDir) {
@@ -209,13 +214,16 @@ export function SearchPopup({
               {loading && commandMatches.length === 0 && matches.length === 0 && (
                 <div className="search-popup__status">{t("searching")}</div>
               )}
-            </>
+            </div>
           ) : (
-            <div className="search-popup__footer">
+            <div className={interactiveListClassName("search-popup__footer")}>
               {actions.map((a, i) => (
                 <div
                   key={a.id}
-                  className={`search-popup__action-row${i === selectedIdx ? " search-popup__action-row--active" : ""}`}
+                  className={interactiveItemClassName(
+                    i === selectedIdx,
+                    `search-popup__action-row${i === selectedIdx ? " search-popup__action-row--active" : ""}`,
+                  )}
                   onMouseEnter={() => setSelectedIdx(i)}
                   onClick={() => {
                     a.action();

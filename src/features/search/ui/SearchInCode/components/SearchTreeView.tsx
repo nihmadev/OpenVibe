@@ -1,6 +1,7 @@
 import type React from "react";
 import { useTranslate } from "@/shared/i18n/useI18n";
 import { ChevronRightIcon, FileIcon, FolderIcon } from "@/shared/icons";
+import { interactiveItemClassName } from "@/shared/ui/kit";
 import { getCachedHighlight, getLanguageFromFilename } from "../../../highlighting/searchSyntax";
 import type { TreeNode } from "../../../model/searchTree";
 
@@ -36,7 +37,7 @@ export function SearchTreeView({
     elements.push(
       <div
         key={`row-${nodePath}`}
-        className="sc-tree-row"
+        className={interactiveItemClassName(false, "sc-tree-row")}
         style={{ paddingLeft: 8 + depth * 10 }}
         onClick={() => {
           if (node.isDir) onToggleTreeNode(nodePath);
@@ -74,7 +75,10 @@ export function SearchTreeView({
           elements.push(
             <div
               key={`match-${m.path}:${m.line}:${m.column}:${matchIndex}`}
-              className={`sc-match-row${matchIndex === visibleMatchCount - 1 ? " sc-match-row--last" : ""}`}
+              className={interactiveItemClassName(
+                false,
+                `sc-match-row${matchIndex === visibleMatchCount - 1 ? " sc-match-row--last" : ""}`,
+              )}
               style={{ paddingLeft: 8 + (depth + 1) * 10 + 14 }}
               onClick={() => {
                 onOpenFile(m.path, m.line, m.column, query.length);

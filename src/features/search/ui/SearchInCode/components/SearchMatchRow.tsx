@@ -1,5 +1,6 @@
 import React from "react";
 import type { ContentMatch } from "@/features/files/model/fs";
+import { interactiveItemClassName } from "@/shared/ui/kit";
 import { getCachedHighlight } from "../../../highlighting/searchSyntax";
 
 export interface SearchMatchRowProps {
@@ -27,7 +28,10 @@ export function SearchMatchRow({
 }: SearchMatchRowProps): React.ReactElement {
   return (
     <div
-      className={`sc-match-row${isLastMatch ? " sc-match-row--last" : ""}${isSelected ? " sc-match-row--selected" : ""}`}
+      className={interactiveItemClassName(
+        isSelected,
+        `sc-match-row${isLastMatch ? " sc-match-row--last" : ""}${isSelected ? " sc-match-row--selected" : ""}`,
+      )}
       onClick={() => {
         onOpenFile(match.path, match.line, match.column, query.length);
       }}

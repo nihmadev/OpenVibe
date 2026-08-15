@@ -1,6 +1,7 @@
 import type React from "react";
 import type { FileGroupEntry } from "@/features/files/model/fs";
 import { ChevronRightIcon, FileIcon } from "@/shared/icons";
+import { interactiveItemClassName } from "@/shared/ui/kit";
 
 export interface SearchFileGroupProps {
   entry: FileGroupEntry;
@@ -19,7 +20,7 @@ export function SearchFileGroup({
 }: SearchFileGroupProps): React.ReactElement {
   return (
     <div
-      className={`sc-file-header${isSelected ? " sc-file-header--selected" : ""}`}
+      className={interactiveItemClassName(isSelected, `sc-file-header${isSelected ? " sc-file-header--selected" : ""}`)}
       onClick={onClick}
       onMouseEnter={onMouseEnter}
     >

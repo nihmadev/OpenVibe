@@ -1,6 +1,7 @@
 import type React from "react";
 import { useTranslate } from "@/shared/i18n/useI18n";
 import { ClearIcon, CollapseAllIcon, Loader2Icon, RefreshIcon } from "@/shared/icons";
+import { interactiveItemClassName } from "@/shared/ui/kit";
 import { Tooltip } from "@/shared/ui/Tooltip/Tooltip";
 import "@vscode/codicons/dist/codicon.css";
 import "./SearchInCode.css";
@@ -186,7 +187,10 @@ export function SearchInCode({ cwd, onOpenFile, onClose }: SearchInCodeProps): R
                 return (
                   <div
                     key={row.key}
-                    className={`sc-match-row${virtualRow.index === selectedIndex ? " sc-match-row--selected" : ""}`}
+                    className={interactiveItemClassName(
+                      virtualRow.index === selectedIndex,
+                      `sc-match-row${virtualRow.index === selectedIndex ? " sc-match-row--selected" : ""}`,
+                    )}
                     style={{
                       position: "absolute",
                       top: 0,
@@ -206,10 +210,11 @@ export function SearchInCode({ cwd, onOpenFile, onClose }: SearchInCodeProps): R
                 return (
                   <div
                     key={row.key}
-                    className={
+                    className={interactiveItemClassName(
+                      virtualRow.index === selectedIndex,
                       "sc-match-row sc-match-row--last" +
-                      (virtualRow.index === selectedIndex ? " sc-match-row--selected" : "")
-                    }
+                        (virtualRow.index === selectedIndex ? " sc-match-row--selected" : ""),
+                    )}
                     style={{
                       position: "absolute",
                       top: 0,

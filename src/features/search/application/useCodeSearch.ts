@@ -188,6 +188,8 @@ export function useCodeSearch({ cwd, onOpenFile, onClose }: UseCodeSearchProps) 
     [loadFileMatches],
   );
 
+  // These values are read through searchParamsRef inside requery; changing them must restart the debounce.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: filter state intentionally triggers this effect.
   useEffect(() => {
     if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current);
     filterDebounceRef.current = setTimeout(() => {
@@ -196,7 +198,7 @@ export function useCodeSearch({ cwd, onOpenFile, onClose }: UseCodeSearchProps) 
     return () => {
       if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current);
     };
-  }, [requery]);
+  }, [excludeFilter, includeFilter, matchCase, matchWholeWord, requery, useRegex]);
 
   const flatRows: FlatRow[] = useMemo(
     () => computeFlatRows(fileEntries, collapsedFiles, fileMatchesMap),
