@@ -8,6 +8,7 @@ import { fsApi } from "@/features/files/infrastructure/fsGateway";
 import { getReasoningEfforts } from "@/features/providers/model/providerTemplates";
 import { ArrowUpIcon, AttachPlusIcon, RefreshCwIcon, StopIcon } from "@/shared/icons/icons";
 import { getFileIconUrl, getFolderIconUrl } from "@/shared/icons/utils";
+import { surfaceClassName } from "@/shared/ui/kit";
 import { Tooltip } from "@/shared/ui/Tooltip/Tooltip";
 import { prewarmLlmConnection } from "../../infrastructure/prewarm";
 import { RollbackPill } from "../RollbackPill/RollbackPill";
@@ -126,6 +127,7 @@ export function PromptInput({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [focused, setFocused] = useState(false);
   const [mode, setMode] = useState<"normal" | "shell">("normal");
@@ -904,7 +906,7 @@ export function PromptInput({
       {/* ── DockShellForm ── */}
       <form
         data-dock-surface="shell"
-        className={`prompt-input${dragOver ? " prompt-input--drag" : ""}`}
+        className={surfaceClassName("composer", `prompt-input${dragOver ? " prompt-input--drag" : ""}`)}
         onSubmit={(e) => {
           e.preventDefault();
           submit();
@@ -915,10 +917,32 @@ export function PromptInput({
       >
         <PromptDragOverlay type={dragOver ? "image" : null} label={t("dropFilesAttach")} />
 
+        {previewAttachment?.dataUrl && (
+          <div
+            className="prompt-input__image-viewer"
+            role="dialog"
+            aria-modal="true"
+            aria-label={previewAttachment.name}
+            onClick={() => setPreviewAttachment(null)}
+          >
+            <div className="prompt-input__image-viewer-content" onClick={(e) => e.stopPropagation()}>
+              <img src={previewAttachment.dataUrl} alt={previewAttachment.name} />
+              <button
+                type="button"
+                className="prompt-input__image-viewer-close"
+                onClick={() => setPreviewAttachment(null)}
+                aria-label={t("close")}
+              >
+                <span aria-hidden="true">&#215;</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {imageAttachments.length > 0 && (
           <PromptImageAttachments
             attachments={imageAttachments}
-            onOpen={(att) => window.open(att.dataUrl)}
+            onOpen={setPreviewAttachment}
             onRemove={(id) => setAttachments((prev) => prev.filter((a) => a.id !== id))}
             removeLabel={t("remove")}
           />
@@ -1002,7 +1026,7 @@ export function PromptInput({
             className="prompt-input__gradient"
             style={{
               height: space,
-              background: "linear-gradient(to top, var(--bg-2) calc(100% - 20px), transparent)",
+              background: "linear-gradient(to top, var(--surface-raised) calc(100% - 20px), transparent)",
             }}
           />
 

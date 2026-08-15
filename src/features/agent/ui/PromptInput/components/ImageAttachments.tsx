@@ -15,7 +15,14 @@ export function PromptImageAttachments({ attachments, onOpen, onRemove, removeLa
       {attachments.map((att) => (
         <div key={att.id} className="prompt-input__image-attachment">
           {att.dataUrl ? (
-            <img src={att.dataUrl} alt={att.name} className="prompt-input__image-thumb" onClick={() => onOpen(att)} />
+            <button
+              type="button"
+              className="prompt-input__image-preview"
+              onClick={() => onOpen(att)}
+              aria-label={att.name}
+            >
+              <img src={att.dataUrl} alt="" className="prompt-input__image-thumb" />
+            </button>
           ) : (
             <div className="prompt-input__image-fallback">
               <svg
@@ -54,9 +61,6 @@ export function PromptImageAttachments({ attachments, onOpen, onRemove, removeLa
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
-          <div className="prompt-input__image-name">
-            <span>{att.name}</span>
-          </div>
         </div>
       ))}
     </div>

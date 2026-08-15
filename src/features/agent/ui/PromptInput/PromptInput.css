@@ -8,15 +8,16 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
   position: relative;
-  transition: border-color var(--duration-fast);
+  transition:
+    border-color var(--duration-fast),
+    box-shadow var(--duration-fast),
+    transform var(--duration-fast);
 }
 
 .prompt-input:focus-within {
-  border-color: color-mix(in srgb, var(--line) 70%, var(--fg-dim) 30%);
+  border-color: color-mix(in srgb, var(--fg) 12%, transparent);
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.12);
 }
 
 .prompt-input--drag {
@@ -33,7 +34,7 @@
   align-items: center;
   justify-content: center;
   background: var(--bg-3);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-composer);
   pointer-events: none;
 }
 
@@ -145,13 +146,26 @@
   height: 64px;
   object-fit: cover;
   border-radius: var(--radius-md);
+  display: block;
+}
+
+.prompt-input__image-preview {
+  display: block;
+  width: 64px;
+  height: 64px;
+  padding: 0;
   border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: transparent;
   cursor: pointer;
+  overflow: hidden;
   transition: border-color var(--duration-fast);
 }
 
-.prompt-input__image-thumb:hover {
+.prompt-input__image-preview:hover,
+.prompt-input__image-preview:focus-visible {
   border-color: var(--line-strong);
+  outline: none;
 }
 
 .prompt-input__image-fallback {
@@ -164,6 +178,58 @@
   align-items: center;
   justify-content: center;
   color: var(--fg-dim);
+}
+
+.prompt-input__image-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  background: rgba(0, 0, 0, 0.78);
+  cursor: zoom-out;
+}
+
+.prompt-input__image-viewer-content {
+  position: relative;
+  max-width: min(90vw, 1200px);
+  max-height: 90vh;
+  cursor: default;
+}
+
+.prompt-input__image-viewer-content img {
+  display: block;
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.prompt-input__image-viewer-close {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  color: white;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.prompt-input__image-viewer-close:hover,
+.prompt-input__image-viewer-close:focus-visible {
+  background: rgba(0, 0, 0, 0.9);
+  outline: none;
 }
 
 .prompt-input__image-remove {
@@ -190,25 +256,6 @@
 
 .prompt-input__image-remove:hover {
   color: var(--fg);
-}
-
-.prompt-input__image-name {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: var(--space-1) var(--space-2);
-  background: var(--bg-3);
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-}
-
-.prompt-input__image-name span {
-  font-size: var(--text-2xs);
-  color: white;
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* ── Editor area ── */
@@ -386,7 +433,7 @@
   left: 0;
   right: 0;
   pointer-events: none;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border-radius: 0 0 var(--radius-composer) var(--radius-composer);
 }
 
 /* ── Submit area (bottom-right) ── */
@@ -548,17 +595,12 @@
   width: 100%;
   padding: var(--space-3) var(--space-4);
   border: 0;
-  border-radius: var(--radius-md);
   background: transparent;
   color: var(--fg);
   font-size: var(--text-md);
   cursor: pointer;
   text-align: left;
   transition: background var(--duration-fast);
-}
-
-.popup__item--active {
-  background: var(--bg-3);
 }
 
 .popup__name {
@@ -745,8 +787,6 @@
   left: 0;
   bottom: calc(100% + 8px);
   width: 140px;
-  display: flex;
-  flex-direction: column;
   background: var(--bg-2);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
@@ -762,7 +802,6 @@
   width: 100%;
   padding: var(--space-3) var(--space-4);
   border: 0;
-  border-radius: var(--radius-md);
   background: transparent;
   color: var(--fg);
   font-size: var(--text-md);
@@ -771,13 +810,8 @@
   transition: background var(--duration-fast);
 }
 
-.reasoning-effort-selector__item:hover {
-  background: var(--bg-3);
-}
-
 .reasoning-effort-selector__item--active {
   color: var(--fg);
-  background: var(--bg-3);
   font-weight: 500;
 }
 

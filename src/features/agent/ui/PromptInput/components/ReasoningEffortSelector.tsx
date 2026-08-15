@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { LightbulbIcon } from "@/shared/icons/icons";
+import { interactiveItemClassName, interactiveListClassName } from "@/shared/ui/kit";
 
 interface EffortOption {
   value: string;
@@ -63,15 +64,16 @@ export function ReasoningEffortSelector({ currentEffort, onChange, effortOptions
       </button>
 
       {open && (
-        <div className="reasoning-effort-selector__popup">
+        <div className={interactiveListClassName("reasoning-effort-selector__popup")}>
           {effortOptions.map((opt) => (
             <button
               key={opt.value}
               type="button"
-              className={
+              className={interactiveItemClassName(
+                (currentEffort ?? "") === opt.value,
                 "reasoning-effort-selector__item" +
-                ((currentEffort ?? "") === opt.value ? " reasoning-effort-selector__item--active" : "")
-              }
+                  ((currentEffort ?? "") === opt.value ? " reasoning-effort-selector__item--active" : ""),
+              )}
               onClick={() => {
                 onChange(opt.value || null);
                 setOpen(false);

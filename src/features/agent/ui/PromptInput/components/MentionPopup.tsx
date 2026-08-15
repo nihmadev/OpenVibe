@@ -3,6 +3,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import type { FileMatch } from "@/features/files/model/fs";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { FileIcon, FolderIcon } from "@/shared/icons";
+import { interactiveItemClassName, interactiveListClassName } from "@/shared/ui/kit";
 import type { MentionState } from "../types";
 
 interface MentionPopupProps {
@@ -49,13 +50,21 @@ export function MentionPopup({ mention, onSelect, onHover }: MentionPopupProps) 
   if (!mention.active) return null;
 
   return (
-    <div ref={popupRef} style={positionStyle} className="popup popup--mentions" role="listbox">
+    <div
+      ref={popupRef}
+      style={positionStyle}
+      className={interactiveListClassName("popup popup--mentions")}
+      role="listbox"
+    >
       {mention.loading && mention.matches.length === 0 ? <div className="popup__empty">{t("searching")}</div> : null}
       {!mention.loading && mention.matches.length === 0 ? <div className="popup__empty">{t("noMatches")}</div> : null}
       {mention.matches.map((m, i) => (
         <div
           key={m.path}
-          className={`popup__item popup__item--mention${i === mention.selected ? " popup__item--active" : ""}`}
+          className={interactiveItemClassName(
+            i === mention.selected,
+            `popup__item popup__item--mention${i === mention.selected ? " popup__item--active" : ""}`,
+          )}
           role="option"
           aria-selected={i === mention.selected}
           onMouseEnter={() => onHover(i)}
