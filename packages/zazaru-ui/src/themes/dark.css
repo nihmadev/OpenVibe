@@ -1,0 +1,23 @@
+:where(:root, [data-z-theme="dark"], .z-theme-dark) {
+  color-scheme: dark;
+  --z-color-canvas: #151515;
+  --z-color-surface: #1c1c1c;
+  --z-color-surface-raised: #242424;
+  --z-color-surface-sunken: #101010;
+  --z-color-surface-floating: #282828;
+  --z-color-surface-hover: #2b2b2b;
+  --z-color-surface-active: #333333;
+  --z-color-text: #e8e8e8;
+  --z-color-text-muted: #adadad;
+  --z-color-text-subtle: #888888;
+  --z-color-border: #343434;
+  --z-color-border-strong: #525252;
+  --z-color-accent: #d8d8d8;
+  --z-color-accent-text: #151515;
+  --z-color-danger: #e76f6f;
+  --z-color-danger-hover: #f08080;
+  --z-color-danger-text: #160707;
+  --z-color-focus: #8ab4ff;
+  --z-color-selection: #343f50;
+  --z-color-backdrop: rgb(0 0 0 / 58%);
+}

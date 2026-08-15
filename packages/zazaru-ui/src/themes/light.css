@@ -1,0 +1,26 @@
+:where([data-z-theme="light"], .z-theme-light) {
+  color-scheme: light;
+  --z-color-canvas: #f7f7f6;
+  --z-color-surface: #ffffff;
+  --z-color-surface-raised: #f1f1ef;
+  --z-color-surface-sunken: #ececea;
+  --z-color-surface-floating: #ffffff;
+  --z-color-surface-hover: #e9e9e6;
+  --z-color-surface-active: #ddddda;
+  --z-color-text: #202020;
+  --z-color-text-muted: #565656;
+  --z-color-text-subtle: #6f6f6f;
+  --z-color-border: #d6d6d2;
+  --z-color-border-strong: #9b9b96;
+  --z-color-accent: #252525;
+  --z-color-accent-text: #ffffff;
+  --z-color-danger: #b42318;
+  --z-color-danger-hover: #912018;
+  --z-color-danger-text: #ffffff;
+  --z-color-focus: #155eef;
+  --z-color-selection: #d9e5ff;
+  --z-color-backdrop: rgb(20 20 20 / 36%);
+  --z-primitive-shadow-1: 0 1px 2px rgb(0 0 0 / 10%);
+  --z-primitive-shadow-2: 0 4px 12px rgb(0 0 0 / 14%);
+  --z-primitive-shadow-3: 0 10px 32px rgb(0 0 0 / 18%);
+}
