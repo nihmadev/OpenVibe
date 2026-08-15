@@ -207,6 +207,9 @@ function WelcomeScreenInner({ onComplete, onLanguageChange }: WelcomeScreenProps
     setShowThinking(checked);
     try {
       appState.set("settings:showThinking", String(checked));
+      window.dispatchEvent(
+        new CustomEvent("vibe:settings-changed", { detail: { key: "showThinking", value: checked } }),
+      );
     } catch (error) {
       void error;
     }
