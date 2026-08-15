@@ -12,11 +12,8 @@
 .msg--user {
   color: var(--fg);
   position: relative;
-  padding: var(--space-4) var(--space-6);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-md);
-  background: var(--bg-2);
-  max-width: 75%;
+  padding: var(--space-5) var(--space-7);
+  max-width: 68%;
   display: table;
   line-height: 1.5;
 }
@@ -659,14 +656,18 @@
 .agent-run__separator {
   width: 100%;
   height: 1px;
-  margin: var(--space-4) 0 var(--space-6);
-  background: var(--line);
-  opacity: 1;
+  margin: var(--space-4) 0 var(--space-4);
+  background: var(--surface-border);
+  opacity: 0.8;
   transition:
     opacity var(--duration-slow) var(--ease-out),
     height var(--duration-slow) var(--ease-out),
     margin var(--duration-slow) var(--ease-out);
   overflow: hidden;
+}
+
+.agent-run__activity {
+  margin-top: 0;
 }
 
 .agent-run__separator--hidden {
@@ -730,38 +731,16 @@
   margin: var(--space-5) 0 var(--space-2);
 }
 
-/* ── Thinking: ghost text in the flow, folded behind a one-line header ── */
+/* ── Thinking: always-visible ghost text in the flow ── */
 .flow-thinking {
   min-width: 0;
 }
 
-.flow-thinking__head {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) 0;
-  margin-left: -3px;
-  border: 0;
-  background: transparent;
-  font: inherit;
-  font-size: var(--text-md);
-  color: var(--fg-muted);
-  cursor: pointer;
-  transition: color var(--duration-fast) ease;
-}
-
-.flow-thinking__head:hover {
-  color: var(--fg-dim);
-}
-
-.flow-thinking__chevron {
-  display: inline-flex;
-  align-items: center;
-  color: var(--fg-muted);
-}
-
 .flow-thinking__title {
-  font-style: italic;
+  padding: var(--space-1) 0;
+  font-size: var(--text-md);
+  color: var(--fg-dim);
+  font-weight: 400;
 }
 
 .flow-thinking__title--active {
@@ -784,8 +763,6 @@
 /* Ghost text: the model's raw thoughts, visually receded behind the chat. */
 .flow-ghost {
   margin: var(--space-1) 0 var(--space-2);
-  padding-left: calc(var(--space-5) + 1px);
-  border-left: 2px solid color-mix(in srgb, var(--fg) 10%, transparent);
   color: var(--fg-muted);
   font-size: var(--text-md);
   line-height: 1.55;
@@ -820,24 +797,28 @@
   min-width: 0;
   margin: 0;
   padding: var(--space-1) 0;
-  gap: var(--space-2);
+  gap: var(--space-3);
   font-size: var(--text-md);
-  color: var(--fg);
+  color: var(--fg-dim);
+  line-height: 20px;
 }
 
 .flow-tool .tool__icon {
   color: var(--fg-muted);
-  width: 16px;
+  width: 18px;
+  height: 20px;
+  align-items: center;
   display: inline-flex;
   justify-content: center;
 }
 
 .flow-tool .tool__verb {
-  color: var(--fg);
+  color: var(--fg-dim);
+  font-weight: 400;
 }
 
 .flow-tool .tool__suffix {
-  color: var(--fg-dim);
+  color: var(--fg-muted);
 }
 
 .flow-tool__repeat {
@@ -859,9 +840,12 @@
 
 .flow-tool .fbadge__name {
   text-decoration: underline;
-  text-decoration-color: var(--line-strong);
-  text-decoration-style: dotted;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
   text-underline-offset: 2px;
+}
+
+.flow-tool .fbadge {
+  color: var(--fg-dim);
 }
 
 .flow-tool .tool--agent {
@@ -953,8 +937,7 @@
   flex-direction: column;
   gap: var(--space-1);
   margin-top: var(--space-1);
-  padding-left: calc(var(--space-5) + 1px);
-  border-left: 2px solid color-mix(in srgb, var(--fg) 10%, transparent);
+  padding-left: var(--space-1);
 }
 
 /* ── Narration between steps ── */

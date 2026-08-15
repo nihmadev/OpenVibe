@@ -6,6 +6,7 @@ import { appState } from "@/shared/api/keyValueStore";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { FileIcon } from "@/shared/icons/file-icons";
 import { CheckStrokeIcon } from "@/shared/icons/icons";
+import { Surface } from "@/shared/ui/kit";
 import { Tooltip } from "@/shared/ui/Tooltip/Tooltip";
 import { buildChatEntries } from "../../model/agentRun";
 import { AgentRun } from "./components/AgentRun";
@@ -53,9 +54,9 @@ const StandaloneItem = React.memo(
     if (item.kind === "user") {
       return (
         <div className="msg msg--user-wrap">
-          <div className="msg msg--user">
+          <Surface tone="bubble" className="msg msg--user">
             <UserMessageContent text={item.text} mentions={item.mentions} />
-          </div>
+          </Surface>
           <UserMessageActions item={item} onRevert={onRevert} />
           {item.attachments && item.attachments.length > 0 ? (
             <div className="msg__attachments">
@@ -113,14 +114,26 @@ export function AgentChat({
   const [isJumping, setIsJumping] = useState(false);
   const [jumpMetrics, setJumpMetrics] = useState({ duration: 800, dist: 10 });
   const scrollRafRef = useRef<number | null>(null);
+  const followRafRef = useRef<number | null>(null);
   const shouldFollowBottomRef = useRef(true);
 
   useEffect(() => {
+    let changed = false;
+    const handleSettingsChanged = (event: Event) => {
+      const { key, value } = (event as CustomEvent<{ key?: string; value?: unknown }>).detail ?? {};
+      if (key === "showThinking") {
+        changed = true;
+        setShowThinking(value === true || value === "true");
+      }
+    };
+    window.addEventListener("vibe:settings-changed", handleSettingsChanged);
     appState.get("settings:showThinking").then((val) => {
-      if (val !== null) setShowThinking(val === "true");
+      if (!changed && val !== null) setShowThinking(val === "true");
     });
     return () => {
+      window.removeEventListener("vibe:settings-changed", handleSettingsChanged);
       if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
+      if (followRafRef.current) cancelAnimationFrame(followRafRef.current);
     };
   }, []);
 
@@ -208,10 +221,14 @@ export function AgentChat({
     handleScroll();
 
     const followBottom = () => {
-      const currentEl = ref.current;
-      if (!currentEl || !shouldFollowBottomRef.current) return;
-      currentEl.scrollTop = currentEl.scrollHeight;
-      handleScroll();
+      if (followRafRef.current || !shouldFollowBottomRef.current) return;
+      followRafRef.current = requestAnimationFrame(() => {
+        followRafRef.current = null;
+        const currentEl = ref.current;
+        if (!currentEl || !shouldFollowBottomRef.current) return;
+        currentEl.scrollTop = currentEl.scrollHeight;
+        handleScroll();
+      });
     };
 
     const mutationObserver = new MutationObserver(followBottom);
@@ -223,6 +240,10 @@ export function AgentChat({
     return () => {
       mutationObserver.disconnect();
       resizeObserver.disconnect();
+      if (followRafRef.current) {
+        cancelAnimationFrame(followRafRef.current);
+        followRafRef.current = null;
+      }
     };
   }, [handleScroll]);
 

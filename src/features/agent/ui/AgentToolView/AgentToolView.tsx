@@ -2,65 +2,14 @@ import React from "react";
 import { CodeBlock, resolveMonacoLang } from "@/features/editor/ui/CodeBlock/CodeBlock";
 import { DiffEditor } from "@/features/editor/ui/DiffEditor/DiffEditor";
 import { useI18n } from "@/shared/i18n/useI18n";
+import { ToolGlyph } from "@/shared/icons";
 import { FileIcon, FolderIcon } from "@/shared/icons/file-icons";
-import {
-  BookOpenIcon,
-  BotIcon,
-  ChevronRightIcon,
-  FailIcon,
-  FilePlus2Icon,
-  FolderOpenStrokeIcon,
-  GlobeIcon,
-  LinkIcon,
-  Loader2Icon,
-  PencilIcon,
-  SearchStrokeIcon,
-  ServerIcon,
-  ShowMoreIcon,
-  SquareTerminalIcon,
-  WrenchIcon,
-} from "@/shared/icons/icons";
+import { ChevronRightIcon, ShowMoreIcon } from "@/shared/icons/icons";
 import type { HistoryItem } from "../../model/history";
 import { describe, getEditStrings, getFilePathFromArgs, pickFile } from "../../model/historyUtils";
 import { FileBadge } from "../AgentChat/components/FileBadge";
 import "./Tool.css";
 import { fsApi } from "@/features/files/infrastructure/fsGateway";
-
-function ToolKindIcon({ name, size = 14 }: { name?: string; size?: number }): React.ReactElement {
-  const props = { size, strokeWidth: 1.7, "aria-hidden": true } as const;
-  if (name?.startsWith("git_")) {
-    return <img src="/icons/providers/github.svg" width={size} height={size} alt="" aria-hidden="true" />;
-  }
-  switch (name) {
-    case "read_file":
-    case "view_file":
-      return <BookOpenIcon {...props} />;
-    case "search_codebase":
-    case "grep_search":
-      return <SearchStrokeIcon {...props} />;
-    case "web_search":
-      return <GlobeIcon {...props} />;
-    case "fetch_url":
-      return <LinkIcon {...props} />;
-    case "run":
-    case "bash":
-    case "run_command":
-      return <SquareTerminalIcon {...props} />;
-    case "edit_file":
-    case "replace_file_content":
-    case "multi_replace_file_content":
-      return <PencilIcon {...props} />;
-    case "write_file":
-    case "write_to_file":
-      return <FilePlus2Icon {...props} />;
-    case "list_dir":
-      return <FolderOpenStrokeIcon {...props} />;
-    case "agent":
-      return <BotIcon {...props} />;
-    default:
-      return <WrenchIcon {...props} />;
-  }
-}
 
 // ─── Animated counter ─────────────────────────────────────────────────────
 
@@ -359,7 +308,9 @@ export function AgentToolView({
           }
         }}
       >
-        <span className="tool__icon">{isPending ? <Loader2Icon /> : <ToolKindIcon name={item.toolName} />}</span>
+        <span className="tool__icon">
+          <ToolGlyph name={item.toolName} state={isPending ? "pending" : isErr ? "error" : "ok"} />
+        </span>
         <span className="tool__line">
           <span className="tool__agent-task">{suffix || verb}</span>
           <span className="tool__agent-open">
@@ -381,15 +332,7 @@ export function AgentToolView({
   return (
     <div className={`tool ${isMcp ? "tool--mcp" : ""} ${stateCls}${hasExpandable ? " tool--has-diff" : ""}`}>
       <span className={`tool__icon${isPending && isWebTool ? " tool__icon--shimmer" : ""}`}>
-        {isPending && !isWebTool ? (
-          <Loader2Icon />
-        ) : isErr ? (
-          <FailIcon />
-        ) : isMcp ? (
-          <ServerIcon size={14} strokeWidth={1.7} aria-hidden="true" />
-        ) : (
-          <ToolKindIcon name={item.toolName} />
-        )}
+        <ToolGlyph name={item.toolName} state={isPending ? "pending" : isErr ? "error" : "ok"} />
       </span>
       <span className="tool__line">
         <span className="tool__verb">{verb}</span>

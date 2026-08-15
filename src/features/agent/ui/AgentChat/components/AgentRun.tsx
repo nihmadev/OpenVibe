@@ -1,5 +1,4 @@
-import type React from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { ChevronDownStrokeIcon, ChevronRightIcon } from "@/shared/icons/icons";
 import {
@@ -29,31 +28,26 @@ interface AgentRunProps {
   onOpenAgentDiff?: (toolCallId: string, path: string) => void;
 }
 
-/**
- * Model thinking rendered OpenCode-style: while the model is reasoning the
- * text streams as ghost text right in the chat flow; once done it folds into
- * a one-line "Thought process" header that expands on click.
- */
-function ThinkingBlock({ item, runActive }: { item: HistoryItem; runActive: boolean }): React.ReactElement | null {
+/** Model thinking stays visible as subdued text directly in the run flow. */
+function ThinkingBlock({
+  item,
+  runActive,
+  showBody,
+}: {
+  item: HistoryItem;
+  runActive: boolean;
+  showBody: boolean;
+}): React.ReactElement | null {
   const { t } = useI18n();
   const isDone = !runActive || item.reasoningDone === true || item.completedAt !== undefined;
-  // null = automatic (open while streaming, folded when done); boolean = user override.
-  const [manualOpen, setManualOpen] = useState<boolean | null>(null);
-  const open = manualOpen ?? !isDone;
-
-  const body = item.reasoning?.trim() ?? "";
-  const title = item.reasoningName?.trim() || t(isDone ? "flowThought" : "flowThinking");
-  if (!body && !item.reasoningName) return null;
+  const body = showBody ? (item.reasoning?.trim() ?? "") : "";
+  const title = item.reasoningName?.trim() || (showBody && !isDone ? t("flowThinking") : "");
+  if (!body && !title) return null;
 
   return (
-    <div className={`flow-thinking${open ? " flow-thinking--open" : ""}`}>
-      <button type="button" className="flow-thinking__head" onClick={() => setManualOpen(!open)} aria-expanded={open}>
-        <span className="flow-thinking__chevron">
-          <ChevronRightIcon open={open} />
-        </span>
-        <span className={`flow-thinking__title${!isDone ? " flow-thinking__title--active" : ""}`}>{title}</span>
-      </button>
-      {open && body && (
+    <div className="flow-thinking">
+      {title && <div className={`flow-thinking__title${!isDone ? " flow-thinking__title--active" : ""}`}>{title}</div>}
+      {body && (
         <div className="flow-ghost">
           <Markdown content={body} isAssistant={true} noFileIcons={true} isStreaming={!isDone} />
         </div>
@@ -161,7 +155,7 @@ function AnalysisGroup({
   );
 }
 
-export function AgentRun({
+function AgentRunComponent({
   items,
   finalItem,
   allItems,
@@ -193,7 +187,10 @@ export function AgentRun({
   const timeLabel = t(isActive ? "agentRunWorkingFor" : "agentRunWorkedFor", { time: duration });
 
   const visibleNodes = useMemo(
-    () => (showThinking ? nodes : nodes.filter((node) => node.type !== "reasoning")),
+    () =>
+      showThinking
+        ? nodes
+        : nodes.filter((node) => node.type !== "reasoning" || Boolean(node.item.reasoningName?.trim())),
     [nodes, showThinking],
   );
   const hasNodes = visibleNodes.length > 0;
@@ -213,13 +210,21 @@ export function AgentRun({
           {hasNodes && <ChevronDownStrokeIcon className="agent-run__head-chevron" aria-hidden="true" />}
         </button>
       </div>
+      {hasNodes && <div className="agent-run__separator" aria-hidden="true" />}
 
       {hasNodes && expanded && (
-        <div className="agent-flow">
+        <div className="agent-flow agent-run__activity">
           {visibleNodes.map((node) => {
             switch (node.type) {
               case "reasoning":
-                return <ThinkingBlock key={`reasoning-${node.id}`} item={node.item} runActive={isActive} />;
+                return (
+                  <ThinkingBlock
+                    key={`reasoning-${node.id}`}
+                    item={node.item}
+                    runActive={isActive}
+                    showBody={showThinking}
+                  />
+                );
               case "narration":
                 return (
                   <div className="flow-narration" key={`narration-${node.id}`}>
@@ -295,3 +300,22 @@ export function AgentRun({
     </div>
   );
 }
+
+function sameItemReferences(left: HistoryItem[], right: HistoryItem[]): boolean {
+  return left.length === right.length && left.every((item, index) => item === right[index]);
+}
+
+export const AgentRun = React.memo(AgentRunComponent, (previous, next) => {
+  if (previous.isActive || next.isActive) return false;
+  if (!sameItemReferences(previous.items, next.items)) return false;
+  if (previous.finalItem !== next.finalItem) return false;
+  if (previous.allItems.length !== next.allItems.length) return false;
+  return (
+    previous.isFinalStreaming === next.isFinalStreaming &&
+    previous.showThinking === next.showThinking &&
+    previous.cwd === next.cwd &&
+    previous.onRegenerate === next.onRegenerate &&
+    previous.onDrillDown === next.onDrillDown &&
+    previous.onOpenAgentDiff === next.onOpenAgentDiff
+  );
+});
