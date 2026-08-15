@@ -12,8 +12,11 @@
     "isolatedModules": true,
     "noEmit": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@zazaru/ui": ["./packages/zazaru-ui/src/index.ts"],
+      "@zazaru/ui/recipes": ["./packages/zazaru-ui/src/recipes/index.ts"],
+      "@zazaru/core": ["./packages/zazaru-core/src/index.ts"]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "packages/zazaru-ui/src/**/*", "packages/zazaru-core/src/**/*"]
 }

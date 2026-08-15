@@ -8,9 +8,17 @@ export default defineConfig({
   base: "./",
   plugins: [react()],
   resolve: {
-    alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
-    },
+    // The local @zazaru/ui package has its own development node_modules.
+    // Always resolve hooks through the application's React instance; otherwise
+    // Radix providers loaded from the linked package receive a second dispatcher.
+    dedupe: ["react", "react-dom"],
+    alias: [
+      { find: "@zazaru/ui/styles.css", replacement: fileURLToPath(new URL("./packages/zazaru-ui/src/styles.css", import.meta.url)) },
+      { find: "@zazaru/ui/recipes", replacement: fileURLToPath(new URL("./packages/zazaru-ui/src/recipes/index.ts", import.meta.url)) },
+      { find: "@zazaru/ui", replacement: fileURLToPath(new URL("./packages/zazaru-ui/src/index.ts", import.meta.url)) },
+      { find: "@zazaru/core", replacement: fileURLToPath(new URL("./packages/zazaru-core/src/index.ts", import.meta.url)) },
+      { find: "@", replacement: fileURLToPath(new URL("./src", import.meta.url)) },
+    ],
   },
   build: {
     outDir: "../dist/src",

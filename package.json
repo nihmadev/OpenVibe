@@ -1,6 +1,6 @@
 {
   "name": "openvibe",
-  "version": "1.3.8",
+  "version": "1.3.9",
   "description": "Open-source agentic coding environment. Bring your own AI model.",
   "license": "SEE LICENSE IN LICENSE",
   "author": "nihmadev <lolz@nihmadev.fun>",
@@ -25,6 +25,9 @@
     "check": "npm run typecheck && npm run lint && npm run format:check",
     "test": "vitest run",
     "test:watch": "vitest",
+    "examples:build": "npm --prefix examples/observatory run build && npm --prefix examples/settings-lab run build",
+    "example:observatory": "npm --prefix examples/observatory run dev",
+    "example:settings": "npm --prefix examples/settings-lab run dev",
     "audit": "npm audit --audit-level=moderate",
     "clean": "rm -rf dist node_modules/.vite && cargo clean",
     "setup": "npm install && npm run check",
@@ -35,6 +38,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@zazaru/ui": "file:packages/zazaru-ui",
     "@fontsource/anonymous-pro": "^5.2.8",
     "@fontsource/archivo": "^5.2.8",
     "@fontsource/barlow": "^5.2.8",
@@ -113,6 +117,7 @@
     "eslint": "^9.22.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "fast-check": "^4.9.0",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
     "lint-staged": "^17.0.8",
