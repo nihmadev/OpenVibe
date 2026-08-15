@@ -23,6 +23,7 @@ import { ProjectRail } from "@/features/projects/ui/ProjectRail/ProjectRail";
 import type { VibeConfig } from "@/features/providers/model/provider";
 import { SearchInCode } from "@/features/search/ui/SearchInCode/SearchInCode";
 import { Terminals } from "@/features/terminal/ui/Terminals/Terminals";
+import { surfaceClassName } from "@/shared/ui/kit";
 import { ResizeHandle } from "./panels/ResizeHandle";
 
 type ChatChangeCallback = (record: ChatRecord | null) => void | Promise<void>;
@@ -233,7 +234,7 @@ export function WorkspaceShell({
     <div className="app__body">
       {/* Left: project rail + chat sidebar */}
       <div
-        className="sidebar-group"
+        className={surfaceClassName("chrome", "sidebar-group")}
         onMouseLeave={() => {
           if (!chatSideSticky && !sidebarResizing) {
             setChatSideOpen(false);
@@ -292,7 +293,7 @@ export function WorkspaceShell({
           {/* Chat panel */}
           <div
             ref={chatPanelRef}
-            className={`layout__chat${items.length === 0 ? " layout__chat--empty" : ""}`}
+            className={surfaceClassName("canvas", `layout__chat${items.length === 0 ? " layout__chat--empty" : ""}`)}
             style={
               openFiles.length > 0
                 ? chatWidth === null
@@ -346,7 +347,11 @@ export function WorkspaceShell({
 
             <div
               ref={terminalPanelRef}
-              className={`terminal-embedded ${!terminalOpen ? "terminal-embedded--closed" : ""}`}
+              className={
+                terminalOpen
+                  ? surfaceClassName("panel", "terminal-embedded")
+                  : "terminal-embedded terminal-embedded--closed"
+              }
               style={
                 {
                   height: terminalOpen ? `${terminalHeight}px` : undefined,
@@ -388,7 +393,10 @@ export function WorkspaceShell({
                 forceHandleSide="left"
               />
             )}
-            <div className="layout__search-code" style={{ flex: 1, minWidth: 200, maxWidth: 2400 }}>
+            <div
+              className={surfaceClassName("panel", "layout__search-code")}
+              style={{ flex: 1, minWidth: 200, maxWidth: 2400 }}
+            >
               <SearchInCode cwd={cwd} onOpenFile={handleOpenFile} onClose={onCloseSearchInCode} />
             </div>
             {fileTreeOpen && !gitPanelOpen && openFiles.length === 0 && (
@@ -422,7 +430,10 @@ export function WorkspaceShell({
                 forceHandleSide="left"
               />
             )}
-            <div className="layout__search-code" style={{ flex: 1, minWidth: 200, maxWidth: 2400 }}>
+            <div
+              className={surfaceClassName("panel", "layout__search-code")}
+              style={{ flex: 1, minWidth: 200, maxWidth: 2400 }}
+            >
               <GitPanel cwd={cwd} onOpenFile={handleOpenFile} onClose={onCloseGitPanel} />
             </div>
             {fileTreeOpen && openFiles.length === 0 && (
@@ -438,7 +449,7 @@ export function WorkspaceShell({
                 minWidth={200}
                 maxWidth={2400}
               />
-              <div className="layout__editor">
+              <div className={surfaceClassName("panel", "layout__editor")}>
                 <EditorArea
                   openFiles={openFiles}
                   activeFile={activeFile}
@@ -467,7 +478,7 @@ export function WorkspaceShell({
           {/* File tree sidebar */}
           <aside
             ref={ftreePanelRef}
-            className={`sidebar ${!fileTreeOpen ? "sidebar--closed" : ""}`}
+            className={fileTreeOpen ? surfaceClassName("panel", "sidebar") : "sidebar sidebar--closed"}
             style={
               fileTreeOpen
                 ? { flex: `0 1 ${ftreeWidth}px`, minWidth: 160, maxWidth: 2400 }

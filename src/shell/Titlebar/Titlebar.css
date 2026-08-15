@@ -6,7 +6,7 @@
   height: 38px;
   min-height: 38px;
   background: var(--bg);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--chrome-divider);
   padding: 0 0 0 var(--space-6);
   -webkit-app-region: drag;
   user-select: none;
@@ -53,7 +53,11 @@
    hide/show behavior lives here. */
 .titlebar__action-btn--active {
   color: var(--fg);
-  background: var(--bg-2);
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+}
+
+.titlebar__action-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
 }
 
 .titlebar__action-btn--hiding {
@@ -91,9 +95,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  background: var(--bg-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--fg) 3%, transparent);
+  border: 1px solid var(--surface-border-soft);
+  border-radius: var(--radius-lg);
   padding: 0 var(--space-6);
   height: 28px;
   min-width: 200px;
@@ -110,9 +114,9 @@
 }
 
 .titlebar__search:hover {
-  background: var(--bg-3);
-  border-color: var(--fg-dim);
-  box-shadow: var(--shadow-sm);
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+  border-color: color-mix(in srgb, var(--fg) 10%, transparent);
+  box-shadow: none;
 }
 
 .titlebar__search:active {
@@ -126,7 +130,7 @@
 .titlebar__search-kbd {
   font-size: var(--text-2xs);
   opacity: 0.6;
-  background: var(--bg);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
 }

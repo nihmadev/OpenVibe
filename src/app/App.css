@@ -14,6 +14,8 @@
   flex: 1 1 0;
   min-height: 0;
   overflow: hidden;
+  gap: var(--canvas-gutter);
+  padding: var(--canvas-gutter) var(--canvas-gutter) var(--canvas-gutter) 0;
 }
 
 .sidebar-group {
@@ -51,10 +53,6 @@
   overflow: hidden;
   padding: var(--space-7) var(--space-8) var(--space-6);
   gap: var(--space-6);
-  border-right: 1px solid var(--line);
-  border-top: 1px solid var(--line);
-  border-left: 1px solid var(--line);
-  border-radius: var(--radius-2xl) 0 0 0;
 }
 
 .layout__chat--empty .chathistory-wrapper {
@@ -96,7 +94,6 @@
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-  border-right: 1px solid var(--line);
 }
 
 .layout__search-code-wrap {
@@ -141,7 +138,7 @@ body.is-resizing-vertical {
 }
 
 .resize-handle--horizontal {
-  width: 4px;
+  width: var(--canvas-gutter);
   cursor: col-resize;
 }
 
@@ -165,22 +162,17 @@ body.is-resizing-vertical {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* Cancels out .layout__chat padding (space-8 horizontal, space-6 bottom) */
-  margin: 0 calc(-1 * var(--space-8)) calc(-1 * var(--space-6)) calc(-1 * var(--space-8));
-  border-top: 1px solid var(--line);
+  margin: 0;
   transition:
     height calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
     var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
-    margin calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
-    var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
-    border-color calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+    opacity calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
     var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .terminal-embedded--closed {
   height: 0;
-  margin-bottom: 0;
-  border-top-color: transparent;
+  opacity: 0;
 }
 
 /* Prevent internal resizing during the slide animation to avoid text jumping */

@@ -25,6 +25,27 @@
   --radius-xl: calc(var(--radius) + 8px);
   --radius-2xl: calc(var(--radius) + 10px);
 
+  /* Semantic surfaces: one place to retheme the workspace composition. */
+  --radius-bubble: calc(var(--radius) + 7px);
+  --radius-composer: calc(var(--radius) + 12px);
+  --radius-surface: calc(var(--radius) + 10px);
+  --canvas-gutter: 8px;
+  --control-height: 30px;
+  --interactive-list-gap: var(--space-1);
+  --interactive-item-radius: var(--radius-md);
+  --interactive-item-hover: color-mix(in srgb, var(--fg) 5%, transparent);
+  --interactive-item-active: color-mix(in srgb, var(--fg) 8%, transparent);
+  --surface-chrome: transparent;
+  --surface-canvas: color-mix(in srgb, var(--bg-2) 58%, var(--bg));
+  --surface-panel: var(--bg-2);
+  --surface-raised: color-mix(in srgb, var(--bg-3) 72%, var(--bg-2));
+  --surface-border: color-mix(in srgb, var(--fg) 6%, transparent);
+  --surface-border-soft: color-mix(in srgb, var(--fg) 4%, transparent);
+  --surface-shadow-canvas: 0 1px 0 color-mix(in srgb, var(--fg) 2%, transparent);
+  --surface-shadow-panel: var(--shadow-sm);
+  --surface-shadow-raised: 0 2px 12px rgba(0, 0, 0, 0.1);
+  --chrome-divider: transparent;
+
   /* Backdrop blur — controlled via settings */
   --blur-amount: 0px;
 
@@ -102,6 +123,26 @@ html.theme-borderless .app-sidebar {
   position: relative;
   z-index: 10;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
+}
+
+html.theme-borderless .ui-surface {
+  box-shadow: var(--surface-shadow-panel);
+}
+
+html.theme-borderless .ui-surface--chrome {
+  box-shadow: none;
+}
+
+html.theme-borderless .ui-surface--canvas {
+  box-shadow: var(--surface-shadow-canvas);
+}
+
+html.theme-borderless .ui-surface--composer {
+  box-shadow: var(--surface-shadow-raised);
+}
+
+html.theme-borderless .layout__search-code-wrap {
+  box-shadow: none;
 }
 
 * {

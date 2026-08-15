@@ -13,7 +13,6 @@
   gap: var(--space-1);
   padding: 0 var(--space-8);
   background: transparent;
-  border-bottom: 1px solid var(--line);
   overflow-x: auto;
   scrollbar-width: none;
 }
