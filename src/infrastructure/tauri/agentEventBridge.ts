@@ -31,6 +31,29 @@ interface ToolResultPayload {
 interface BusyPayload {
   busy?: boolean;
 }
+interface UsagePayload {
+  ttftMs?: number | null;
+  tokensPerSec?: number;
+  streamSecs?: number;
+  promptTokens?: number;
+  completionTokens?: number;
+}
+
+const STREAM_START_MARK = "vibe-agent-stream-start";
+let firstChunkPending = false;
+
+function markFirstChunk(): void {
+  if (!firstChunkPending) return;
+  firstChunkPending = false;
+  performance.mark("vibe-agent-first-event");
+  performance.measure("vibe-agent:ttft-event", STREAM_START_MARK, "vibe-agent-first-event");
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      performance.mark("vibe-agent-first-paint");
+      performance.measure("vibe-agent:ttft-paint", STREAM_START_MARK, "vibe-agent-first-paint");
+    });
+  });
+}
 
 export async function registerAgentEventBridge(): Promise<void> {
   addTauriUnlistenFn(
@@ -40,11 +63,14 @@ export async function registerAgentEventBridge(): Promise<void> {
   );
   addTauriUnlistenFn(
     await listen("vibe:agent:assistant-start", () => {
+      firstChunkPending = true;
+      performance.mark(STREAM_START_MARK);
       emitEvent({ kind: "assistant-start" });
     }),
   );
   addTauriUnlistenFn(
     await listen<TextPayload>("vibe:agent:assistant-chunk", (e) => {
+      markFirstChunk();
       emitEvent({ kind: "assistant-chunk", text: e.payload.text ?? "" });
     }),
   );
@@ -55,6 +81,7 @@ export async function registerAgentEventBridge(): Promise<void> {
   );
   addTauriUnlistenFn(
     await listen<ReasoningPayload>("vibe:agent:reasoning-chunk", (e) => {
+      markFirstChunk();
       emitEvent({ kind: "reasoning-chunk", text: e.payload?.text ?? "", name: e.payload?.name });
     }),
   );
@@ -105,6 +132,16 @@ export async function registerAgentEventBridge(): Promise<void> {
         id: e.payload.id ?? "",
         name: e.payload.name ?? "",
       });
+    }),
+  );
+  addTauriUnlistenFn(
+    await listen<UsagePayload>("vibe:agent:stream-metrics", (e) => {
+      window.dispatchEvent(new CustomEvent("vibe:agent:stream-metrics", { detail: e.payload }));
+    }),
+  );
+  addTauriUnlistenFn(
+    await listen<UsagePayload>("vibe:agent:usage", (e) => {
+      window.dispatchEvent(new CustomEvent("vibe:agent:stream-metrics", { detail: e.payload }));
     }),
   );
   addTauriUnlistenFn(

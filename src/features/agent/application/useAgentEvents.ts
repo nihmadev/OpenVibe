@@ -41,11 +41,23 @@ function useRafBatching() {
   return { schedule, flush };
 }
 
+function appendAssistantDelta(prev: HistoryItem[], id: string, text: string): HistoryItem[] {
+  const last = prev[prev.length - 1];
+  if (last?.id === id) {
+    const next = [...prev];
+    next[next.length - 1] = { ...last, text: last.text + text };
+    return next;
+  }
+  return prev.map((item) => (item.id === id ? { ...item, text: item.text + text } : item));
+}
+
 export function useAgentEvents(onActivity: () => void) {
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [streamingNow, setStreamingNow] = useState<string | null>(null);
   const streamingId = useRef<string | null>(null);
+  const hasPaintedContent = useRef(false);
+  const hasPaintedReasoning = useRef(false);
   /** Accumulated tool-args streams by call id (deltas merged outside React state). */
   const toolStreamAcc = useRef<Map<string, string>>(new Map());
   const pendingAttachments = useRef<HistoryItem["attachments"]>(undefined);
@@ -83,6 +95,8 @@ export function useAgentEvents(onActivity: () => void) {
           const id = localId();
           const startedAt = Date.now();
           streamingId.current = id;
+          hasPaintedContent.current = false;
+          hasPaintedReasoning.current = false;
           flush();
           setStreamingNow(id);
           setItems((prev) => [...(prev ?? []), { id, kind: "assistant", text: "", startedAt }]);
@@ -90,16 +104,15 @@ export function useAgentEvents(onActivity: () => void) {
         }
         case "assistant-chunk": {
           if (!sid) break;
+          if (!hasPaintedContent.current) {
+            hasPaintedContent.current = true;
+            setItems((prev) => appendAssistantDelta(prev, sid, e.text));
+            break;
+          }
           schedule(() => {
             setItems((prev) => {
               if (!prev) return prev;
-              const last = prev[prev.length - 1];
-              if (last?.id === sid) {
-                const next = [...prev];
-                next[next.length - 1] = { ...last, text: last.text + e.text };
-                return next;
-              }
-              return prev.map((it) => (it.id === sid ? { ...it, text: it.text + e.text } : it));
+              return appendAssistantDelta(prev, sid, e.text);
             });
           });
           break;
@@ -118,7 +131,7 @@ export function useAgentEvents(onActivity: () => void) {
         }
         case "reasoning-chunk": {
           if (!sid) break;
-          schedule(() => {
+          const commit = () => {
             setItems((prev) => {
               if (!prev) return prev;
               return prev.map((it) =>
@@ -131,7 +144,13 @@ export function useAgentEvents(onActivity: () => void) {
                   : it,
               );
             });
-          });
+          };
+          if (!hasPaintedReasoning.current) {
+            hasPaintedReasoning.current = true;
+            commit();
+          } else {
+            schedule(commit);
+          }
           break;
         }
         case "reasoning-end": {
@@ -146,6 +165,8 @@ export function useAgentEvents(onActivity: () => void) {
         case "assistant-end": {
           const completedAt = Date.now();
           streamingId.current = null;
+          hasPaintedContent.current = false;
+          hasPaintedReasoning.current = false;
           flush();
           setStreamingNow(null);
           if (!sid) break;
@@ -246,6 +267,8 @@ export function useAgentEvents(onActivity: () => void) {
           flush();
           setStreamingNow(null);
           streamingId.current = null;
+          hasPaintedContent.current = false;
+          hasPaintedReasoning.current = false;
           playAudio("stoped.mp3");
           setItems((prev) => {
             if (!prev) return prev;
@@ -269,6 +292,8 @@ export function useAgentEvents(onActivity: () => void) {
             flush();
             setStreamingNow(null);
             streamingId.current = null;
+            hasPaintedContent.current = false;
+            hasPaintedReasoning.current = false;
             setItems((prev) => {
               if (!prev) return prev;
               return [
