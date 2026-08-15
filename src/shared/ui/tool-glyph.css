@@ -27,8 +27,7 @@
   fill: var(--surface-canvas);
 }
 
-.tool-glyph--agent circle,
-.tool-glyph--git circle {
+.tool-glyph--agent circle {
   fill: currentColor;
   stroke: none;
 }

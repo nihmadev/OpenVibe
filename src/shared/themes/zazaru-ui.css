@@ -1,0 +1,27 @@
+/* OpenVibe theme adapter. The library never reads application tokens directly. */
+:root {
+  --z-color-canvas: var(--bg);
+  --z-color-surface: var(--bg-2);
+  --z-color-surface-raised: var(--bg-3);
+  --z-color-surface-hover: color-mix(in srgb, var(--fg) 7%, var(--bg-2));
+  --z-color-surface-active: color-mix(in srgb, var(--fg) 11%, var(--bg-2));
+  --z-color-text: var(--fg);
+  --z-color-text-muted: var(--fg-dim);
+  --z-color-text-subtle: var(--fg-muted);
+  --z-color-border: var(--line);
+  --z-color-border-strong: var(--line-strong);
+  --z-color-accent: var(--accent);
+  --z-color-accent-text: var(--bg);
+  --z-color-danger: var(--red);
+  --z-color-danger-hover: color-mix(in srgb, var(--red) 86%, white);
+  --z-color-danger-text: var(--bg);
+  --z-color-focus: color-mix(in srgb, var(--accent) 75%, #6aa5ff);
+  --z-color-selection: color-mix(in srgb, var(--fg) 10%, transparent);
+  --z-radius-control: var(--radius-sm);
+  --z-radius-surface: var(--radius-md);
+  --z-control-height-md: var(--control-height);
+  --z-duration-fast: var(--duration-fast);
+  --z-duration-normal: var(--duration-normal);
+  --z-ease: var(--ease-standard);
+  --z-disabled-opacity: var(--disabled-opacity);
+}
