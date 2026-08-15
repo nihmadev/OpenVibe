@@ -1,9 +1,14 @@
+import type * as monaco from "monaco-editor";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fsApi } from "@/features/files/infrastructure/fsGateway";
 import { getLanguage } from "@/shared/icons/utils";
 import type { MonacoLspSession } from "../../infrastructure/monacoLspClient";
 import { loadTypeDefinitions, MODEL_CACHE, preloadLocalImports } from "./editorModels";
 import type { EditorRefs } from "./editorTypes";
+
+function isUsableModel(model: monaco.editor.ITextModel | null | undefined): model is monaco.editor.ITextModel {
+  return !!model && !model.isDisposed();
+}
 
 interface DocumentOptions {
   path: string;
@@ -23,8 +28,12 @@ export function useEditorDocument({
   lspSessionRef,
 }: DocumentOptions) {
   const initialCached = MODEL_CACHE.get(path);
-  const [content, setContent] = useState<string | null>(() => initialCached?.model.getValue() ?? null);
-  const [original, setOriginal] = useState(() => initialCached?.originalContent ?? "");
+  const [content, setContent] = useState<string | null>(() =>
+    isUsableModel(initialCached?.model) ? initialCached.model.getValue() : null,
+  );
+  const [original, setOriginal] = useState(() =>
+    isUsableModel(initialCached?.model) ? (initialCached.originalContent ?? "") : "",
+  );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const dirty = content !== null && content !== original;
@@ -36,19 +45,21 @@ export function useEditorDocument({
       setError(null);
       cleanupInlineSession();
       const cached = MODEL_CACHE.get(path);
+      const cachedModel = isUsableModel(cached?.model) ? cached : undefined;
+      if (cached && !cachedModel) MODEL_CACHE.delete(path);
 
-      if (cached) {
-        setContent(cached.model.getValue());
-        setOriginal(cached.originalContent);
-        if (refs.editor.current && refs.editor.current.getModel() !== cached.model) {
-          refs.editor.current.setModel(cached.model);
+      if (cachedModel) {
+        setContent(cachedModel.model.getValue());
+        setOriginal(cachedModel.originalContent);
+        if (refs.editor.current && refs.editor.current.getModel() !== cachedModel.model) {
+          refs.editor.current.setModel(cachedModel.model);
         }
       }
 
       const result = await fsApi.read(path);
       if (cancelled) return;
       if (!result.ok) {
-        if (!cached) setError(result.error);
+        if (!cachedModel) setError(result.error);
         return;
       }
 
@@ -63,17 +74,22 @@ export function useEditorDocument({
         }
       }
 
-      if (model) {
+      if (cancelled) return;
+      if (isUsableModel(model)) {
         MODEL_CACHE.set(path, { model, originalContent: result.content });
         if (refs.editor.current && refs.editor.current.getModel() !== model) refs.editor.current.setModel(model);
       }
 
-      if (!cached) {
+      if (!cachedModel) {
         setContent(result.content);
         setOriginal(result.content);
-      } else if (cached.model.getValue() === cached.originalContent && cached.originalContent !== result.content) {
-        cached.originalContent = result.content;
-        cached.model.setValue(result.content);
+      } else if (
+        isUsableModel(cachedModel.model) &&
+        cachedModel.model.getValue() === cachedModel.originalContent &&
+        cachedModel.originalContent !== result.content
+      ) {
+        cachedModel.originalContent = result.content;
+        cachedModel.model.setValue(result.content);
         setContent(result.content);
         setOriginal(result.content);
       }
@@ -96,8 +112,12 @@ export function useEditorDocument({
       void fsApi.read(path).then((result) => {
         if (!result.ok) return;
         const cached = MODEL_CACHE.get(path);
+        if (cached && !isUsableModel(cached.model)) {
+          MODEL_CACHE.delete(path);
+          return;
+        }
         if (cached && cached.model.getValue() !== cached.originalContent) return;
-        if (cached) {
+        if (cached && isUsableModel(cached.model)) {
           cached.originalContent = result.content;
           cached.model.setValue(result.content);
         }

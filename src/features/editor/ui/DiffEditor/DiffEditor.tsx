@@ -69,7 +69,7 @@ export const DiffEditor = React.memo(function DiffEditor({
         lineNumbers: "on",
         folding: true,
         glyphMargin: false,
-        lineNumbersMinChars: 3,
+        lineNumbersMinChars: 4,
         padding: { top: 10, bottom: 10 },
         overviewRulerLanes: 0,
         hideCursorInOverviewRuler: true,

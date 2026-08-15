@@ -24,7 +24,10 @@ export function useEditorLsp(
           sessionRef.current = result;
         }
       })
-      .catch((error) => console.error(`Failed to connect Monaco to LSP for ${model.getLanguageId()}:`, error));
+      .catch((error) => {
+        const language = model.isDisposed() ? "unknown" : model.getLanguageId();
+        console.error(`Failed to connect Monaco to LSP for ${language}:`, error);
+      });
 
     return () => {
       cancelled = true;

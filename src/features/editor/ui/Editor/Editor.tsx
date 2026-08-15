@@ -108,6 +108,8 @@ export function Editor({
     <div className="editor">
       <MonacoEditor
         height="100%"
+        // Models are shared through MODEL_CACHE and must outlive this React view.
+        keepCurrentModel
         theme={themeName}
         path={`file://${path.replace(/\\/g, "/")}`}
         language={getLanguage(path)}
@@ -125,8 +127,8 @@ export function Editor({
           automaticLayout: true,
           tabSize: 2,
           wordWrap: "on",
-          lineNumbersMinChars: 3,
-          lineDecorationsWidth: 10,
+          lineNumbersMinChars: 4,
+          lineDecorationsWidth: 12,
           glyphMargin: false,
           folding: false,
           fixedOverflowWidgets: true,
