@@ -154,6 +154,10 @@ fn build_body_bytes(
         flatten_for_text_only(current_messages.to_vec())
     };
 
+    if is_direct_anthropic(config) {
+        return build_anthropic_body(config, &outbound_messages, tools);
+    }
+
     let mut body = serde_json::json!({
         "model": config.model,
         "messages": messages_to_api_json_with_cache(
@@ -172,6 +176,187 @@ fn build_body_bytes(
     serde_json::to_vec(&body)
         .map(bytes::Bytes::from)
         .map_err(|e| format!("Failed to serialize request body: {e}"))
+}
+
+fn is_direct_anthropic(config: &LlmConfig) -> bool {
+    !should_route_via_proxy(config) && config.base_url.contains("api.anthropic.com")
+}
+
+fn build_anthropic_body(
+    config: &LlmConfig,
+    messages: &[ChatMessage],
+    tools: &[ToolDefinition],
+) -> Result<bytes::Bytes, String> {
+    let mut system = Vec::new();
+    let mut outbound: Vec<serde_json::Value> = Vec::new();
+    for message in messages {
+        if message.role == "system" {
+            if let Some(content) = &message.content {
+                system.extend(anthropic_content_blocks(
+                    content,
+                    supports_prompt_caching(config),
+                )?);
+            }
+            continue;
+        }
+
+        if message.role == "tool" {
+            let tool_use_id = message.tool_call_id.as_deref().ok_or_else(|| {
+                "Anthropic tool result message is missing tool_call_id".to_string()
+            })?;
+            let content = message
+                .content
+                .as_ref()
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or("");
+            let block = serde_json::json!({
+                "type": "tool_result",
+                "tool_use_id": tool_use_id,
+                "content": content,
+            });
+            if let Some(blocks) = outbound
+                .last_mut()
+                .filter(|value| {
+                    value.get("role").and_then(serde_json::Value::as_str) == Some("user")
+                })
+                .and_then(|value| value.get_mut("content"))
+                .and_then(serde_json::Value::as_array_mut)
+            {
+                blocks.push(block);
+            } else {
+                outbound.push(serde_json::json!({
+                    "role": "user",
+                    "content": [block],
+                }));
+            }
+            continue;
+        }
+
+        let mut blocks = message
+            .content
+            .as_ref()
+            .map(|content| anthropic_content_blocks(content, false))
+            .transpose()?
+            .unwrap_or_default();
+        if message.role == "assistant" {
+            if let Some(tool_calls) = &message.tool_calls {
+                for call in tool_calls {
+                    let input = if call.function.arguments.trim().is_empty() {
+                        serde_json::json!({})
+                    } else {
+                        serde_json::from_str(&call.function.arguments).map_err(|error| {
+                            format!(
+                                "Cannot send Anthropic tool call {} with invalid arguments: {error}",
+                                call.id
+                            )
+                        })?
+                    };
+                    blocks.push(serde_json::json!({
+                        "type": "tool_use",
+                        "id": call.id,
+                        "name": call.function.name,
+                        "input": input,
+                    }));
+                }
+            }
+        }
+        outbound.push(serde_json::json!({
+            "role": message.role,
+            "content": blocks,
+        }));
+    }
+
+    let mut body = serde_json::json!({
+        "model": config.model,
+        "messages": outbound,
+        "max_tokens": 8192,
+        "stream": true,
+    });
+    if !system.is_empty() {
+        body["system"] = serde_json::Value::Array(system);
+    }
+    if !tools.is_empty() {
+        body["tools"] = serde_json::Value::Array(
+            tools
+                .iter()
+                .map(|tool| {
+                    serde_json::json!({
+                        "name": tool.function.name,
+                        "description": tool.function.description,
+                        "input_schema": tool.function.parameters,
+                    })
+                })
+                .collect(),
+        );
+    }
+    serde_json::to_vec(&body)
+        .map(bytes::Bytes::from)
+        .map_err(|error| format!("Failed to serialize Anthropic request body: {error}"))
+}
+
+fn anthropic_content_blocks(
+    content: &serde_json::Value,
+    cache: bool,
+) -> Result<Vec<serde_json::Value>, String> {
+    let mut blocks = match content {
+        serde_json::Value::String(text) => vec![serde_json::json!({
+            "type": "text",
+            "text": text,
+        })],
+        serde_json::Value::Array(parts) => parts
+            .iter()
+            .map(
+                |part| match part.get("type").and_then(serde_json::Value::as_str) {
+                    Some("text") => Ok(serde_json::json!({
+                        "type": "text",
+                        "text": part.get("text").and_then(serde_json::Value::as_str).unwrap_or(""),
+                    })),
+                    Some("image_url") => {
+                        let url = part
+                            .get("image_url")
+                            .and_then(|value| value.get("url"))
+                            .and_then(serde_json::Value::as_str)
+                            .ok_or_else(|| {
+                                "Anthropic image content is missing image_url.url".to_string()
+                            })?;
+                        let data = url
+                            .strip_prefix("data:")
+                            .and_then(|value| value.split_once(';'));
+                        let (media_type, encoded) = data
+                            .and_then(|(media_type, rest)| {
+                                rest.strip_prefix("base64,").map(|data| (media_type, data))
+                            })
+                            .ok_or_else(|| {
+                                "Direct Anthropic requests require base64 data URLs for images"
+                                    .to_string()
+                            })?;
+                        Ok(serde_json::json!({
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": media_type,
+                                "data": encoded,
+                            },
+                        }))
+                    }
+                    Some(other) => {
+                        Err(format!("Unsupported Anthropic content block type: {other}"))
+                    }
+                    None => Err("Anthropic content block is missing type".to_string()),
+                },
+            )
+            .collect::<Result<Vec<_>, _>>()?,
+        _ => return Err("Anthropic message content must be a string or array".to_string()),
+    };
+    if cache {
+        if let Some(last) = blocks.last_mut().and_then(serde_json::Value::as_object_mut) {
+            last.insert(
+                "cache_control".to_string(),
+                serde_json::json!({"type": "ephemeral"}),
+            );
+        }
+    }
+    Ok(blocks)
 }
 
 /// True for transport-level failures where the request never reached the
@@ -388,6 +573,13 @@ fn build_request(config: &LlmConfig) -> (String, reqwest::header::HeaderMap) {
         headers.insert("x-provider-base-url", safe_header_val(&config.base_url));
         headers.insert("x-api-key", safe_header_val(&config.api_key));
         format!("{base}/v3/{pid}/chat/completions")
+    } else if is_direct_anthropic(config) {
+        headers.insert("x-api-key", safe_header_val(&config.api_key));
+        headers.insert(
+            "anthropic-version",
+            reqwest::header::HeaderValue::from_static("2023-06-01"),
+        );
+        format!("{}/messages", config.base_url.trim_end_matches('/'))
     } else {
         let auth_val = format!("Bearer {}", config.api_key);
         headers.insert(reqwest::header::AUTHORIZATION, safe_header_val(&auth_val));
@@ -515,5 +707,74 @@ mod tests {
         apply_reasoning_params(&config, &mut body);
         assert_eq!(body["thinking"]["type"], "enabled");
         assert_eq!(body["reasoning_effort"], "max");
+    }
+
+    #[test]
+    fn direct_anthropic_uses_native_url_headers_and_body() {
+        let config = cfg("anthropic", "https://api.anthropic.com/v1", None);
+        let messages = vec![
+            ChatMessage {
+                role: "system".to_string(),
+                content: Some(serde_json::json!("system")),
+                name: None,
+                tool_call_id: None,
+                tool_calls: None,
+                reasoning_content: None,
+                reasoning_name: None,
+                usage: None,
+            },
+            ChatMessage {
+                role: "user".to_string(),
+                content: Some(serde_json::json!("hello")),
+                name: None,
+                tool_call_id: None,
+                tool_calls: None,
+                reasoning_content: None,
+                reasoning_name: None,
+                usage: None,
+            },
+        ];
+        let body = build_body_bytes(&config, &messages, &[]).unwrap();
+        let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(body["system"][0]["text"], "system");
+        assert_eq!(body["messages"][0]["content"][0]["text"], "hello");
+        assert!(body.get("stream_options").is_none());
+
+        let (url, headers) = build_request(&config);
+        assert_eq!(url, "https://api.anthropic.com/v1/messages");
+        assert_eq!(headers["x-api-key"], "k");
+        assert_eq!(headers["anthropic-version"], "2023-06-01");
+        assert!(!headers.contains_key(reqwest::header::AUTHORIZATION));
+    }
+
+    #[test]
+    fn anthropic_proxy_remains_openai_compatible() {
+        let mut config = cfg("anthropic", "https://api.anthropic.com/v1", None);
+        config.api_url = Some("https://proxy.example".to_string());
+        assert!(!is_direct_anthropic(&config));
+        let (url, _) = build_request(&config);
+        assert_eq!(url, "https://proxy.example/v3/anthropic/chat/completions");
+    }
+
+    #[test]
+    fn direct_anthropic_groups_parallel_tool_results() {
+        let config = cfg("anthropic", "https://api.anthropic.com/v1", None);
+        let messages = ["one", "two"]
+            .into_iter()
+            .map(|id| ChatMessage {
+                role: "tool".to_string(),
+                content: Some(serde_json::json!(format!("result {id}"))),
+                name: None,
+                tool_call_id: Some(id.to_string()),
+                tool_calls: None,
+                reasoning_content: None,
+                reasoning_name: None,
+                usage: None,
+            })
+            .collect::<Vec<_>>();
+        let body = build_body_bytes(&config, &messages, &[]).unwrap();
+        let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(body["messages"].as_array().unwrap().len(), 1);
+        assert_eq!(body["messages"][0]["content"].as_array().unwrap().len(), 2);
     }
 }

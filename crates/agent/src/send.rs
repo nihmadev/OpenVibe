@@ -192,6 +192,8 @@ impl Agent {
             // text never stalls in the buffer when the model pauses or switches
             // to tool calls mid-stream.
             let debounce = Duration::from_millis(16);
+            let stream_started = std::time::Instant::now();
+            let first_delta_at = Arc::new(std::sync::OnceLock::new());
             let stream_epoch = std::time::Instant::now()
                 .checked_sub(debounce)
                 .unwrap_or_else(std::time::Instant::now);
@@ -209,7 +211,17 @@ impl Agent {
 
             let cb_chunk = {
                 let chunk_buf = chunk_buf.clone();
+                let first_delta_at = first_delta_at.clone();
                 move |chunk: &str| {
+                    let first = std::time::Instant::now();
+                    if first_delta_at.set(first).is_ok() {
+                        emit(
+                            "vibe:agent:stream-metrics",
+                            serde_json::json!({
+                                "ttftMs": first.duration_since(stream_started).as_millis() as u64,
+                            }),
+                        );
+                    }
                     if let Ok(mut sb) = chunk_buf.lock() {
                         sb.buf.push_str(chunk);
                         let now = std::time::Instant::now();
@@ -242,7 +254,17 @@ impl Agent {
             let cb_reasoning = {
                 let reason_buf = reason_buf.clone();
                 let reason_name = reason_name.clone();
+                let first_delta_at = first_delta_at.clone();
                 move |chunk: &str| {
+                    let first = std::time::Instant::now();
+                    if first_delta_at.set(first).is_ok() {
+                        emit(
+                            "vibe:agent:stream-metrics",
+                            serde_json::json!({
+                                "ttftMs": first.duration_since(stream_started).as_millis() as u64,
+                            }),
+                        );
+                    }
                     if let Ok(mut sb) = reason_buf.lock() {
                         sb.buf.push_str(chunk);
                         let now = std::time::Instant::now();
@@ -344,7 +366,6 @@ impl Agent {
                 }
             };
 
-            let stream_started = std::time::Instant::now();
             let stream_fut = stream_chat(
                 &llm_config,
                 self.messages.clone(),
@@ -394,6 +415,9 @@ impl Agent {
                 // low tok/s with high promptTokens and zero cacheRead points
                 // at cold-prefix re-processing, not network issues.
                 let elapsed = stream_started.elapsed().as_secs_f64();
+                let ttft_ms = first_delta_at
+                    .get()
+                    .map(|first| first.duration_since(stream_started).as_millis() as u64);
                 let tokens_per_sec = if elapsed > 0.0 && u.completion_tokens > 0 {
                     (u.completion_tokens as f64 / elapsed * 10.0).round() / 10.0
                 } else {
@@ -409,6 +433,7 @@ impl Agent {
                         "cacheReadInputTokens": u.cache_read_input_tokens,
                         "tokensPerSec": tokens_per_sec,
                         "streamSecs": (elapsed * 10.0).round() / 10.0,
+                        "ttftMs": ttft_ms,
                     }),
                 );
             }

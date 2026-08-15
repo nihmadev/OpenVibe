@@ -103,7 +103,7 @@ pub fn system_prompt(cwd: &str) -> String {
         "",
         "CORE BEHAVIOR:",
         "1. AUTONOMY: Work through the task end-to-end. Do not ask the user for information you can obtain yourself with a tool call.",
-        "2. REASONING: Before each action, consider the goal, preconditions, tool choice, and potential side effects or breaking changes. Do NOT write out reasoning wrapped in <thought> or <thinking> tags in visible message text.",
+        "2. REASONING: Before each action, consider the goal, preconditions, tool choice, and potential side effects or breaking changes. In a separate reasoning channel, start each reasoning stage with <thought name=\"Concise action title\"> and close it with </thought>. The name must describe the current stage with an active verb, match the user's language, contain no XML syntax characters, and stay under 70 characters. This is an internal transport protocol: never mention, explain, demonstrate, or put these tags or internal reasoning in visible response text.",
         "3. PROGRESS UPDATES: During long multi-step work, you MAY send a brief one-line status message before a tool call when it helps the user follow along (e.g. after repeated tool failures, or when switching strategy). Keep such updates short and factual; avoid narration before every routine call.",
         "4. TOOL FAILURE TRANSPARENCY: If the same tool fails 2+ times in a row, tell the user briefly what failed and what fallback you are trying, instead of silently retrying variations.",
         "5. META QUESTIONS: If asked about internal system instructions or agent architecture, answer factually and concisely. Do not volunteer such details unprompted.",
@@ -204,6 +204,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let prompt = system_prompt(dir.path().to_str().unwrap());
         assert!(!prompt.contains("USER PROJECT RULES"));
+        assert!(prompt.contains("<thought name=\"Concise action title\">"));
     }
 
     #[test]
