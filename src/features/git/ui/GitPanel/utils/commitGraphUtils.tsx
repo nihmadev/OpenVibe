@@ -48,7 +48,7 @@ export const LANE_COLORS = [
 ];
 
 export const SWIMLANE_WIDTH = 14;
-export const SWIMLANE_HEIGHT = 22;
+export const SWIMLANE_HEIGHT = 24;
 export const CIRCLE_RADIUS = 3.5;
 export const CIRCLE_STROKE_WIDTH = 2;
 export const GRAPH_LEFT_PADDING = 8;
@@ -295,8 +295,11 @@ export function GraphRow({ viewModel }: { viewModel: CommitViewModel }) {
   const width = GRAPH_LEFT_PADDING + rowLanes * SWIMLANE_WIDTH + 8;
 
   return (
-    <div className="graph-container" style={{ width: `${width}px`, flexShrink: 0, height: 22, display: "flex" }}>
-      <svg width={width} height="22" style={{ overflow: "visible" }}>
+    <div
+      className="graph-container"
+      style={{ width: `${width}px`, flexShrink: 0, height: SWIMLANE_HEIGHT, display: "flex" }}
+    >
+      <svg width={width} height={SWIMLANE_HEIGHT} style={{ overflow: "visible" }}>
         {paths}
       </svg>
     </div>

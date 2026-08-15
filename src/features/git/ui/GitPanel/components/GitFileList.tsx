@@ -27,15 +27,15 @@ export function FileRow({ file, isStaged, onOpenFile, onStageFile, onUnstageFile
 
   return (
     <div className="scm-list-row" onClick={() => onOpenFile?.(file.path)}>
-      <div className="resource" style={{ width: "100%", display: "flex", alignItems: "center", height: "100%" }}>
-        <div className="name" style={{ display: "flex", alignItems: "center", flex: 1, overflow: "hidden" }}>
+      <div className="resource scm-resource-row">
+        <div className="name scm-resource-name">
           <div className="scm-icon-label">
-            <span style={{ display: "flex", alignItems: "center", marginRight: 6 }}>
+            <span className="scm-file-icon">
               {isDirectory ? <FolderIcon open={false} name={fileName} /> : <FileIcon name={fileName} />}
             </span>
             <div className="scm-icon-name">{fileName}</div>
             {dirPath && <div className="scm-icon-description">{dirPath}</div>}
-            <div className="actions" style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
+            <div className="actions scm-file-actions">
               {isStaged ? (
                 <div className="action-label" title={t("unstageChanges")} onClick={(e) => onUnstageFile(file.path, e)}>
                   <i className="codicon codicon-remove"></i>
@@ -53,22 +53,8 @@ export function FileRow({ file, isStaged, onOpenFile, onStageFile, onUnstageFile
             </div>
           </div>
         </div>
-        <div className="decoration-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <span
-            className={`scm-status-tag ${statusChar}`}
-            style={{
-              color:
-                statusChar === "M"
-                  ? "var(--yellow)"
-                  : statusChar === "A"
-                    ? "var(--green)"
-                    : statusChar === "D"
-                      ? "var(--red)"
-                      : "var(--fg-dim)",
-            }}
-          >
-            {statusChar}
-          </span>
+        <div className="decoration-icon">
+          <span className={`scm-status-tag scm-status-tag--${statusChar.toLowerCase()}`}>{statusChar}</span>
         </div>
       </div>
     </div>
@@ -102,34 +88,26 @@ export function TreeFolder({
 }: TreeFolderProps) {
   const isExpanded = expandedFolders[folderData.path] !== false; // expanded by default
   return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
+    <div className="scm-tree-folder">
       <div
         className="scm-list-row"
         style={{ paddingLeft: `${depth * 14}px` }}
         onClick={() => onToggleFolder(folderData.path)}
       >
-        <div className="resource" style={{ width: "100%", display: "flex", alignItems: "center", height: "100%" }}>
-          <div className="name" style={{ display: "flex", alignItems: "center", flex: 1, overflow: "hidden" }}>
+        <div className="resource scm-resource-row">
+          <div className="name scm-resource-name">
             <div className="scm-icon-label">
-              <i
-                className={`icon codicon codicon-chevron-${isExpanded ? "down" : "right"}`}
-                style={{ marginRight: 4 }}
-              ></i>
-              <span style={{ display: "flex", alignItems: "center", marginRight: 6 }}>
+              <i className={`icon codicon codicon-chevron-${isExpanded ? "down" : "right"} scm-tree-chevron`}></i>
+              <span className="scm-file-icon">
                 <FolderIcon open={isExpanded} name={folderName} />
               </span>
-              <div className="scm-icon-name" style={{ fontWeight: 500 }}>
-                {folderName}
-              </div>
+              <div className="scm-icon-name scm-icon-name--folder">{folderName}</div>
             </div>
           </div>
         </div>
       </div>
       {isExpanded && (
-        <div
-          className="ftree__subtree-content"
-          style={{ position: "relative", display: "flex", flexDirection: "column" }}
-        >
+        <div className="ftree__subtree-content">
           <div className="ftree__line" style={{ left: `${depth * 14 + 6}px` }} />
           {Object.keys(folderData.folders).map((subName) => (
             <TreeFolder
@@ -181,32 +159,18 @@ export function CommitFileRow({ file, onOpenFile }: CommitFileRowProps) {
   const statusChar = file.status;
   return (
     <div className="scm-list-row" onClick={() => onOpenFile?.(file.path)}>
-      <div className="resource" style={{ width: "100%", display: "flex", alignItems: "center", height: "100%" }}>
-        <div className="name" style={{ display: "flex", alignItems: "center", flex: 1, overflow: "hidden" }}>
+      <div className="resource scm-resource-row">
+        <div className="name scm-resource-name">
           <div className="scm-icon-label">
-            <span style={{ display: "flex", alignItems: "center", marginRight: 6 }}>
+            <span className="scm-file-icon">
               {isDirectory ? <FolderIcon open={false} name={fileName} /> : <FileIcon name={fileName} />}
             </span>
             <div className="scm-icon-name">{fileName}</div>
             {dirPath && <div className="scm-icon-description">{dirPath}</div>}
           </div>
         </div>
-        <div className="decoration-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <span
-            className={`scm-status-tag ${statusChar}`}
-            style={{
-              color:
-                statusChar === "M"
-                  ? "var(--yellow)"
-                  : statusChar === "A"
-                    ? "var(--green)"
-                    : statusChar === "D"
-                      ? "var(--red)"
-                      : "var(--fg-dim)",
-            }}
-          >
-            {statusChar}
-          </span>
+        <div className="decoration-icon">
+          <span className={`scm-status-tag scm-status-tag--${statusChar.toLowerCase()}`}>{statusChar}</span>
         </div>
       </div>
     </div>
@@ -232,34 +196,26 @@ export function CommitTreeFolder({
 }: CommitTreeFolderProps) {
   const isExpanded = expandedCommitFolders.has(folderData.path) === false; // Expanded by default
   return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
+    <div className="scm-tree-folder">
       <div
         className="scm-list-row"
         style={{ paddingLeft: `${depth * 14}px` }}
         onClick={(e) => onToggleCommitFolder(folderData.path, e)}
       >
-        <div className="resource" style={{ width: "100%", display: "flex", alignItems: "center", height: "100%" }}>
-          <div className="name" style={{ display: "flex", alignItems: "center", flex: 1, overflow: "hidden" }}>
+        <div className="resource scm-resource-row">
+          <div className="name scm-resource-name">
             <div className="scm-icon-label">
-              <i
-                className={`icon codicon codicon-chevron-${isExpanded ? "down" : "right"}`}
-                style={{ marginRight: 4 }}
-              ></i>
-              <span style={{ display: "flex", alignItems: "center", marginRight: 6 }}>
+              <i className={`icon codicon codicon-chevron-${isExpanded ? "down" : "right"} scm-tree-chevron`}></i>
+              <span className="scm-file-icon">
                 <FolderIcon open={isExpanded} name={folderName} />
               </span>
-              <div className="scm-icon-name" style={{ fontWeight: 500 }}>
-                {folderName}
-              </div>
+              <div className="scm-icon-name scm-icon-name--folder">{folderName}</div>
             </div>
           </div>
         </div>
       </div>
       {isExpanded && (
-        <div
-          className="ftree__subtree-content"
-          style={{ position: "relative", display: "flex", flexDirection: "column" }}
-        >
+        <div className="ftree__subtree-content">
           <div className="ftree__line" style={{ left: `${depth * 14 + 6}px` }} />
           {Object.keys(folderData.folders).map((subName) => (
             <CommitTreeFolder

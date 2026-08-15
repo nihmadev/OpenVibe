@@ -127,24 +127,8 @@ export function GitCommitTooltip({
             }}
           >
             {hoveredCommit.isHead && (
-              <span
-                className="scm-ref-pill head"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  padding: "2px 8px",
-                  fontSize: 11,
-                  borderRadius: 10,
-                  backgroundColor: "var(--fg)",
-                  color: "var(--bg)",
-                  border: "1px solid var(--line-strong)",
-                  wordBreak: "break-all",
-                }}
-              >
-                <i
-                  className="codicon codicon-target"
-                  style={{ fontSize: 12, marginRight: 4, color: "#68d391", flexShrink: 0 }}
-                ></i>
+              <span className="scm-ref-pill scm-ref-pill--head">
+                <i className="codicon codicon-target scm-ref-icon"></i>
                 <span>{currentBranch} (HEAD)</span>
               </span>
             )}
@@ -152,21 +136,8 @@ export function GitCommitTooltip({
               if (ref.includes(currentBranch) && hoveredCommit.isHead) return null;
               const isRemote = ref.startsWith("origin/") || ref.includes("/");
               return (
-                <span
-                  key={ref}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    padding: "2px 8px",
-                    fontSize: 11,
-                    borderRadius: 10,
-                    backgroundColor: isRemote ? "rgba(183, 148, 244, 0.15)" : "rgba(99, 179, 237, 0.15)",
-                    color: isRemote ? "#d6bcfa" : "#90cdf4",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    wordBreak: "break-all",
-                  }}
-                >
-                  <i className="codicon codicon-git-branch" style={{ fontSize: 12, marginRight: 4, flexShrink: 0 }}></i>
+                <span key={ref} className={`scm-ref-pill ${isRemote ? "scm-ref-pill--remote" : "scm-ref-pill--local"}`}>
+                  <i className="codicon codicon-git-branch scm-ref-icon"></i>
                   <span>{ref}</span>
                 </span>
               );
