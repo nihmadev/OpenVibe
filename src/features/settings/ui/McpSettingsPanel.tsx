@@ -1,3 +1,4 @@
+import { Button, Input, Toggle } from "@zazaru/ui";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -20,7 +21,6 @@ import {
   TrashIcon,
   UploadStrokeIcon,
 } from "@/shared/icons/icons";
-import { Input, Toggle } from "@/shared/ui/kit";
 
 export function McpSettingsPanel(): React.ReactElement {
   const t = useTranslate();
@@ -477,12 +477,12 @@ enabled = true`}
             </div>
 
             <div className="connect-popup__footer">
-              <button className="ui-button ui-button--primary" onClick={handleSaveForm}>
+              <Button variant="primary" onClick={handleSaveForm}>
                 {t("mcpSaveServer")}
-              </button>
-              <button className="ui-button ui-button--outline" onClick={() => setIsAdding(false)}>
+              </Button>
+              <Button variant="outline" onClick={() => setIsAdding(false)}>
                 {t("cancel")}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

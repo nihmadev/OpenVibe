@@ -1,7 +1,8 @@
+import { Button, Select, Toggle } from "@zazaru/ui";
+import { ControlRow } from "@zazaru/ui/recipes";
 import type React from "react";
 import { languageOptions } from "@/shared/i18n";
 import { useI18n } from "@/shared/i18n/useI18n";
-import { Button, ControlRow, Select } from "@/shared/ui/kit";
 import type { GeneralSettings, UpdateGeneral } from "./types";
 
 interface Props {
@@ -14,12 +15,7 @@ export function GeneralTab({ general, updateGeneral, onClose }: Props): React.Re
   const { t } = useI18n();
   const toggle = (key: keyof GeneralSettings, label: string, description: string) => (
     <ControlRow label={t(label)} description={t(description)}>
-      <input
-        type="checkbox"
-        className="settings__checkbox"
-        checked={general[key] as boolean}
-        onChange={(event) => updateGeneral(key, event.target.checked)}
-      />
+      <Toggle checked={general[key] as boolean} onValueChange={(checked) => updateGeneral(key, checked)} />
     </ControlRow>
   );
   return (

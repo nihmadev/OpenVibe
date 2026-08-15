@@ -1,5 +1,6 @@
+import { NumberInput, Select, Toggle } from "@zazaru/ui";
+import { ControlRow } from "@zazaru/ui/recipes";
 import { useI18n } from "@/shared/i18n/useI18n";
-import { ControlRow, NumberInput, Select } from "@/shared/ui/kit";
 import type { GeneralSettings, UpdateGeneral } from "./types";
 
 export function CodeTab({ general, updateGeneral }: { general: GeneralSettings; updateGeneral: UpdateGeneral }) {
@@ -26,11 +27,9 @@ export function CodeTab({ general, updateGeneral }: { general: GeneralSettings; 
           />
         </ControlRow>
         <ControlRow label={t("editorLigatures")} description={t("editorLigaturesDesc")}>
-          <input
-            type="checkbox"
-            className="settings__checkbox"
+          <Toggle
             checked={general.editorLigatures}
-            onChange={(e) => updateGeneral("editorLigatures", e.target.checked)}
+            onValueChange={(checked) => updateGeneral("editorLigatures", checked)}
           />
         </ControlRow>
         <ControlRow label={t("editorCursorStyle")} description={t("editorCursorStyleDesc")}>

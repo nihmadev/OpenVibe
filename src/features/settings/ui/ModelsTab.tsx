@@ -1,3 +1,4 @@
+import { Toggle } from "@zazaru/ui";
 import type React from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { getProviderIconPath, PROVIDER_TEMPLATES } from "@/features/providers/model/providerTemplates";
@@ -89,11 +90,9 @@ export function ModelsTab({
                         <div className="settings__model-info">
                           <span className="settings__model-name">{model.name}</span>
                         </div>
-                        <input
-                          type="checkbox"
-                          className="settings__checkbox"
+                        <Toggle
                           checked={enabledModels.has(compositeKey) || enabledModels.has(model.id)}
-                          onChange={() => onToggle(model.providerDbId, model.id)}
+                          onValueChange={() => onToggle(model.providerDbId, model.id)}
                         />
                       </div>
                     );

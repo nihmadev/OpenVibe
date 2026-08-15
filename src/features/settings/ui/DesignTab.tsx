@@ -1,3 +1,5 @@
+import { NumberInput, Select, Toggle } from "@zazaru/ui";
+import { ControlRow } from "@zazaru/ui/recipes";
 import { CODE_FONT_OPTIONS, FONT_OPTIONS } from "@/app/fonts";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { DownloadIcon, UploadStrokeIcon } from "@/shared/icons/icons";
@@ -5,7 +7,6 @@ import { addCustomTheme, parseVSCodeTheme, themes } from "@/shared/themes/themes
 import { useTheme } from "@/shared/themes/useTheme";
 import type { AnimStyle } from "@/shared/ui/animations/useAnimations";
 import { useAnimations } from "@/shared/ui/animations/useAnimations";
-import { ControlRow, NumberInput, Select } from "@/shared/ui/kit";
 import { InlineAnimPreview } from "./AnimationPreviewModal";
 import type { GeneralSettings, UpdateGeneral } from "./types";
 
@@ -109,13 +110,11 @@ export function DesignTab({ general, updateGeneral }: { general: GeneralSettings
             />
           </ControlRow>
           <ControlRow label={t("experimentalExtremeRadius")} description={t("experimentalExtremeRadiusDesc")}>
-            <input
-              type="checkbox"
-              className="settings__checkbox"
+            <Toggle
               checked={general.experimentalExtremeRadius}
-              onChange={(event) => {
-                updateGeneral("experimentalExtremeRadius", event.target.checked);
-                if (!event.target.checked && (parseFloat(general.radius) || 0) > 16) updateGeneral("radius", "16");
+              onValueChange={(checked) => {
+                updateGeneral("experimentalExtremeRadius", checked);
+                if (!checked && (parseFloat(general.radius) || 0) > 16) updateGeneral("radius", "16");
               }}
             />
           </ControlRow>

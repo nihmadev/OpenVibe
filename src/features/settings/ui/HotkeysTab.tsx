@@ -1,7 +1,7 @@
+import { ControlRow } from "@zazaru/ui/recipes";
 import type { Dispatch, SetStateAction } from "react";
 import type { ShortcutCategory, ShortcutDef } from "@/features/shortcuts/application/useShortcuts";
 import { useI18n } from "@/shared/i18n/useI18n";
-import { ControlRow } from "@/shared/ui/kit";
 
 const CATEGORY_ORDER: ShortcutCategory[] = [
   "navigation",

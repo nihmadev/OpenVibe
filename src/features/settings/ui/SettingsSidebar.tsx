@@ -1,7 +1,7 @@
+import { interactiveItemClassName, interactiveListClassName, surfaceClassName } from "@zazaru/ui";
 import type React from "react";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { CodeIcon, ServerIcon } from "@/shared/icons/icons";
-import { interactiveItemClassName, interactiveListClassName, surfaceClassName } from "@/shared/ui/kit";
 import type { SettingsTab } from "./types";
 
 interface Props {
@@ -65,7 +65,7 @@ export function SettingsSidebar({ activeTab, onSelect }: Props): React.ReactElem
     </button>
   );
   return (
-    <div className={surfaceClassName("chrome", "settings__sidebar")}>
+    <div className={surfaceClassName("transparent", "settings__sidebar")}>
       <div className={interactiveListClassName("settings__sidebar-group")}>
         <div className="settings__sidebar-title">{t("app")}</div>
         {item("general", t("general"))}
