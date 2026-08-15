@@ -1,6 +1,7 @@
 import type React from "react";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { CodeIcon, ServerIcon } from "@/shared/icons/icons";
+import { interactiveItemClassName, interactiveListClassName, surfaceClassName } from "@/shared/ui/kit";
 import type { SettingsTab } from "./types";
 
 interface Props {
@@ -52,21 +53,27 @@ const icons: Record<SettingsTab, React.ReactNode> = {
 export function SettingsSidebar({ activeTab, onSelect }: Props): React.ReactElement {
   const { t } = useI18n();
   const item = (id: SettingsTab, label: string) => (
-    <button className={`settings__sidebar-item ${activeTab === id ? "active" : ""}`} onClick={() => onSelect(id)}>
+    <button
+      className={interactiveItemClassName(
+        activeTab === id,
+        `settings__sidebar-item ${activeTab === id ? "active" : ""}`,
+      )}
+      onClick={() => onSelect(id)}
+    >
       {icons[id]}
       <span>{label}</span>
     </button>
   );
   return (
-    <div className="settings__sidebar">
-      <div className="settings__sidebar-group">
+    <div className={surfaceClassName("chrome", "settings__sidebar")}>
+      <div className={interactiveListClassName("settings__sidebar-group")}>
         <div className="settings__sidebar-title">{t("app")}</div>
         {item("general", t("general"))}
         {item("design", t("design"))}
         {item("code", t("codeTab"))}
         {item("hotkeys", t("hotkeys"))}
       </div>
-      <div className="settings__sidebar-group">
+      <div className={interactiveListClassName("settings__sidebar-group")}>
         <div className="settings__sidebar-title">{t("server")}</div>
         {item("providers", t("providers"))}
         {item("models", t("models"))}

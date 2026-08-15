@@ -2,6 +2,7 @@ import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { ConnectPopup } from "@/features/providers/ui/ConnectPopup/ConnectPopup";
 import { useI18n } from "@/shared/i18n/useI18n";
+import { surfaceClassName } from "@/shared/ui/kit";
 import "./Settings.css";
 import { CodeTab } from "./CodeTab";
 import { DesignTab } from "./DesignTab";
@@ -65,9 +66,9 @@ export function Settings({
 
   return (
     <div className="settings__overlay" onClick={onClose}>
-      <div className="settings__container" onClick={(event) => event.stopPropagation()}>
+      <div className={surfaceClassName("panel", "settings__container")} onClick={(event) => event.stopPropagation()}>
         <SettingsSidebar activeTab={activeTab} onSelect={selectTab} />
-        <div className="settings__content">
+        <div className={surfaceClassName("canvas", "settings__content")}>
           <div className="settings__content-header">
             <h2>{labels[activeTab]}</h2>
             <button className="settings__close" onClick={onClose}>

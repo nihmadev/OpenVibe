@@ -182,10 +182,12 @@ export function ConnectPopup({
               </div>
             )}
           </div>
-          <h2 className="connect-popup__title">
-            {isEditing ? editProvider?.name : custom ? t("customProviderTitle") : template?.name}
-          </h2>
-          {isEditing && <p className="connect-popup__subtitle">{t("editProvider")}</p>}
+          <div className="connect-popup__heading">
+            <h2 className="connect-popup__title">
+              {isEditing ? editProvider?.name : custom ? t("customProviderTitle") : template?.name}
+            </h2>
+            {isEditing && <p className="connect-popup__subtitle">{t("editProvider")}</p>}
+          </div>
           <button className="connect-popup__close" onClick={onClose}>
             ×
           </button>
@@ -222,12 +224,14 @@ export function ConnectPopup({
             <>
               {custom && (
                 <div className="connect-popup__section">
+                  <label className="connect-popup__label">{t("name")}</label>
                   <Input
                     containerClassName="connect-popup__input"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder={t("name")}
                   />
+                  <label className="connect-popup__label connect-popup__label--spaced">Base URL</label>
                   <Input
                     containerClassName="connect-popup__input"
                     value={form.baseUrl}
@@ -238,6 +242,7 @@ export function ConnectPopup({
               )}
 
               <div className="connect-popup__section">
+                <label className="connect-popup__label">{t("apiKeyPlaceholder")}</label>
                 <Input
                   containerClassName="connect-popup__input"
                   type={showKey ? "text" : "password"}
@@ -350,15 +355,15 @@ export function ConnectPopup({
         </div>
 
         <div className="connect-popup__footer">
+          <button className="ui-button ui-button--outline" onClick={onClose}>
+            {t("cancel")}
+          </button>
           <button
             className="ui-button ui-button--primary"
             onClick={handleConnect}
             disabled={!form.apiKey.trim() || busy}
           >
             {busy ? "..." : isEditing ? t("save") : t("connect")}
-          </button>
-          <button className="ui-button ui-button--outline" onClick={onClose}>
-            {t("cancel")}
           </button>
         </div>
       </div>
