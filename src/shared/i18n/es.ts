@@ -353,7 +353,7 @@ export const es: Partial<Translations> = {
   zoomDefaultDesc: "Nivel de zoom al presionar Ctrl+0",
   terminalShell: "Carcasa de terminales",
   appName: "Escritorio OpenVibe",
-  appVersion: "v1.3.8",
+  appVersion: "v1.3.9",
   shell: "Caparazón",
   langRussian: "ruso",
   langEnglish: "Inglés",

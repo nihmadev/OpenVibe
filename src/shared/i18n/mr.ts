@@ -349,7 +349,7 @@ export const mr: Partial<Translations> = {
   zoomDefault: "डीफॉल्ट झूम",
   zoomDefaultDesc: "Ctrl+0 दाबताना झूम पातळी",
   appName: "OpenVibe डेस्कटॉप",
-  appVersion: "v1.3.8",
+  appVersion: "v1.3.9",
   shell: "शेल",
   langRussian: "रशियन",
   langEnglish: "इंग्रजी",

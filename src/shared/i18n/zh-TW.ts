@@ -350,7 +350,7 @@ export const zhTW: Partial<Translations> = {
   zoomDefault: "預設縮放",
   zoomDefaultDesc: "按 Ctrl+0 時的縮放級別",
   appName: "OpenVibe 桌面",
-  appVersion: "v1.3.8",
+  appVersion: "v1.3.9",
   shell: "殼",
   langRussian: "俄文",
   langEnglish: "英語",

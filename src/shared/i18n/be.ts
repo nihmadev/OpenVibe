@@ -353,7 +353,7 @@ export const be: Partial<Translations> = {
   zoomDefaultDesc: "Узровень маштабавання пры націску Ctrl+0",
   terminalShell: "Тэрмінальная абалонка",
   appName: "Працоўны стол OpenVibe",
-  appVersion: "версія 1.3.8",
+  appVersion: "версія 1.3.9",
   shell: "Ракавінка",
   langRussian: "рускі",
   langEnglish: "англійская",

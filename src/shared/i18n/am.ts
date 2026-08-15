@@ -349,7 +349,7 @@ export const am: Partial<Translations> = {
   zoomDefault: "ነባሪ ማጉላት",
   zoomDefaultDesc: "Ctrl+0 ን ሲጫኑ አጉላ",
   appName: "Vibe ዴስክቶፕን ይክፈቱ",
-  appVersion: "v1.3.8",
+  appVersion: "v1.3.9",
   shell: "ዛጎል",
   langRussian: "ራሺያኛ",
   langEnglish: "እንግሊዝኛ",

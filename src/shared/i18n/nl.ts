@@ -350,7 +350,7 @@ export const nl: Partial<Translations> = {
   zoomDefaultDesc: "Zoomniveau wanneer u op Ctrl+0 drukt",
   terminalShell: "Terminalshell",
   appName: "OpenVibe-bureaublad",
-  appVersion: "v1.3.8",
+  appVersion: "v1.3.9",
   shell: "Schelp",
   langRussian: "Russisch",
   langEnglish: "Engels",

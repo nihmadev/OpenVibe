@@ -350,7 +350,7 @@ export const kk: Partial<Translations> = {
   zoomDefaultDesc: "Ctrl+0 пернелерін басқан кезде масштабтау деңгейі",
   terminalShell: "Терминал қабығы",
   appName: "OpenVibe жұмыс үстелі",
-  appVersion: "v1.3.8",
+  appVersion: "v1.3.9",
   shell: "Shell",
   langRussian: "орыс",
   langEnglish: "Ағылшын",

@@ -1,6 +1,6 @@
+import { interactiveItemClassName, interactiveListClassName } from "@zazaru/ui";
 import type React from "react";
 import { useEffect, useRef } from "react";
-import { interactiveItemClassName, interactiveListClassName } from "@/shared/ui/kit";
 import "./ContextMenu.css";
 
 export interface MenuItem {

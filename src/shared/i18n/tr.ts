@@ -351,7 +351,7 @@ export const tr: Partial<Translations> = {
   zoomDefaultDesc: "Ctrl+0 tuşlarına basıldığında yakınlaştırma düzeyi",
   terminalShell: "Terminal Kabuğu",
   appName: "OpenVibe Masaüstü",
-  appVersion: "v1.3.8",
+  appVersion: "v1.3.9",
   shell: "Kabuk",
   langRussian: "Rusça",
   langEnglish: "İngilizce",

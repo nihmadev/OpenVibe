@@ -352,7 +352,7 @@ export const de: Partial<Translations> = {
   zoomDefaultDesc: "Zoomstufe beim Drücken von Strg+0",
   terminalShell: "Terminal-Shell",
   appName: "OpenVibe-Desktop",
-  appVersion: "v1.3.8",
+  appVersion: "v1.3.9",
   shell: "Hülse",
   langRussian: "Russisch",
   langEnglish: "Englisch",
