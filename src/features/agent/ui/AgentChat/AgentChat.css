@@ -406,6 +406,144 @@
   padding: var(--space-2) var(--space-1) var(--space-4);
 }
 
+/* Compact turn navigator. It stays quiet until a line is hovered or focused. */
+.chat-history-rail {
+  position: absolute;
+  z-index: 12;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  padding: var(--space-5) 0 var(--space-5) 8px;
+}
+
+.chat-history-rail__track {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--line-strong);
+  opacity: 0.5;
+}
+
+.chat-history-rail__items {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.chat-history-rail__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.chat-history-rail__marker {
+  display: flex;
+  align-items: center;
+  width: 44px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.chat-history-rail__line {
+  display: block;
+  width: 6px;
+  height: 1px;
+  border-radius: 1px;
+  background: var(--fg-muted);
+  opacity: 0.72;
+  transform-origin: left center;
+  transition:
+    width 220ms var(--ease-out),
+    opacity 220ms ease,
+    background-color 220ms ease;
+}
+
+.chat-history-rail:hover .chat-history-rail__line {
+  width: max(8px, calc(28px - var(--history-line-step, 0) * 4px));
+  opacity: 0.62;
+}
+
+.chat-history-rail .chat-history-rail__item--active .chat-history-rail__line {
+  opacity: 1;
+  background: var(--fg);
+}
+
+.chat-history-rail__marker:focus-visible {
+  outline: 1px solid var(--fg-muted);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.chat-history-preview {
+  position: absolute;
+  left: 36px;
+  top: 50%;
+  width: clamp(230px, 36vw, 360px);
+  min-width: 0;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg-2);
+  box-shadow: var(--shadow-md);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  animation: chat-history-preview-in 180ms var(--ease-out);
+}
+
+.chat-history-preview__prompt,
+.chat-history-preview__answer {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+}
+
+.chat-history-preview__prompt {
+  color: var(--fg);
+  font-size: var(--text-sm);
+  line-height: 1.35;
+  -webkit-line-clamp: 1;
+}
+
+.chat-history-preview__answer {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  -webkit-line-clamp: 2;
+}
+
+@keyframes chat-history-preview-in {
+  from {
+    opacity: 0;
+    transform: translate(-5px, -50%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-history-rail__line {
+    transition: none;
+  }
+
+  .chat-history-preview {
+    animation: none;
+  }
+}
+
 .scroll-down-btn {
   position: absolute;
   bottom: 24px;
@@ -720,10 +858,8 @@
   transform: rotate(-90deg);
 }
 
-/* ═══ Run flow (linear, OpenCode style) ════════════════════════════════════
-   The whole turn reads top-to-bottom as a plain chat flow: ghost-text
-   thinking, compact tool rows, folded "Analysis" groups for research bursts,
-   and inline narration between the steps. */
+/* ═══ Agent activity flow ══════════════════════════════════════════════════
+   Model-authored action headings lead expandable, subdued tool details. */
 .agent-flow {
   display: flex;
   flex-direction: column;
@@ -870,10 +1006,11 @@
 .flow-analysis__head {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   max-width: 100%;
   min-width: 0;
-  padding: var(--space-1) 0;
+  min-height: 22px;
+  padding: 0;
   border: 0;
   background: transparent;
   font: inherit;
@@ -883,21 +1020,35 @@
   text-align: left;
 }
 
-.flow-analysis__title {
-  flex-shrink: 0;
-  color: var(--fg);
+.flow-analysis__head:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
 }
 
-/* Counts read slightly dimmer than the "Analysis" label so the kinds
-   (reads, searches…) are visually secondary — but a touch brighter than
-   plain --fg-dim to stay comfortably readable. */
-.flow-analysis__counts {
-  flex: 0 1 auto;
-  min-width: 0;
+.flow-analysis__icon {
+  display: inline-flex;
+  width: 18px;
+  height: 20px;
+  flex: 0 0 18px;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-muted);
+}
+
+.flow-analysis__icon .tool-glyph,
+.flow-analysis__icon .tool-glyph svg {
+  width: 16px;
+  height: 16px;
+}
+
+.flow-analysis__title {
+  flex-shrink: 0;
+  color: var(--fg-dim);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: color-mix(in srgb, var(--fg-dim) 40%, var(--fg));
+  font-weight: 400;
 }
 
 .flow-analysis__title--active {
@@ -923,21 +1074,48 @@
   flex-shrink: 0;
   color: var(--fg-muted);
   opacity: 0;
-  transition: opacity var(--duration-fast) ease;
+  transform: translateX(-2px);
+  transition:
+    color var(--duration-fast) ease,
+    opacity var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
 }
 
 .flow-analysis__head:hover .flow-analysis__chevron,
 .flow-analysis__head:focus-visible .flow-analysis__chevron,
 .flow-analysis--open .flow-analysis__chevron {
-  opacity: 1;
+  opacity: 0.8;
+  transform: translateX(0);
 }
 
 .flow-analysis__body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 0;
   margin-top: var(--space-1);
-  padding-left: var(--space-1);
+  max-height: 14rem;
+  padding-left: 26px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  mask-image: linear-gradient(to bottom, transparent, black 10px, black calc(100% - 10px), transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-run__time--active,
+  .flow-analysis__title--active,
+  .tool--pending .tool__verb {
+    animation: none;
+    -webkit-text-fill-color: currentColor;
+  }
+}
+
+.flow-analysis__body .tool {
+  opacity: 0.72;
+}
+
+.flow-analysis__body .tool:hover,
+.flow-analysis__body .tool:focus-within {
+  opacity: 1;
 }
 
 /* ── Narration between steps ── */

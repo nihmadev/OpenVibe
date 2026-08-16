@@ -29,6 +29,15 @@
   gap: var(--space-1);
 }
 
+.ftree__actions .z-icon-button--compact {
+  width: auto;
+  height: auto;
+  min-width: unset;
+  min-height: unset;
+  padding: var(--space-2);
+  border-radius: var(--interactive-item-radius);
+}
+
 .ftree__body {
   flex: 1;
   overflow-y: auto;

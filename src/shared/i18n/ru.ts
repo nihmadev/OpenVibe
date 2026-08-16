@@ -531,6 +531,15 @@ export const ru = {
   activityGroupGit: "операции Git",
   activityGroupExternal: "внешние инструменты",
   activityGroupTools: "действия",
+  activitySummaryRead: "прочитал файлы",
+  activitySummaryEdit: "отредактировал файлы",
+  activitySummaryCommand: "выполнил команды",
+  activitySummaryGit: "проверил Git",
+  activitySummaryWeb: "выполнил поиск в интернете",
+  activitySummaryAgent: "исследовал задачу",
+  activitySummaryExternal: "использовал внешние инструменты",
+  activitySummaryTools: "выполнил действия",
+  activitySummaryAnd: "и",
 
   // Group labels with count (accordion headers)
   activityGroupSearchN_one: "Поиск — {count} запрос",

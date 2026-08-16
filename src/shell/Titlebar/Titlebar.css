@@ -35,7 +35,7 @@
 .titlebar__right {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: var(--space-1);
   -webkit-app-region: no-drag;
   justify-content: flex-end;
   flex: 1;
@@ -45,7 +45,7 @@
 .titlebar__nav-group {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: var(--space-1);
   margin-left: 0;
 }
 
@@ -56,6 +56,10 @@
   height: 30px;
   min-width: 30px;
   min-height: 30px;
+  border-radius: var(--radius-sm);
+  transition:
+    background var(--duration-fast) ease,
+    color var(--duration-fast) ease;
 }
 
 .titlebar__action-btn > svg {
@@ -67,11 +71,11 @@
 
 .titlebar__action-btn--active {
   color: var(--fg);
-  background: color-mix(in srgb, var(--fg) 5%, transparent);
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
 }
 
 .titlebar__action-btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
 }
 
 .titlebar__action-btn--hiding {
@@ -210,6 +214,7 @@
   border-radius: 50%;
   z-index: 2;
   pointer-events: none;
+  box-shadow: 0 0 0 2px var(--bg);
   transition: transform var(--duration-fast) var(--ease-standard);
 }
 
@@ -226,17 +231,23 @@
 
 .titlebar__mcp-dot--green {
   background-color: var(--color-success);
-  box-shadow: 0 0 5px color-mix(in srgb, var(--color-success) 40%, transparent);
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 5px color-mix(in srgb, var(--color-success) 45%, transparent);
 }
 
 .titlebar__mcp-dot--yellow {
   background-color: var(--color-warning);
-  box-shadow: 0 0 5px color-mix(in srgb, var(--color-warning) 40%, transparent);
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 5px color-mix(in srgb, var(--color-warning) 45%, transparent);
 }
 
 .titlebar__mcp-dot--red {
   background-color: var(--color-error);
-  box-shadow: 0 0 5px color-mix(in srgb, var(--color-error) 40%, transparent);
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 5px color-mix(in srgb, var(--color-error) 45%, transparent);
 }
 
 @keyframes mcp-spin {
@@ -246,10 +257,11 @@
 }
 
 .titlebar__mcp-dot--starting {
-  background-color: transparent;
+  background-color: var(--bg);
   border: 1.5px solid var(--line-strong);
   border-top-color: var(--fg);
   box-sizing: border-box;
+  box-shadow: 0 0 0 2px var(--bg);
   animation: mcp-spin 1s linear infinite;
 }
 

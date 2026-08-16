@@ -1,10 +1,17 @@
-import { Input, List, ListGroup, ListItem } from "@zazaru/ui";
+import { Input } from "@zazaru/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { modelsGateway, providersGateway } from "@/features/providers/infrastructure/providersGateway";
 import type { Provider } from "@/features/providers/model/provider";
 import { getProviderIconPath, PROVIDER_TEMPLATES } from "@/features/providers/model/providerTemplates";
 import { useI18n } from "@/shared/i18n/useI18n";
-import { AttachPlusIcon, CheckIcon, ChevronDownIcon, FilterIcon, SearchMiniIcon } from "@/shared/icons/icons";
+import {
+  AttachPlusIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  FilterIcon,
+  SearchMiniIcon,
+} from "@/shared/icons/icons";
 import { useTheme } from "@/shared/themes/useTheme";
 
 interface ModelEntry {
@@ -253,7 +260,7 @@ export function ModelSelector({ currentModel, onPickModel, onOpenSettings }: Mod
             ) : filtered.length === 0 ? (
               <div className="model-selector__empty">{search ? t("noModelsFound") : t("noModelsEnabled")}</div>
             ) : (
-              <List>
+              <div className="model-selector__table">
                 {filtered.map((group) => {
                   const isCollapsed = !!collapsedGroups[group.providerDbId];
                   const tmpl = PROVIDER_TEMPLATES.find((t) => t.id === group.providerId);
@@ -266,30 +273,37 @@ export function ModelSelector({ currentModel, onPickModel, onOpenSettings }: Mod
                   ) : undefined;
 
                   return (
-                    <ListGroup
-                      key={group.providerDbId}
-                      title={group.providerName}
-                      icon={groupIcon}
-                      expanded={!isCollapsed}
-                      onToggle={() => toggleGroupCollapse(group.providerDbId)}
-                    >
-                      {group.models.map((m) => (
-                        <ListItem
-                          key={`${group.providerDbId}::${m.id}`}
-                          active={m.id === currentModel}
-                          onClick={() => {
-                            onPickModel(m.id, group.providerDbId);
-                            setOpen(false);
-                          }}
-                          rightIcon={m.id === currentModel ? <CheckIcon /> : undefined}
-                        >
-                          {m.name}
-                        </ListItem>
-                      ))}
-                    </ListGroup>
+                    <div key={group.providerDbId} className="model-selector__group">
+                      <div
+                        className="model-selector__group-name"
+                        onClick={() => toggleGroupCollapse(group.providerDbId)}
+                      >
+                        <ChevronRightIcon open={!isCollapsed} />
+                        {groupIcon && <span className="model-selector__group-icon">{groupIcon}</span>}
+                        <span>{group.providerName}</span>
+                      </div>
+                      <div
+                        className={`model-selector__models ${isCollapsed ? "model-selector__models--collapsed" : ""}`}
+                      >
+                        {group.models.map((m) => (
+                          <button
+                            key={`${group.providerDbId}::${m.id}`}
+                            type="button"
+                            className={`model-selector__item${m.id === currentModel ? " model-selector__item--active" : ""}`}
+                            onClick={() => {
+                              onPickModel(m.id, group.providerDbId);
+                              setOpen(false);
+                            }}
+                          >
+                            <span className="model-selector__item-name">{m.name}</span>
+                            {m.id === currentModel && <CheckIcon />}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   );
                 })}
-              </List>
+              </div>
             )}
           </div>
         </div>

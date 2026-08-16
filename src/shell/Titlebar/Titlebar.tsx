@@ -383,7 +383,27 @@ export function Titlebar({
                 onContextMenu={(e) => onBtnCtx(e, "servers")}
                 aria-label="Servers"
               >
-                <ServerIcon size={15} />
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <mask id="titlebar-server-mask">
+                    <rect width="24" height="24" fill="white" />
+                    <circle cx="22.5" cy="2.5" r="7" fill="black" />
+                  </mask>
+                  <g mask="url(#titlebar-server-mask)">
+                    <rect width="20" height="8" x="2" y="2" rx="2" ry="2" />
+                    <rect width="20" height="8" x="2" y="14" rx="2" ry="2" />
+                    <line x1="6" x2="6.01" y1="6" y2="6" />
+                    <line x1="6" x2="6.01" y1="18" y2="18" />
+                  </g>
+                </svg>
 
                 <span className={`titlebar__mcp-badge ${getGlobalDotClass(mcpServers, lspServers)}`} />
               </button>

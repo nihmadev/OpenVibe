@@ -34,6 +34,17 @@ describe("recordToItems", () => {
     expect(recordToItems(record)).toEqual([]);
   });
 
+  it("hides internal work-title protocol retries", () => {
+    const record: ChatRecord = {
+      id: "1",
+      title: "test",
+      createdAt: 0,
+      updatedAt: 0,
+      messages: [{ role: "user", content: "[work-title-protocol-error] retry with a title" }],
+    };
+    expect(recordToItems(record)).toEqual([]);
+  });
+
   it("converts a user message with string content", () => {
     const record: ChatRecord = {
       id: "1",

@@ -66,7 +66,11 @@ export function recordToItems(record: ChatRecord): HistoryItem[] {
       // Backend injects compaction summaries as user-role messages marked
       // with [context-compacted]. They are model-facing context, not user
       // input — skip them in the visible history.
-      if (text.startsWith("[context-compacted]") || text.startsWith("[earlier conversation trimmed")) {
+      if (
+        text.startsWith("[context-compacted]") ||
+        text.startsWith("[earlier conversation trimmed") ||
+        text.startsWith("[work-title-protocol-error]")
+      ) {
         continue;
       }
       out.push({

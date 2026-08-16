@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  activitySummaryLabel,
   buildChatEntries,
   buildRunTimeline,
   countRunActions,
@@ -109,6 +110,24 @@ describe("agent run presentation", () => {
   it("labels a group with its kind and call count", () => {
     expect(toolActivityGroupLabel("read", 3, t)).toBe("Reading 3 files");
     expect(toolActivityGroupLabel("git", 1, t)).toBe("Git operations");
+  });
+
+  it("summarizes tool activity in first-seen order without duplicates", () => {
+    const translate = (key: string) =>
+      ({
+        activitySummaryRead: "read files",
+        activitySummaryCommand: "ran commands",
+        activitySummaryWeb: "searched the web",
+        activitySummaryAnd: "and",
+      })[key] ?? key;
+    const nodes = buildRunTimeline([
+      item({ id: "read-1", kind: "tool", toolName: "read_file" }),
+      item({ id: "read-2", kind: "tool", toolName: "grep_search" }),
+      item({ id: "run", kind: "tool", toolName: "run" }),
+      item({ id: "web", kind: "tool", toolName: "web_search" }),
+    ]);
+
+    expect(activitySummaryLabel(nodes, translate)).toBe("Read files, ran commands and searched the web");
   });
 
   it("lays the run out as one chronological flow, grouping research bursts", () => {

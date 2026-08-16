@@ -337,6 +337,46 @@ export function analysisKindCounts(tools: RunFlowTool[]): [ToolActivityKind, num
   return [...counts.entries()];
 }
 
+const ACTIVITY_SUMMARY_LABELS: Partial<Record<ToolActivityKind, string>> = {
+  browse: "activitySummaryRead",
+  read: "activitySummaryRead",
+  search: "activitySummaryRead",
+  edit: "activitySummaryEdit",
+  command: "activitySummaryCommand",
+  git: "activitySummaryGit",
+  web: "activitySummaryWeb",
+  agent: "activitySummaryAgent",
+  external: "activitySummaryExternal",
+  tool: "activitySummaryTools",
+};
+
+/** A compact, ordered summary of the tools used in a run. */
+export function activitySummaryLabel(nodes: RunTimelineNode[], t: Translate): string | null {
+  const labels: string[] = [];
+  const seen = new Set<string>();
+
+  const addKind = (kind: ToolActivityKind) => {
+    const key = ACTIVITY_SUMMARY_LABELS[kind];
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    labels.push(t(key));
+  };
+
+  for (const node of nodes) {
+    if (node.type === "tool") addKind(node.kind);
+    if (node.type === "analysis") {
+      for (const tool of node.tools) addKind(tool.kind);
+    }
+  }
+
+  if (labels.length === 0) return null;
+  const [first, ...rest] = labels;
+  const leading = first.charAt(0).toLocaleUpperCase() + first.slice(1);
+  if (rest.length === 0) return leading;
+  if (rest.length === 1) return `${leading} ${t("activitySummaryAnd")} ${rest[0]}`;
+  return `${leading}, ${rest.slice(0, -1).join(", ")} ${t("activitySummaryAnd")} ${rest.at(-1)}`;
+}
+
 export function getRunTiming(
   items: HistoryItem[],
   allItems?: HistoryItem[],

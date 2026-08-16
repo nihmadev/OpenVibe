@@ -433,6 +433,15 @@ export const en: Partial<Translations> = {
   activityGroupGit: "Git operations",
   activityGroupExternal: "external tools",
   activityGroupTools: "actions",
+  activitySummaryRead: "read files",
+  activitySummaryEdit: "edited files",
+  activitySummaryCommand: "ran commands",
+  activitySummaryGit: "checked Git",
+  activitySummaryWeb: "searched the web",
+  activitySummaryAgent: "investigated the task",
+  activitySummaryExternal: "used external tools",
+  activitySummaryTools: "used tools",
+  activitySummaryAnd: "and",
 
   // Group labels with count (accordion headers)
   activityGroupSearchN_one: "Search — {count} query",

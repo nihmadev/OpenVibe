@@ -176,7 +176,6 @@ function SelectInner<Value extends string | number>(
       </SelectPrimitive.Trigger>
       <SelectPrimitive.Portal container={portalContainer ?? undefined}>
         <SelectPrimitive.Content className={["z-select-content", contentClassName].filter(Boolean).join(" ")} position="popper" sideOffset={4} collisionPadding={8} avoidCollisions>
-          <SelectPrimitive.ScrollUpButton className="z-select-scroll">▲</SelectPrimitive.ScrollUpButton>
           <SelectPrimitive.Viewport className="z-select-viewport">
             {groups.map((group, groupIndex) => (
               <SelectPrimitive.Group key={`${group.label ?? "ungrouped"}-${groupIndex}`}>
@@ -199,7 +198,6 @@ function SelectInner<Value extends string | number>(
               </SelectPrimitive.Group>
             ))}
           </SelectPrimitive.Viewport>
-          <SelectPrimitive.ScrollDownButton className="z-select-scroll">▼</SelectPrimitive.ScrollDownButton>
         </SelectPrimitive.Content>
       </SelectPrimitive.Portal>
     </SelectPrimitive.Root>

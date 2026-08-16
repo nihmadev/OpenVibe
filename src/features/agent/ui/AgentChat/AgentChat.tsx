@@ -10,6 +10,7 @@ import { CheckStrokeIcon } from "@/shared/icons/icons";
 import { Tooltip } from "@/shared/ui/Tooltip/Tooltip";
 import { buildChatEntries } from "../../model/agentRun";
 import { AgentRun } from "./components/AgentRun";
+import { ChatHistoryRail } from "./components/ChatHistoryRail";
 import { ErrorNotice } from "./components/ErrorNotice";
 import { UserMessageActions } from "./components/UserMessageActions";
 import { UserMessageContent } from "./components/UserMessageContent";
@@ -206,6 +207,17 @@ export function AgentChat({
     scrollRafRef.current = requestAnimationFrame(animateScroll);
   }, [handleScroll]);
 
+  const navigateToMessage = useCallback((id: string) => {
+    const el = ref.current;
+    if (!el) return;
+    const target = Array.from(el.querySelectorAll<HTMLElement>("[data-chat-entry-id]")).find(
+      (node) => node.dataset.chatEntryId === id,
+    );
+    if (!target) return;
+    shouldFollowBottomRef.current = false;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
   const handleAnimationEnd = useCallback((e: React.AnimationEvent<HTMLButtonElement>) => {
     if (e.target === e.currentTarget && !scrollRafRef.current) {
       setIsJumping(false);
@@ -249,6 +261,7 @@ export function AgentChat({
 
   return (
     <div className="chathistory-wrapper">
+      <ChatHistoryRail entries={chatEntries} onNavigate={navigateToMessage} />
       <div
         className="chathistory-container"
         ref={ref}
@@ -259,22 +272,27 @@ export function AgentChat({
         {chatEntries.map((entry) => {
           if (entry.kind === "run") {
             return (
-              <AgentRun
-                key={entry.id}
-                items={entry.items}
-                finalItem={entry.finalItem}
-                allItems={items}
-                isActive={!!busy && entry.id === lastRunId}
-                isFinalStreaming={entry.finalItem?.id === streamingId}
-                showThinking={showThinking}
-                cwd={cwd}
-                onRegenerate={onRegenerate}
-                onDrillDown={onDrillDown}
-                onOpenAgentDiff={onOpenAgentDiff}
-              />
+              <div key={entry.id} data-chat-entry-id={entry.id}>
+                <AgentRun
+                  items={entry.items}
+                  finalItem={entry.finalItem}
+                  allItems={items}
+                  isActive={!!busy && entry.id === lastRunId}
+                  isFinalStreaming={entry.finalItem?.id === streamingId}
+                  showThinking={showThinking}
+                  cwd={cwd}
+                  onRegenerate={onRegenerate}
+                  onDrillDown={onDrillDown}
+                  onOpenAgentDiff={onOpenAgentDiff}
+                />
+              </div>
             );
           }
-          return <StandaloneItem key={entry.item.id} item={entry.item} onPickModel={onPickModel} onRevert={onRevert} />;
+          return (
+            <div key={entry.item.id} data-chat-entry-id={entry.item.id}>
+              <StandaloneItem item={entry.item} onPickModel={onPickModel} onRevert={onRevert} />
+            </div>
+          );
         })}
 
         {busy && !lastRunId && (
