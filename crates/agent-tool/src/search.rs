@@ -228,43 +228,7 @@ pub async fn tool_search_codebase(cwd: &str, args: &serde_json::Value) -> Result
         return Ok(format_scan_output(query, &regex_outcome, None));
     }
 
-    // Semantic fallback ONLY when its index is already available. Building
-    // the index synchronously here (embedding the whole repo + a one-time
-    // model download) stalls a routine "no results" search for minutes and
-    // makes the agent look frozen. Instead, kick off a background build so
-    // a later semantic query can use it, and answer literally now.
-    if !search::vector_search::has_index(&resolved_root) {
-        search::vector_search::ensure_index_background(&resolved_root);
-        return Ok(format!("No results found for '{query}'"));
-    }
-
-    let vec_root = resolved_root.clone();
-    let vec_query = query.to_string();
-    let additional = tokio::task::spawn_blocking(move || -> Vec<String> {
-        match search::vector_search::search_codebase_vector(&vec_query, &vec_root, 30) {
-            Ok(results) => results
-                .into_iter()
-                .map(|r| {
-                    format!(
-                        "{}:{}: {} [score={:.3}]",
-                        r.path, r.line, r.content, r.score
-                    )
-                })
-                .collect(),
-            Err(e) => {
-                eprintln!("Vector search error: {e}");
-                Vec::new()
-            }
-        }
-    })
-    .await
-    .map_err(|e| format!("Vector search failed: {e}"))?;
-
-    if additional.is_empty() {
-        return Ok(format!("No results found for '{query}'"));
-    }
-
-    Ok(clip(&additional.join("\n"), MAX_OUTPUT_CHARS))
+    Ok(format!("No results found for '{query}'"))
 }
 
 #[cfg(test)]

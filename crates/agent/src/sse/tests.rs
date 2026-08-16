@@ -288,6 +288,20 @@ fn native_reasoning_then_content_ends_reasoning_without_tag_confusion() {
 }
 
 #[test]
+fn native_reasoning_extracts_work_title_protocol() {
+    let turn = decode_chunks(&[
+        b"data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"<thought name=\\\"Refine file tree interactions\\\">inspect code</thought>\",\"content\":\"answer\"}}]}\n\n",
+    ])
+    .unwrap();
+    assert_eq!(
+        turn.reasoning_name.as_deref(),
+        Some("Refine file tree interactions")
+    );
+    assert_eq!(turn.reasoning_content.as_deref(), Some("inspect code"));
+    assert_eq!(turn.content, "answer");
+}
+
+#[test]
 fn null_openai_reasoning_delta_is_ignored() {
     let turn = decode_chunks(&[
         b"data: {\"choices\":[{\"delta\":{\"reasoning\":null,\"reasoning_content\":null,\"content\":\"answer\"}}]}\n\n",

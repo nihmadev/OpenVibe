@@ -5,6 +5,61 @@ All notable changes to OpenVibe will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.9](https://github.com/nihmadev/OpenVibe/compare/v1.3.8...v1.3.9) (2026-08-16)
+
+This release introduces the dedicated Zazaru UI component library, adds real-time SSE streaming metrics and a linear execution flow with grouped thinking/analysis stages for the agent, delivers resilient token-aware compaction and dual prompt cache breakpoints, redesigns the Git repository panel and commit graph, and optimizes background search indexing.
+
+### Added
+
+- **Zazaru UI Component Library**
+  - Extracted shared interface foundations into standalone packages (`@zazaru/core` and `@zazaru/ui`) with built-in accessibility, design tokens, and recipes.
+  - Implemented core components including `Button`, `IconButton`, `Input`, `NumberInput`, `Select`, `Toggle`, `List`, `InteractiveList`, `Surface`, `Overlays`, `Forms`, `Feedback`, `Navigation`, and `Field`.
+  - Added comprehensive test suites, component stories, visual test configs, and multi-theme support (Dark, Light, High Contrast).
+  - Migrated application surfaces (settings, chats, file tree, search, git, onboarding, terminal, modals) to use `@zazaru/ui`.
+
+- **Agent SSE Streaming Pipeline & Linear Flow**
+  - Added native provider SSE streaming pipeline with token/timing metrics, stream progress events, and instant first-paint response streaming.
+  - Redesigned agent run execution and UI into linear flows with collapsible thinking stages, dedicated analysis groups, and clearer narration.
+  - Added inline previews for image and document attachments in prompt inputs and message history.
+
+- **Resilience, Cache Breakpoints & Context Optimization**
+  - Added token-aware history compaction to preserve context stability and prompt cache efficiency under heavy multi-turn sessions.
+  - Implemented dual cache breakpoints (system instructions + conversation history) for Anthropic and compatible LLM proxies.
+  - Added graceful handling for truncated model outputs and turn-limit exhaustion with recovery suggestions.
+  - Replaced legacy code-graph indexing with a lightweight, real-time project tree builder (`project_tree.rs`) and robust working directory synchronization.
+
+- **Git Repository Panel & Commit Graph**
+  - Redesigned the Git panel with a visual commit graph, author and branch metadata, and interactive commit tooltips.
+  - Improved branch switching modal, staged/unstaged file groupings, and status refresh triggers.
+
+- **Sliceable & Hint-Guided Agent Tools**
+  - Added sliceable file reading (`read` tool) with bounded line ranges and offsets for large files.
+  - Added near-miss edit suggestions and fuzzy patch matching hints in the `edit` tool.
+  - Added item-limit capping for directory listings (`list_dir`).
+
+### Improved
+
+- **Search & Background Vector Indexing**
+  - Spooled vector index construction into the background to keep code search responsive and prevent UI blocking.
+  - Fixed search re-querying so results update dynamically whenever active search filters change.
+
+- **Modular Icon System**
+  - Split monolithic icon assets into domain-specific modules (`git-icons`, `common-icons`, `action-icons`, `navigation-icons`, `session-icons`, `prompt-icons`, `search-icons`, `settings-icons`, `status-icons`, `terminal-icons`, `window-controls-icons`, and `ToolGlyph`).
+
+- **Settings, Titlebar & MCP Integration**
+  - Redesigned settings navigation, provider configuration modals, and MCP status indicators in the titlebar.
+  - Refined scrollbar styling across all views and unified navigation lists.
+
+- **Localization & Assets**
+  - Synchronized translations across 36 languages with new agent linear flow strings and tool glyphs.
+  - Refreshed desktop and mobile app icon assets across all resolution targets and updated README preview media.
+
+### Changed
+
+- Migrated internal UI kit from legacy shared components to `@zazaru/ui` package architecture.
+- Removed deprecated `scg2` AST graph engine in favor of streamlined project tree context and live search.
+- Bumped application and package versions to `1.3.9`.
+
 ## [1.3.8](https://github.com/nihmadev/OpenVibe/compare/v1.3.7...v1.3.8) (2026-08-02)
 
 This release gives agent edits a reviewable lifecycle, improves streaming responsiveness and prompt assistance, and reorganizes the frontend into feature-oriented modules with shared infrastructure.

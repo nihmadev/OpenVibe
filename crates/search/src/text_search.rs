@@ -113,51 +113,7 @@ pub async fn search_content_with_vector(
     root: &str,
     max_results: usize,
 ) -> Result<String, String> {
-    let content_result = search_content(cwd, query, root, max_results).await?;
-
-    if content_result != "(no matches)" {
-        return Ok(content_result);
-    }
-
-    let is_regex = regex::Regex::new(&format!("(?i){}", query)).is_ok();
-    if is_regex {
-        return Ok("(no matches)".to_string());
-    }
-
-    let vec_root = resolve_path(cwd, root);
-    // Never build the vector index synchronously on this path: the first
-    // build embeds the entire repo (plus a one-time model download) and can
-    // block for minutes. Warm it in the background and answer now.
-    if !crate::vector_search::has_index(&vec_root) {
-        crate::vector_search::ensure_index_background(&vec_root);
-        return Ok("(no matches)".to_string());
-    }
-    let vec_query = query.to_string();
-    let additional = tokio::task::spawn_blocking(move || -> Vec<String> {
-        match crate::vector_search::search_codebase_vector(&vec_query, &vec_root, max_results) {
-            Ok(results) => results
-                .into_iter()
-                .map(|r| {
-                    format!(
-                        "{}:{}: {} [score={:.3}]",
-                        r.path, r.line, r.content, r.score
-                    )
-                })
-                .collect(),
-            Err(e) => {
-                eprintln!("Vector search error: {e}");
-                Vec::new()
-            }
-        }
-    })
-    .await
-    .map_err(|e| format!("Vector search failed: {e}"))?;
-
-    if additional.is_empty() {
-        return Ok("(no matches)".to_string());
-    }
-
-    Ok(clip(&additional.join("\n"), MAX_OUTPUT_CHARS))
+    search_content(cwd, query, root, max_results).await
 }
 #[allow(clippy::too_many_arguments)]
 pub async fn search_content_structured(

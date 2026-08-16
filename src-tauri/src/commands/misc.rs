@@ -89,7 +89,7 @@ pub fn window_maximize(app_handle: tauri::AppHandle) -> Result<(), String> {
 #[tauri::command]
 pub fn window_close(app_handle: tauri::AppHandle) -> Result<(), String> {
     if let Some(window) = app_handle.get_webview_window("main") {
-        window.close().map_err(|e| e.to_string())?;
+        window.hide().map_err(|e| e.to_string())?;
     }
     Ok(())
 }

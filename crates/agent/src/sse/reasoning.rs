@@ -29,6 +29,27 @@ impl ReasoningParser {
         input.push_str(text);
         let mut rest = input.as_str();
         while !rest.is_empty() {
+            // Native reasoning channels may still follow OpenVibe's named
+            // thought protocol. Extract the transport tag instead of leaking
+            // it into the stored reasoning text.
+            if api_reasoning && !self.in_tag {
+                if let Some((position, length)) = find_tag(rest, false) {
+                    let tag = &rest[position..position + length];
+                    if let Some(name) = extract_name(tag) {
+                        push_reasoning(&rest[..position], reasoning, callbacks);
+                        *reasoning_name = Some(name.to_string());
+                        (callbacks.on_reasoning_name)(name);
+                        self.in_tag = true;
+                        rest = &rest[position + length..];
+                        continue;
+                    }
+                }
+                if let Some(position) = partial_tag_start(rest, false) {
+                    push_reasoning(&rest[..position], reasoning, callbacks);
+                    self.pending.push_str(&rest[position..]);
+                    break;
+                }
+            }
             if self.in_tag || api_reasoning {
                 if let Some((position, length)) = find_tag(rest, true) {
                     push_reasoning(&rest[..position], reasoning, callbacks);

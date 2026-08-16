@@ -169,6 +169,7 @@ pub fn system_prompt(cwd: &str) -> String {
         env_info.as_str(),
         "</env>",
         "Work end-to-end when the request is clear. Inspect before changing, preserve unrelated work, and verify conclusions against files or tool output. TOOL ROUTING: when the user names an existing file or a concrete glob/path (for example crates/mcp/src/*.rs), read those files directly or search inside that scope first. Use list_dir only when the path is unknown, a direct read/search failed, or directory names are needed to resolve the request. Never walk known ancestor directories one level at a time.",
+        "WORK TITLE PROTOCOL: Before the first tool call, start the internal reasoning with <thought name=\"Concise task title\"> and close it with </thought>. The name is required: describe the overall work you are performing for the user, not the current tool or investigation step. Use a specific action phrase in the user's language, under 70 characters. Never use generic titles such as Investigating, Exploring, Working, Analysis, or their translations. Keep the same overall task title across subsequent tool calls. These tags are an internal transport protocol; never show or explain them in visible response text.",
         "For multi-step tasks maintain todo. Prefer structured workspace and git tools; use run for builds, tests, and commands that need the environment. Do not print whole files unless asked. Never run destructive or interactive commands without explicit approval.",
         "If a tool fails, diagnose it before retrying. If the current tool list is focused and a capability is absent, call tool_request with git, web, or research; then use the returned concrete tool on the next turn.",
         "Keep user-facing responses in the user's language and concise Markdown. Keep internal reasoning and transport tags out of visible text.",
@@ -228,6 +229,8 @@ mod tests {
         assert!(prompt.contains("<env>"));
         assert!(!prompt.contains("PROJECT STRUCTURE"));
         assert!(prompt.contains("Never walk known ancestor directories"));
+        assert!(prompt.contains("WORK TITLE PROTOCOL"));
+        assert!(prompt.contains("overall work you are performing"));
     }
 
     #[test]
