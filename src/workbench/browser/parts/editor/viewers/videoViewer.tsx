@@ -1,6 +1,7 @@
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  CheckIcon,
   FullscreenIcon,
   PauseIcon,
   PlayIcon,
@@ -8,6 +9,7 @@ import {
   VolumeLowIcon,
   VolumeMutedIcon,
 } from "@/base/browser/ui/icons/iconRegistry";
+import { Loader } from "@/base/browser/ui/loader/loader";
 import { useI18n } from "@/platform/localization/localizationService";
 import "./videoViewer.css";
 import { fileService } from "@/workbench/services/files/tauri/fileService";
@@ -214,7 +216,11 @@ export function VideoViewer({ path }: Props): React.ReactElement {
   }
 
   if (loading || !dataUrl) {
-    return <div className="video-viewer video-viewer--loading">{t("loading")}</div>;
+    return (
+      <div className="video-viewer video-viewer--loading">
+        <Loader />
+      </div>
+    );
   }
 
   return (
@@ -295,14 +301,17 @@ export function VideoViewer({ path }: Props): React.ReactElement {
                 {playbackRate}x
               </button>
               {showSpeedMenu && (
-                <div className="video-viewer__speed-menu">
+                <div className="video-viewer__speed-menu" role="menu" aria-label={t("videoPlaybackSpeed")}>
                   {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
                     <button
                       key={rate}
                       className={`video-viewer__speed-opt${rate === playbackRate ? " video-viewer__speed-opt--active" : ""}`}
+                      role="menuitemradio"
+                      aria-checked={rate === playbackRate}
                       onClick={() => changeSpeed(rate)}
                     >
-                      {rate}x
+                      <span>{rate}x</span>
+                      <span className="video-viewer__speed-check">{rate === playbackRate && <CheckIcon />}</span>
                     </button>
                   ))}
                 </div>

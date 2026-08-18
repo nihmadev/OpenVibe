@@ -4,6 +4,7 @@ import type React from "react";
 import { useEffect, useMemo, useRef } from "react";
 import ReactDOM from "react-dom";
 import { getLanguage } from "@/base/browser/ui/icons/iconResolver";
+import { Loader } from "@/base/browser/ui/loader/loader";
 import { useI18n } from "@/platform/localization/localizationService";
 import { useTheme } from "@/platform/theme/themeService";
 import type { MonacoLspSession } from "../../../../services/languageServer/browser/monacoLanguageServerClient";
@@ -102,7 +103,12 @@ export function Editor({
       </div>
     );
   }
-  if (document.content === null) return <div className="editor editor--loading">{t("loading")}</div>;
+  if (document.content === null)
+    return (
+      <div className="editor editor--loading">
+        <Loader />
+      </div>
+    );
 
   return (
     <div className="editor">
@@ -118,7 +124,7 @@ export function Editor({
         beforeMount={mount.beforeMount}
         onMount={mount.onMount}
         options={{
-          fontFamily: '"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace',
+          fontFamily: "var(--mono)",
           ...editorSettings,
           minimap: { enabled: false },
           scrollBeyondLastLine: false,

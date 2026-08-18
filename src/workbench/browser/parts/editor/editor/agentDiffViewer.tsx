@@ -2,6 +2,7 @@ import { Button } from "@zazaru/ui";
 import { useEffect, useState } from "react";
 import { CheckIcon, CloseIcon } from "@/base/browser/ui/icons/iconRegistry";
 import { getLanguage } from "@/base/browser/ui/icons/iconResolver";
+import { Loader } from "@/base/browser/ui/loader/loader";
 import { useI18n } from "@/platform/localization/localizationService";
 import type { AgentFileChange } from "@/workbench/services/agent/common/agentFileChanges";
 import { DiffEditor } from "../diffEditor/diffEditor";
@@ -62,7 +63,12 @@ export function AgentDiffViewer({ path }: { path: string }) {
     }
   };
 
-  if (loading) return <div className="editor-area__empty-hint">{t("loadingDiff")}</div>;
+  if (loading)
+    return (
+      <div className="editor-area__empty-hint">
+        <Loader />
+      </div>
+    );
   if (!change) return <div className="agent-diff__error">{error || "File change unavailable"}</div>;
 
   return (

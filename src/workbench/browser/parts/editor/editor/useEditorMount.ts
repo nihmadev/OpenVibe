@@ -58,9 +58,9 @@ export function useEditorMount(options: MountOptions) {
         let model = m.editor.getModel(uri);
         if (!model) model = m.editor.createModel(options.content, getLanguage(options.path), uri);
         editor.setModel(model);
-        MODEL_CACHE.set(options.path, { model, originalContent: options.original });
+        MODEL_CACHE.set(options.path, { model, originalContent: options.original, workspace: options.cwd });
         if (options.cwd) void loadTypeDefinitions(m, options.cwd);
-        void preloadLocalImports(m, options.content, options.path);
+        void preloadLocalImports(m, options.content, options.path, options.cwd);
 
         editor.onDidChangeModelContent(() => {
           if (!options.loadingRef.current) options.setContent(editor.getValue());

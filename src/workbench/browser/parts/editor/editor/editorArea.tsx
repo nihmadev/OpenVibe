@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { FileIcon, FolderIcon } from "@/base/browser/ui/icons/iconRegistry";
 import { basename } from "@/base/common/paths";
 import { useI18n } from "@/platform/localization/localizationService";
@@ -7,6 +7,7 @@ import { isVideoFile, VideoViewer } from "@/workbench/browser/parts/editor/viewe
 import { AgentDiffViewer } from "./agentDiffViewer";
 import { Editor } from "./editor";
 import { GitDiffViewer } from "./gitDiffViewer";
+import { releaseMonacoWorkspace, setActiveMonacoWorkspace } from "./monacoModels";
 import "./editorArea.css";
 
 interface EditorAreaProps {
@@ -45,6 +46,11 @@ export function EditorArea({
   const { t } = useI18n();
   const breadcrumbRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setActiveMonacoWorkspace(cwd);
+    return () => releaseMonacoWorkspace(cwd);
+  }, [cwd]);
 
   const onWheel = useCallback((e: React.WheelEvent, ref: React.RefObject<HTMLDivElement>) => {
     if (!ref.current) return;

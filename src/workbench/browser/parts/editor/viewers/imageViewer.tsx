@@ -1,5 +1,6 @@
 import type React from "react";
 import { useEffect, useState } from "react";
+import { Loader } from "@/base/browser/ui/loader/loader";
 import { useI18n } from "@/platform/localization/localizationService";
 import "./imageViewer.css";
 import { fileService } from "@/workbench/services/files/tauri/fileService";
@@ -100,7 +101,11 @@ export function ImageViewer({ path }: Props): React.ReactElement {
   }
 
   if (loading) {
-    return <div className="image-viewer image-viewer--loading">{t("loading")}</div>;
+    return (
+      <div className="image-viewer image-viewer--loading">
+        <Loader />
+      </div>
+    );
   }
 
   return (

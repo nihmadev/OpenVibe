@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getLanguage } from "@/base/browser/ui/icons/iconResolver";
+import { Loader } from "@/base/browser/ui/loader/loader";
 import { useI18n } from "@/platform/localization/localizationService";
 import { gitScmService } from "@/workbench/services/scm/tauri/gitScmService";
 import { DiffEditor } from "../diffEditor/diffEditor";
@@ -86,7 +87,11 @@ export function GitDiffViewer({ path, cwd }: GitDiffViewerProps) {
   }, [path, cwd, t]);
 
   if (loading) {
-    return <div className="editor-area__empty-hint">{t("loadingDiff") || "Loading diff..."}</div>;
+    return (
+      <div className="editor-area__empty-hint">
+        <Loader />
+      </div>
+    );
   }
 
   if (error) {

@@ -39,6 +39,11 @@ export function useEditorDocument({
   const dirty = content !== null && content !== original;
 
   useEffect(() => {
+    MODEL_CACHE.pin(path);
+    return () => MODEL_CACHE.unpin(path);
+  }, [path]);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function load() {
@@ -76,7 +81,7 @@ export function useEditorDocument({
 
       if (cancelled) return;
       if (isUsableModel(model)) {
-        MODEL_CACHE.set(path, { model, originalContent: result.content });
+        MODEL_CACHE.set(path, { model, originalContent: result.content, workspace: cwd });
         if (refs.editor.current && refs.editor.current.getModel() !== model) refs.editor.current.setModel(model);
       }
 
@@ -96,7 +101,7 @@ export function useEditorDocument({
 
       if (m && cwd) {
         void loadTypeDefinitions(m, cwd);
-        void preloadLocalImports(m, result.content, path);
+        void preloadLocalImports(m, result.content, path, cwd);
       }
     }
 

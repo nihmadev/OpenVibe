@@ -236,7 +236,10 @@
 }
 
 .video-viewer__speed-opt {
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 12px;
+  align-items: center;
+  gap: var(--space-3);
   width: 100%;
   padding: var(--space-2) var(--space-6);
   border: none;
@@ -245,7 +248,7 @@
   font-size: var(--text-sm);
   cursor: pointer;
   border-radius: var(--radius-xs);
-  text-align: center;
+  text-align: left;
   transition:
     background var(--duration-fast),
     color var(--duration-fast);
@@ -258,5 +261,10 @@
 
 .video-viewer__speed-opt--active {
   color: var(--fg);
-  font-weight: 600;
+}
+
+.video-viewer__speed-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }

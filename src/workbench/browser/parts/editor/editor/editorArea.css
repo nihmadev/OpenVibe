@@ -29,7 +29,7 @@
   flex-shrink: 0;
   min-width: 0;
   height: var(--workspace-panel-toolbar-height, 46px);
-  padding: 0 8px;
+  padding: 0;
   overflow-x: auto;
   overflow-y: hidden;
   background: var(--workspace-panel-surface-secondary, var(--bg-3));
@@ -44,11 +44,11 @@
   flex: 0 0 auto;
   gap: 8px;
   width: min(156px, 34vw);
-  height: 28px;
-  padding: 4px 8px;
+  height: 100%;
+  padding: 4px 12px;
   overflow: hidden;
   border: 0;
-  border-radius: 10px;
+  border-radius: 0;
   background: transparent;
   color: var(--workspace-panel-text-secondary, var(--fg-dim));
   font-size: 13px;
@@ -75,7 +75,8 @@
 
 .editor-area__tab--active {
   color: var(--workspace-panel-text-primary, var(--fg));
-  background: color-mix(in srgb, var(--workspace-panel-text-primary, var(--fg)) 8%, transparent);
+  background: var(--workspace-panel-surface, var(--bg-2));
+  box-shadow: inset 0 -2px var(--accent);
 }
 
 .editor-area__tab-icon {
@@ -103,7 +104,7 @@
   background: transparent;
   color: var(--workspace-panel-text-secondary, var(--fg-dim));
   font-size: 16px;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   cursor: default;
   flex-shrink: 0;
   padding: 0;
@@ -158,7 +159,7 @@
 /* ── Pill tabs ── */
 .theme-tab-pills .editor-area__tabs {
   padding: 0 8px;
-  gap: 0;
+  gap: 4px;
   border-bottom: 0;
   background: var(--workspace-panel-surface-secondary, var(--bg-3));
 }
@@ -167,7 +168,7 @@
   padding: 4px 8px;
   height: 28px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   box-shadow: none;
 }
 
