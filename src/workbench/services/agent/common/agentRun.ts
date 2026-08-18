@@ -322,6 +322,11 @@ function isReadTool(item: HistoryItem): boolean {
   return item.toolName === "read_file" || item.toolName === "view_file";
 }
 
+/** Runtime-only capability negotiation is not part of the user-visible activity trace. */
+export function isInternalToolActivity(item: HistoryItem): boolean {
+  return item.kind === "tool" && item.toolName === "tool_request";
+}
+
 /** Read-only research activities that merge into an "Analysis" group. */
 const ANALYSIS_KINDS: ReadonlySet<ToolActivityKind> = new Set(["read", "search", "browse", "web", "git"]);
 
@@ -338,7 +343,7 @@ export function buildRunTimeline(items: HistoryItem[], finalItemId?: string): Ru
   for (const item of items) {
     if (item.kind === "tool") {
       // Task-list updates are rendered once above the prompt input.
-      if (item.toolName === "todo") continue;
+      if (item.toolName === "todo" || isInternalToolActivity(item)) continue;
       const prev = nodes[nodes.length - 1];
       if (prev && prev.type === "tool" && isReadTool(item)) {
         const prevItem = prev.items[prev.items.length - 1]!;
@@ -527,7 +532,9 @@ export function getRunTiming(
 
 export function countRunActions(items: HistoryItem[], finalItemId?: string): number {
   return items.reduce((count, item) => {
-    if (item.kind === "tool") return item.toolName === "todo" ? count : count + 1;
+    if (item.kind === "tool") {
+      return item.toolName === "todo" || isInternalToolActivity(item) ? count : count + 1;
+    }
     if (item.kind === "assistant" && (hasMeaningfulReasoning(item) || (item.id !== finalItemId && item.text.trim()))) {
       return count + 1;
     }

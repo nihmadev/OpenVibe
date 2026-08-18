@@ -124,6 +124,16 @@ describe("agent run presentation", () => {
     ).toBe(1);
   });
 
+  it("does not render or count internal capability requests", () => {
+    const items = [
+      item({ id: "request", kind: "tool", toolName: "tool_request", toolArgs: { capability: "browser" } }),
+      item({ id: "open", kind: "tool", toolName: "browser_open" }),
+    ];
+
+    expect(buildRunTimeline(items)).toMatchObject([{ type: "browser", items: [{ id: "open" }] }]);
+    expect(countRunActions(items)).toBe(1);
+  });
+
   it("labels a group with its kind and call count", () => {
     expect(toolActivityGroupLabel("read", 3, t)).toBe("Reading 3 files");
     expect(toolActivityGroupLabel("git", 1, t)).toBe("Git operations");
