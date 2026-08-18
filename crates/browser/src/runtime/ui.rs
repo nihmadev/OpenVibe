@@ -12,6 +12,18 @@ impl BrowserManager {
     ) -> Result<BrowserToolResult, String> {
         let started = std::time::Instant::now();
         self.ensure_session(emit).await?;
+        {
+            let state = self.state.lock().await;
+            let session = state
+                .as_ref()
+                .ok_or_else(|| "Browser session did not start".to_string())?;
+            // A prewarmed session was launched with a silent event sink. Emit
+            // before navigation so the workbench reveals the tab immediately.
+            emit(
+                "browser:session-started",
+                json!({"sessionId":session.id,"profile":self.profile_dir}),
+            );
+        }
         if let Some(url) = url {
             self.navigate(url, emit).await?;
         } else {

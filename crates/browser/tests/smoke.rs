@@ -46,6 +46,7 @@ async fn opens_snapshots_clicks_and_types_with_real_chromium() {
             .expect("stale singleton lock");
     }
     let browser = BrowserManager::new(data_dir.path());
+    browser.prewarm().await.expect("prewarm browser");
     browser.mark_skill_read();
     let events = Arc::new(Mutex::new(Vec::<(String, Value)>::new()));
     let stream_events = events.clone();
@@ -66,6 +67,11 @@ async fn opens_snapshots_clicks_and_types_with_real_chromium() {
     };
 
     browser.open(Some(&url), &emit).await.expect("open browser");
+    assert!(events
+        .lock()
+        .expect("events lock")
+        .iter()
+        .any(|(name, _)| name == "browser:session-started"));
     let request_headers = requests.lock().expect("requests lock").join("\n");
     assert!(!request_headers.contains("HeadlessChrome"));
     assert!(request_headers

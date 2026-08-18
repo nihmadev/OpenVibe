@@ -12,6 +12,7 @@ import { initFonts } from "@/platform/theme/fontService";
 import { DesktopApplication, type DesktopContributions } from "@/workbench/browser/desktopApplication";
 import { browserPreviewConfig, isBrowserDevPreview } from "@/workbench/browser/desktopPreview";
 import type { WorkbenchInitializationResult } from "@/workbench/browser/useWorkbenchInitialization";
+import { onBrowserSessionVisibility } from "@/workbench/contrib/browser/browser/browserEventService";
 import { BrowserPane } from "@/workbench/contrib/browser/browser/browserPane";
 import { ChatView } from "@/workbench/contrib/chat/browser/chatView/chatView";
 import { Composer } from "@/workbench/contrib/chat/browser/composer/composer";
@@ -80,6 +81,7 @@ async function initializeWorkbench(): Promise<WorkbenchInitializationResult> {
 }
 
 const desktopContributions: DesktopContributions = {
+  subscribeBrowserSessionVisibility: onBrowserSessionVisibility,
   workbench: {
     ChatView,
     Composer,
