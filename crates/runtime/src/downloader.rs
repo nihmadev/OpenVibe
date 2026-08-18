@@ -38,7 +38,6 @@ pub async fn download_and_extract_tar_gz(url: &str, dest_dir: &Path) -> anyhow::
     Ok(())
 }
 
-#[cfg(target_os = "windows")]
 pub async fn download_and_extract_zip(url: &str, dest_dir: &Path) -> anyhow::Result<()> {
     info!("Downloading {}", url);
     let response = reqwest::get(url).await?;

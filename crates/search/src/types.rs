@@ -10,16 +10,6 @@ pub struct SearchResult {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct FileMatch {
-    pub path: String,
-    pub rel: String,
-    pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub is_dir: Option<bool>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct ContentMatch {
     pub path: String,
     pub rel: String,

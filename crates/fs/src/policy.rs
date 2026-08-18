@@ -1,3 +1,5 @@
+//! Shared workspace traversal and file-size policy.
+
 pub const SKIP_DIRS: &[&str] = &[
     "node_modules",
     ".git",

@@ -1,3 +1,5 @@
+//! Root `.gitignore` handling shared by workspace consumers.
+
 use std::path::Path;
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};

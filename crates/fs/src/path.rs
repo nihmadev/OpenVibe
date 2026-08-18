@@ -9,6 +9,19 @@ pub fn resolve_path(cwd: &str, p: &str) -> String {
     }
 }
 
+pub fn relative_path(path: &Path, base: &Path) -> String {
+    if let Ok(relative) = path.strip_prefix(base) {
+        return relative.to_string_lossy().replace('\\', "/");
+    }
+
+    let path = path.to_string_lossy().replace('\\', "/");
+    let base = base.to_string_lossy().replace('\\', "/");
+    if path.to_lowercase().starts_with(&base.to_lowercase()) {
+        return path[base.len()..].trim_start_matches('/').to_string();
+    }
+    path
+}
+
 pub fn clip(text: &str, max: usize) -> String {
     if text.len() <= max {
         text.to_string()

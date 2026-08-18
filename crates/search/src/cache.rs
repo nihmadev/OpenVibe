@@ -87,15 +87,8 @@ pub async fn ensure_cached(
     }
 
     // Cache miss: run broad search (match_case=false, whole_word=false, no filters)
-    let skip: Vec<String> = crate::config::SKIP_DIRS
-        .iter()
-        .map(|s| s.to_string())
-        .collect();
-
     let root_clone = resolved_root.clone();
     let q = query.to_string();
-    let skip_clone = skip.clone();
-    let gitignore = crate::gitignore_filter::load(std::path::Path::new(&root_clone));
 
     let results = tokio::task::spawn_blocking(move || -> Vec<ContentMatch> {
         let mut results: Vec<ContentMatch> = Vec::new();
@@ -108,49 +101,15 @@ pub async fn ensure_cached(
         let q_lower = q.to_ascii_lowercase();
 
         let root_path = std::path::PathBuf::from(&root_clone);
-        let walk = jwalk::WalkDir::new(&root_path).process_read_dir(
-            move |_depth, _path, _state, children| {
-                children.retain(|entry_result| {
-                    let entry = match entry_result {
-                        Ok(e) => e,
-                        Err(_) => return false,
-                    };
-                    let name = entry.file_name.to_string_lossy().to_string();
-                    if skip_clone.iter().any(|s| s == &name) {
-                        return false;
-                    }
-                    if let Some(ref gi) = gitignore {
-                        if let Ok(rel) = entry.path().strip_prefix(&root_path) {
-                            if crate::gitignore_filter::is_ignored(
-                                gi,
-                                rel,
-                                entry.file_type().is_dir(),
-                            ) {
-                                return false;
-                            }
-                        }
-                    }
-                    true
-                });
-            },
-        );
-        for entry in walk.into_iter() {
+        for path in workspace_fs::walk_files(&root_path, usize::MAX) {
             if results.len() >= CACHE_MAX {
                 break;
             }
-            let entry = match entry {
-                Ok(e) => e,
-                Err(_) => continue,
-            };
-            if !entry.file_type().is_file() {
-                continue;
-            }
-            if let Ok(meta) = entry.metadata() {
+            if let Ok(meta) = path.metadata() {
                 if meta.len() > MAX_FILE_BYTES {
                     continue;
                 }
             }
-            let path = entry.path();
             let text = match std::fs::read_to_string(&path) {
                 Ok(t) => t,
                 Err(_) => continue,

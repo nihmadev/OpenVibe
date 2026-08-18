@@ -5,8 +5,8 @@ use std::path::Path;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
-use crate::config::should_skip;
-use crate::types::FileMatch;
+use crate::{is_ignored, load_gitignore, relative_path, should_skip};
+use serde::Serialize;
 
 const MAX_FILES: usize = 8000;
 const CACHE_TTL: Duration = Duration::from_secs(10);
@@ -24,30 +24,19 @@ struct CacheEntry {
 
 static CACHE: Lazy<Mutex<HashMap<String, CacheEntry>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
-fn relpath(path: &str, base: &str) -> String {
-    let p = Path::new(path);
-    let b = Path::new(base);
-    if let Ok(rel) = p.strip_prefix(b) {
-        return rel.to_string_lossy().replace('\\', "/");
-    }
-
-    let p_norm = path.replace('\\', "/");
-    let b_norm = base.replace('\\', "/");
-    let p_lower = p_norm.to_lowercase();
-    let b_lower = b_norm.to_lowercase();
-    if p_lower.starts_with(&b_lower) {
-        let mut rel = &p_norm[b_norm.len()..];
-        if rel.starts_with('/') {
-            rel = &rel[1..];
-        }
-        return rel.to_string();
-    }
-    p_norm
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FileMatch {
+    pub path: String,
+    pub rel: String,
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_dir: Option<bool>,
 }
 
 fn walk(root: &Path) -> Vec<WalkEntry> {
     let mut out = Vec::new();
-    let gitignore = crate::gitignore_filter::load(root);
+    let gitignore = load_gitignore(root);
     let root_owned = root.to_path_buf();
 
     let walk = WalkDir::new(root).process_read_dir(move |_depth, _path, _state, children| {
@@ -62,7 +51,7 @@ fn walk(root: &Path) -> Vec<WalkEntry> {
             }
             if let Some(ref gi) = gitignore {
                 if let Ok(rel) = entry.path().strip_prefix(&root_owned) {
-                    if crate::gitignore_filter::is_ignored(gi, rel, entry.file_type().is_dir()) {
+                    if is_ignored(gi, rel, entry.file_type().is_dir()) {
                         return false;
                     }
                 }
@@ -128,9 +117,6 @@ fn score(haystack: &str, needle: &str) -> f64 {
         {
             penalty -= 20.0;
         }
-        if depth == 0.0 {
-            penalty -= 5.0;
-        }
         return 1.0 + depth * 3.0 + penalty;
     }
 
@@ -167,7 +153,7 @@ pub fn find_files(root: &str, query: &str, limit: usize) -> Vec<FileMatch> {
         .into_iter()
         .filter(|e| !e.is_dir)
         .filter_map(|e| {
-            let r = relpath(&e.path, root);
+            let r = relative_path(Path::new(&e.path), Path::new(root));
             let s = score(&r, query);
             if s > 0.0 {
                 Some((s, e))
@@ -181,7 +167,7 @@ pub fn find_files(root: &str, query: &str, limit: usize) -> Vec<FileMatch> {
         .into_iter()
         .take(limit)
         .map(|(_, e)| {
-            let r = relpath(&e.path, root);
+            let r = relative_path(Path::new(&e.path), Path::new(root));
             let name = Path::new(&e.path)
                 .file_name()
                 .map(|n| n.to_string_lossy().to_string())
@@ -201,7 +187,7 @@ pub fn find_all(root: &str, query: &str, limit: usize) -> Vec<FileMatch> {
     let mut ranked: Vec<(f64, WalkEntry)> = entries
         .into_iter()
         .filter_map(|e| {
-            let r = relpath(&e.path, root);
+            let r = relative_path(Path::new(&e.path), Path::new(root));
             let s = score(&r, query);
             if s > 0.0 {
                 Some((s, e))
@@ -215,7 +201,7 @@ pub fn find_all(root: &str, query: &str, limit: usize) -> Vec<FileMatch> {
         .into_iter()
         .take(limit)
         .map(|(_, e)| {
-            let r = relpath(&e.path, root);
+            let r = relative_path(Path::new(&e.path), Path::new(root));
             let name = Path::new(&e.path)
                 .file_name()
                 .map(|n| n.to_string_lossy().to_string())

@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use tokio::process::Command;
 use tracing::info;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RuntimeType {
     Node,
     Python,
@@ -232,29 +233,7 @@ impl RuntimeManager {
         crate::downloader::download_and_extract_zip(&url, &self.base_dir).await?;
         #[cfg(not(target_os = "windows"))]
         {
-            // Wait, we only have download_and_extract_zip for windows natively in downloader...
-            // Let's use download_and_extract_zip for unix too if we update downloader.rs or just use reqwest.
-            // Actually clangd is zip for all. Let me just use unzip command on unix.
-            let std_file = tempfile::tempfile()?;
-            let tokio_file = tokio::fs::File::from_std(std_file);
-            let mut tokio_file = tokio::io::BufWriter::new(tokio_file);
-            let mut stream = reqwest::get(&url).await?.bytes_stream();
-            use futures_util::StreamExt;
-            use tokio::io::AsyncWriteExt;
-            while let Some(chunk) = stream.next().await {
-                tokio_file.write_all(&chunk?).await?;
-            }
-            tokio_file.flush().await?;
-            let mut std_file = tokio_file.into_inner().try_into_std().unwrap();
-
-            tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
-                use std::io::Seek;
-                std_file.seek(std::io::SeekFrom::Start(0))?;
-                let mut archive = zip::ZipArchive::new(std_file)?;
-                archive.extract(clangd_dir.parent().unwrap())?;
-                Ok(())
-            })
-            .await??;
+            crate::downloader::download_and_extract_zip(&url, &self.base_dir).await?;
         }
 
         info!("Clangd installed successfully");
@@ -281,26 +260,7 @@ impl RuntimeManager {
 
         std::fs::create_dir_all(&jdtls_dir)?;
 
-        #[cfg(not(target_os = "windows"))]
         crate::downloader::download_and_extract_tar_gz(&url, &jdtls_dir).await?;
-
-        // Usually eclipse provides tar.gz, so we'll just use that
-        #[cfg(target_os = "windows")]
-        {
-            // Windows tar.gz extraction isn't natively implemented in downloader.rs, we can use a workaround or add it.
-            // Actually, we'll just assume downloader::download_and_extract_tar_gz works on windows if we enable it.
-            // Wait, we didn't enable it for windows in downloader.rs... I will just run `tar -xzf` on windows.
-            let response = reqwest::get(&url).await?;
-            let temp_tar = jdtls_dir.join("temp.tar.gz");
-            tokio::fs::write(&temp_tar, response.bytes().await?).await?;
-            tokio::process::Command::new("tar")
-                .arg("-xzf")
-                .arg(&temp_tar)
-                .current_dir(&jdtls_dir)
-                .status()
-                .await?;
-            tokio::fs::remove_file(temp_tar).await?;
-        }
 
         info!("JDTLS installed successfully");
         Ok(())

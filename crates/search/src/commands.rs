@@ -3,8 +3,8 @@ use std::fs;
 use std::path::Path;
 
 use crate::config::should_skip;
-use crate::types::{FileMatch, FsEntry};
-use crate::walker;
+use crate::types::FsEntry;
+use workspace_fs::FileMatch;
 
 const TEXT_FILE_LIMIT: u64 = 2 * 1024 * 1024;
 
@@ -72,9 +72,9 @@ pub fn fs_write(path: String, content: String) -> Result<(), String> {
 }
 
 pub fn fs_find(root: String, query: String, limit: Option<usize>) -> Vec<FileMatch> {
-    walker::find_files(&root, &query, limit.unwrap_or(30))
+    workspace_fs::find_files(&root, &query, limit.unwrap_or(30))
 }
 
 pub fn fs_find_all(root: String, query: String, limit: Option<usize>) -> Vec<FileMatch> {
-    walker::find_all(&root, &query, limit.unwrap_or(50))
+    workspace_fs::find_all(&root, &query, limit.unwrap_or(50))
 }
