@@ -1,0 +1,101 @@
+/* OpenVibe theme adapter. The library never reads application tokens directly. */
+:root {
+  --z-color-canvas: var(--bg);
+  --z-color-surface: var(--bg-2);
+  --z-color-surface-raised: var(--bg-3);
+  --z-color-surface-hover: var(--surface-hover, rgba(255, 255, 255, 0.08));
+  --z-color-surface-active: var(--surface-active, rgba(255, 255, 255, 0.12));
+  --z-color-text: var(--fg);
+  --z-color-text-muted: var(--fg-dim);
+  --z-color-text-subtle: var(--fg-muted);
+  --z-color-border: var(--line);
+  --z-color-border-strong: var(--line-strong);
+  --z-color-accent: var(--accent);
+  --z-color-accent-text: var(--accent-text);
+  --z-color-danger: var(--red);
+  --z-color-danger-hover: #ff7878;
+  --z-color-danger-text: #ffffff;
+  --z-color-focus: var(--accent);
+  --z-color-selection: var(--selected-bg, rgba(255, 255, 255, 0.1));
+
+  /* Typography scale */
+  --z-font-family: var(--sans);
+  --z-font-mono: var(--mono);
+  --z-font-xs: var(--text-xs);
+  --z-font-sm: var(--text-sm);
+  --z-font-md: var(--text-md);
+  --z-font-lg: var(--text-lg);
+  --z-font-xl: var(--text-xl);
+
+  /* Spacing scale */
+  --z-space-0: var(--space-0);
+  --z-space-1: var(--space-1);
+  --z-space-2: var(--space-2);
+  --z-space-3: var(--space-3);
+  --z-space-4: var(--space-4);
+  --z-space-5: var(--space-5);
+  --z-space-6: var(--space-6);
+  --z-space-7: var(--space-7);
+  --z-space-8: var(--space-8);
+  --z-space-9: var(--space-9);
+  --z-space-10: var(--space-10);
+
+  /* Radii */
+  --z-radius-control: var(--radius-sm);
+  --z-radius-surface: var(--radius-md);
+  --z-button-radius: var(--radius-sm);
+  --z-field-radius: var(--radius-sm);
+  --z-overlay-radius: var(--radius-md);
+  --z-primitive-radius-1: var(--radius-xs);
+  --z-primitive-radius-2: var(--radius-sm);
+  --z-primitive-radius-3: var(--radius-md);
+  --z-primitive-radius-4: var(--radius-lg);
+
+  --z-control-height-md: var(--control-height);
+  --z-duration-fast: var(--duration-fast);
+  --z-duration-normal: var(--duration-normal);
+  --z-ease: var(--ease-standard);
+  --z-disabled-opacity: var(--disabled-opacity);
+}
+
+.z-select-viewport {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+}
+
+.z-select-viewport [role="group"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.z-select-item,
+.z-menu-item {
+  margin-block: 1px;
+}
+
+.z-select-item[data-state="checked"][data-highlighted],
+.z-menu-item[data-state="checked"][data-highlighted] {
+  background: var(--z-color-surface-active);
+}
+
+.z-select-scroll {
+  display: none !important;
+}
+
+.z-toggle {
+  position: relative;
+}
+
+.z-toggle input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}

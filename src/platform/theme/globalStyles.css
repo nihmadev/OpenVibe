@@ -1,0 +1,530 @@
+@import "@zazaru/ui/styles.css";
+@import "./zazaruUi.css";
+
+:root {
+  --bg: #121212;
+  --bg-2: #18181b;
+  --bg-3: #222225;
+  --surface-underlay: #101010;
+  --line: rgba(250, 250, 250, 0.08);
+  --line-strong: rgba(250, 250, 250, 0.16);
+  --fg: #f4f4f5;
+  --fg-dim: #b4b4ba;
+  --fg-muted: #898990;
+  --accent: #929299;
+  --accent-text: #111111;
+  --cyan: #38bdf8;
+  --green: #4ade80;
+  --yellow: #fbbf24;
+  --red: #f87171;
+  --white: #ffffff;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Border radius scale — controlled via settings */
+  --radius: 6px;
+  --radius-xs: max(2px, calc(var(--radius) - 3px));
+  --radius-sm: max(3px, calc(var(--radius) - 2px));
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 8px);
+  --radius-2xl: calc(var(--radius) + 10px);
+
+  /* Semantic surfaces: one place to retheme the workspace composition. */
+  --radius-bubble: calc(var(--radius) + 4px);
+  --radius-composer: calc(var(--radius) + 14px);
+  --radius-surface: calc(var(--radius) + 4px);
+  --canvas-gutter: 8px;
+  --control-height: 30px;
+  --interactive-list-gap: var(--space-1);
+  --interactive-item-radius: var(--radius-md);
+  --interactive-item-hover: color-mix(in srgb, var(--fg) 5%, transparent);
+  --interactive-item-active: color-mix(in srgb, var(--fg) 8%, transparent);
+  --scm-row-height: 24px;
+  --git-ref-head: #68d391;
+  --git-ref-local: #63b3ed;
+  --git-ref-remote: #b794f4;
+  --git-ref-local-surface: color-mix(in srgb, var(--git-ref-local) 15%, transparent);
+  --git-ref-remote-surface: color-mix(in srgb, var(--git-ref-remote) 15%, transparent);
+  --surface-chrome: transparent;
+  --surface-canvas: color-mix(in srgb, var(--bg-2) 58%, var(--bg));
+  --surface-panel: var(--bg-2);
+  --surface-raised: color-mix(in srgb, var(--bg-3) 72%, var(--bg-2));
+  --surface-border: color-mix(in srgb, var(--fg) 6%, transparent);
+  --surface-border-soft: color-mix(in srgb, var(--fg) 4%, transparent);
+  --surface-shadow-canvas: 0 1px 0 color-mix(in srgb, var(--fg) 2%, transparent);
+  --surface-shadow-panel: var(--shadow-sm);
+  --surface-shadow-raised: 0 2px 12px rgba(0, 0, 0, 0.1);
+  --chrome-divider: transparent;
+
+  /* Workspace panel primitives shared by tabs, file views and docked panes. */
+  --workspace-panel-surface: var(--bg-2);
+  --workspace-panel-surface-secondary: color-mix(in srgb, var(--bg-3) 78%, var(--bg-2));
+  --workspace-panel-text-primary: var(--fg);
+  --workspace-panel-text-secondary: color-mix(in srgb, var(--fg) 70%, transparent);
+  --workspace-panel-text-tertiary: color-mix(in srgb, var(--fg) 50%, transparent);
+  --workspace-panel-border: color-mix(in srgb, var(--fg) 8%, transparent);
+  --workspace-panel-border-heavy: color-mix(in srgb, var(--fg) 16%, transparent);
+  --workspace-panel-border-light: color-mix(in srgb, var(--fg) 4%, transparent);
+  --workspace-panel-focus: color-mix(in srgb, #339cff 70%, transparent);
+  --workspace-panel-toolbar-height: 46px;
+  --workspace-pane-toolbar-height: 40px;
+  --workspace-panel-padding: 20px;
+
+  /* ── Typography & UI Scale ── */
+  --ui-font-size: 14px;
+  --text-ui-xl: calc(var(--ui-font-size) + 4px);
+  --text-ui-lg: calc(var(--ui-font-size) + 2px);
+  --text-ui-base: var(--ui-font-size);
+  --text-ui-caption: calc(var(--ui-font-size) - 1px);
+  --text-ui-sm: calc(var(--ui-font-size) - 2px);
+  --text-ui-xs: calc(var(--ui-font-size) - 4px);
+
+  /* ── Refined interaction tokens: granular hover levels ── */
+  --hover-ghost: color-mix(in srgb, var(--fg) 5%, transparent);
+  --hover-subtle: color-mix(in srgb, var(--fg) 6.5%, transparent);
+  --hover-card: color-mix(in srgb, var(--fg) 8%, transparent);
+  --hover-icon: color-mix(in srgb, var(--fg) 9%, transparent);
+  --active-subtle: color-mix(in srgb, var(--fg) 10%, transparent);
+
+  /* Theme tokens for sessions, sidebar cards and badges */
+  --card-border: rgba(250, 250, 250, 0.08);
+  --card-bg: rgba(255, 255, 255, 0.02);
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --surface-active: rgba(255, 255, 255, 0.12);
+  --selected-bg: rgba(255, 255, 255, 0.1);
+  --selected-border: rgba(250, 250, 250, 0.14);
+  --fg-subtle: var(--fg-dim);
+  --fg-subtlest: var(--fg-muted);
+
+  /* Status Indicators */
+  --status-unread: #0ea5e9;
+  --status-error: #ef4444;
+  --status-success: #22c55e;
+  --status-warning: #f59e0b;
+  --status-idle: rgba(250, 250, 250, 0.2);
+
+  /* Backdrop blur — controlled via settings */
+  --blur-amount: 0px;
+
+  /* ── Spacing scale (2px micro-grid below 12, 4px grid above) ──
+     All paddings/margins/gaps in components should use these tokens. */
+  --space-0: 0px;
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 10px;
+  --space-6: 12px;
+  --space-7: 16px;
+  --space-8: 20px;
+  --space-9: 24px;
+  --space-10: 32px;
+  --space-11: 40px;
+  --space-12: 48px;
+  --space-13: 64px;
+
+  /* ── Legacy typography scale ── */
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px; /* base */
+  --text-lg: 14px;
+  --text-xl: 15px;
+  --text-2xl: 18px;
+  --text-3xl: 20px;
+
+  /* ── Motion tokens ──
+     Scaled by the user-facing animation multiplier (Settings → Animations),
+     so every tokenized transition respects the global speed preference. */
+  --duration-instant: calc(0.08s * var(--anim-multiplier, 1));
+  --duration-fast: calc(0.12s * var(--anim-multiplier, 1));
+  --duration-normal: calc(0.18s * var(--anim-multiplier, 1));
+  --duration-slow: calc(0.3s * var(--anim-multiplier, 1));
+  --ease-standard: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-out: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-spring: cubic-bezier(0.23, 1, 0.32, 1);
+  --shimmer-duration: 3s;
+
+  /* ── Elevation scale ── */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 6px 20px rgba(0, 0, 0, 0.45);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.45);
+
+  /* ── Interaction states ── */
+  --disabled-opacity: 0.4;
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--fg-dim);
+
+  /* ── Semantic status colors ──
+     Prefer these over the raw --green/--yellow/--red/--cyan hues so intent
+     stays readable and theming can evolve independently. */
+  --color-success: var(--green);
+  --color-warning: var(--yellow);
+  --color-error: var(--red);
+  --color-info: var(--cyan);
+}
+
+/* Shared inline representation used by the composer and user messages. */
+.inline-file-mention {
+  --inline-file-mention-color: color-mix(in srgb, #439bf7 80%, var(--fg) 20%);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  margin: 0;
+  padding-inline: 2px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--inline-file-mention-color);
+  font-family: var(--sans);
+  font-size: inherit;
+  font-weight: 500;
+  line-height: inherit;
+  text-decoration: none;
+  vertical-align: bottom;
+  white-space: nowrap;
+}
+
+.inline-file-mention__icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  vertical-align: bottom;
+}
+
+@media (hover: hover) {
+  .inline-file-mention:hover {
+    text-decoration: underline dashed;
+    text-decoration-thickness: 0.5px;
+    text-underline-offset: 2px;
+  }
+}
+
+/* ── Sidebar launchers inside the chat chrome ── */
+.layout__chat {
+  position: relative;
+}
+
+.layout__chat-sidebar-actions {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.layout__chat-sidebar-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--fg-dim);
+  cursor: pointer;
+  padding: 0;
+  box-shadow: none;
+  transition:
+    color 100ms ease-out,
+    background-color 100ms ease-out,
+    border-color 100ms ease-out;
+}
+
+.layout__chat-sidebar-button--raised {
+  border-color: color-mix(in srgb, var(--fg) 8%, transparent);
+  background: color-mix(in srgb, var(--surface-raised) 76%, var(--surface-canvas));
+}
+
+.layout__chat-sidebar-button:hover {
+  color: var(--fg);
+  border-color: color-mix(in srgb, var(--fg) 14%, transparent);
+  background: var(--surface-raised);
+}
+
+.layout__chat-sidebar-button--active {
+  color: var(--fg);
+  border-color: color-mix(in srgb, var(--fg) 14%, transparent);
+  background: var(--selected-bg);
+}
+
+.layout__chat-sidebar-button[aria-label="Toggle side panel"] > svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.76;
+}
+
+html.theme-borderless {
+  --line: rgba(255, 255, 255, 0);
+  --line-strong: rgba(255, 255, 255, 0.02);
+}
+
+html.theme-borderless .sidebar-group,
+html.theme-borderless .layout__chat,
+html.theme-borderless .layout__editor,
+html.theme-borderless .layout__search-code-wrap,
+html.theme-borderless .terminal-embedded,
+html.theme-borderless .app-sidebar {
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
+}
+
+html.theme-borderless .z-surface {
+  box-shadow: var(--surface-shadow-panel);
+}
+
+html.theme-borderless .z-surface--chrome {
+  box-shadow: none;
+}
+
+html.theme-borderless .z-surface--canvas {
+  box-shadow: var(--surface-shadow-canvas);
+}
+
+html.theme-borderless .z-surface--composer {
+  box-shadow: var(--surface-shadow-raised);
+}
+
+html.theme-borderless .layout__search-code-wrap {
+  box-shadow: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: var(--text-md);
+  line-height: 1.55;
+  overflow: hidden;
+  /* The application is primarily a control surface rather than a document.
+     Disable accidental selection on layout chrome, buttons, list rows and
+     decorative/overlay elements. Text-heavy controls opt back in below. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Keep selection available where it is an intentional part of the interaction.
+   These rules are deliberately explicit so newly added UI components inherit
+   the safe default without making editors or message content frustrating to
+   copy and edit. */
+input,
+textarea,
+[contenteditable="true"],
+[contenteditable="plaintext-only"],
+.monaco-editor,
+.monaco-editor * {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.markdown-body,
+.markdown-body *,
+.code-block,
+.code-block *,
+.terminal-embedded .xterm,
+.terminal-embedded .xterm * {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+/* ── Keyboard focus ──
+   Every interactive element gets a visible focus ring on keyboard
+   navigation. Pointer interaction stays clean (:focus-visible only).
+   High specificity + !important intentionally beat per-component
+   `outline: none` resets. */
+button:focus-visible,
+[role="button"]:focus-visible,
+[role="menuitem"]:focus-visible,
+[tabindex]:focus-visible,
+a:focus-visible,
+select:focus-visible,
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible,
+input[type="range"]:focus-visible {
+  outline: 2px solid var(--fg-dim);
+  outline-offset: 1px;
+}
+
+code {
+  font-family: var(--mono);
+}
+
+::selection {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Global animation keyframes ── */
+
+@keyframes loader-wave {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes anim-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes anim-slide {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes anim-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes anim-fade-slide {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes project-switch-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Applied to the main content when a project is picked */
+.animate-project-switch {
+  animation-name: var(--anim-project-switch-keyframes, project-switch-in);
+  animation-duration: calc(var(--anim-project-switch-duration, 0.22s) * var(--anim-project-switch-enabled, 1));
+  animation-timing-function: var(--anim-project-switch-easing, cubic-bezier(0.2, 0, 0.2, 1));
+}
+
+/* Generic fade-in for any newly mounted panel */
+.animate-fade-in {
+  animation-name: var(--anim-panel-appear-keyframes, fade-in);
+  animation-duration: calc(var(--anim-panel-appear-duration, 0.18s) * var(--anim-panel-appear-enabled, 1));
+  animation-timing-function: var(--anim-panel-appear-easing, ease);
+}
+
+/* Slide up — used for session list items, chat rows, etc */
+.animate-slide-up {
+  animation-name: var(--anim-sidebar-slide-keyframes, slide-up-in);
+  animation-duration: calc(var(--anim-sidebar-slide-duration, 0.18s) * var(--anim-sidebar-slide-enabled, 1));
+  animation-timing-function: var(--anim-sidebar-slide-easing, cubic-bezier(0.2, 0, 0.2, 1));
+}
+
+/* Skeleton Loader Utilities */
+.skeleton-item {
+  background-color: var(--bg-3);
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-circle {
+  border-radius: 50%;
+}
+
+.skeleton-line {
+  border-radius: var(--radius-xs, 3px);
+}
+
+.skeleton-block {
+  border-radius: var(--radius-md, 6px);
+}
+
+@keyframes skeleton-shimmer-anim {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, var(--bg-3) 25%, var(--line) 37%, var(--bg-3) 63%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer-anim 1.5s infinite linear;
+}
+
+/* ── Reduced motion ──
+   Collapse every tokenized duration so users who ask the OS for less
+   motion get near-instant transitions app-wide. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0.01s;
+    --duration-fast: 0.01s;
+    --duration-normal: 0.01s;
+    --duration-slow: 0.01s;
+    --shimmer-duration: 10s;
+  }
+}
