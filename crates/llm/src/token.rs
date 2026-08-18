@@ -1,4 +1,4 @@
-use crate::chat::ChatMessage;
+use agent_api::ChatMessage;
 
 pub fn max_context_tokens(model: &str) -> usize {
     let m = model.to_lowercase();

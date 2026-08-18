@@ -2,7 +2,7 @@ use serde_json::{Map, Value};
 
 use super::accumulator::{Accumulator, ToolKey};
 use super::frame::SseEvent;
-use crate::chat::TokenUsage;
+use agent_api::TokenUsage;
 
 pub(super) fn decode(event: &SseEvent, accumulator: &mut Accumulator<'_>) -> Result<(), String> {
     let payload = parse_payload(event)?;

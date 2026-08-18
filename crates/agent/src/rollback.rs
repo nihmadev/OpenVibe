@@ -1,7 +1,7 @@
 use crate::agent::Agent;
-use crate::chat::ChatMessage;
-use crate::snapshot::{
-    AgentChangeStatus, AgentFileChange, FileSnapshot, RollbackPreview, SnapshotEntry, UndoState,
+use crate::snapshot::UndoState;
+use agent_api::{
+    AgentChangeStatus, AgentFileChange, ChatMessage, FileSnapshot, RollbackPreview, SnapshotEntry,
 };
 
 impl Agent {

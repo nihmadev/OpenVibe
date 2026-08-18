@@ -10,7 +10,7 @@ use accumulator::{Accumulator, Callbacks};
 use frame::{SseEvent, SseParser};
 
 use crate::cancel::wait_for_cancel;
-use crate::chat::AssistantTurn;
+use agent_api::AssistantTurn;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum StreamFormat {

@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 use super::accumulator::{Accumulator, Callbacks};
 use super::frame::SseParser;
 use super::{dispatch_event, StreamFormat};
-use crate::chat::AssistantTurn;
+use agent_api::AssistantTurn;
 
 fn decode_chunks(chunks: &[&[u8]]) -> Result<AssistantTurn, String> {
     let mut parser = SseParser::default();

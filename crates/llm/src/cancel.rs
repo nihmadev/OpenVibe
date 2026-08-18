@@ -1,3 +1,5 @@
+//! Cancellation primitives shared by LLM requests.
+
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 

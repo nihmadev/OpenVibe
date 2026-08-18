@@ -3,10 +3,10 @@ use std::sync::atomic::AtomicU64;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use crate::chat::ChatMessage;
 use crate::config::AgentConfig;
 use crate::prompt::system_prompt;
-use crate::snapshot::{SnapshotEntry, UndoState};
+use crate::snapshot::UndoState;
+use agent_api::{ChatMessage, SnapshotEntry};
 
 pub struct Agent {
     pub messages: Vec<ChatMessage>,

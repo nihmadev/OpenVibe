@@ -1,14 +1,12 @@
 //! Language-agnostic tool profile selection.
 //!
-//! A new session starts with the full tool surface, so the model is never
-//! expected to infer capabilities from user wording. Once the model has used
-//! a capability, later turns retain that capability plus the core workspace
-//! tools. It can explicitly unlock another group with `tool_request`.
+//! A new session starts with the full built-in surface except deferred
+//! capabilities (browser and MCP servers). Once explicitly requested or used,
+//! a capability remains available for the rest of the task.
 
 use std::collections::HashSet;
 
-use crate::chat::ChatMessage;
-use crate::definition::ToolDefinition;
+use agent_api::{ChatMessage, ToolCall, ToolDefinition};
 
 const CORE_TOOLS: &[&str] = &[
     "read_file",
@@ -19,6 +17,9 @@ const CORE_TOOLS: &[&str] = &[
     "search_codebase",
     "todo",
     "tool_request",
+    "list_skills",
+    "read_skill",
+    "read_skill_resource",
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -27,7 +28,7 @@ pub enum ToolProfileKind {
     Focused,
 }
 
-fn tool_calls(messages: &[ChatMessage]) -> impl Iterator<Item = &crate::chat::ToolCall> {
+fn tool_calls(messages: &[ChatMessage]) -> impl Iterator<Item = &ToolCall> {
     messages
         .iter()
         .filter_map(|message| message.tool_calls.as_ref())
@@ -48,9 +49,15 @@ fn requested_capabilities(messages: &[ChatMessage]) -> HashSet<String> {
         .collect()
 }
 
+fn mcp_server(name: &str) -> Option<&str> {
+    name.strip_prefix("mcp__")?
+        .split_once("__")
+        .map(|(server, _)| server)
+}
+
 /// Select the smallest safe tool surface based solely on prior tool activity,
-/// never on the user's natural-language text. If MCP tools are present, keep
-/// the full surface because their arbitrary schemas cannot be grouped safely.
+/// never on the user's natural-language text. Browser and each MCP server are
+/// deferred groups, so merely connecting a server does not expose its schemas.
 pub fn select_tool_profile(
     all_tools: &[ToolDefinition],
     messages: &[ChatMessage],
@@ -58,15 +65,31 @@ pub fn select_tool_profile(
     let called: HashSet<&str> = tool_calls(messages)
         .map(|call| call.function.name.as_str())
         .collect();
-    let has_mcp = all_tools
+    let requested = requested_capabilities(messages);
+    let browser_active =
+        called.iter().any(|name| name.starts_with("browser_")) || requested.contains("browser");
+    let active_mcp_servers: HashSet<String> = called
         .iter()
-        .any(|tool| tool.function.name.starts_with("mcp__"));
+        .filter_map(|name| mcp_server(name).map(str::to_string))
+        .chain(
+            requested
+                .iter()
+                .filter_map(|capability| capability.strip_prefix("mcp:").map(str::to_string)),
+        )
+        .collect();
 
-    if called.is_empty() || has_mcp {
-        return (ToolProfileKind::Full, all_tools.to_vec());
+    if called.is_empty() {
+        let selected = all_tools
+            .iter()
+            .filter(|tool| {
+                let name = tool.function.name.as_str();
+                !name.starts_with("browser_") && !name.starts_with("mcp__")
+            })
+            .cloned()
+            .collect();
+        return (ToolProfileKind::Full, selected);
     }
 
-    let requested = requested_capabilities(messages);
     let use_git = called.iter().any(|name| name.starts_with("git_")) || requested.contains("git");
     let use_web =
         called.contains("web_search") || called.contains("fetch_url") || requested.contains("web");
@@ -80,6 +103,8 @@ pub fn select_tool_profile(
                 || (use_git && name.starts_with("git_"))
                 || (use_web && matches!(name, "web_search" | "fetch_url"))
                 || (use_research && name == "agent")
+                || (browser_active && name.starts_with("browser_"))
+                || mcp_server(name).is_some_and(|server| active_mcp_servers.contains(server))
         })
         .cloned()
         .collect();
@@ -90,12 +115,12 @@ pub fn select_tool_profile(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::chat::{ToolCall, ToolCallFunction};
+    use agent_api::{ToolCall, ToolCallFunction};
 
     fn tool(name: &str) -> ToolDefinition {
         ToolDefinition {
             type_: "function".to_string(),
-            function: crate::definition::ToolDefFunction {
+            function: agent_api::ToolDefFunction {
                 name: name.to_string(),
                 description: String::new(),
                 parameters: serde_json::json!({"type": "object"}),
@@ -130,11 +155,20 @@ mod tests {
     }
 
     #[test]
-    fn new_session_keeps_every_tool_for_a_language_independent_first_turn() {
-        let all = vec![tool("read_file"), tool("git_blame"), tool("web_search")];
+    fn new_session_defers_browser_and_mcp_schemas() {
+        let all = vec![
+            tool("read_file"),
+            tool("git_blame"),
+            tool("web_search"),
+            tool("browser_open"),
+            tool("mcp__slack__send_message"),
+        ];
         let (kind, selected) = select_tool_profile(&all, &[]);
         assert_eq!(kind, ToolProfileKind::Full);
-        assert_eq!(selected.len(), all.len());
+        let selected = names(selected);
+        assert!(selected.contains("read_file"));
+        assert!(!selected.contains("browser_open"));
+        assert!(!selected.contains("mcp__slack__send_message"));
     }
 
     #[test]
@@ -171,5 +205,43 @@ mod tests {
         let selected = names(selected);
         assert!(selected.contains("git_diff"));
         assert!(selected.contains("git_blame"));
+    }
+
+    #[test]
+    fn browser_capability_is_lazy_and_persists_after_use() {
+        let all = vec![
+            tool("read_file"),
+            tool("tool_request"),
+            tool("browser_open"),
+            tool("browser_click"),
+        ];
+        let requested = vec![assistant_call(
+            "tool_request",
+            r#"{"capabilities":["browser"]}"#,
+        )];
+        let (_, selected) = select_tool_profile(&all, &requested);
+        assert!(names(selected).contains("browser_click"));
+
+        let used = vec![assistant_call("browser_open", "{}")];
+        let (_, selected) = select_tool_profile(&all, &used);
+        assert!(names(selected).contains("browser_open"));
+    }
+
+    #[test]
+    fn mcp_tools_are_grouped_by_server() {
+        let all = vec![
+            tool("read_file"),
+            tool("tool_request"),
+            tool("mcp__slack__search"),
+            tool("mcp__github__search"),
+        ];
+        let messages = vec![assistant_call(
+            "tool_request",
+            r#"{"capabilities":["mcp:slack"]}"#,
+        )];
+        let (_, selected) = select_tool_profile(&all, &messages);
+        let selected = names(selected);
+        assert!(selected.contains("mcp__slack__search"));
+        assert!(!selected.contains("mcp__github__search"));
     }
 }

@@ -3,39 +3,10 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use crate::agent::Agent;
-use crate::chat::{ChatMessage, ToolCall, ToolCallFunction};
-use crate::executor::ToolExecutor;
-use crate::request::stream_chat;
+use agent_api::{ChatMessage, ToolCall, ToolCallFunction, ToolExecutor};
+use llm::request::stream_chat;
 
 const MAX_TURNS: usize = 100;
-const MAX_WORK_TITLE_RETRIES: usize = 2;
-
-fn valid_work_title(value: &str) -> Option<String> {
-    let title = value.split_whitespace().collect::<Vec<_>>().join(" ");
-    let normalized = title
-        .trim_matches(|ch: char| ch.is_ascii_punctuation())
-        .to_lowercase();
-    let generic = [
-        "analysis",
-        "analyzing",
-        "exploring",
-        "investigating",
-        "working",
-        "анализ",
-        "анализирую",
-        "изучаю",
-        "исследую",
-        "работаю",
-    ];
-    if title.chars().count() > 70
-        || title.split_whitespace().count() < 2
-        || generic.contains(&normalized.as_str())
-    {
-        None
-    } else {
-        Some(title)
-    }
-}
 
 /// Keep tool failures useful to the model as a diagnostic hint. The UI filters
 /// messages carrying this marker instead of rendering raw error output.
@@ -101,29 +72,12 @@ fn clean_tool_calls(tool_calls: Vec<ToolCall>) -> Vec<ToolCall> {
         .collect()
 }
 
-fn take_file_snapshot(path: &str) -> Option<crate::snapshot::FileSnapshot> {
+fn take_file_snapshot(path: &str) -> Option<agent_api::FileSnapshot> {
     let content = std::fs::read_to_string(path).ok();
-    Some(crate::snapshot::FileSnapshot {
+    Some(agent_api::FileSnapshot {
         path: path.to_string(),
         content,
     })
-}
-
-#[cfg(test)]
-mod tests {
-    use super::valid_work_title;
-
-    #[test]
-    fn work_title_requires_a_specific_multiword_name() {
-        assert_eq!(
-            valid_work_title("Объяснить архитектуру MCP").as_deref(),
-            Some("Объяснить архитектуру MCP")
-        );
-        assert_eq!(valid_work_title("Исследую"), None);
-        assert_eq!(valid_work_title("Investigating"), None);
-        assert_eq!(valid_work_title("one"), None);
-        assert_eq!(valid_work_title(&"x".repeat(71)), None);
-    }
 }
 
 impl Agent {
@@ -215,8 +169,6 @@ impl Agent {
         // reported explicitly — silently dropping an unfinished task looks
         // to the user like the model "gave up halfway".
         let mut turns_exhausted = true;
-        let mut work_title: Option<String> = None;
-        let mut work_title_retries = 0;
 
         for _turn in 0..MAX_TURNS {
             if self.cancel.load(Ordering::Relaxed) {
@@ -294,11 +246,12 @@ impl Agent {
             let cb_reasoning_name = {
                 let reason_name = reason_name.clone();
                 move |name: &str| {
-                    let Some(name) = valid_work_title(name) else {
+                    let name = name.trim();
+                    if name.is_empty() {
                         return;
-                    };
+                    }
                     if let Ok(mut state) = reason_name.lock() {
-                        *state = Some(name.clone());
+                        *state = Some(name.to_string());
                     }
                     emit(
                         "vibe:agent:reasoning-start",
@@ -510,38 +463,6 @@ impl Agent {
             let cleaned_tool_calls = clean_tool_calls(turn_result.tool_calls);
             emit("vibe:agent:assistant-end", serde_json::Value::Null);
 
-            if !cleaned_tool_calls.is_empty() && work_title.is_none() {
-                work_title = turn_result
-                    .reasoning_name
-                    .as_deref()
-                    .and_then(valid_work_title);
-                if work_title.is_none() {
-                    work_title_retries += 1;
-                    if work_title_retries <= MAX_WORK_TITLE_RETRIES {
-                        self.messages.push(ChatMessage {
-                            role: "user".to_string(),
-                            content: Some(serde_json::Value::String(
-                                "[work-title-protocol-error] Tool execution was rejected because your internal reasoning did not start with a valid <thought name=\"Specific task title\">. Retry the same turn now. The title must describe the overall user task, contain 2 or more words, use the user's language, and be at most 70 characters. Do not emit visible narration before the corrected tool call."
-                                    .to_string(),
-                            )),
-                            name: None,
-                            tool_call_id: None,
-                            tool_calls: None,
-                            reasoning_content: None,
-                            reasoning_name: None,
-                            usage: None,
-                        });
-                        continue;
-                    }
-                    turns_exhausted = false;
-                    emit(
-                        "vibe:agent:error",
-                        serde_json::json!({"text": "Model repeatedly violated the required work-title protocol; tool execution was cancelled."}),
-                    );
-                    break;
-                }
-            }
-
             let assistant_content = if content_text.is_empty() {
                 None
             } else {
@@ -564,7 +485,7 @@ impl Agent {
                     Some(cleaned_tool_calls.clone())
                 },
                 reasoning_content: turn_result.reasoning_content.clone(),
-                reasoning_name: work_title.clone().or(turn_result.reasoning_name.clone()),
+                reasoning_name: turn_result.reasoning_name.clone(),
                 usage: turn_result.usage.clone(),
             });
 
@@ -757,12 +678,12 @@ impl Agent {
                         if let Some(snap) = snapshot {
                             let after_content = std::fs::read_to_string(&snap.path).ok();
                             let msg_idx = self.messages.len();
-                            self.file_snapshots.push(crate::snapshot::SnapshotEntry {
+                            self.file_snapshots.push(agent_api::SnapshotEntry {
                                 message_index: msg_idx,
                                 tool_call_id: call.id.clone(),
                                 snapshot: snap,
                                 after_content,
-                                status: crate::snapshot::AgentChangeStatus::Pending,
+                                status: agent_api::AgentChangeStatus::Pending,
                             });
                         }
                     }
@@ -818,5 +739,13 @@ impl Agent {
 
         // Reset cancel flag for the next send cycle
         self.cancel.store(false, Ordering::Relaxed);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn tool_error_hint_includes_marker() {
+        assert!(super::tool_error_hint("boom".into()).starts_with("[tool-error]"));
     }
 }

@@ -1,4 +1,4 @@
-use crate::definition::ToolDefinition;
+use crate::ToolDefinition;
 use std::sync::atomic::AtomicBool;
 
 #[async_trait::async_trait]

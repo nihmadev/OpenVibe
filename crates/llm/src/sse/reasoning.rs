@@ -1,3 +1,5 @@
+//! Reasoning delta normalization.
+
 use super::accumulator::Callbacks;
 
 #[derive(Default)]

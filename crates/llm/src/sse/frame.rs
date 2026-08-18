@@ -1,3 +1,5 @@
+//! Provider-neutral SSE frame decoding.
+
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub(super) struct SseEvent {
     pub event: Option<String>,

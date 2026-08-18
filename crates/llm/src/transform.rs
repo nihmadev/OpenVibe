@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use crate::chat::ChatMessage;
 use crate::token::estimate_tokens;
+use agent_api::ChatMessage;
 
 pub fn supports_vision(model: &str) -> bool {
     let m = model.to_lowercase();
@@ -267,7 +267,7 @@ fn with_cache_control(content: serde_json::Value) -> serde_json::Value {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::chat::ChatMessage;
+    use agent_api::ChatMessage;
 
     #[test]
     fn test_messages_to_api_json_round_trips_native_reasoning() {
@@ -316,7 +316,7 @@ mod tests {
 
     #[test]
     fn test_messages_to_api_json_no_placeholder_reasoning_for_tool_calls() {
-        use crate::chat::{ToolCall, ToolCallFunction};
+        use agent_api::{ToolCall, ToolCallFunction};
         let msg = ChatMessage {
             role: "assistant".to_string(),
             content: None,
@@ -477,7 +477,7 @@ mod tests {
 
     #[test]
     fn test_cache_control_moving_breakpoint_on_last_content_message() {
-        use crate::chat::{ToolCall, ToolCallFunction};
+        use agent_api::{ToolCall, ToolCallFunction};
         // history: system, user, assistant(tool_calls only, no content), tool
         let mut assistant = ChatMessage {
             role: "assistant".to_string(),

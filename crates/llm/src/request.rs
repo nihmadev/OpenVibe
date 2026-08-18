@@ -2,15 +2,13 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::cancel::{cancellable_sleep, wait_for_cancel};
-use crate::chat::{AssistantTurn, ChatMessage};
-use crate::config::LlmConfig;
-use crate::definition::ToolDefinition;
 use crate::sse::parse_sse_stream;
 use crate::token::max_context_tokens;
 use crate::transform::{
     flatten_for_text_only, messages_to_api_json_with_cache, supports_vision, trim_messages,
     trim_messages_to_budget,
 };
+use agent_api::{AssistantTurn, ChatMessage, LlmConfig, ToolDefinition};
 
 #[allow(clippy::too_many_arguments)]
 pub async fn stream_chat(
@@ -166,8 +164,10 @@ fn build_body_bytes(
             provider_kind(config).round_trips_native_reasoning(),
         ),
         "stream": true,
-        "stream_options": { "include_usage": true },
     });
+    if !is_google(config) {
+        body["stream_options"] = serde_json::json!({ "include_usage": true });
+    }
     apply_reasoning_params(config, &mut body);
     if supports_prompt_cache_key(config) {
         if let Some(key) = config.prompt_cache_key.as_deref() {
@@ -430,6 +430,13 @@ fn supports_prompt_cache_key(config: &LlmConfig) -> bool {
         || config.base_url.to_lowercase().contains("openrouter.ai")
 }
 
+fn is_google(config: &LlmConfig) -> bool {
+    config.provider_id.as_deref() == Some("google")
+        || config
+            .base_url
+            .contains("generativelanguage.googleapis.com")
+}
+
 /// Providers whose OpenAI-compatible chat endpoint accepts the flat
 /// `reasoning_effort` field. Everything else gets no reasoning params rather
 /// than an unsupported field that some providers reject with a hard error.
@@ -437,6 +444,9 @@ fn provider_kind(config: &LlmConfig) -> ReasoningTransport {
     let base = config.base_url.to_lowercase();
     let pid = config.provider_id.as_deref().unwrap_or("");
 
+    if is_google(config) {
+        return ReasoningTransport::None;
+    }
     if pid == "deepseek" || base.contains("api.deepseek.com") {
         return ReasoningTransport::DeepSeek;
     }
@@ -469,6 +479,7 @@ fn provider_kind(config: &LlmConfig) -> ReasoningTransport {
 }
 
 enum ReasoningTransport {
+    None,
     /// `reasoning_effort: "high"` (OpenAI-compatible chat completions).
     FlatEffort,
     /// DeepSeek thinking mode: `thinking: {type: enabled}` + `reasoning_effort`
@@ -497,6 +508,7 @@ fn apply_reasoning_params(config: &LlmConfig, body: &mut serde_json::Value) {
     };
 
     match provider_kind(config) {
+        ReasoningTransport::None => {}
         ReasoningTransport::FlatEffort => {
             body["reasoning_effort"] = serde_json::json!(effort);
         }
@@ -616,19 +628,20 @@ fn build_request(config: &LlmConfig) -> (String, reqwest::header::HeaderMap) {
         );
         format!("{}/messages", config.base_url.trim_end_matches('/'))
     } else {
-        let auth_val = format!("Bearer {}", config.api_key);
-        headers.insert(reqwest::header::AUTHORIZATION, safe_header_val(&auth_val));
         let is_google = config
             .base_url
             .contains("generativelanguage.googleapis.com");
         let is_github = config.base_url.contains("models.github.ai");
         if is_google {
+            headers.insert("x-goog-api-key", safe_header_val(&config.api_key));
             format!(
                 "{}/chat/completions?key={}",
                 config.base_url.trim_end_matches('/'),
                 config.api_key
             )
         } else if is_github {
+            let auth_val = format!("Bearer {}", config.api_key);
+            headers.insert(reqwest::header::AUTHORIZATION, safe_header_val(&auth_val));
             headers.insert(
                 "Accept",
                 reqwest::header::HeaderValue::from_static("application/vnd.github+json"),
@@ -642,6 +655,8 @@ fn build_request(config: &LlmConfig) -> (String, reqwest::header::HeaderMap) {
                 config.base_url.trim_end_matches('/')
             )
         } else {
+            let auth_val = format!("Bearer {}", config.api_key);
+            headers.insert(reqwest::header::AUTHORIZATION, safe_header_val(&auth_val));
             format!("{}/chat/completions", config.base_url.trim_end_matches('/'))
         }
     };
@@ -874,5 +889,21 @@ mod tests {
         let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
         assert_eq!(body["messages"].as_array().unwrap().len(), 1);
         assert_eq!(body["messages"][0]["content"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn direct_google_uses_goog_api_key_and_query_param() {
+        let config = cfg(
+            "google",
+            "https://generativelanguage.googleapis.com/v1beta/openai",
+            None,
+        );
+        let (url, headers) = build_request(&config);
+        assert_eq!(
+            url,
+            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions?key=k"
+        );
+        assert_eq!(headers["x-goog-api-key"], "k");
+        assert!(!headers.contains_key(reqwest::header::AUTHORIZATION));
     }
 }

@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use super::reasoning::ReasoningParser;
-use crate::chat::{AssistantTurn, TokenUsage, ToolCall, ToolCallFunction};
+use agent_api::{AssistantTurn, TokenUsage, ToolCall, ToolCallFunction};
 
 pub(super) struct Callbacks<'a> {
     pub on_delta: &'a (dyn Fn(&str) + Send + Sync),

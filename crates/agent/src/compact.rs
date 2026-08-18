@@ -1,7 +1,7 @@
 use crate::agent::Agent;
-use crate::chat::ChatMessage;
-use crate::request::stream_chat;
-use crate::token::compute_context_usage_with_last;
+use agent_api::ChatMessage;
+use llm::request::stream_chat;
+use llm::token::compute_context_usage_with_last;
 
 /// Marker prefix identifying an injected compaction summary message. The UI
 /// uses it to render the entry as a system notice instead of a user bubble.
@@ -128,7 +128,7 @@ fn compute_tail_start(messages: &[ChatMessage]) -> usize {
         if kept >= KEEP_RECENT {
             break;
         }
-        let msg_tokens = crate::token::estimate_tokens(std::slice::from_ref(msg));
+        let msg_tokens = llm::token::estimate_tokens(std::slice::from_ref(msg));
         if kept >= 2 && tokens + msg_tokens > KEEP_RECENT_TOKEN_BUDGET {
             break;
         }
@@ -225,7 +225,7 @@ impl Agent {
                 // request still fits. trim_messages preserves the first user
                 // message (task anchor).
                 tracing::warn!("LLM context compaction failed; falling back to trim");
-                let trimmed = crate::transform::trim_messages(self.messages.clone(), KEEP_RECENT);
+                let trimmed = llm::transform::trim_messages(self.messages.clone(), KEEP_RECENT);
                 self.apply_new_messages(trimmed);
                 emit(
                     "vibe:agent:context-compaction-end",
@@ -397,7 +397,7 @@ impl Agent {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::chat::{ToolCall, ToolCallFunction};
+    use agent_api::{ToolCall, ToolCallFunction};
 
     fn msg(role: &str, text: &str) -> ChatMessage {
         ChatMessage {

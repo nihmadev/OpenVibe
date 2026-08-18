@@ -2,7 +2,7 @@ use serde_json::Value;
 
 use super::accumulator::{Accumulator, ToolKey};
 use super::frame::SseEvent;
-use crate::chat::TokenUsage;
+use agent_api::TokenUsage;
 
 pub(super) fn is_event_type(event: &str) -> bool {
     matches!(
