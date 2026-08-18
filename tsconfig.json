@@ -11,6 +11,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    "types": ["@testing-library/jest-dom/vitest"],
     "paths": {
       "@/*": ["./src/*"],
       "@zazaru/ui": ["./packages/zazaru-ui/src/index.ts"],
