@@ -43,6 +43,8 @@
   /* Radii */
   --z-radius-control: var(--radius-sm);
   --z-radius-surface: var(--radius-md);
+  --z-radius-canvas: var(--radius-md);
+  --z-radius-floating: var(--radius-lg);
   --z-button-radius: var(--radius-sm);
   --z-field-radius: var(--radius-sm);
   --z-overlay-radius: var(--radius-md);
@@ -56,6 +58,11 @@
   --z-duration-normal: var(--duration-normal);
   --z-ease: var(--ease-standard);
   --z-disabled-opacity: var(--disabled-opacity);
+}
+
+.z-dialog-overlay {
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
 }
 
 .z-select-viewport {
@@ -74,11 +81,6 @@
 .z-select-item,
 .z-menu-item {
   margin-block: 1px;
-}
-
-.z-select-item[data-state="checked"][data-highlighted],
-.z-menu-item[data-state="checked"][data-highlighted] {
-  background: var(--z-color-surface-active);
 }
 
 .z-select-scroll {

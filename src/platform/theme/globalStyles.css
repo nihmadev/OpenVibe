@@ -23,17 +23,17 @@
 
   /* Border radius scale — controlled via settings */
   --radius: 6px;
-  --radius-xs: max(2px, calc(var(--radius) - 3px));
-  --radius-sm: max(3px, calc(var(--radius) - 2px));
+  --radius-xs: max(0px, calc(var(--radius) - 3px));
+  --radius-sm: max(0px, calc(var(--radius) - 2px));
   --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 4px);
-  --radius-xl: calc(var(--radius) + 8px);
-  --radius-2xl: calc(var(--radius) + 10px);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
 
   /* Semantic surfaces: one place to retheme the workspace composition. */
-  --radius-bubble: calc(var(--radius) + 4px);
-  --radius-composer: calc(var(--radius) + 14px);
-  --radius-surface: calc(var(--radius) + 4px);
+  --radius-bubble: var(--radius-lg);
+  --radius-composer: var(--radius-2xl);
+  --radius-surface: var(--radius-lg);
   --canvas-gutter: 8px;
   --control-height: 30px;
   --interactive-list-gap: var(--space-1);
@@ -223,7 +223,7 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid transparent;
   background: transparent;
   color: var(--fg-dim);
@@ -257,11 +257,6 @@
   width: 16px;
   height: 16px;
   opacity: 0.76;
-}
-
-html.theme-borderless {
-  --line: rgba(255, 255, 255, 0);
-  --line-strong: rgba(255, 255, 255, 0.02);
 }
 
 html.theme-borderless .sidebar-group,

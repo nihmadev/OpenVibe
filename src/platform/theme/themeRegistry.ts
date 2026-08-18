@@ -254,7 +254,12 @@ export const themes: ThemeDef[] = [
 export function applyThemeVars(vars: ThemeVars): void {
   const root = document.documentElement;
   for (const [key, value] of Object.entries(vars)) {
-    root.style.setProperty(key, value);
+    if (key === "--line" || key === "--line-strong") {
+      root.style.setProperty(key === "--line" ? "--theme-line" : "--theme-line-strong", value);
+      root.style.setProperty(key, root.classList.contains("theme-borderless") ? "transparent" : value);
+    } else {
+      root.style.setProperty(key, value);
+    }
   }
 }
 

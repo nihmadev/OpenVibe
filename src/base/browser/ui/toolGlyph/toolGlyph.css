@@ -15,7 +15,3 @@
   height: 16px;
   overflow: visible;
 }
-
-.tool-glyph--skill:not(.tool-glyph--error) {
-  color: var(--accent-blue, #78a9ff);
-}

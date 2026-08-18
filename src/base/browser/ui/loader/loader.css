@@ -1,0 +1,24 @@
+.ui-loader {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: currentColor;
+  line-height: 0;
+}
+
+.ui-loader svg {
+  animation: ui-loader-spin 600ms linear infinite;
+}
+
+@keyframes ui-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-loader svg {
+    animation: none;
+  }
+}

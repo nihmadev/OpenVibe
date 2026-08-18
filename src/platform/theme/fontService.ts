@@ -1,49 +1,57 @@
-import "@fontsource/inter";
-import "@fontsource/roboto";
-import "@fontsource/open-sans";
-import "@fontsource/nunito";
-import "@fontsource/manrope";
-import "@fontsource/poppins";
-import "@fontsource/lato";
-import "@fontsource/montserrat";
-import "@fontsource/raleway";
-import "@fontsource/ubuntu";
-import "@fontsource/noto-sans";
-import "@fontsource/source-sans-3";
-import "@fontsource/pt-sans";
-import "@fontsource/fira-sans";
-import "@fontsource/barlow";
-import "@fontsource/josefin-sans";
-import "@fontsource/work-sans";
-import "@fontsource/dm-sans";
-import "@fontsource/plus-jakarta-sans";
-import "@fontsource/figtree";
-import "@fontsource/outfit";
-import "@fontsource/sora";
-import "@fontsource/lexend";
-import "@fontsource/quicksand";
-import "@fontsource/rubik";
-import "@fontsource/mulish";
-import "@fontsource/archivo";
-import "@fontsource/be-vietnam-pro";
-import "@fontsource/epilogue";
-import "@fontsource/urbanist";
-import "@fontsource/onest";
-import "@fontsource/fira-code";
-import "@fontsource/source-code-pro";
-import "@fontsource/space-mono";
-import "@fontsource/ibm-plex-mono";
-import "@fontsource/anonymous-pro";
-import "@fontsource/jetbrains-mono";
-import "@fontsource/inconsolata";
-import "@fontsource/dm-mono";
-import "@fontsource/iosevka";
-import "@fontsource/victor-mono";
-import "@fontsource/red-hat-mono";
-import "@fontsource/sometype-mono";
-import "@fontsource/recursive";
-
 import { appState } from "@/platform/storage/common/keyValueStore";
+
+type FontModuleLoader = () => Promise<unknown>;
+
+// Literal imports are intentional: Vite emits one lazy CSS chunk per family.
+const FONT_LOADERS: Record<string, FontModuleLoader> = {
+  Inter: () => import("@fontsource/inter/400.css"),
+  Roboto: () => import("@fontsource/roboto/400.css"),
+  "Open Sans": () => import("@fontsource/open-sans/400.css"),
+  Nunito: () => import("@fontsource/nunito/400.css"),
+  Manrope: () => import("@fontsource/manrope/400.css"),
+  Poppins: () => import("@fontsource/poppins/400.css"),
+  Lato: () => import("@fontsource/lato/400.css"),
+  Montserrat: () => import("@fontsource/montserrat/400.css"),
+  Raleway: () => import("@fontsource/raleway/400.css"),
+  Ubuntu: () => import("@fontsource/ubuntu/400.css"),
+  "Noto Sans": () => import("@fontsource/noto-sans/400.css"),
+  "Source Sans 3": () => import("@fontsource/source-sans-3/400.css"),
+  "PT Sans": () => import("@fontsource/pt-sans/400.css"),
+  "Fira Sans": () => import("@fontsource/fira-sans/400.css"),
+  Barlow: () => import("@fontsource/barlow/400.css"),
+  "Josefin Sans": () => import("@fontsource/josefin-sans/400.css"),
+  "Work Sans": () => import("@fontsource/work-sans/400.css"),
+  "DM Sans": () => import("@fontsource/dm-sans/400.css"),
+  "Plus Jakarta Sans": () => import("@fontsource/plus-jakarta-sans/400.css"),
+  Figtree: () => import("@fontsource/figtree/400.css"),
+  Outfit: () => import("@fontsource/outfit/400.css"),
+  Sora: () => import("@fontsource/sora/400.css"),
+  Lexend: () => import("@fontsource/lexend/400.css"),
+  Quicksand: () => import("@fontsource/quicksand/400.css"),
+  Rubik: () => import("@fontsource/rubik/400.css"),
+  Mulish: () => import("@fontsource/mulish/400.css"),
+  Archivo: () => import("@fontsource/archivo/400.css"),
+  "Be Vietnam Pro": () => import("@fontsource/be-vietnam-pro/400.css"),
+  Epilogue: () => import("@fontsource/epilogue/400.css"),
+  Urbanist: () => import("@fontsource/urbanist/400.css"),
+  Onest: () => import("@fontsource/onest/400.css"),
+  "Fira Code": () => import("@fontsource/fira-code/400.css"),
+  "Source Code Pro": () => import("@fontsource/source-code-pro/400.css"),
+  "Space Mono": () => import("@fontsource/space-mono/400.css"),
+  "IBM Plex Mono": () => import("@fontsource/ibm-plex-mono/400.css"),
+  "Anonymous Pro": () => import("@fontsource/anonymous-pro/400.css"),
+  "JetBrains Mono": () => import("@fontsource/jetbrains-mono/400.css"),
+  Inconsolata: () => import("@fontsource/inconsolata/400.css"),
+  "DM Mono": () => import("@fontsource/dm-mono/400.css"),
+  Iosevka: () => import("@fontsource/iosevka/400.css"),
+  "Victor Mono": () => import("@fontsource/victor-mono/400.css"),
+  "Red Hat Mono": () => import("@fontsource/red-hat-mono/400.css"),
+  "Sometype Mono": () => import("@fontsource/sometype-mono/400.css"),
+  Recursive: () => import("@fontsource/recursive/400.css"),
+};
+
+const FONT_LOAD_PROMISES = new Map<string, Promise<boolean>>();
+let applyGeneration = 0;
 
 export interface FontOption {
   value: string;
@@ -112,11 +120,30 @@ const MONO_FALLBACKS: Record<string, string> = {
   monospace: "monospace",
 };
 
-export function applyFont(font: string, codeFont: string): void {
-  const fontStack = FONT_FALLBACKS[font] ?? `"${font}", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif`;
-  const monoStack =
-    MONO_FALLBACKS[codeFont] ??
-    `"${codeFont}", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+export function loadFont(font: string): Promise<boolean> {
+  const loader = FONT_LOADERS[font];
+  if (!loader) return Promise.resolve(true);
+  const existing = FONT_LOAD_PROMISES.get(font);
+  if (existing) return existing;
+  const loading = loader().then(
+    () => true,
+    () => false,
+  );
+  FONT_LOAD_PROMISES.set(font, loading);
+  return loading;
+}
+
+export async function applyFont(font: string, codeFont: string): Promise<void> {
+  const generation = ++applyGeneration;
+  const [fontLoaded, codeFontLoaded] = await Promise.all([loadFont(font), loadFont(codeFont)]);
+  if (generation !== applyGeneration) return;
+  const fontStack = fontLoaded
+    ? (FONT_FALLBACKS[font] ?? `"${font}", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif`)
+    : FONT_FALLBACKS.System;
+  const monoStack = codeFontLoaded
+    ? (MONO_FALLBACKS[codeFont] ??
+      `"${codeFont}", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`)
+    : MONO_FALLBACKS.monospace;
   document.documentElement.style.setProperty("--sans", fontStack);
   document.documentElement.style.setProperty("--mono", monoStack);
 }
@@ -124,7 +151,7 @@ export function applyFont(font: string, codeFont: string): void {
 export async function initFonts(): Promise<void> {
   try {
     const [font, codeFont] = await Promise.all([appState.get("settings:font"), appState.get("settings:codeFont")]);
-    applyFont(font || "Segoe UI", codeFont || "JetBrains Mono");
+    await applyFont(font || "Segoe UI", codeFont || "JetBrains Mono");
   } catch {
     // ignore
   }
