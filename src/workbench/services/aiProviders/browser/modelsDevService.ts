@@ -1,12 +1,70 @@
 import type { ProviderTemplate } from "../common/aiProvider";
 import type { ModelsDevCatalog, ModelsDevModel, ModelsDevProvider } from "../common/modelsDevCatalog";
-import bundledCatalogRaw from "../data/modelsDevCatalog.json";
 
-const BUNDLED_CATALOG = bundledCatalogRaw as unknown as ModelsDevCatalog;
-
-const CACHE_KEY = "openvibe_modelsdev_catalog";
-const LAST_SYNC_KEY = "openvibe_modelsdev_last_sync";
+const CACHE_DB = "openvibe-modelsdev";
+const CACHE_STORE = "catalog";
+const CACHE_RECORD = "canonical";
+const LEGACY_CACHE_KEY = "openvibe_modelsdev_catalog";
+const LEGACY_LAST_SYNC_KEY = "openvibe_modelsdev_last_sync";
 const SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+interface CatalogCacheRecord {
+  id: typeof CACHE_RECORD;
+  catalog: ModelsDevCatalog;
+  syncedAt: number;
+}
+
+function isCatalog(value: unknown): value is ModelsDevCatalog {
+  return !!value && typeof value === "object" && Object.keys(value).length > 10;
+}
+
+function openCatalogDb(): Promise<IDBDatabase | null> {
+  if (typeof indexedDB === "undefined") return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const request = indexedDB.open(CACHE_DB, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(CACHE_STORE)) request.result.createObjectStore(CACHE_STORE);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => resolve(null);
+  });
+}
+
+async function readCatalogCache(): Promise<CatalogCacheRecord | null> {
+  const db = await openCatalogDb();
+  if (!db) return null;
+  return new Promise((resolve) => {
+    const transaction = db.transaction(CACHE_STORE, "readonly");
+    const request = transaction.objectStore(CACHE_STORE).get(CACHE_RECORD);
+    request.onsuccess = () => {
+      const value = request.result as CatalogCacheRecord | undefined;
+      resolve(value && isCatalog(value.catalog) ? value : null);
+      db.close();
+    };
+    request.onerror = () => {
+      resolve(null);
+      db.close();
+    };
+  });
+}
+
+async function writeCatalogCache(catalog: ModelsDevCatalog, syncedAt: number): Promise<void> {
+  const db = await openCatalogDb();
+  if (!db) return;
+  await new Promise<void>((resolve) => {
+    const transaction = db.transaction(CACHE_STORE, "readwrite");
+    transaction.objectStore(CACHE_STORE).put({ id: CACHE_RECORD, catalog, syncedAt }, CACHE_RECORD);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => resolve();
+    transaction.onabort = () => resolve();
+  });
+  db.close();
+}
+
+function replaceCatalog(target: ModelsDevCatalog, source: ModelsDevCatalog): void {
+  for (const key of Object.keys(target)) delete target[key];
+  Object.assign(target, source);
+}
 
 // Canonical mapping between legacy OpenVibe IDs and models.dev IDs
 export const PROVIDER_ALIAS_MAP: Record<string, string> = {
@@ -134,89 +192,89 @@ const REASONING_MODEL_PATTERNS = [
 ];
 
 class ModelsDevService {
-  private catalog: ModelsDevCatalog;
-  private isSyncing = false;
+  private catalog: ModelsDevCatalog | null = null;
+  private initialization: Promise<ModelsDevCatalog> | null = null;
+  private syncPromise: Promise<boolean> | null = null;
+  private lastSync = 0;
 
-  constructor() {
-    this.catalog = this.loadInitialCatalog();
-    // Schedule background sync
-    if (typeof window !== "undefined") {
-      setTimeout(() => {
-        this.syncWithRemote().catch(() => {});
-      }, 2000);
-    }
+  public initialize(): Promise<ModelsDevCatalog> {
+    return this.ensureInitialized(true);
   }
 
-  private loadInitialCatalog(): ModelsDevCatalog {
-    if (typeof localStorage === "undefined") {
-      return BUNDLED_CATALOG;
-    }
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
+  private ensureInitialized(scheduleSync: boolean): Promise<ModelsDevCatalog> {
+    if (this.catalog) return Promise.resolve(this.catalog);
+    if (this.initialization) return this.initialization;
+    this.initialization = (async () => {
+      const cached = await readCatalogCache();
       if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
-          return { ...BUNDLED_CATALOG, ...parsed };
-        }
+        this.catalog = cached.catalog;
+        this.lastSync = cached.syncedAt;
+      } else {
+        const bundled = await import("../data/modelsDevCatalog.json");
+        this.catalog = bundled.default as unknown as ModelsDevCatalog;
       }
-    } catch {
-      // Fallback to bundled
-    }
-    return BUNDLED_CATALOG;
+      try {
+        localStorage.removeItem(LEGACY_CACHE_KEY);
+        localStorage.removeItem(LEGACY_LAST_SYNC_KEY);
+      } catch {
+        // Legacy synchronous cache may be unavailable.
+      }
+      if (scheduleSync && typeof window !== "undefined") {
+        setTimeout(() => void this.syncWithRemote(), 2000);
+      }
+      return this.catalog;
+    })();
+    return this.initialization;
   }
 
   public async syncWithRemote(force = false): Promise<boolean> {
-    if (this.isSyncing || typeof fetch === "undefined") return false;
-    if (!force && typeof localStorage !== "undefined") {
-      const lastSync = Number(localStorage.getItem(LAST_SYNC_KEY) || "0");
-      if (Date.now() - lastSync < SYNC_INTERVAL_MS) {
-        return false;
-      }
-    }
+    if (this.syncPromise) return this.syncPromise;
+    if (typeof fetch === "undefined") return false;
+    await this.ensureInitialized(false);
+    if (this.syncPromise) return this.syncPromise;
+    if (!force && Date.now() - this.lastSync < SYNC_INTERVAL_MS) return false;
 
-    this.isSyncing = true;
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000);
-      const res = await fetch("https://models.dev/api.json", {
-        signal: controller.signal,
-        headers: { Accept: "application/json" },
-      });
-      clearTimeout(timeoutId);
+    this.syncPromise = (async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        const res = await fetch("https://models.dev/api.json", {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+        });
+        clearTimeout(timeoutId);
 
-      if (!res.ok) return false;
-      const data = (await res.json()) as ModelsDevCatalog;
-      if (data && typeof data === "object" && Object.keys(data).length > 10) {
-        this.catalog = { ...BUNDLED_CATALOG, ...data };
-        if (typeof localStorage !== "undefined") {
-          try {
-            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-            localStorage.setItem(LAST_SYNC_KEY, String(Date.now()));
-          } catch {
-            // Storage quota exceeded or disabled
-          }
-        }
+        if (!res.ok) return false;
+        const data = (await res.json()) as ModelsDevCatalog;
+        if (!isCatalog(data)) return false;
+        if (this.catalog) replaceCatalog(this.catalog, data);
+        else this.catalog = data;
+        this.lastSync = Date.now();
+        void writeCatalogCache(this.catalog, this.lastSync);
         return true;
+      } catch {
+        // Network failed or offline; the cached or bundled snapshot remains canonical.
+        return false;
+      } finally {
+        this.syncPromise = null;
       }
-    } catch {
-      // Network failed or offline, bundled snapshot is active
-    } finally {
-      this.isSyncing = false;
-    }
-    return false;
+    })();
+    return this.syncPromise;
   }
 
-  public getCatalog(): ModelsDevCatalog {
-    return this.catalog;
+  public async getCatalog(): Promise<ModelsDevCatalog> {
+    return this.initialize();
   }
 
   public getProvider(id: string): ModelsDevProvider | undefined {
-    const direct = this.catalog[id];
+    const catalog = this.catalog;
+    if (!catalog) return undefined;
+    const direct = catalog[id];
     if (direct) return direct;
     const mapped = PROVIDER_ALIAS_MAP[id];
-    if (mapped && this.catalog[mapped]) return this.catalog[mapped];
+    if (mapped && catalog[mapped]) return catalog[mapped];
     const reverse = REVERSE_ALIAS_MAP[id];
-    if (reverse && this.catalog[reverse]) return this.catalog[reverse];
+    if (reverse && catalog[reverse]) return catalog[reverse];
     return undefined;
   }
 
@@ -225,7 +283,7 @@ class ModelsDevService {
     const cleanUrl = baseUrl.replace(/\/+$/, "").toLowerCase();
 
     // 1. Direct match on models.dev api field
-    for (const p of Object.values(this.catalog)) {
+    for (const p of Object.values(this.catalog ?? {})) {
       if (p.api && cleanUrl.startsWith(p.api.replace(/\/+$/, "").toLowerCase())) {
         return p;
       }
@@ -239,7 +297,7 @@ class ModelsDevService {
     }
 
     // 3. Substring match on host domain
-    for (const p of Object.values(this.catalog)) {
+    for (const p of Object.values(this.catalog ?? {})) {
       const pid = p.id.toLowerCase();
       if (cleanUrl.includes(pid)) {
         return p;
@@ -281,7 +339,7 @@ class ModelsDevService {
     }
 
     // 3. Add remaining providers from models.dev catalog
-    for (const [id, p] of Object.entries(this.catalog)) {
+    for (const [id, p] of Object.entries(this.catalog ?? {})) {
       const canonicalId = REVERSE_ALIAS_MAP[id] ?? id;
       if (templatesMap.has(canonicalId)) continue;
       const baseUrl = p.api || STANDARD_BASE_URLS[canonicalId] || STANDARD_BASE_URLS[id] || `https://api.${id}.com/v1`;
@@ -318,7 +376,7 @@ class ModelsDevService {
     }
 
     // 2. Global search across catalog
-    for (const p of Object.values(this.catalog)) {
+    for (const p of Object.values(this.catalog ?? {})) {
       if (!p.models) continue;
       if (p.models[modelId]) return p.models[modelId];
       for (const [mid, m] of Object.entries(p.models)) {

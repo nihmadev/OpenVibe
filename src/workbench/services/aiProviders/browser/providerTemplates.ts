@@ -1,7 +1,34 @@
+import { useEffect, useState } from "react";
 import type { ProviderTemplate } from "../common/aiProvider";
 import { modelsDevService, PROVIDER_ALIAS_MAP, REVERSE_ALIAS_MAP } from "./modelsDevService";
 
 export const PROVIDER_TEMPLATES: ProviderTemplate[] = modelsDevService.getProviders();
+const templateListeners = new Set<() => void>();
+let templatesLoading: Promise<ProviderTemplate[]> | null = null;
+
+export function loadProviderTemplates(): Promise<ProviderTemplate[]> {
+  if (templatesLoading) return templatesLoading;
+  templatesLoading = modelsDevService.initialize().then(() => {
+    const templates = modelsDevService.getProviders();
+    PROVIDER_TEMPLATES.splice(0, PROVIDER_TEMPLATES.length, ...templates);
+    for (const listener of templateListeners) listener();
+    return PROVIDER_TEMPLATES;
+  });
+  return templatesLoading;
+}
+
+export function useProviderTemplates(): ProviderTemplate[] {
+  const [, setVersion] = useState(0);
+  useEffect(() => {
+    const listener = () => setVersion((version) => version + 1);
+    templateListeners.add(listener);
+    void loadProviderTemplates();
+    return () => {
+      templateListeners.delete(listener);
+    };
+  }, []);
+  return PROVIDER_TEMPLATES;
+}
 
 export const LOCAL_PROVIDER_ICONS = new Set([
   "amazon-bedrock",

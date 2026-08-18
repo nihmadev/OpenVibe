@@ -52,6 +52,7 @@ export const aiProviderService = {
       (r) => r,
     );
     if (!res.ok) return res;
+    await modelsDevService.initialize();
 
     const enriched = res.models.map((m) => {
       const meta = modelsDevService.getModel(m.id, providerId);
