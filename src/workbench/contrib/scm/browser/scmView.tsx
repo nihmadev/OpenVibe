@@ -1,5 +1,6 @@
 import { IconButton, Input, interactiveListClassName } from "@zazaru/ui";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Loader } from "@/base/browser/ui/loader/loader";
 import { useI18n } from "@/platform/localization/localizationService";
 import "@vscode/codicons/dist/codicon.css";
 import "./scmView.css";
@@ -847,7 +848,9 @@ export function ScmView({ cwd, onOpenFile, onClose: _onClose }: ScmViewProps) {
                           </div>
                           <div className="scm-expanded-commit-files">
                             {loadingCommitFiles[node.id] ? (
-                              <div className="scm-inline-empty">Loading files...</div>
+                              <div className="scm-inline-empty">
+                                <Loader />
+                              </div>
                             ) : commitFilesMap[node.id] && commitFilesMap[node.id].length > 0 ? (
                               <div className="scm-group-children scm-group-children--clipped">
                                 {(() => {

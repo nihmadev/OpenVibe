@@ -408,7 +408,7 @@
   min-width: 18px;
   height: 18px;
   padding: 0 var(--space-2);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--bg-2);
   color: var(--fg-muted);
   font-size: var(--text-2xs);

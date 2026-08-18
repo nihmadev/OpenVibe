@@ -1,6 +1,7 @@
 import { interactiveItemClassName } from "@zazaru/ui";
 import type React from "react";
 import { ChevronRightIcon, FileIcon, FolderIcon } from "@/base/browser/ui/icons/iconRegistry";
+import { Loader } from "@/base/browser/ui/loader/loader";
 import { useTranslate } from "@/platform/localization/localizationService";
 import type { TreeNode } from "../../common/search";
 import { getCachedHighlight, getLanguageFromFilename } from "../highlighting/searchSyntax";
@@ -102,7 +103,7 @@ export function SearchTreeView({
             {childGuidePositions.map((pos, i) => (
               <span key={i} className="sc-guide-line" style={{ left: pos }} />
             ))}
-            {t("loadingMatches")}
+            <Loader />
           </div>,
         );
       }

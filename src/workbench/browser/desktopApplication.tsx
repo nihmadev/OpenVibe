@@ -70,6 +70,7 @@ interface PreferencesSlotProps {
 
 export interface DesktopContributions {
   workbench: WorkbenchContributions;
+  subscribeBrowserSessionVisibility?: (listener: (open: boolean) => void) => () => void;
   renderOnboarding: (props: OnboardingSlotProps) => React.ReactNode;
   renderWorkspaceWelcome: (props: WorkspaceWelcomeSlotProps) => React.ReactNode;
   renderQuickAccess: (props: QuickAccessSlotProps) => React.ReactNode;
@@ -113,6 +114,10 @@ export function DesktopApplication({
   const [revealPath, setRevealPath] = useState<string | null>(null);
 
   const layout = useWorkspaceLayout();
+
+  useEffect(() => {
+    return contributions.subscribeBrowserSessionVisibility?.(layout.setBrowserOpen);
+  }, [contributions, layout.setBrowserOpen]);
 
   const handleOpenSearch = useCallback(() => {
     setRevealPath(null);

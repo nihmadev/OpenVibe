@@ -313,7 +313,7 @@
 .scm-view .monaco-list-row .history-item > .label-container > .label {
   display: flex;
   align-items: center;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   line-height: 18px;
 }
 
@@ -349,7 +349,7 @@
 .scm-view .monaco-list-row .history-item .monaco-icon-label .avatar {
   width: 14px;
   height: 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
 }
 
 .scm-view .monaco-list-row .history-item .monaco-icon-label.history-item-current .label-name {
@@ -479,11 +479,11 @@
 }
 
 .scm-view .scm-editor-container .monaco-editor {
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 .scm-view .scm-editor-container .monaco-editor .overflow-guard {
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 .scm-view .scm-editor {
@@ -493,7 +493,7 @@
   align-items: flex-start;
   border: 1px solid var(--line);
   background-color: var(--bg-2);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 .scm-view .button-container {

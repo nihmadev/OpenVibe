@@ -1,5 +1,6 @@
 import type React from "react";
 import {
+  CheckIcon,
   FolderTreeIcon,
   GitBranchIcon,
   GlobeIcon,
@@ -63,19 +64,22 @@ export function WorkspaceSelectorPanel({
           {/* Git Source Control */}
           <button
             type="button"
-            className={`workspace-selector-panel__card workspace-selector-panel__card--git${gitPanelOpen ? " workspace-selector-panel__card--active" : ""}`}
+            className="workspace-selector-panel__card workspace-selector-panel__card--git"
+            aria-pressed={gitPanelOpen}
             onClick={() => activate("git", gitPanelOpen, onToggleGitPanel)}
           >
             <span className="workspace-selector-panel__card-icon">
               <GitBranchIcon size={16} />
             </span>
             <span className="workspace-selector-panel__card-label">{t("gitTitle")}</span>
+            <span className="workspace-selector-panel__check">{gitPanelOpen && <CheckIcon />}</span>
           </button>
 
           {/* Terminal */}
           <button
             type="button"
-            className={`workspace-selector-panel__card workspace-selector-panel__card--terminal${terminalOpen ? " workspace-selector-panel__card--active" : ""}`}
+            className="workspace-selector-panel__card workspace-selector-panel__card--terminal"
+            aria-pressed={terminalOpen}
             onClick={() => activate("terminal", terminalOpen, onToggleTerminal)}
           >
             <span className="workspace-selector-panel__card-icon">
@@ -83,12 +87,14 @@ export function WorkspaceSelectorPanel({
             </span>
             <span className="workspace-selector-panel__card-label">{t("terminalTitle")}</span>
             <kbd className="workspace-selector-panel__shortcut">Ctrl+`</kbd>
+            <span className="workspace-selector-panel__check">{terminalOpen && <CheckIcon />}</span>
           </button>
 
           {/* Search in Code */}
           <button
             type="button"
-            className={`workspace-selector-panel__card workspace-selector-panel__card--search${searchInCodeOpen ? " workspace-selector-panel__card--active" : ""}`}
+            className="workspace-selector-panel__card workspace-selector-panel__card--search"
+            aria-pressed={searchInCodeOpen}
             onClick={() => activate("search", searchInCodeOpen, onToggleSearchInCode)}
           >
             <span className="workspace-selector-panel__card-icon">
@@ -96,12 +102,14 @@ export function WorkspaceSelectorPanel({
             </span>
             <span className="workspace-selector-panel__card-label">{t("searchTitle")}</span>
             <kbd className="workspace-selector-panel__shortcut">Ctrl+Shift+F</kbd>
+            <span className="workspace-selector-panel__check">{searchInCodeOpen && <CheckIcon />}</span>
           </button>
 
           {/* File Tree */}
           <button
             type="button"
-            className={`workspace-selector-panel__card workspace-selector-panel__card--files${fileTreeOpen ? " workspace-selector-panel__card--active" : ""}`}
+            className="workspace-selector-panel__card workspace-selector-panel__card--files"
+            aria-pressed={fileTreeOpen}
             onClick={() => activate("files", fileTreeOpen, onToggleFileTree)}
           >
             <span className="workspace-selector-panel__card-icon">
@@ -109,17 +117,20 @@ export function WorkspaceSelectorPanel({
             </span>
             <span className="workspace-selector-panel__card-label">{t("filesTitle")}</span>
             <kbd className="workspace-selector-panel__shortcut">Ctrl+Shift+E</kbd>
+            <span className="workspace-selector-panel__check">{fileTreeOpen && <CheckIcon />}</span>
           </button>
 
           <button
             type="button"
-            className={`workspace-selector-panel__card workspace-selector-panel__card--browser${browserOpen ? " workspace-selector-panel__card--active" : ""}`}
+            className="workspace-selector-panel__card workspace-selector-panel__card--browser"
+            aria-pressed={browserOpen}
             onClick={() => activate("browser", browserOpen, onToggleBrowser)}
           >
             <span className="workspace-selector-panel__card-icon">
               <GlobeIcon size={16} />
             </span>
             <span className="workspace-selector-panel__card-label">{t("browserTitle")}</span>
+            <span className="workspace-selector-panel__check">{browserOpen && <CheckIcon />}</span>
           </button>
 
           {/* MCP & Server Settings */}

@@ -3,6 +3,7 @@ import { AnimationProvider } from "@/platform/configuration/browser/animationSer
 import type { LangCode } from "@/platform/localization/localizationCatalog";
 import { I18nProvider } from "@/platform/localization/localizationService";
 import { ThemeProvider } from "@/platform/theme/themeService";
+import { GeneralSettingsProvider } from "@/workbench/contrib/preferences/browser/useGeneralSettings";
 
 interface AppProvidersProps {
   lang: string;
@@ -13,9 +14,11 @@ interface AppProvidersProps {
 export function AppProviders({ lang, children }: AppProvidersProps): React.ReactElement {
   return (
     <ThemeProvider>
-      <I18nProvider lang={lang as LangCode}>
-        <AnimationProvider>{children}</AnimationProvider>
-      </I18nProvider>
+      <GeneralSettingsProvider>
+        <I18nProvider lang={lang as LangCode}>
+          <AnimationProvider>{children}</AnimationProvider>
+        </I18nProvider>
+      </GeneralSettingsProvider>
     </ThemeProvider>
   );
 }

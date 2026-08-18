@@ -1,8 +1,8 @@
 .display-options-dropdown {
   min-width: 195px;
   background: color-mix(in srgb, var(--bg-2) 92%, var(--bg-3) 8%);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
   border: 1px solid color-mix(in srgb, var(--line-strong) 65%, rgba(255, 255, 255, 0.1) 35%);
   border-radius: var(--radius-md, 8px);
   box-shadow:

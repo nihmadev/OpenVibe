@@ -220,7 +220,7 @@
   padding: var(--space-5);
   background: var(--bg-3);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition:
     border-color calc(0.2s * var(--anim-multiplier, 1)) ease,
@@ -242,7 +242,7 @@
 
 .ws-theme-preview {
   height: 58px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: var(--space-3);
   display: flex;
   flex-direction: column;
@@ -384,7 +384,7 @@
   padding: var(--space-5);
   background: var(--bg-3);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   text-align: left;
   gap: var(--space-6);
 }
@@ -394,7 +394,7 @@
   padding: var(--space-4);
   background: var(--bg-3);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 .ws-settings-panel-title {
@@ -473,7 +473,7 @@
 .ws-start-button {
   min-width: 240px;
   padding: var(--space-6) var(--space-10);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   font-size: var(--text-xl);
   font-weight: 600;
 }

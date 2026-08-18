@@ -1,6 +1,7 @@
 import { interactiveItemClassName } from "@zazaru/ui";
 import type React from "react";
 import { ClearIcon, CollapseAllIcon, Loader2Icon, RefreshIcon } from "@/base/browser/ui/icons/iconRegistry";
+import { Loader } from "@/base/browser/ui/loader/loader";
 import { Tooltip } from "@/base/browser/ui/tooltip/tooltip";
 import { useTranslate } from "@/platform/localization/localizationService";
 import "@vscode/codicons/dist/codicon.css";
@@ -197,7 +198,7 @@ export function SearchView({ cwd, onOpenFile, onClose }: SearchViewProps): React
                     }}
                     onMouseEnter={() => setSelectedIndex(virtualRow.index)}
                   >
-                    {loadingFiles.has(entry.path) ? t("loadingMatches") : ""}
+                    {loadingFiles.has(entry.path) ? <Loader /> : null}
                   </div>
                 );
               }

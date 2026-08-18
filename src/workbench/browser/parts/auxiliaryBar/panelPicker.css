@@ -14,8 +14,8 @@
   border-radius: var(--radius-sm, 6px);
   border: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
   background: color-mix(in srgb, var(--bg-2) 80%, var(--bg));
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
   color: var(--fg-muted);
   cursor: pointer;
   position: relative;
@@ -52,8 +52,8 @@
 .workspace-panel-picker__content {
   width: 280px;
   background: color-mix(in srgb, var(--bg-2) 92%, var(--bg-3) 8%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
   border: 1px solid color-mix(in srgb, var(--line-strong) 65%, rgba(255, 255, 255, 0.1) 35%);
   border-radius: var(--radius-lg, 10px);
   box-shadow:
@@ -89,7 +89,7 @@
   justify-content: center;
   width: 20px;
   height: 20px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   border: 0;
   background: transparent;
   color: var(--fg-muted);
@@ -132,11 +132,6 @@
   border-color: var(--selected-border);
 }
 
-.workspace-panel-picker__card--active {
-  background: color-mix(in srgb, var(--fg) 8%, var(--bg-2));
-  border-color: color-mix(in srgb, var(--fg) 20%, transparent);
-}
-
 .workspace-panel-picker__card-icon {
   display: flex;
   align-items: center;
@@ -145,8 +140,7 @@
   transition: color 100ms ease;
 }
 
-.workspace-panel-picker__card:hover .workspace-panel-picker__card-icon,
-.workspace-panel-picker__card--active .workspace-panel-picker__card-icon {
+.workspace-panel-picker__card:hover .workspace-panel-picker__card-icon {
   color: var(--fg);
 }
 
@@ -167,21 +161,16 @@
   color: var(--fg-muted);
 }
 
-.workspace-panel-picker__badge {
+.workspace-panel-picker__check {
   position: absolute;
   top: 8px;
   right: 8px;
-  font-size: 9.5px;
-  font-weight: 600;
-  padding: 1px 4px;
-  border-radius: 9999px;
-  color: var(--fg-muted);
-  background: color-mix(in srgb, var(--fg) 6%, transparent);
-}
-
-.workspace-panel-picker__badge--on {
-  color: var(--accent, #60a5fa);
-  background: color-mix(in srgb, var(--accent, #60a5fa) 15%, transparent);
+  display: inline-flex;
+  width: 12px;
+  height: 12px;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg);
 }
 
 .workspace-panel-picker__footer {

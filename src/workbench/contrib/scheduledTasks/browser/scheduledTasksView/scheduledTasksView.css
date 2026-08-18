@@ -175,7 +175,7 @@
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(var(--blur-amount));
   padding: 16px;
   animation: sched-fade-in 0.12s ease-out;
 }

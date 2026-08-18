@@ -1,6 +1,7 @@
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import type React from "react";
 import {
+  CheckIcon,
   CloseIcon,
   FolderTreeIcon,
   GitBranchIcon,
@@ -88,7 +89,8 @@ export function WorkspacePanelPicker({
               {/* Files */}
               <button
                 type="button"
-                className={`workspace-panel-picker__card${fileTreeOpen ? " workspace-panel-picker__card--active" : ""}`}
+                className="workspace-panel-picker__card"
+                aria-pressed={fileTreeOpen}
                 onClick={onToggleFileTree}
               >
                 <div className="workspace-panel-picker__card-icon">
@@ -98,17 +100,14 @@ export function WorkspacePanelPicker({
                   <span className="workspace-panel-picker__card-title">{t("files" as any) || "Files"}</span>
                   <span className="workspace-panel-picker__card-desc">Explorer</span>
                 </div>
-                <div
-                  className={`workspace-panel-picker__badge${fileTreeOpen ? " workspace-panel-picker__badge--on" : ""}`}
-                >
-                  {fileTreeOpen ? "Active" : "Off"}
-                </div>
+                <span className="workspace-panel-picker__check">{fileTreeOpen && <CheckIcon />}</span>
               </button>
 
               {/* Search in Code */}
               <button
                 type="button"
-                className={`workspace-panel-picker__card${searchInCodeOpen ? " workspace-panel-picker__card--active" : ""}`}
+                className="workspace-panel-picker__card"
+                aria-pressed={searchInCodeOpen}
                 onClick={onToggleSearchInCode}
               >
                 <div className="workspace-panel-picker__card-icon">
@@ -118,17 +117,14 @@ export function WorkspacePanelPicker({
                   <span className="workspace-panel-picker__card-title">{t("searchInCode" as any) || "Search"}</span>
                   <span className="workspace-panel-picker__card-desc">In workspace</span>
                 </div>
-                <div
-                  className={`workspace-panel-picker__badge${searchInCodeOpen ? " workspace-panel-picker__badge--on" : ""}`}
-                >
-                  {searchInCodeOpen ? "Active" : "Off"}
-                </div>
+                <span className="workspace-panel-picker__check">{searchInCodeOpen && <CheckIcon />}</span>
               </button>
 
               {/* Git Panel */}
               <button
                 type="button"
-                className={`workspace-panel-picker__card${gitPanelOpen ? " workspace-panel-picker__card--active" : ""}`}
+                className="workspace-panel-picker__card"
+                aria-pressed={gitPanelOpen}
                 onClick={onToggleGitPanel}
               >
                 <div className="workspace-panel-picker__card-icon">
@@ -138,17 +134,14 @@ export function WorkspacePanelPicker({
                   <span className="workspace-panel-picker__card-title">Git</span>
                   <span className="workspace-panel-picker__card-desc">Source Control</span>
                 </div>
-                <div
-                  className={`workspace-panel-picker__badge${gitPanelOpen ? " workspace-panel-picker__badge--on" : ""}`}
-                >
-                  {gitPanelOpen ? "Active" : "Off"}
-                </div>
+                <span className="workspace-panel-picker__check">{gitPanelOpen && <CheckIcon />}</span>
               </button>
 
               {/* Terminal */}
               <button
                 type="button"
-                className={`workspace-panel-picker__card${terminalOpen ? " workspace-panel-picker__card--active" : ""}`}
+                className="workspace-panel-picker__card"
+                aria-pressed={terminalOpen}
                 onClick={onToggleTerminal}
               >
                 <div className="workspace-panel-picker__card-icon">
@@ -158,17 +151,14 @@ export function WorkspacePanelPicker({
                   <span className="workspace-panel-picker__card-title">{t("terminal" as any) || "Terminal"}</span>
                   <span className="workspace-panel-picker__card-desc">Shell runner</span>
                 </div>
-                <div
-                  className={`workspace-panel-picker__badge${terminalOpen ? " workspace-panel-picker__badge--on" : ""}`}
-                >
-                  {terminalOpen ? "Active" : "Off"}
-                </div>
+                <span className="workspace-panel-picker__check">{terminalOpen && <CheckIcon />}</span>
               </button>
 
               {/* Isolated Chromium browser */}
               <button
                 type="button"
-                className={`workspace-panel-picker__card${browserOpen ? " workspace-panel-picker__card--active" : ""}`}
+                className="workspace-panel-picker__card"
+                aria-pressed={browserOpen}
                 onClick={onToggleBrowser}
               >
                 <div className="workspace-panel-picker__card-icon">
@@ -178,11 +168,7 @@ export function WorkspacePanelPicker({
                   <span className="workspace-panel-picker__card-title">{t("browserTitle")}</span>
                   <span className="workspace-panel-picker__card-desc">Chromium</span>
                 </div>
-                <div
-                  className={`workspace-panel-picker__badge${browserOpen ? " workspace-panel-picker__badge--on" : ""}`}
-                >
-                  {browserOpen ? "Active" : "Off"}
-                </div>
+                <span className="workspace-panel-picker__check">{browserOpen && <CheckIcon />}</span>
               </button>
             </div>
 

@@ -1,4 +1,5 @@
 import { Button, IconButton, Input, interactiveItemClassName, interactiveListClassName } from "@zazaru/ui";
+import { CheckIcon } from "@/base/browser/ui/icons/iconRegistry";
 import { useI18n } from "@/platform/localization/localizationService";
 import type { BranchInfo } from "../../../../services/scm/common/scm";
 
@@ -47,14 +48,18 @@ export function GitBranchModal({
           </div>
 
           {/* Branch List */}
-          <div className={interactiveListClassName("scm-list scm-branch-list")}>
+          <div
+            className={interactiveListClassName("scm-list scm-branch-list")}
+            role="listbox"
+            aria-label={t("checkoutCreateBranch")}
+          >
             {branches.map((b) => (
-              <div
+              <button
                 key={b.name}
-                className={interactiveItemClassName(
-                  b.isHead,
-                  `scm-list-row scm-branch-row ${b.isHead ? "selected" : ""}`,
-                )}
+                type="button"
+                className={interactiveItemClassName(false, "scm-list-row scm-branch-row")}
+                role="option"
+                aria-selected={b.isHead}
                 onClick={() => onCheckoutBranch(b.name)}
               >
                 <div className="scm-branch-row-content">
@@ -62,9 +67,13 @@ export function GitBranchModal({
                     <i className="codicon codicon-git-branch"></i>
                   </span>
                   <span className="scm-branch-name">{b.name}</span>
-                  {b.isHead && <span className="scm-branch-current">{t("currentBranch")}</span>}
+                  {b.isHead && (
+                    <span className="scm-branch-current" title={t("currentBranch")}>
+                      <CheckIcon />
+                    </span>
+                  )}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>

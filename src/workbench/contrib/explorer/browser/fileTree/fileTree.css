@@ -40,7 +40,7 @@
   min-width: 28px;
   min-height: 28px;
   padding: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--workspace-panel-text-secondary, var(--fg-dim));
 }
 
@@ -59,7 +59,7 @@
   height: 30px;
   padding: 0 7px;
   border: 1px solid var(--workspace-panel-border, color-mix(in srgb, var(--fg) 8%, transparent));
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--workspace-panel-text-primary, var(--fg)) 3%, transparent);
   color: var(--workspace-panel-text-secondary, var(--fg-dim));
   transition:
@@ -110,7 +110,7 @@
   height: 22px;
   padding: 0;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--workspace-panel-text-tertiary, var(--fg-muted));
   cursor: default;
@@ -173,7 +173,7 @@
   margin: 0 8px 2px;
   padding: 4px 8px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   outline: none;
   background: transparent;
   color: var(--workspace-panel-text-secondary, var(--fg-dim));
@@ -246,7 +246,7 @@
     color var(--duration-fast);
   position: relative;
   margin: 0 8px 1px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .ftree__row:hover {
