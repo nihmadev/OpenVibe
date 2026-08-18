@@ -44,7 +44,7 @@ vi.mock("@/workbench/services/aiProviders/browser/providerLogo", () => ({
 describe("ComposerOptions", () => {
   it("refreshes enabled models whenever the selector is opened", async () => {
     providerMocks.setEnabled([]);
-    const { container, getByText } = render(
+    const { container, getByText, queryByText } = render(
       <ComposerOptions
         currentModel="old-model"
         onPickModel={vi.fn()}
@@ -61,7 +61,9 @@ describe("ComposerOptions", () => {
 
     fireEvent.click(container.querySelector(".composer-options__trigger")!);
     await waitFor(() => expect(providerMocks.listEnabledModels).toHaveBeenCalledTimes(2));
-    fireEvent.click(container.querySelector(".composer-options__row")!);
+    fireEvent.mouseEnter(document.querySelector(".composer-options__row")!);
+    expect(queryByText("Fresh Model Name")).not.toBeInTheDocument();
+    fireEvent.click(document.querySelector(".composer-options__row")!);
 
     await waitFor(() => expect(getByText("Fresh Model Name")).toBeInTheDocument());
   });

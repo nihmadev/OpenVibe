@@ -6,12 +6,12 @@
 
 .composer {
   --composer-radius: 22px;
-  --composer-control: 28px;
+  --composer-control: 30px;
   --composer-surface: color-mix(in srgb, var(--surface-raised) 94%, var(--fg) 6%);
   /* Active choices are functional content, not tertiary helper text. Mix with
      the composer surface so themes whose muted token already has alpha do not
      make the current model, effort, and permission mode unreadable. */
-  --composer-functional-fg: color-mix(in srgb, var(--fg) 78%, var(--composer-surface));
+  --composer-functional-fg: color-mix(in srgb, var(--fg) 92%, var(--composer-surface));
   position: relative;
   display: flex;
   flex-direction: column;
@@ -24,8 +24,8 @@
     0 0 0 0.5px color-mix(in srgb, var(--fg) 9%, transparent),
     0 3px 7.5px rgba(0, 0, 0, 0.04),
     0 0 20px rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
   transition:
     background-color 150ms cubic-bezier(0.23, 1, 0.32, 1),
     box-shadow 150ms cubic-bezier(0.23, 1, 0.32, 1);
@@ -33,7 +33,7 @@
 
 @supports (corner-shape: superellipse(1.5)) {
   .composer {
-    border-radius: 25px;
+    border-radius: var(--radius-2xl);
     corner-shape: superellipse(1.5);
   }
 }
@@ -231,7 +231,9 @@
   padding: 0 7px 0 5px;
   border-radius: 999px;
   color: var(--composer-functional-fg);
-  font-size: 12px;
+  font-size: var(--text-ui-caption, 13px);
+  font-weight: 500;
+  line-height: 1;
   white-space: nowrap;
   transition:
     color 120ms ease,
@@ -265,13 +267,13 @@
   width: 286px;
   padding: 4px;
   border: 1px solid color-mix(in srgb, var(--fg) 9%, transparent);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--surface-raised) 96%, var(--fg) 4%);
   box-shadow:
     0 12px 32px rgba(0, 0, 0, 0.34),
     0 2px 8px rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
   animation: composer-menu-in 140ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
@@ -292,7 +294,7 @@
   min-height: 48px;
   padding: 7px 8px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--fg);
   text-align: left;
@@ -303,8 +305,7 @@
   margin-top: 3px;
 }
 
-.composer-permissions__option:hover,
-.composer-permissions__option--selected {
+.composer-permissions__option:hover {
   background: color-mix(in srgb, var(--fg) 8%, transparent);
 }
 
@@ -345,7 +346,7 @@
   min-height: 30px;
   padding: 5px 8px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--fg-muted);
   font-size: 13px;
@@ -374,14 +375,14 @@
   padding: 20px;
   overflow: hidden;
   border: 0;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   background: color-mix(in srgb, var(--surface-raised) 90%, transparent);
   color: var(--fg);
   box-shadow:
     0 0 0 0.5px color-mix(in srgb, var(--fg) 13%, transparent),
     0 4px 8px -2px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
 }
 
 .composer-permissions__dialog-section + .composer-permissions__dialog-section {
@@ -415,7 +416,7 @@
 
 .composer-permissions__capabilities {
   padding: 12px 16px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: color-mix(in srgb, var(--fg) 5%, transparent);
 }
 
@@ -569,13 +570,14 @@
 .composer-options__trigger {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   max-width: 330px;
   height: var(--composer-control);
-  padding: 0 7px;
+  padding: 0 8px;
   border-radius: 999px;
   color: var(--composer-functional-fg);
-  font-size: 12px;
+  font-size: var(--text-ui-caption, 13px);
+  line-height: 1;
   white-space: nowrap;
   transition:
     color 120ms ease,
@@ -606,9 +608,10 @@
 }
 
 .composer-options__summary {
+  align-items: center;
   display: flex;
   min-width: 0;
-  gap: 4px;
+  gap: 6px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -618,39 +621,55 @@
   text-overflow: ellipsis;
 }
 
-.composer-options__effort-summary {
-  flex: none;
-  color: inherit;
+.composer-options__model-summary {
+  color: var(--fg);
+  font-weight: 500;
 }
 
-.composer-options__menu,
-.composer-options__submenu {
-  position: absolute;
+.composer-options__effort-summary {
+  flex: none;
+  color: var(--fg-muted);
+  font-size: var(--text-ui-sm, 12px);
+  font-weight: 500;
+  transform: translateY(0.5px);
+}
+
+.composer-options__menu {
+  position: relative;
   z-index: 220;
   padding: 4px;
   border: 1px solid color-mix(in srgb, var(--fg) 9%, transparent);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--surface-raised) 96%, var(--fg) 4%);
   box-shadow:
     0 12px 32px rgba(0, 0, 0, 0.34),
     0 2px 8px rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
   animation: composer-menu-in 140ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
 .composer-options__menu {
-  right: 0;
-  bottom: calc(100% + 10px);
   width: 228px;
 }
 
 .composer-options__submenu {
+  position: absolute;
   left: calc(100% + 6px);
   bottom: -1px;
   width: 220px;
   max-height: min(360px, 60vh);
   overflow-y: auto;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--fg) 9%, transparent);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface-raised) 96%, var(--fg) 4%);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.34),
+    0 2px 8px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+  animation: composer-menu-in 140ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
 .composer-options__submenu--models {
@@ -676,7 +695,7 @@
   min-height: 30px;
   padding: 5px 8px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--fg);
   font-size: 13px;
@@ -691,8 +710,7 @@
 
 .composer-options__row:hover,
 .composer-options__row--active,
-.composer-options__submenu-row:hover,
-.composer-options__submenu-row--selected {
+.composer-options__submenu-row:hover {
   background: color-mix(in srgb, var(--fg) 8%, transparent);
 }
 
@@ -725,7 +743,18 @@
 }
 
 .composer-options__submenu-title {
+  width: 100%;
   padding: 6px 8px 5px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.composer-options__submenu-title svg {
+  width: 12px;
+  height: 12px;
+  transform: rotate(180deg);
 }
 
 .composer-options__group-label {
@@ -768,13 +797,13 @@
   padding: 4px;
   overflow-y: auto;
   border: 1px solid color-mix(in srgb, var(--fg) 9%, transparent);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: color-mix(in srgb, var(--surface-raised) 96%, var(--fg) 4%);
   box-shadow:
     0 12px 32px rgba(0, 0, 0, 0.28),
     0 2px 8px rgba(0, 0, 0, 0.18);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
 }
 
 .composer-suggestions__empty {
@@ -792,7 +821,7 @@
   min-height: 30px;
   padding: 5px 8px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--fg-dim);
   font-size: 13px;
@@ -843,7 +872,7 @@
   display: block;
   width: 80px;
   height: 80px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 .composer__image-preview {
@@ -901,7 +930,7 @@
   min-height: 48px;
   padding: 6px 8px;
   border: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--fg) 4%, transparent);
 }
 
@@ -925,7 +954,7 @@
   margin-left: auto;
   padding: 2px;
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   background: transparent;
   color: var(--fg-muted);
   cursor: pointer;
@@ -995,7 +1024,7 @@
   justify-content: center;
   border-radius: inherit;
   background: color-mix(in srgb, var(--surface-raised) 78%, transparent);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(var(--blur-amount));
   pointer-events: none;
 }
 
@@ -1032,7 +1061,7 @@
   display: block;
   max-width: 90vw;
   max-height: 90vh;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   object-fit: contain;
   box-shadow: var(--shadow-lg);
 }
@@ -1070,7 +1099,7 @@
   max-width: 220px;
   padding: 2px 4px 2px 7px;
   border: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--fg) 4%, transparent);
   color: var(--fg-dim);
   font-size: 11px;
@@ -1079,7 +1108,7 @@
 .chip__img {
   width: 22px;
   height: 22px;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   object-fit: cover;
 }
 
@@ -1100,7 +1129,7 @@
   height: 18px;
   padding: 0;
   border: 0;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--fg-muted);
 }
@@ -1156,7 +1185,7 @@
 .composer__md-code,
 .composer__md-codeblock {
   border: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--fg) 5%, transparent);
   color: var(--fg);
   font-family: var(--mono);
@@ -1233,19 +1262,58 @@
     padding: 0;
     justify-content: center;
   }
+}
+
+/* At a narrow viewport (including browser zoom), keep navigation inside one
+   panel so the flyout cannot consume the remaining composer width. */
+@media (max-width: 1050px) {
+  .composer-options__menu--submenu {
+    width: 220px;
+  }
+
+  .composer-options__menu--models {
+    width: 260px;
+  }
+
+  .composer-options__menu--submenu .composer-options__root-menu {
+    display: none;
+  }
 
   .composer-options__submenu {
-    right: 0;
-    left: auto;
-    bottom: calc(100% + 6px);
+    position: static;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    animation: none;
   }
 }
 
-@media (max-width: 1050px) {
-  .composer-options__submenu {
-    right: calc(100% + 6px);
-    left: auto;
-  }
+.composer-options__menu--compact.composer-options__menu--submenu {
+  width: 220px;
+}
+
+.composer-options__menu--compact.composer-options__menu--models {
+  width: 260px;
+}
+
+.composer-options__menu--compact .composer-options__root-menu {
+  display: none;
+}
+
+.composer-options__menu--compact .composer-options__submenu {
+  position: static;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

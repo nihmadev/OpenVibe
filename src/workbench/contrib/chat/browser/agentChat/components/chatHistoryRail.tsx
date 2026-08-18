@@ -25,25 +25,26 @@ function compactText(value: string): string {
 
 function buildPreviews(entries: ChatEntry[]): HistoryPreview[] {
   const previews: HistoryPreview[] = [];
+  let nextTurn: ChatEntry | null = null;
 
-  for (let index = 0; index < entries.length; index++) {
+  for (let index = entries.length - 1; index >= 0; index--) {
     const entry = entries[index];
-    if (entry.kind !== "single" || entry.item.kind !== "user") continue;
-
-    const nextRun = entries.slice(index + 1).find((candidate) => {
-      if (candidate.kind === "single" && candidate.item.kind === "user") return true;
-      return candidate.kind === "run";
-    });
-    const answer = nextRun?.kind === "run" ? (nextRun.finalItem?.text ?? "") : "";
+    if (entry.kind === "run") {
+      nextTurn = entry;
+      continue;
+    }
+    if (entry.item.kind !== "user") continue;
+    const answer = nextTurn?.kind === "run" ? (nextTurn.finalItem?.text ?? "") : "";
 
     previews.push({
       id: entry.item.id,
       prompt: compactText(entry.item.text),
       answer: compactText(answer),
     });
+    nextTurn = entry;
   }
 
-  return previews;
+  return previews.reverse();
 }
 
 export function ChatHistoryRail({ entries, onNavigate }: ChatHistoryRailProps): React.ReactElement | null {

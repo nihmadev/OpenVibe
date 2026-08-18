@@ -1,5 +1,7 @@
+import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CheckIcon, ChevronDownIcon, ChevronRightIcon } from "@/base/browser/ui/icons/iconRegistry";
+import { Loader } from "@/base/browser/ui/loader/loader";
 import { useI18n } from "@/platform/localization/localizationService";
 import { modelsDevService } from "@/workbench/services/aiProviders/browser/modelsDevService";
 import { ProviderLogo } from "@/workbench/services/aiProviders/browser/providerLogo";
@@ -85,6 +87,7 @@ function useModelGroups() {
       const connected = providers.filter((provider) => provider.apiKey);
       const now = Date.now();
       const results: ModelGroup[] = [];
+      await modelsDevService.initialize();
 
       await Promise.allSettled(
         connected.map(async (provider) => {
@@ -154,7 +157,8 @@ export function ComposerOptions({
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [submenu, setSubmenu] = useState<"model" | "effort" | null>(null);
-  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [compactMenu, setCompactMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const { groups, loading, fetch } = useModelGroups();
 
   useEffect(() => {
@@ -162,27 +166,6 @@ export function ComposerOptions({
   }, [fetch]);
 
   useEffect(() => aiProviderService.onEnabledModelsChange(fetch), [fetch]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-        setSubmenu(null);
-      }
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      if (submenu) setSubmenu(null);
-      else setOpen(false);
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open, submenu]);
 
   const activeModel = useMemo(() => {
     for (const group of groups) {
@@ -200,86 +183,142 @@ export function ComposerOptions({
   const close = () => {
     setOpen(false);
     setSubmenu(null);
+    setCompactMenu(false);
   };
 
-  return (
-    <div className="composer-options" ref={rootRef}>
-      <button
-        type="button"
-        className={`composer-options__trigger${open ? " composer-options__trigger--open" : ""}`}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={() => {
-          setOpen((value) => {
-            if (!value) {
-              onOpen?.();
-              void fetch();
-            }
-            return !value;
-          });
-          setSubmenu(null);
-        }}
-      >
-        <span className="composer-options__provider" aria-hidden="true">
-          {activeModel.group ? (
-            <ProviderLogo providerId={activeModel.group.providerId} style={{ width: 13, height: 13 }} />
-          ) : (
-            <span className="composer-options__status-dot" />
-          )}
-        </span>
-        <span className="composer-options__summary">
-          <span>{activeModel.name}</span>
-          {showReasoningEffort && <span className="composer-options__effort-summary">{activeEffort}</span>}
-        </span>
-        <ChevronDownIcon size={11} />
-      </button>
+  const openSubmenu = (nextSubmenu: "model" | "effort", interaction: "hover" | "click") => {
+    const menuRect = menuRef.current?.getBoundingClientRect();
+    const submenuWidth = nextSubmenu === "model" ? 260 : 220;
+    const wouldOverflowRight = menuRect ? menuRect.right + 6 + submenuWidth > window.innerWidth - 8 : false;
+    const nextCompactMenu = window.innerWidth <= 1050 || wouldOverflowRight;
+    setCompactMenu(nextCompactMenu);
+    if (interaction === "hover" && nextCompactMenu) return;
+    setSubmenu(nextSubmenu);
+  };
 
-      {open && (
-        <div className="composer-options__menu" role="menu" aria-label={t("composerOptions")}>
+  useEffect(() => {
+    if (!open || !submenu) return;
+    const updateLayout = () => {
+      const menuRect = menuRef.current?.getBoundingClientRect();
+      const submenuWidth = submenu === "model" ? 260 : 220;
+      const wouldOverflowRight = menuRect ? menuRect.right + 6 + submenuWidth > window.innerWidth - 8 : false;
+      setCompactMenu(window.innerWidth <= 1050 || wouldOverflowRight);
+    };
+    window.addEventListener("resize", updateLayout);
+    updateLayout();
+    return () => window.removeEventListener("resize", updateLayout);
+  }, [open, submenu]);
+
+  return (
+    <PopoverPrimitive.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        setSubmenu(null);
+        setCompactMenu(false);
+        if (nextOpen) {
+          onOpen?.();
+          void fetch();
+        }
+      }}
+    >
+      <div className="composer-options">
+        <PopoverPrimitive.Trigger asChild>
           <button
             type="button"
-            className={`composer-options__row${submenu === "model" ? " composer-options__row--active" : ""}`}
-            role="menuitem"
-            onMouseEnter={() => setSubmenu("model")}
-            onClick={() => setSubmenu("model")}
+            className={`composer-options__trigger${open ? " composer-options__trigger--open" : ""}`}
+            aria-haspopup="menu"
+            aria-expanded={open}
+            onMouseDown={(event) => event.preventDefault()}
           >
-            <span>{t("composerModel")}</span>
-            <span className="composer-options__row-value">{activeModel.name}</span>
-            <ChevronRightIcon />
+            <span className="composer-options__provider" aria-hidden="true">
+              {activeModel.group ? (
+                <ProviderLogo providerId={activeModel.group.providerId} style={{ width: 13, height: 13 }} />
+              ) : (
+                <span className="composer-options__status-dot" />
+              )}
+            </span>
+            <span className="composer-options__summary">
+              <span className="composer-options__model-summary">{activeModel.name}</span>
+              {showReasoningEffort && <span className="composer-options__effort-summary">{activeEffort}</span>}
+            </span>
+            <ChevronDownIcon size={11} />
           </button>
+        </PopoverPrimitive.Trigger>
+      </div>
 
-          {showReasoningEffort && (
+      <PopoverPrimitive.Portal>
+        <PopoverPrimitive.Content
+          ref={menuRef}
+          className={`composer-options__menu${submenu ? " composer-options__menu--submenu" : ""}${
+            submenu === "model" ? " composer-options__menu--models" : ""
+          }${compactMenu && submenu ? " composer-options__menu--compact" : ""}`}
+          role="menu"
+          aria-label={t("composerOptions")}
+          side="top"
+          align="end"
+          sideOffset={10}
+          collisionPadding={8}
+          onOpenAutoFocus={(event) => event.preventDefault()}
+          onEscapeKeyDown={(event) => {
+            if (!submenu) return;
+            event.preventDefault();
+            setSubmenu(null);
+          }}
+        >
+          <div className="composer-options__root-menu">
             <button
               type="button"
-              className={`composer-options__row${submenu === "effort" ? " composer-options__row--active" : ""}`}
+              className={`composer-options__row${submenu === "model" ? " composer-options__row--active" : ""}`}
               role="menuitem"
-              onMouseEnter={() => setSubmenu("effort")}
-              onClick={() => setSubmenu("effort")}
+              onMouseEnter={() => openSubmenu("model", "hover")}
+              onClick={() => openSubmenu("model", "click")}
             >
-              <span>{t("composerEffort")}</span>
-              <span className="composer-options__row-value">{activeEffort}</span>
+              <span>{t("composerModel")}</span>
+              <span className="composer-options__row-value">{activeModel.name}</span>
               <ChevronRightIcon />
             </button>
-          )}
 
-          <div className="composer-options__divider" />
-          <button
-            type="button"
-            className="composer-options__row composer-options__row--muted"
-            role="menuitem"
-            onClick={() => {
-              close();
-              onOpenSettings("models");
-            }}
-          >
-            <span>{t("configureModels")}</span>
-          </button>
+            {showReasoningEffort && (
+              <button
+                type="button"
+                className={`composer-options__row${submenu === "effort" ? " composer-options__row--active" : ""}`}
+                role="menuitem"
+                onMouseEnter={() => openSubmenu("effort", "hover")}
+                onClick={() => openSubmenu("effort", "click")}
+              >
+                <span>{t("composerEffort")}</span>
+                <span className="composer-options__row-value">{activeEffort}</span>
+                <ChevronRightIcon />
+              </button>
+            )}
+
+            <div className="composer-options__divider" />
+            <button
+              type="button"
+              className="composer-options__row composer-options__row--muted"
+              role="menuitem"
+              onMouseEnter={() => setSubmenu(null)}
+              onClick={() => {
+                close();
+                onOpenSettings("models");
+              }}
+            >
+              <span>{t("configureModels")}</span>
+            </button>
+          </div>
 
           {submenu === "model" && (
             <div className="composer-options__submenu composer-options__submenu--models" role="menu">
-              <div className="composer-options__submenu-title">{t("composerModel")}</div>
-              {loading && <div className="composer-options__empty">{t("loading")}</div>}
+              <button type="button" className="composer-options__submenu-title" onClick={() => setSubmenu(null)}>
+                <ChevronRightIcon />
+                <span>{t("composerModel")}</span>
+              </button>
+              {loading && (
+                <div className="composer-options__empty">
+                  <Loader />
+                </div>
+              )}
               {!loading && groups.length === 0 && <div className="composer-options__empty">{t("noModelsEnabled")}</div>}
               {groups.map((group) => (
                 <div className="composer-options__model-group" key={group.providerDbId}>
@@ -290,9 +329,7 @@ export function ComposerOptions({
                   {group.models.map((model) => (
                     <button
                       type="button"
-                      className={`composer-options__submenu-row${
-                        model.id === currentModel ? " composer-options__submenu-row--selected" : ""
-                      }`}
+                      className="composer-options__submenu-row"
                       role="menuitemradio"
                       aria-checked={model.id === currentModel}
                       key={`${group.providerDbId}::${model.id}`}
@@ -312,15 +349,16 @@ export function ComposerOptions({
 
           {submenu === "effort" && (
             <div className="composer-options__submenu composer-options__submenu--effort" role="menu">
-              <div className="composer-options__submenu-title">{t("composerEffort")}</div>
+              <button type="button" className="composer-options__submenu-title" onClick={() => setSubmenu(null)}>
+                <ChevronRightIcon />
+                <span>{t("composerEffort")}</span>
+              </button>
               {effortOptions.map((option) => {
                 const selected = (currentEffort ?? "") === option.value;
                 return (
                   <button
                     type="button"
-                    className={`composer-options__submenu-row${
-                      selected ? " composer-options__submenu-row--selected" : ""
-                    }`}
+                    className="composer-options__submenu-row"
                     role="menuitemradio"
                     aria-checked={selected}
                     key={option.value}
@@ -336,8 +374,8 @@ export function ComposerOptions({
               })}
             </div>
           )}
-        </div>
-      )}
-    </div>
+        </PopoverPrimitive.Content>
+      </PopoverPrimitive.Portal>
+    </PopoverPrimitive.Root>
   );
 }

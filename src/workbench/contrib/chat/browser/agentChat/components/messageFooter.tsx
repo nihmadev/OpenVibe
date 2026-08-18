@@ -9,6 +9,7 @@ import {
   CopyCheckIcon,
   DiffIcon,
 } from "@/base/browser/ui/icons/iconRegistry";
+import { Loader } from "@/base/browser/ui/loader/loader";
 import { Tooltip } from "@/base/browser/ui/tooltip/tooltip";
 import { useI18n } from "@/platform/localization/localizationService";
 import { writeClipboard } from "@/platform/native/tauri/clipboardService";
@@ -88,7 +89,6 @@ function FileChangeRow({
   cwd?: string;
   onOpenAgentDiff?: (toolCallId: string, path: string) => void;
 }) {
-  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [diffData, setDiffData] = useState<{ original: string; modified: string; lang: string } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -188,7 +188,11 @@ function FileChangeRow({
       </div>
       {open && (
         <div className="changes-pill__diff">
-          {loading && <div className="tool__diff-loading">{t("loadingDiff")}</div>}
+          {loading && (
+            <div className="tool__diff-loading">
+              <Loader />
+            </div>
+          )}
           {!loading && diffData && (
             <DiffEditor original={diffData.original} modified={diffData.modified} language={diffData.lang} />
           )}

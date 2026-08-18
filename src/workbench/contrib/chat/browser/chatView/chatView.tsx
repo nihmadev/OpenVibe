@@ -1,3 +1,4 @@
+import { defaultRangeExtractor, useVirtualizer } from "@tanstack/react-virtual";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./chatView.css";
 import "./fileBadge.css";
@@ -30,12 +31,14 @@ const StandaloneItem = React.memo(
 
     if (item.kind === "model-picker" && item.models) {
       return (
-        <div className="modelpicker">
+        <div className="modelpicker" role="radiogroup" aria-label={t("selectModel")}>
           <div className="modelpicker__title">{t("selectModel")}</div>
           {item.models.map((m) => (
             <button
               key={m.id}
-              className={`modelpicker__item${m.id === item.currentModel ? " modelpicker__item--active" : ""}`}
+              className="modelpicker__item"
+              role="radio"
+              aria-checked={m.id === item.currentModel}
               onClick={() => onPickModel?.(m.id)}
             >
               <span className="modelpicker__name">{m.name}</span>
@@ -114,6 +117,7 @@ export function ChatView({
   const scrollRafRef = useRef<number | null>(null);
   const followRafRef = useRef<number | null>(null);
   const shouldFollowBottomRef = useRef(true);
+  const didInitialScrollRef = useRef(false);
 
   useEffect(() => {
     let changed = false;
@@ -140,6 +144,38 @@ export function ChatView({
     () => [...chatEntries].reverse().find((entry) => entry.kind === "run")?.id,
     [chatEntries],
   );
+  const pendingOnly = !!busy && !lastRunId;
+  const virtualCount = chatEntries.length + (pendingOnly ? 1 : 0);
+  const activeRunIndex = React.useMemo(
+    () => (busy && lastRunId ? chatEntries.findIndex((entry) => entry.kind === "run" && entry.id === lastRunId) : -1),
+    [busy, chatEntries, lastRunId],
+  );
+
+  const virtualizer = useVirtualizer({
+    count: virtualCount,
+    getScrollElement: () => ref.current,
+    estimateSize: () => 220,
+    getItemKey: (index) => {
+      const entry = chatEntries[index];
+      if (!entry) return "pending-run";
+      return entry.kind === "run" ? entry.id : entry.item.id;
+    },
+    overscan: 6,
+    rangeExtractor: (range) => {
+      const indexes = defaultRangeExtractor(range);
+      if (activeRunIndex >= 0 && !indexes.includes(activeRunIndex)) indexes.push(activeRunIndex);
+      return indexes.sort((a, b) => a - b);
+    },
+    initialRect: { width: 0, height: 600 },
+    onChange: (instance, sync) => {
+      if (sync || followRafRef.current || !shouldFollowBottomRef.current || virtualCount === 0) return;
+      followRafRef.current = requestAnimationFrame(() => {
+        followRafRef.current = null;
+        if (!shouldFollowBottomRef.current) return;
+        instance.scrollToIndex(virtualCount - 1, { align: "end" });
+      });
+    },
+  });
 
   const handleScroll = useCallback(() => {
     const el = ref.current;
@@ -161,6 +197,7 @@ export function ChatView({
   const scrollToBottom = useCallback(() => {
     const el = ref.current;
     if (!el) return;
+    shouldFollowBottomRef.current = true;
     if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
 
     const startScrollTop = el.scrollTop;
@@ -204,16 +241,24 @@ export function ChatView({
     scrollRafRef.current = requestAnimationFrame(animateScroll);
   }, [handleScroll]);
 
-  const navigateToMessage = useCallback((id: string) => {
-    const el = ref.current;
-    if (!el) return;
-    const target = Array.from(el.querySelectorAll<HTMLElement>("[data-chat-entry-id]")).find(
-      (node) => node.dataset.chatEntryId === id,
-    );
-    if (!target) return;
-    shouldFollowBottomRef.current = false;
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+  const entryIndexes = React.useMemo(() => {
+    const indexes = new Map<string, number>();
+    chatEntries.forEach((entry, index) => {
+      indexes.set(entry.kind === "run" ? entry.id : entry.item.id, index);
+    });
+    return indexes;
+  }, [chatEntries]);
+
+  const navigateToMessage = useCallback(
+    (id: string) => {
+      const index = entryIndexes.get(id);
+      if (index === undefined) return;
+      shouldFollowBottomRef.current = false;
+      virtualizer.scrollToIndex(index, { align: "start" });
+      setShowScrollDown(true);
+    },
+    [entryIndexes, virtualizer],
+  );
 
   const handleAnimationEnd = useCallback((e: React.AnimationEvent<HTMLButtonElement>) => {
     if (e.target === e.currentTarget && !scrollRafRef.current) {
@@ -223,38 +268,24 @@ export function ChatView({
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 150;
-    shouldFollowBottomRef.current = nearBottom;
-    if (nearBottom) el.scrollTop = el.scrollHeight;
-    handleScroll();
-
-    const followBottom = () => {
-      if (followRafRef.current || !shouldFollowBottomRef.current) return;
-      followRafRef.current = requestAnimationFrame(() => {
-        followRafRef.current = null;
-        const currentEl = ref.current;
-        if (!currentEl || !shouldFollowBottomRef.current) return;
-        currentEl.scrollTop = currentEl.scrollHeight;
-        handleScroll();
-      });
-    };
-
-    const mutationObserver = new MutationObserver(followBottom);
-    mutationObserver.observe(el, { childList: true, subtree: true, characterData: true });
-
-    const resizeObserver = new ResizeObserver(followBottom);
-    resizeObserver.observe(el);
+    if (!el || virtualCount === 0) return;
+    if (!didInitialScrollRef.current) {
+      didInitialScrollRef.current = true;
+      shouldFollowBottomRef.current = true;
+    }
+    if (shouldFollowBottomRef.current) virtualizer.scrollToIndex(virtualCount - 1, { align: "end" });
+    followRafRef.current = requestAnimationFrame(() => {
+      followRafRef.current = null;
+      handleScroll();
+    });
 
     return () => {
-      mutationObserver.disconnect();
-      resizeObserver.disconnect();
       if (followRafRef.current) {
         cancelAnimationFrame(followRafRef.current);
         followRafRef.current = null;
       }
     };
-  }, [handleScroll]);
+  }, [handleScroll, virtualCount, virtualizer]);
 
   return (
     <div className="chathistory-wrapper">
@@ -266,42 +297,48 @@ export function ChatView({
         onWheel={handleManualInterrupt}
         onPointerDown={handleManualInterrupt}
       >
-        {chatEntries.map((entry) => {
-          if (entry.kind === "run") {
+        <div className="chathistory-virtualizer" style={{ height: `${virtualizer.getTotalSize()}px` }}>
+          {virtualizer.getVirtualItems().map((virtualItem) => {
+            const entry = chatEntries[virtualItem.index];
+            const id = entry ? (entry.kind === "run" ? entry.id : entry.item.id) : "pending-run";
             return (
-              <div key={entry.id} data-chat-entry-id={entry.id}>
-                <AgentRun
-                  items={entry.items}
-                  finalItem={entry.finalItem}
-                  allItems={items}
-                  isActive={!!busy && entry.id === lastRunId}
-                  isFinalStreaming={entry.finalItem?.id === streamingId}
-                  showThinking={showThinking}
-                  cwd={cwd}
-                  onRegenerate={onRegenerate}
-                  onDrillDown={onDrillDown}
-                  onOpenAgentDiff={onOpenAgentDiff}
-                />
+              <div
+                key={virtualItem.key}
+                ref={virtualizer.measureElement}
+                data-index={virtualItem.index}
+                data-chat-entry-id={id}
+                className="chathistory-virtual-entry"
+                style={{ transform: `translateY(${virtualItem.start}px)` }}
+              >
+                {!entry ? (
+                  <AgentRun
+                    items={[]}
+                    allItems={items}
+                    isActive
+                    showThinking={showThinking}
+                    cwd={cwd}
+                    onOpenAgentDiff={onOpenAgentDiff}
+                  />
+                ) : entry.kind === "run" ? (
+                  <AgentRun
+                    items={entry.items}
+                    finalItem={entry.finalItem}
+                    allItems={items}
+                    isActive={!!busy && entry.id === lastRunId}
+                    isFinalStreaming={entry.finalItem?.id === streamingId}
+                    showThinking={showThinking}
+                    cwd={cwd}
+                    onRegenerate={onRegenerate}
+                    onDrillDown={onDrillDown}
+                    onOpenAgentDiff={onOpenAgentDiff}
+                  />
+                ) : (
+                  <StandaloneItem item={entry.item} onPickModel={onPickModel} onRevert={onRevert} />
+                )}
               </div>
             );
-          }
-          return (
-            <div key={entry.item.id} data-chat-entry-id={entry.item.id}>
-              <StandaloneItem item={entry.item} onPickModel={onPickModel} onRevert={onRevert} />
-            </div>
-          );
-        })}
-
-        {busy && !lastRunId && (
-          <AgentRun
-            items={[]}
-            allItems={items}
-            isActive
-            showThinking={showThinking}
-            cwd={cwd}
-            onOpenAgentDiff={onOpenAgentDiff}
-          />
-        )}
+          })}
+        </div>
       </div>
       {(showScrollDown || isJumping) && (
         <button

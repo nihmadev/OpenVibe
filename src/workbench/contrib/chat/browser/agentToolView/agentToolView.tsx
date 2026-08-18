@@ -2,6 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import React from "react";
 import { FileIcon, FolderIcon } from "@/base/browser/ui/icons/fileIcons";
 import { ChevronRightIcon, ShowMoreIcon, ToolGlyph } from "@/base/browser/ui/icons/iconRegistry";
+import { Loader } from "@/base/browser/ui/loader/loader";
 import { useI18n } from "@/platform/localization/localizationService";
 import { CodeBlock, resolveMonacoLang } from "@/workbench/browser/parts/editor/codeBlock/codeBlock";
 import { DiffEditor } from "@/workbench/browser/parts/editor/diffEditor/diffEditor";
@@ -92,7 +93,6 @@ function StreamingCodeBlock({ toolStream, toolName }: { toolStream: string; tool
 }
 
 function DiffBlock({ item, file }: { item: HistoryItem; file?: { name: string } | null }) {
-  const { t } = useI18n();
   const [diffData, setDiffData] = React.useState<{ original: string; modified: string; lang: string } | null>(null);
   const [loading, setLoading] = React.useState(true);
 
@@ -139,7 +139,11 @@ function DiffBlock({ item, file }: { item: HistoryItem; file?: { name: string } 
           <span className="tool__diff-fname">{info?.name}</span>
         </span>
       </div>
-      {loading && <div className="tool__diff-loading">{t("loadingDiff")}</div>}
+      {loading && (
+        <div className="tool__diff-loading">
+          <Loader />
+        </div>
+      )}
       {!loading && diffData && (
         <DiffEditor original={diffData.original} modified={diffData.modified} language={diffData.lang} />
       )}
@@ -171,7 +175,12 @@ function WriteFileBlock({ item }: { item: HistoryItem }) {
     }
   }, [item.ok, item.toolArgs]);
 
-  if (loading) return <div className="tool__diff-loading">Loading…</div>;
+  if (loading)
+    return (
+      <div className="tool__diff-loading">
+        <Loader />
+      </div>
+    );
   if (!content) return <div className="tool__diff-loading">No content preview available.</div>;
   const info = pickFile(item.toolArgs);
   const lang = resolveMonacoLang(info?.ext || "plaintext");

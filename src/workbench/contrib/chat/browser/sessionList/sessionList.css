@@ -117,7 +117,7 @@
   padding: 0 10px;
   background: color-mix(in srgb, var(--fg) 9%, transparent);
   border: 1px solid color-mix(in srgb, var(--fg) 14%, transparent);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--fg);
   font-size: 13px;
   font-weight: 500;
@@ -343,7 +343,7 @@
   justify-content: center;
   background: transparent;
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   color: var(--fg-subtlest, var(--fg-muted));
   cursor: pointer;
   padding: 0;

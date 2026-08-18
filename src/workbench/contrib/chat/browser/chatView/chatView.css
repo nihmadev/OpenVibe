@@ -333,11 +333,6 @@
   background: var(--bg-3);
 }
 
-.modelpicker__item--active {
-  border-color: var(--fg);
-  background: var(--bg-3);
-}
-
 .modelpicker__name {
   flex: 1;
   font-size: var(--text-lg);
@@ -356,7 +351,7 @@
   opacity: 0;
 }
 
-.modelpicker__item--active .modelpicker__check {
+.modelpicker__item[aria-checked="true"] .modelpicker__check {
   opacity: 1;
 }
 
@@ -451,6 +446,19 @@
   min-height: 0;
   overflow-y: auto;
   padding: var(--space-2) var(--space-1) var(--space-4);
+}
+
+.chathistory-virtualizer {
+  position: relative;
+  width: 100%;
+}
+
+.chathistory-virtual-entry {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flow-root;
 }
 
 /* Compact turn navigator. It stays quiet until a line is hovered or focused. */
@@ -819,18 +827,6 @@
   min-height: 20px;
   align-items: center;
   color: var(--fg-muted);
-}
-
-.agent-run__pending-icon {
-  width: 18px;
-  height: 18px;
-  animation: agent-run-loader-spin 600ms linear infinite;
-}
-
-@keyframes agent-run-loader-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .agent-run__timing {
@@ -1306,7 +1302,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .agent-run__pending-icon,
   .agent-run__activity-label--active,
   .tool--pending .tool__verb {
     animation: none;

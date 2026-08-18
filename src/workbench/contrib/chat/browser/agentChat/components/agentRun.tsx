@@ -1,7 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Loader } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDownStrokeIcon, ToolGlyph } from "@/base/browser/ui/icons/iconRegistry";
+import { Loader } from "@/base/browser/ui/loader/loader";
 import { useI18n } from "@/platform/localization/localizationService";
 import type { HistoryItem } from "@/workbench/common/conversation";
 import { Markdown } from "../../../../../browser/parts/editor/markdown/markdown";
@@ -10,6 +10,7 @@ import {
   buildRunTimeline,
   formatRunDurationLabel,
   getRunTiming,
+  isInternalToolActivity,
   type RunTimelineNode,
   toolActivityTitle,
 } from "../../../../../services/agent/common/agentRun";
@@ -151,7 +152,10 @@ function AgentRunComponent({
     [nodes, showThinking],
   );
   const hasNodes = visibleNodes.length > 0;
-  const toolItems = useMemo(() => items.filter((item) => item.kind === "tool" && item.toolName !== "todo"), [items]);
+  const toolItems = useMemo(
+    () => items.filter((item) => item.kind === "tool" && item.toolName !== "todo" && !isInternalToolActivity(item)),
+    [items],
+  );
   const activeTool = useMemo(
     () => [...toolItems].reverse().find((item) => item.ok === undefined) ?? toolItems.at(-1),
     [toolItems],
@@ -168,7 +172,7 @@ function AgentRunComponent({
     <div className={`agent-run${isActive ? " agent-run--active" : " agent-run--completed"}`}>
       {isActive && !hasNodes && !finalItem && (
         <div className="agent-run__pending" role="status" aria-label={t("flowThinking")}>
-          <Loader className="agent-run__pending-icon" aria-hidden="true" />
+          <Loader />
         </div>
       )}
       {hasNodes && <div className="agent-run__timing">{timeLabel}</div>}

@@ -138,7 +138,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--card-border, color-mix(in srgb, var(--fg) 8%, transparent));
   background: var(--card-bg, color-mix(in srgb, var(--fg) 3%, transparent));
   cursor: pointer;

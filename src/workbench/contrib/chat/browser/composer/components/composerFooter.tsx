@@ -276,7 +276,7 @@ export function ComposerFooter({
                   <div className="composer-permissions__title">{t("composerPermissionTitle")}</div>
                   <button
                     type="button"
-                    className={`composer-permissions__option${permissionMode === "ask" ? " composer-permissions__option--selected" : ""}`}
+                    className="composer-permissions__option"
                     role="menuitemradio"
                     aria-checked={permissionMode === "ask"}
                     onClick={() => choosePermissionMode("ask")}
@@ -290,7 +290,7 @@ export function ComposerFooter({
                   </button>
                   <button
                     type="button"
-                    className={`composer-permissions__option${permissionMode === "approve" ? " composer-permissions__option--selected" : ""}`}
+                    className="composer-permissions__option"
                     role="menuitemradio"
                     aria-checked={permissionMode === "approve"}
                     onClick={() => choosePermissionMode("approve")}
@@ -304,7 +304,7 @@ export function ComposerFooter({
                   </button>
                   <button
                     type="button"
-                    className={`composer-permissions__option composer-permissions__option--warning${permissionMode === "full-access" ? " composer-permissions__option--selected" : ""}`}
+                    className="composer-permissions__option composer-permissions__option--warning"
                     role="menuitemradio"
                     aria-checked={permissionMode === "full-access"}
                     onClick={() => choosePermissionMode("full-access")}

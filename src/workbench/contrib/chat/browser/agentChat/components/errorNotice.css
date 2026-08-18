@@ -5,7 +5,7 @@
   margin: var(--space-4) 0;
   padding: var(--space-6) var(--space-6);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--bg-2);
   color: var(--fg);
   font-size: var(--text-sm);
@@ -23,7 +23,7 @@
   flex: 0 0 28px;
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--fg-dim);
   background: var(--bg-3);
 }

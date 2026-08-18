@@ -176,7 +176,7 @@
   display: grid;
   gap: 2px;
   padding: 5px 7px;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   background: var(--bg-secondary);
   font-size: var(--text-sm);
 }
@@ -201,7 +201,7 @@
   padding: 7px 8px;
   overflow: auto;
   border: 1px solid var(--border-subtle);
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   background: var(--bg-primary);
   color: var(--fg-dim);
   font: 11px / 1.55 var(--font-mono, ui-monospace, monospace);
@@ -486,7 +486,7 @@
   width: 100%;
   margin-top: var(--space-2);
   border: 1px solid var(--line-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
