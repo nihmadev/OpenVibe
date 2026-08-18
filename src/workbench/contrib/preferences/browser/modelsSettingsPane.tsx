@@ -2,6 +2,7 @@ import { Toggle } from "@zazaru/ui";
 import type React from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { ChevronRightIcon } from "@/base/browser/ui/icons/iconRegistry";
+import { Loader } from "@/base/browser/ui/loader/loader";
 import { useI18n } from "@/platform/localization/localizationService";
 import { ProviderLogo } from "@/workbench/services/aiProviders/browser/providerLogo";
 import { PROVIDER_TEMPLATES } from "@/workbench/services/aiProviders/browser/providerTemplates";
@@ -52,7 +53,9 @@ export function ModelsTab({
         />
       </div>
       {loading ? (
-        <div className="settings__models-loading">{t("loadingModels")}</div>
+        <div className="settings__models-loading">
+          <Loader />
+        </div>
       ) : models.length === 0 ? (
         <div className="settings__models-empty">
           <p>{t("noModels")}</p>
@@ -76,20 +79,22 @@ export function ModelsTab({
                   <span>{name}</span>
                 </div>
                 <div className={`settings__models-list ${isCollapsed ? "settings__models-list--collapsed" : ""}`}>
-                  {providerModels.map((model) => {
-                    const compositeKey = `${model.providerDbId}::${model.id}`;
-                    return (
-                      <div key={compositeKey} className="settings__model-row">
-                        <div className="settings__model-info">
-                          <span className="settings__model-name">{model.name}</span>
+                  <div className="settings__models-list-inner">
+                    {providerModels.map((model) => {
+                      const compositeKey = `${model.providerDbId}::${model.id}`;
+                      return (
+                        <div key={compositeKey} className="settings__model-row">
+                          <div className="settings__model-info">
+                            <span className="settings__model-name">{model.name}</span>
+                          </div>
+                          <Toggle
+                            checked={enabledModels.has(compositeKey) || enabledModels.has(model.id)}
+                            onValueChange={() => onToggle(model.providerDbId, model.id)}
+                          />
                         </div>
-                        <Toggle
-                          checked={enabledModels.has(compositeKey) || enabledModels.has(model.id)}
-                          onValueChange={() => onToggle(model.providerDbId, model.id)}
-                        />
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             );

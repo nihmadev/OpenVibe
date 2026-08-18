@@ -3,10 +3,11 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import {
   AlertCircleIcon,
+  DotsHorizontalIcon,
   DownloadIcon,
   Edit2Icon,
-  PlusIcon,
   PlusStrokeIcon,
+  RefreshCwStrokeIcon,
   ServerIcon,
   Trash2Icon,
   TrashIcon,
@@ -235,63 +236,105 @@ export function McpSettingsPane(): React.ReactElement {
     reader.readAsText(file);
   };
 
-  const getStatusDotClass = (name: string) => {
+  const getStatusMeta = (server: McpServerConfig) => {
+    if (!server.enabled) {
+      return { dotClass: "mcp-dot--gray", label: t("mcpStatusDisabled") };
+    }
+
+    const name = server.name;
     const st = statuses.find((s) => s.name === name);
-    if (!st?.enabled) return "mcp-dot--gray";
+    if (!st?.enabled) {
+      return { dotClass: "mcp-dot--gray", label: t("mcpStatusStopped") };
+    }
+
     const statusType = typeof st.status === "string" ? st.status : st.status.type;
-    if (statusType === "running") return "mcp-dot--green";
-    if (statusType === "starting") return "mcp-dot--starting";
-    if (statusType === "stopped") return "mcp-dot--yellow";
-    return "mcp-dot--red";
+    if (statusType === "running") return { dotClass: "mcp-dot--green", label: t("mcpStatusRunning") };
+    if (statusType === "starting") return { dotClass: "mcp-dot--starting", label: t("mcpStatusStarting") };
+    if (statusType === "stopped") return { dotClass: "mcp-dot--yellow", label: t("mcpStatusStopped") };
+    return { dotClass: "mcp-dot--red", label: t("mcpStatusError") };
+  };
+
+  const closeMenu = (target: HTMLElement) => {
+    const details = target.closest("details");
+    if (details) details.open = false;
   };
 
   const currentServers = getServers(config);
 
   return (
-    <>
-      <div className="settings__subsection">
-        <div className="settings__control-group">
-          <div className="settings__control-row">
-            <div className="settings__control-info">
-              <div className="settings__control-label">{t("mcpRawConfig")}</div>
-              <div className="settings__control-desc">{t("mcpVisualEditor")}</div>
-            </div>
-            <Toggle checked={isRawMode} onValueChange={setIsRawMode} />
-          </div>
-          <div className="settings__control-row">
-            <div className="settings__control-info">
-              <div className="settings__control-label">
-                {t("mcpExport")} / {t("mcpImport")}
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button className="settings__edit-btn" onClick={handleExport}>
-                <DownloadIcon size={12} style={{ marginRight: 4 }} />
+    <div className="mcp-panel">
+      <div className="mcp-panel__toolbar">
+        <div className="mcp-panel__tabs" role="tablist" aria-label={t("mcpServers")}>
+          <button
+            className={`mcp-panel__tab${!isRawMode ? " mcp-panel__tab--active" : ""}`}
+            type="button"
+            role="tab"
+            aria-selected={!isRawMode}
+            onClick={() => setIsRawMode(false)}
+          >
+            {t("mcpServers")} <span>{currentServers.length}</span>
+          </button>
+          <button
+            className={`mcp-panel__tab${isRawMode ? " mcp-panel__tab--active" : ""}`}
+            type="button"
+            role="tab"
+            aria-selected={isRawMode}
+            onClick={() => setIsRawMode(true)}
+          >
+            {t("mcpConfiguration")}
+          </button>
+        </div>
+
+        <div className="mcp-panel__toolbar-actions">
+          <button className="mcp-panel__secondary-action" type="button" onClick={() => loadData()}>
+            <RefreshCwStrokeIcon size={13} />
+            {t("mcpRefreshStatuses")}
+          </button>
+          <details className="mcp-menu">
+            <summary className="mcp-panel__icon-action" aria-label={`${t("mcpExport")} / ${t("mcpImport")}`}>
+              <DotsHorizontalIcon size={14} />
+            </summary>
+            <div className="mcp-menu__popover mcp-menu__popover--toolbar">
+              <button
+                className="mcp-menu__item"
+                type="button"
+                onClick={(event) => {
+                  handleExport();
+                  closeMenu(event.currentTarget);
+                }}
+              >
+                <DownloadIcon size={13} />
                 {t("mcpExport")}
               </button>
-              <label className="settings__edit-btn" style={{ cursor: "pointer", margin: 0 }}>
-                <UploadStrokeIcon size={12} style={{ marginRight: 4 }} />
+              <label className="mcp-menu__item">
+                <UploadStrokeIcon size={13} />
                 {t("mcpImport")}
-                <input type="file" accept=".json" onChange={handleImport} hidden />
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={(event) => {
+                    closeMenu(event.currentTarget);
+                    handleImport(event);
+                  }}
+                  hidden
+                />
               </label>
             </div>
-          </div>
+          </details>
+          <button className="mcp-panel__primary-action" type="button" onClick={openAddModal}>
+            <PlusStrokeIcon size={13} />
+            {t("mcpAddServer")}
+          </button>
         </div>
       </div>
 
       {isRawMode ? (
-        <div className="settings__section" style={{ marginTop: 16 }}>
+        <div className="mcp-panel__raw">
           <textarea
-            className="settings__input"
+            className="mcp-panel__raw-editor"
             value={rawToml}
             onChange={(e) => setRawToml(e.target.value)}
-            style={{
-              width: "100%",
-              fontFamily: "monospace",
-              minHeight: 300,
-              resize: "vertical",
-              boxSizing: "border-box",
-            }}
+            spellCheck={false}
             placeholder={`[mcp]
 
 [[mcp.server]]
@@ -300,67 +343,81 @@ command = "npx"
 args = ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
 enabled = true`}
           />
-          <button className="settings__connect-btn" style={{ marginTop: 12 }} onClick={handleSaveRawToml}>
+          <Button variant="primary" onClick={handleSaveRawToml}>
             {t("mcpSaveTomlConfig")}
-          </button>
+          </Button>
         </div>
       ) : (
-        <div className="settings__section" style={{ marginTop: 16 }}>
-          <h3 className="settings__section-title">{t("mcpServers")}</h3>
-          <div className="settings__providers-list">
-            {currentServers.map((server) => (
-              <div key={server.name} className="settings__provider-row">
-                <div className="settings__provider-info">
-                  <span className={`mcp-dot ${getStatusDotClass(server.name)}`} />
-                  <ServerIcon size={14} style={{ opacity: 0.8 }} />
-                  <div className="settings__provider-name">{server.name}</div>
-                </div>
-                <div className="settings__provider-actions">
+        <div className="mcp-panel__server-list">
+          {currentServers.length === 0 ? (
+            <div className="mcp-panel__empty">{t("mcpNoServersConfigured")}</div>
+          ) : (
+            currentServers.map((server) => {
+              const status = getStatusMeta(server);
+              const command = [server.command, ...(server.args || [])].filter(Boolean).join(" ");
+              return (
+                <div key={server.name} className="mcp-panel__server-row">
+                  <div className="mcp-panel__server-main">
+                    <div className="mcp-panel__server-icon">
+                      <ServerIcon size={16} />
+                    </div>
+                    <div className="mcp-panel__server-copy">
+                      <div className="mcp-panel__server-name">{server.name}</div>
+                      <div className="mcp-panel__server-command" title={command}>
+                        {command}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mcp-panel__status">
+                    <span className={`mcp-dot ${status.dotClass}`} />
+                    {status.label}
+                  </div>
                   <Toggle
                     checked={server.enabled}
                     onValueChange={(checked) => handleToggleServer(server.name, checked)}
                     title={server.enabled ? t("mcpDisableServer") : t("mcpEnableServer")}
                   />
-                  <button className="settings__edit-btn" onClick={() => openEditModal(server)} title={t("edit")}>
-                    <Edit2Icon size={12} />
-                  </button>
-                  <button
-                    className="settings__disconnect-btn"
-                    onClick={() => handleDeleteServer(server.name)}
-                    title={t("delete")}
-                  >
-                    <Trash2Icon size={12} />
-                  </button>
+                  <details className="mcp-menu mcp-menu--row">
+                    <summary className="mcp-panel__row-menu-trigger" aria-label={server.name}>
+                      <DotsHorizontalIcon size={14} />
+                    </summary>
+                    <div className="mcp-menu__popover">
+                      <button
+                        className="mcp-menu__item"
+                        type="button"
+                        onClick={(event) => {
+                          closeMenu(event.currentTarget);
+                          openEditModal(server);
+                        }}
+                      >
+                        <Edit2Icon size={13} />
+                        {t("edit")}
+                      </button>
+                      <button
+                        className="mcp-menu__item mcp-menu__item--danger"
+                        type="button"
+                        onClick={(event) => {
+                          closeMenu(event.currentTarget);
+                          handleDeleteServer(server.name);
+                        }}
+                      >
+                        <Trash2Icon size={13} />
+                        {t("delete")}
+                      </button>
+                    </div>
+                  </details>
                 </div>
-              </div>
-            ))}
-
-            <div className="settings__provider-row">
-              <div className="settings__provider-info">
-                <div className="settings__provider-icon-placeholder">
-                  <PlusStrokeIcon size={16} />
-                </div>
-                <div className="settings__provider-name">{t("mcpAddServer")}</div>
-              </div>
-              <button className="settings__connect-btn" onClick={openAddModal}>
-                <PlusStrokeIcon size={12} />
-                {t("mcpAddServer")}
-              </button>
-            </div>
-          </div>
+              );
+            })
+          )}
         </div>
       )}
 
       {/* Add / Edit Server Modal */}
       {isAdding && (
         <div className="connect-popup__overlay" onClick={() => setIsAdding(false)}>
-          <div className="connect-popup" onClick={(e) => e.stopPropagation()}>
+          <div className="connect-popup mcp-connect-popup" onClick={(e) => e.stopPropagation()}>
             <div className="connect-popup__header">
-              <div className="connect-popup__icon-wrap">
-                <div className="connect-popup__icon-placeholder">
-                  <ServerIcon size={20} />
-                </div>
-              </div>
               <h2 className="connect-popup__title">
                 {editingServer ? t("mcpEditServerTitle") : t("mcpAddServerTitle")}
               </h2>
@@ -371,16 +428,7 @@ enabled = true`}
 
             <div className="connect-popup__body">
               {formError && (
-                <div
-                  style={{
-                    color: "var(--error-fg, #e74c3c)",
-                    fontSize: 12,
-                    marginBottom: 8,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
-                >
+                <div className="mcp-connect-popup__error">
                   <AlertCircleIcon size={14} />
                   <span>{formError}</span>
                 </div>
@@ -396,24 +444,26 @@ enabled = true`}
                 />
               </div>
 
-              <div className="connect-popup__section">
-                <label className="connect-popup__label">{t("mcpCommandPath")}</label>
-                <Input
-                  containerClassName="connect-popup__input"
-                  value={formCommand}
-                  onChange={(e) => setFormCommand(e.target.value)}
-                  placeholder={t("mcpCommandPlaceholder")}
-                />
-              </div>
+              <div className="mcp-connect-popup__command-grid">
+                <div className="connect-popup__section">
+                  <label className="connect-popup__label">{t("mcpCommand")}</label>
+                  <Input
+                    containerClassName="connect-popup__input"
+                    value={formCommand}
+                    onChange={(e) => setFormCommand(e.target.value)}
+                    placeholder={t("mcpCommandPlaceholder")}
+                  />
+                </div>
 
-              <div className="connect-popup__section">
-                <label className="connect-popup__label">{t("mcpArguments")}</label>
-                <Input
-                  containerClassName="connect-popup__input"
-                  value={formArgs}
-                  onChange={(e) => setFormArgs(e.target.value)}
-                  placeholder="-y @modelcontextprotocol/server-filesystem /tmp"
-                />
+                <div className="connect-popup__section">
+                  <label className="connect-popup__label">{t("mcpArgumentsShort")}</label>
+                  <Input
+                    containerClassName="connect-popup__input"
+                    value={formArgs}
+                    onChange={(e) => setFormArgs(e.target.value)}
+                    placeholder="-y @modelcontextprotocol/server-filesystem /tmp"
+                  />
+                </div>
               </div>
 
               <div className="connect-popup__section">
@@ -457,30 +507,28 @@ enabled = true`}
                     type="button"
                     onClick={() => setFormEnv([...formEnv, { key: "", value: "" }])}
                   >
-                    <PlusIcon /> {t("mcpAddEnvVar")}
+                    {t("mcpAddEnvVar")}
                   </button>
                 </div>
               </div>
 
-              <div className="connect-popup__section" style={{ marginTop: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Toggle checked={formEnabled} onValueChange={setFormEnabled} />
-                  <label className="connect-popup__label">{t("mcpEnableOnStartup")}</label>
-                </div>
+              <div className="mcp-connect-popup__startup">
+                <label className="connect-popup__label">{t("mcpEnableOnStartup")}</label>
+                <Toggle checked={formEnabled} onValueChange={setFormEnabled} />
               </div>
             </div>
 
             <div className="connect-popup__footer">
-              <Button variant="primary" onClick={handleSaveForm}>
-                {t("mcpSaveServer")}
-              </Button>
               <Button variant="outline" onClick={() => setIsAdding(false)}>
                 {t("cancel")}
+              </Button>
+              <Button variant="primary" onClick={handleSaveForm}>
+                {t("mcpSaveServer")}
               </Button>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

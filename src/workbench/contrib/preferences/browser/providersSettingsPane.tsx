@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useI18n } from "@/platform/localization/localizationService";
 import { ProviderLogo } from "@/workbench/services/aiProviders/browser/providerLogo";
-import { PROVIDER_TEMPLATES } from "@/workbench/services/aiProviders/browser/providerTemplates";
+import type { PROVIDER_TEMPLATES } from "@/workbench/services/aiProviders/browser/providerTemplates";
+import { useProviderTemplates } from "@/workbench/services/aiProviders/browser/providerTemplates";
 import type { Provider } from "@/workbench/services/aiProviders/common/aiProvider";
 
 interface Props {
@@ -21,16 +22,17 @@ const PlusIcon = () => (
 export function ProvidersTab({ connected, onEdit, onDisconnect, onCustom, onConnect }: Props) {
   const { t } = useI18n();
   const [search, setSearch] = useState("");
+  const templates = useProviderTemplates();
 
   const query = search.trim().toLowerCase();
   const filteredTemplates = query
-    ? PROVIDER_TEMPLATES.filter(
+    ? templates.filter(
         (tpl) =>
           tpl.name.toLowerCase().includes(query) ||
           tpl.id.toLowerCase().includes(query) ||
           tpl.baseUrl.toLowerCase().includes(query),
       )
-    : PROVIDER_TEMPLATES;
+    : templates;
 
   return (
     <>
@@ -39,7 +41,7 @@ export function ProvidersTab({ connected, onEdit, onDisconnect, onCustom, onConn
           <h3 className="settings__section-title">{t("connectedProviders")}</h3>
           <div className="settings__providers-list">
             {connected.map((provider) => {
-              const template = PROVIDER_TEMPLATES.find((item) => item.baseUrl === provider.baseUrl);
+              const template = templates.find((item) => item.baseUrl === provider.baseUrl);
               return (
                 <div key={provider.id} className="settings__provider-row">
                   <div className="settings__provider-info">
