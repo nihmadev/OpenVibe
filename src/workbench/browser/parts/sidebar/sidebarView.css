@@ -1,0 +1,604 @@
+.app-sidebar {
+  --sidebar-border-subtle: color-mix(in srgb, var(--fg) 5%, transparent);
+  --sidebar-border: color-mix(in srgb, var(--fg) 8%, transparent);
+  --sidebar-border-strong: color-mix(in srgb, var(--fg) 12%, transparent);
+  --sidebar-hover: color-mix(in srgb, var(--fg) 7%, transparent);
+  --sidebar-active: color-mix(in srgb, var(--fg) 10%, transparent);
+  --sidebar-focus: color-mix(in srgb, var(--fg) 42%, transparent);
+  --sidebar-duration-basic: 150ms;
+  --sidebar-duration-disclosure: 220ms;
+  --sidebar-duration-layout: 300ms;
+  position: relative;
+  z-index: 50;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-self: stretch;
+  overflow: visible;
+  user-select: none;
+  border: 0;
+  border-right: 1px solid var(--sidebar-border);
+  border-radius: 0;
+  background: var(--surface-underlay, var(--bg, #161616));
+  box-shadow: none;
+  transition:
+    width var(--anim-sidebar-slide-duration, var(--sidebar-duration-layout))
+    var(--anim-sidebar-slide-easing, cubic-bezier(0.19, 1, 0.22, 1)),
+    min-width var(--anim-sidebar-slide-duration, var(--sidebar-duration-layout))
+    var(--anim-sidebar-slide-easing, cubic-bezier(0.19, 1, 0.22, 1));
+}
+
+.app-sidebar--resizing {
+  transition: none;
+}
+
+.app-sidebar__inner {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  opacity: 1;
+  transition: opacity var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar:not(.app-sidebar--open) .app-sidebar__inner {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-sidebar__resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  z-index: 100;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+}
+
+.app-sidebar__resize-handle::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 1px;
+  background: transparent;
+  content: "";
+  transition: background-color var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__resize-handle:hover::after,
+.app-sidebar--resizing .app-sidebar__resize-handle::after {
+  background: var(--fg-muted);
+}
+
+.app-sidebar__top-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 1px;
+  padding-bottom: 12px;
+}
+
+.app-sidebar__btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  height: 32px;
+  padding: 0 9px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg-dim);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 450;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1),
+    color var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__btn:hover,
+.app-sidebar__btn--active {
+  background: var(--sidebar-hover);
+  color: var(--fg);
+}
+
+.app-sidebar__btn--new {
+  color: var(--fg);
+}
+
+.app-sidebar__btn-icon {
+  flex: 0 0 auto;
+  color: var(--fg-muted);
+  transition: color var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__btn > svg {
+  flex: 0 0 auto;
+  color: var(--fg-muted);
+  transition: color var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__btn:hover .app-sidebar__btn-icon,
+.app-sidebar__btn--active .app-sidebar__btn-icon,
+.app-sidebar__btn--new .app-sidebar__btn-icon,
+.app-sidebar__btn:hover > svg,
+.app-sidebar__btn--active > svg,
+.app-sidebar__btn--new > svg {
+  color: currentColor;
+}
+
+.app-sidebar__btn-label {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent 100%);
+}
+
+.app-sidebar__new-affordance {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+  border: 1px solid var(--sidebar-border-strong);
+  border-radius: 50%;
+  color: var(--fg-muted);
+  transition:
+    border-color var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1),
+    color var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__btn--new:hover .app-sidebar__new-affordance {
+  border-color: color-mix(in srgb, var(--fg) 22%, transparent);
+  color: var(--fg);
+}
+
+.app-sidebar__projects-section {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.app-sidebar__section-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  height: 30px;
+  padding: 0 5px 0 9px;
+}
+
+.app-sidebar__section-title {
+  color: var(--fg-muted);
+  font-size: 12px;
+  font-weight: 450;
+}
+
+.app-sidebar__section-tools {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  opacity: 0;
+  transition: opacity var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__section-header:hover .app-sidebar__section-tools,
+.app-sidebar__section-header:focus-within .app-sidebar__section-tools {
+  opacity: 1;
+}
+
+.app-sidebar__icon-btn,
+.app-sidebar__project-action,
+.app-sidebar__chat-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1),
+    color var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__icon-btn {
+  width: 24px;
+  height: 24px;
+}
+
+.app-sidebar__project-action,
+.app-sidebar__chat-action-btn {
+  width: 24px;
+  height: 24px;
+}
+
+.app-sidebar__icon-btn:hover,
+.app-sidebar__project-action:hover,
+.app-sidebar__chat-action-btn:hover {
+  background: var(--sidebar-hover);
+  color: var(--fg);
+}
+
+.app-sidebar__tree {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-color: transparent transparent;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.app-sidebar__tree:hover {
+  scrollbar-color: color-mix(in srgb, var(--fg) 16%, transparent) transparent;
+}
+
+.app-sidebar__tree::-webkit-scrollbar {
+  width: 8px;
+}
+
+.app-sidebar__tree::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-sidebar__tree::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  background-clip: content-box;
+  transition: background-color var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__tree:hover::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--fg) 16%, transparent);
+}
+
+.app-sidebar__project-node {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  opacity: 1;
+  transition: opacity var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__project-node--removing {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-sidebar__project-header,
+.app-sidebar__chat-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg-dim);
+  cursor: pointer;
+  transition:
+    background-color var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1),
+    color var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__project-header {
+  justify-content: space-between;
+  height: 31px;
+  min-height: 31px;
+  padding: 0 7px 0 9px;
+}
+
+.app-sidebar__project-header:hover,
+.app-sidebar__chat-row:hover {
+  background: var(--sidebar-hover);
+  color: var(--fg);
+}
+
+.app-sidebar__chat-row--active {
+  background: var(--sidebar-active);
+  color: var(--fg);
+}
+
+.app-sidebar__project-header--active {
+  color: var(--fg-dim);
+}
+
+.app-sidebar__project-left,
+.app-sidebar__chat-left {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  min-width: 0;
+}
+
+.app-sidebar__project-left {
+  gap: 8px;
+}
+
+.app-sidebar__chat-left {
+  gap: 7px;
+}
+
+.app-sidebar__project-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  color: var(--fg-muted);
+}
+
+.app-sidebar__project-header--active .app-sidebar__project-icon {
+  color: var(--fg-dim);
+}
+
+.app-sidebar__project-name,
+.app-sidebar__chat-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent 100%);
+}
+
+.app-sidebar__project-name {
+  font-weight: 450;
+}
+
+.app-sidebar__project-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 1px;
+  opacity: 0;
+  transition: opacity var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__project-header:hover .app-sidebar__project-actions,
+.app-sidebar__project-header:focus-within .app-sidebar__project-actions {
+  opacity: 1;
+}
+
+.app-sidebar__nested-reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  min-width: 0;
+  opacity: 0;
+  visibility: hidden;
+  will-change: grid-template-rows, opacity;
+  transition:
+    grid-template-rows var(--sidebar-duration-disclosure) cubic-bezier(0.19, 1, 0.22, 1),
+    opacity var(--sidebar-duration-basic) cubic-bezier(0.8, 0, 0.4, 1),
+    visibility 0s linear var(--sidebar-duration-disclosure);
+}
+
+.app-sidebar__nested-reveal--open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    grid-template-rows var(--sidebar-duration-disclosure) cubic-bezier(0.19, 1, 0.22, 1),
+    opacity var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1),
+    visibility 0s linear 0s;
+}
+
+.app-sidebar__nested-clip {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-sidebar__nested-chats {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: 1px 0 5px;
+  transform: translateY(-4px);
+  will-change: transform;
+  transition: transform var(--sidebar-duration-disclosure) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__nested-reveal--open .app-sidebar__nested-chats {
+  transform: translateY(0);
+}
+
+.app-sidebar__chat-row {
+  justify-content: space-between;
+  height: 29px;
+  min-height: 29px;
+  padding: 0 7px 0 32px;
+}
+
+.app-sidebar__chat-row--unread:not(.app-sidebar__chat-row--active) .app-sidebar__chat-title {
+  color: var(--fg);
+  font-weight: 550;
+}
+
+.app-sidebar__chat-status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-muted);
+}
+
+.app-sidebar__chat-status--error {
+  color: var(--status-error, #ef4444);
+}
+
+.app-sidebar__chat-status-spinner {
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  border: 1.5px solid color-mix(in srgb, currentColor 32%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: app-sidebar-spin 700ms linear infinite;
+}
+
+@keyframes app-sidebar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.app-sidebar__chat-time {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding-left: 6px;
+  color: var(--fg-subtlest, var(--fg-muted));
+  font-size: 10px;
+  transition: opacity var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__chat-actions {
+  position: absolute;
+  right: 5px;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__chat-row:hover .app-sidebar__chat-time,
+.app-sidebar__chat-row:focus-within .app-sidebar__chat-time {
+  opacity: 0;
+}
+
+.app-sidebar__chat-row:hover .app-sidebar__chat-actions,
+.app-sidebar__chat-row:focus-within .app-sidebar__chat-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.app-sidebar__chat-action-btn--delete:hover {
+  background: color-mix(in srgb, var(--status-error, #ef4444) 12%, transparent);
+  color: var(--status-error, #ef4444);
+}
+
+.app-sidebar__show-more-btn {
+  width: fit-content;
+  height: 25px;
+  margin: 1px 0;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition:
+    background-color var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1),
+    color var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__show-more-btn:hover {
+  background: var(--sidebar-hover);
+  color: var(--fg);
+}
+
+.app-sidebar__chat-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 28px;
+  padding: 0 8px 0 32px;
+  color: var(--fg-muted);
+  font-size: 11px;
+}
+
+.app-sidebar__chat-start-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg-dim);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: color var(--sidebar-duration-basic) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-sidebar__chat-start-btn:hover {
+  color: var(--fg);
+}
+
+.app-sidebar__empty-projects {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 9px;
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+.app-sidebar__empty-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg-dim);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.app-sidebar__empty-add-btn:hover {
+  color: var(--fg);
+}
+
+.app-sidebar__bottom {
+  flex: 0 0 auto;
+  margin-top: auto;
+  padding-top: 7px;
+  border-top: 1px solid var(--sidebar-border-subtle);
+}
+
+.app-sidebar :where(button, [role="button"]):focus-visible {
+  outline: 2px solid var(--sidebar-focus);
+  outline-offset: -2px;
+}
+
+.app-sidebar :where(button, [role="button"]):focus:not(:focus-visible) {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar,
+  .app-sidebar__inner,
+  .app-sidebar__project-node,
+  .app-sidebar__nested-reveal,
+  .app-sidebar__nested-chats,
+  .app-sidebar__chat-status-spinner {
+    transition: none;
+    animation: none;
+  }
+}

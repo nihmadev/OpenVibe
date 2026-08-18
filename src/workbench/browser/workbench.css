@@ -1,0 +1,311 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  gap: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.app__body {
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  gap: 0;
+  padding: 0;
+}
+
+.sidebar-group {
+  display: flex;
+  flex-direction: row;
+  flex-shrink: 1; /* Allow it to shrink if the window is too small */
+  min-height: 0;
+  align-self: stretch;
+}
+
+.app__content {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.layout {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: row;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.layout__chat {
+  --chat-content-max-width: 920px;
+  position: relative;
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
+  flex-shrink: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  padding: var(--space-7) var(--space-8) var(--space-6);
+  gap: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface-canvas);
+  box-shadow: none;
+}
+
+.layout__chat--empty .chathistory-wrapper {
+  flex: 0;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.layout__composer-dock {
+  z-index: 2;
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: var(--chat-content-max-width);
+  margin: 0 auto;
+}
+
+.layout__editor {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 100px;
+  overflow: hidden;
+}
+
+.layout__search-code {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.layout__search-code-wrap {
+  display: flex;
+  flex-direction: row;
+  min-height: 0;
+  overflow: hidden;
+  transition:
+    flex calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+    var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    min-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+    var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    max-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+    var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.layout__right-panel-wrap {
+  position: relative;
+  z-index: 41;
+  display: flex;
+  flex-direction: row;
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+  margin-inline-start: auto;
+  background: var(--workspace-panel-surface, var(--surface-panel));
+  box-shadow: -8px 0 16px -8px rgba(0, 0, 0, 0.18);
+  opacity: 1;
+  transform: translateX(0);
+  transform-origin: right center;
+  visibility: visible;
+  will-change: flex-basis, width, opacity, transform;
+  transition:
+    flex-basis calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+    var(--anim-sidebar-slide-easing, var(--ease-out)),
+    width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+    var(--anim-sidebar-slide-easing, var(--ease-out)),
+    min-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+    var(--anim-sidebar-slide-easing, var(--ease-out)),
+    max-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+    var(--anim-sidebar-slide-easing, var(--ease-out)),
+    opacity calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+    var(--anim-sidebar-slide-easing, var(--ease-out)),
+    transform calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+    var(--anim-sidebar-slide-easing, var(--ease-out)),
+    visibility 0s linear 0s;
+}
+
+.layout__right-panel-wrap--closed {
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  box-shadow: none;
+  transition-delay:
+    0s, 0s, 0s, 0s, 0s, 0s, calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1));
+}
+
+.layout__right-panel-wrap--closed[data-animation="slide"],
+.layout__right-panel-wrap--closed[data-animation="fade-slide"] {
+  transform: translateX(18px);
+}
+
+.layout__right-panel-wrap--closed[data-animation="scale"] {
+  transform: scaleX(0.985);
+}
+
+.layout__right-panel-wrap--closed[data-animation="none"] {
+  transform: none;
+}
+
+.layout__right-panel-wrap--expanded {
+  margin-inline-start: 0;
+  box-shadow: none;
+}
+
+.layout__right-panel-surface {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-left: 1px solid var(--workspace-panel-border, color-mix(in srgb, var(--fg) 8%, transparent));
+  border-radius: 0;
+  background: var(--workspace-panel-surface, var(--surface-panel));
+}
+
+.layout__right-panel-wrap--expanded .layout__right-panel-surface {
+  border-left: 0;
+}
+
+.workspace-right-panel__view {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.workspace-right-panel__view[hidden] {
+  display: none;
+}
+
+.layout__editor--behind-expanded-panel {
+  flex: 0 0 0;
+  width: 0;
+  min-width: 0;
+  visibility: hidden;
+}
+.layout__search-code-wrap--closed {
+  overflow: hidden;
+  padding: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Disable CSS transitions on resizable panels while drag is active */
+body.is-resizing .sidebar,
+body.is-resizing .layout__search-code-wrap,
+body.is-resizing .layout__right-panel-wrap,
+body.is-resizing .terminal-embedded {
+  transition: none;
+}
+body.is-resizing {
+  user-select: none;
+  cursor: col-resize;
+}
+body.is-resizing-vertical {
+  cursor: row-resize;
+}
+
+/* ── Resize handles ── */
+.resize-handle {
+  flex-shrink: 0;
+  background: transparent;
+  z-index: 10;
+}
+
+.resize-handle--horizontal {
+  width: var(--canvas-gutter);
+  cursor: col-resize;
+}
+
+.resize-handle--vertical {
+  height: 4px;
+  cursor: row-resize;
+}
+
+.chathistory-container,
+.composer-container {
+  max-width: var(--chat-content-max-width, 920px);
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.layout__composer-dock .composer-container {
+  max-width: none;
+}
+
+.terminal-embedded {
+  position: relative;
+  height: var(--terminal-height, 300px);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: 0;
+  transition:
+    height calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+    var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    opacity calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+    var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.terminal-embedded--closed {
+  height: 0;
+  opacity: 0;
+}
+
+/* Prevent internal resizing during the slide animation to avoid text jumping */
+.terminal-embedded .terminals {
+  min-height: var(--terminal-height, 300px);
+}
+
+.terminal-embedded .resize-handle--vertical {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  z-index: 10;
+}
+
+.sidebar {
+  flex-shrink: 1; /* Allow it to shrink if needed */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  transition:
+    flex calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+    var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    min-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+    var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    max-width calc(var(--anim-sidebar-slide-duration, 0.3s) * var(--anim-sidebar-slide-enabled, 1))
+    var(--anim-sidebar-slide-easing, cubic-bezier(0.4, 0, 0.2, 1));
+}
+.sidebar--closed {
+  overflow: hidden;
+  padding: 0;
+}

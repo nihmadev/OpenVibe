@@ -1,0 +1,1267 @@
+.composer-container {
+  position: relative;
+  flex-shrink: 0;
+  container-type: inline-size;
+}
+
+.composer {
+  --composer-radius: 22px;
+  --composer-control: 28px;
+  --composer-surface: color-mix(in srgb, var(--surface-raised) 94%, var(--fg) 6%);
+  /* Active choices are functional content, not tertiary helper text. Mix with
+     the composer surface so themes whose muted token already has alpha do not
+     make the current model, effort, and permission mode unreadable. */
+  --composer-functional-fg: color-mix(in srgb, var(--fg) 78%, var(--composer-surface));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100px;
+  border: 0;
+  border-radius: var(--composer-radius);
+  background: var(--composer-surface);
+  box-shadow:
+    0 0 0 0.5px color-mix(in srgb, var(--fg) 9%, transparent),
+    0 3px 7.5px rgba(0, 0, 0, 0.04),
+    0 0 20px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition:
+    background-color 150ms cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 150ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@supports (corner-shape: superellipse(1.5)) {
+  .composer {
+    border-radius: 25px;
+    corner-shape: superellipse(1.5);
+  }
+}
+
+.composer:focus-within {
+  box-shadow:
+    0 0 0 0.5px color-mix(in srgb, var(--fg) 13%, transparent),
+    0 3px 8px rgba(0, 0, 0, 0.05),
+    0 0 24px rgba(0, 0, 0, 0.09);
+}
+
+.composer--drag {
+  background: color-mix(in srgb, var(--surface-raised) 84%, var(--fg) 16%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--fg) 32%, transparent),
+    0 0 24px rgba(0, 0, 0, 0.12);
+}
+
+.composer__file-input {
+  display: none;
+}
+
+.composer__editor-area {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.composer__scroll {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  max-height: 25dvh;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.composer__scroll::-webkit-scrollbar,
+.composer__image-attachments::-webkit-scrollbar,
+.composer-suggestions::-webkit-scrollbar,
+.composer-options__submenu::-webkit-scrollbar {
+  display: none;
+}
+
+.composer__editor {
+  width: 100%;
+  min-height: 54px;
+  padding: 14px 12px 6px;
+  border: 0;
+  outline: 0;
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  user-select: text;
+}
+
+.composer__editor:focus {
+  outline: 0;
+}
+
+.composer__editor--shell {
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.composer__placeholder {
+  position: absolute;
+  inset: 0 0 auto;
+  padding: 14px 12px 6px;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--fg-muted) 82%, transparent);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.composer__placeholder--shell {
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.composer__placeholder-text {
+  display: inline-block;
+  animation: composer-placeholder-in 300ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@keyframes composer-placeholder-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Footer is a real layout row. No controls overlap the editable region. */
+.composer__footer {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+  padding: 4px 8px 8px;
+}
+
+.composer__footer-leading,
+.composer__footer-trailing,
+.composer__normal-controls,
+.composer__shell-controls {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.composer__footer-leading {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: var(--composer-control);
+}
+
+.composer__footer-trailing {
+  flex: 0 1 auto;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.composer__normal-controls {
+  gap: 2px;
+}
+
+.composer__normal-controls--trailing {
+  max-width: min(46cqw, 360px);
+}
+
+.composer__shell-controls {
+  position: absolute;
+  inset-inline-start: 2px;
+  gap: 6px;
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+.composer__icon-button,
+.composer__permission-button,
+.composer-options__trigger,
+.composer__shell-cancel {
+  border: 0;
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+
+.composer__icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--composer-control);
+  height: var(--composer-control);
+  padding: 0;
+  border-radius: 999px;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+}
+
+.composer__icon-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+  color: var(--fg);
+}
+
+.composer__icon-button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.composer__permission-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  height: var(--composer-control);
+  padding: 0 7px 0 5px;
+  border-radius: 999px;
+  color: var(--composer-functional-fg);
+  font-size: 12px;
+  white-space: nowrap;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+}
+
+.composer__permission-button:hover {
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+  color: var(--fg-dim);
+}
+
+.composer__permission-button svg {
+  flex: none;
+}
+
+.composer-permissions {
+  position: relative;
+  min-width: 0;
+}
+
+.composer__permission-button--open {
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+  color: var(--fg-dim);
+}
+
+.composer-permissions__menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  z-index: 220;
+  width: 286px;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--fg) 9%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-raised) 96%, var(--fg) 4%);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.34),
+    0 2px 8px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: composer-menu-in 140ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.composer-permissions__title {
+  padding: 8px 8px 7px;
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.composer-permissions__option {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) 16px;
+  align-items: start;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.composer-permissions__option + .composer-permissions__option {
+  margin-top: 3px;
+}
+
+.composer-permissions__option:hover,
+.composer-permissions__option--selected {
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.composer-permissions__option--warning > svg:first-child {
+  color: var(--status-warning, #d99a3e);
+}
+
+.composer-permissions__option > svg {
+  margin-top: 2px;
+}
+
+.composer-permissions__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.composer-permissions__label {
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.composer-permissions__description {
+  color: var(--fg-muted);
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.composer-permissions__divider {
+  height: 1px;
+  margin: 4px 8px;
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.composer-permissions__settings {
+  width: 100%;
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.composer-permissions__settings:hover {
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  color: var(--fg);
+}
+
+.composer-permissions__dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.133);
+}
+
+.composer-permissions__dialog {
+  width: 520px;
+  max-width: 92vw;
+  padding: 20px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--surface-raised) 90%, transparent);
+  color: var(--fg);
+  box-shadow:
+    0 0 0 0.5px color-mix(in srgb, var(--fg) 13%, transparent),
+    0 4px 8px -2px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.composer-permissions__dialog-section + .composer-permissions__dialog-section {
+  margin-top: 12px;
+}
+
+.composer-permissions__dialog-title-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.composer-permissions__dialog-title-section > svg {
+  flex: none;
+}
+
+.composer-permissions__dialog-title {
+  min-width: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 28px;
+  letter-spacing: -0.36px;
+}
+
+.composer-permissions__dialog-description {
+  color: var(--fg-muted);
+  font-size: 14px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.composer-permissions__capabilities {
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+}
+
+.composer-permissions__capability {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
+}
+
+.composer-permissions__capability:first-child {
+  padding-top: 0;
+}
+
+.composer-permissions__capability:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.composer-permissions__capability > svg {
+  flex: none;
+}
+
+.composer-permissions__capability-copy {
+  min-width: 0;
+}
+
+.composer-permissions__capability-title {
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 19px;
+}
+
+.composer-permissions__capability-description {
+  color: var(--fg-muted);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.composer-permissions__dialog-risk {
+  color: var(--fg-muted);
+  font-size: 14px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.composer-permissions__dialog-actions {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.composer-permissions__dialog-cancel,
+.composer-permissions__dialog-confirm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 8px 20px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.composer-permissions__dialog-cancel {
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+  color: var(--fg);
+}
+
+.composer-permissions__dialog-confirm {
+  background: color-mix(in srgb, var(--red) 10%, transparent);
+  color: var(--red);
+}
+
+.composer-permissions__dialog-cancel:hover {
+  background: color-mix(in srgb, var(--fg) 10%, transparent);
+}
+
+.composer-permissions__dialog-confirm:hover {
+  background: color-mix(in srgb, var(--red) 20%, transparent);
+}
+
+.composer__shell-cancel {
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.composer__shell-cancel:hover {
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+  color: var(--fg);
+}
+
+.composer__primary-action {
+  display: inline-flex;
+  flex: 0 0 var(--composer-control);
+  align-items: center;
+  justify-content: center;
+  width: var(--composer-control);
+  height: var(--composer-control);
+  padding: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+  cursor: pointer;
+  transition:
+    opacity 120ms ease,
+    background-color 120ms ease;
+}
+
+.composer__primary-action:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.composer__primary-action:active:not(:disabled) {
+  opacity: 0.74;
+}
+
+.composer__primary-action:disabled {
+  background: color-mix(in srgb, var(--fg) 48%, var(--composer-surface));
+  color: color-mix(in srgb, var(--bg) 82%, var(--fg) 18%);
+  cursor: default;
+  opacity: 1;
+}
+
+.composer__primary-action svg {
+  width: 16px;
+  height: 16px;
+}
+
+.composer__primary-action--stop svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Codex-style combined model/reasoning menu. */
+.composer-options {
+  position: relative;
+  min-width: 0;
+}
+
+.composer-options__trigger {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 330px;
+  height: var(--composer-control);
+  padding: 0 7px;
+  border-radius: 999px;
+  color: var(--composer-functional-fg);
+  font-size: 12px;
+  white-space: nowrap;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+}
+
+.composer-options__trigger:hover,
+.composer-options__trigger--open {
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+  color: var(--fg-dim);
+}
+
+.composer-options__provider {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+}
+
+.composer-options__status-dot {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid color-mix(in srgb, currentColor 48%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+}
+
+.composer-options__summary {
+  display: flex;
+  min-width: 0;
+  gap: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.composer-options__summary > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.composer-options__effort-summary {
+  flex: none;
+  color: inherit;
+}
+
+.composer-options__menu,
+.composer-options__submenu {
+  position: absolute;
+  z-index: 220;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--fg) 9%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-raised) 96%, var(--fg) 4%);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.34),
+    0 2px 8px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: composer-menu-in 140ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.composer-options__menu {
+  right: 0;
+  bottom: calc(100% + 10px);
+  width: 228px;
+}
+
+.composer-options__submenu {
+  left: calc(100% + 6px);
+  bottom: -1px;
+  width: 220px;
+  max-height: min(360px, 60vh);
+  overflow-y: auto;
+}
+
+.composer-options__submenu--models {
+  width: 260px;
+}
+
+@keyframes composer-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.composer-options__row,
+.composer-options__submenu-row {
+  display: grid;
+  align-items: center;
+  width: 100%;
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.composer-options__row {
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) 14px;
+  gap: 8px;
+}
+
+.composer-options__row:hover,
+.composer-options__row--active,
+.composer-options__submenu-row:hover,
+.composer-options__submenu-row--selected {
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.composer-options__row-value {
+  overflow: hidden;
+  color: var(--fg-muted);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composer-options__row--muted {
+  grid-template-columns: 1fr;
+  color: var(--fg-muted);
+}
+
+.composer-options__divider {
+  height: 1px;
+  margin: 4px 8px;
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.composer-options__submenu-title,
+.composer-options__group-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+.composer-options__submenu-title {
+  padding: 6px 8px 5px;
+}
+
+.composer-options__group-label {
+  padding: 7px 8px 3px;
+}
+
+.composer-options__submenu-row {
+  grid-template-columns: minmax(0, 1fr) 16px;
+  gap: 8px;
+}
+
+.composer-options__submenu-row > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composer-options__submenu-row svg {
+  justify-self: end;
+}
+
+.composer-options__empty {
+  padding: 16px 10px;
+  color: var(--fg-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* The regular mention menu follows the composer anchor exactly. */
+.composer-suggestions {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 230;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 40px;
+  max-height: 320px;
+  padding: 4px;
+  overflow-y: auto;
+  border: 1px solid color-mix(in srgb, var(--fg) 9%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-raised) 96%, var(--fg) 4%);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.28),
+    0 2px 8px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.composer-suggestions__empty {
+  padding: 8px;
+  color: var(--fg-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.composer-suggestions__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg-dim);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.composer-suggestions__item:hover,
+.composer-suggestions__item--active {
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  color: var(--fg);
+}
+
+.composer-suggestions__icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--fg-muted);
+}
+
+.composer-suggestions__path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Attachments force a visually multiline composer and scroll horizontally. */
+.composer__image-attachments,
+.composer__context-items {
+  display: flex;
+  flex: none;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 10px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.composer__image-attachment {
+  position: relative;
+  flex: 0 0 80px;
+  width: 80px;
+  height: 80px;
+}
+
+.composer__image-preview,
+.composer__image-thumb,
+.composer__image-fallback {
+  display: block;
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+}
+
+.composer__image-preview {
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--fg) 14%, transparent);
+  background: transparent;
+  cursor: pointer;
+}
+
+.composer__image-preview:hover {
+  border-color: color-mix(in srgb, var(--fg) 28%, transparent);
+}
+
+.composer__image-thumb {
+  object-fit: cover;
+}
+
+.composer__image-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--fg) 12%, transparent);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  color: var(--fg-muted);
+}
+
+.composer__image-remove {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--fg) 13%, transparent);
+  border-radius: 999px;
+  background: var(--surface-panel);
+  color: var(--fg-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.composer__image-attachment:hover .composer__image-remove,
+.composer__image-remove:focus-visible {
+  opacity: 1;
+}
+
+.composer__context-chip {
+  flex: 0 0 auto;
+  max-width: 256px;
+  min-height: 48px;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+}
+
+.composer__context-chip-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg);
+  font-size: 12px;
+}
+
+.composer__context-chip-name,
+.composer__context-chip-comment {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composer__context-chip-close {
+  display: inline-flex;
+  margin-left: auto;
+  padding: 2px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+
+.composer__context-chip-comment {
+  padding-top: 3px;
+  color: var(--fg-muted);
+  font-size: 11px;
+}
+
+/* Editor-only remove affordance; base mention visuals are shared globally. */
+.composer__file-pill-remove {
+  position: relative;
+  width: 0;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    width 150ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 150ms ease;
+}
+
+.composer__file-pill:hover .composer__file-pill-remove,
+.composer__file-pill:focus-within .composer__file-pill-remove {
+  width: 15px;
+  opacity: 1;
+}
+
+.composer__file-pill-remove::before,
+.composer__file-pill-remove::after {
+  position: absolute;
+  top: 7.5px;
+  left: 3px;
+  width: 9px;
+  height: 1px;
+  border-radius: 1px;
+  background: currentColor;
+  content: "";
+}
+
+.composer__file-pill-remove::before {
+  transform: rotate(45deg);
+}
+
+.composer__file-pill-remove::after {
+  transform: rotate(-45deg);
+}
+
+.composer__editor [data-type="agent"] {
+  color: var(--fg);
+}
+
+/* Drag state. */
+.composer__drag-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 240;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--surface-raised) 78%, transparent);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
+.composer__drag-overlay-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg);
+  font-size: 13px;
+}
+
+/* Fullscreen image preview. */
+.composer__image-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.78);
+  cursor: zoom-out;
+}
+
+.composer__image-viewer-content {
+  position: relative;
+  max-width: min(90vw, 1200px);
+  max-height: 90vh;
+  cursor: default;
+}
+
+.composer__image-viewer-content img {
+  display: block;
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 10px;
+  object-fit: contain;
+  box-shadow: var(--shadow-lg);
+}
+
+.composer__image-viewer-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.64);
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+/* Legacy attachment chips remain styled for restored drafts. */
+.composer__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 10px 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  padding: 2px 4px 2px 7px;
+  border: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  color: var(--fg-dim);
+  font-size: 11px;
+}
+
+.chip__img {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+.chip__icon {
+  display: inline-flex;
+  color: var(--fg-muted);
+}
+
+.chip__name {
+  overflow: hidden;
+  color: var(--fg);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip__close {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--fg-muted);
+}
+
+.chip__close:hover {
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+  color: var(--fg);
+}
+
+/* Markdown styling inside the rich editable surface. */
+.composer__md-syntax {
+  opacity: 0.45;
+  font-weight: normal;
+  user-select: text;
+}
+
+.composer__md-h-plain {
+  display: inline;
+  color: var(--fg);
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 1.35;
+}
+
+.composer__md-h3,
+.composer__md-h4,
+.composer__md-h5,
+.composer__md-h6 {
+  display: inline;
+  color: var(--fg);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.composer__md-bold {
+  display: inline;
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.composer__md-italic {
+  display: inline;
+  font-style: italic;
+}
+
+.composer__md-strike {
+  display: inline;
+  opacity: 0.75;
+  text-decoration: line-through;
+}
+
+.composer__md-code,
+.composer__md-codeblock {
+  border: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.composer__md-code {
+  display: inline;
+  padding: 1px 4px;
+}
+
+.composer__md-codeblock {
+  display: inline-block;
+  margin: 0;
+  padding: 4px 8px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.composer__md-blockquote {
+  display: inline-block;
+  margin: 0;
+  padding-left: 8px;
+  border-left: 2px solid color-mix(in srgb, var(--fg) 18%, transparent);
+  color: var(--fg-muted);
+  font-style: italic;
+}
+
+.composer__md-hr {
+  display: inline-block;
+  margin: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
+  opacity: 0.6;
+}
+
+.composer__md-list-item {
+  display: inline;
+  margin: 0;
+  padding-left: 0;
+}
+
+.composer__md-link {
+  display: inline;
+  color: var(--markdown-link, var(--fg));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@container (max-width: 520px) {
+  .composer__permission-button span,
+  .composer-options__effort-summary {
+    display: none;
+  }
+
+  .composer__permission-button {
+    width: var(--composer-control);
+    padding: 0;
+    justify-content: center;
+  }
+
+  .composer-options__trigger {
+    max-width: 230px;
+  }
+}
+
+@container (max-width: 360px) {
+  .composer-options__provider,
+  .composer-options__summary {
+    display: none;
+  }
+
+  .composer-options__trigger {
+    width: var(--composer-control);
+    padding: 0;
+    justify-content: center;
+  }
+
+  .composer-options__submenu {
+    right: 0;
+    left: auto;
+    bottom: calc(100% + 6px);
+  }
+}
+
+@media (max-width: 1050px) {
+  .composer-options__submenu {
+    right: calc(100% + 6px);
+    left: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer,
+  .composer__placeholder-text,
+  .composer-options__menu,
+  .composer-options__submenu,
+  .composer__file-pill-remove {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .composer {
+    outline: 1px solid CanvasText;
+    box-shadow: none;
+  }
+}

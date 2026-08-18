@@ -1,0 +1,485 @@
+/* ── Antigravity 2.0 Scheduled Tasks Full Screen Overlay & Modal ── */
+
+.sched-page-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  justify-content: center;
+  background: var(--bg, #09090b);
+  overflow-y: auto;
+  animation: sched-fade-in 0.15s ease-out;
+}
+
+@keyframes sched-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.sched-page-container {
+  width: 100%;
+  max-width: 640px;
+  padding: 60px 20px 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Main View (Screenshot 2) ── */
+.sched-view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.sched-view__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.sched-view__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--fg, #ededed);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.sched-view__new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fg) 12%, transparent);
+  color: var(--fg, #ededed);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.sched-view__new-btn:hover {
+  background: color-mix(in srgb, var(--fg) 14%, transparent);
+  color: #ffffff;
+}
+
+/* Search bar */
+.sched-view__search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--fg) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
+  margin-bottom: 24px;
+}
+
+.sched-view__search-icon {
+  color: var(--fg-muted, #71717a);
+  flex-shrink: 0;
+}
+
+.sched-view__search-input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--fg, #ededed);
+  font-size: 13px;
+  outline: none;
+}
+
+.sched-view__search-input::placeholder {
+  color: var(--fg-muted, #71717a);
+}
+
+/* Empty State */
+.sched-view__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 60px;
+  color: var(--fg-muted, #71717a);
+  font-size: 13px;
+  user-select: none;
+}
+
+/* Tasks List */
+.sched-view__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sched-view__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--fg) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fg) 8%, transparent);
+  transition: all 0.12s ease;
+}
+
+.sched-view__item:hover {
+  border-color: color-mix(in srgb, var(--fg) 14%, transparent);
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+}
+
+.sched-view__item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sched-view__item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sched-view__item-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg, #ededed);
+}
+
+.sched-view__item-cron {
+  font-size: 11px;
+  color: var(--fg-muted, #71717a);
+}
+
+.sched-view__item-prompt {
+  font-size: 12px;
+  color: var(--fg-dim, #a1a1aa);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sched-view__item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sched-view__item-run {
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
+  color: var(--fg, #ededed);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sched-view__item-run:hover {
+  background: color-mix(in srgb, var(--fg) 12%, transparent);
+}
+
+.sched-view__switch {
+  position: relative;
+  width: 28px;
+  height: 16px;
+  padding: 2px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--fg) 16%, transparent);
+  border: 0;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.sched-view__switch--on {
+  background: #0284c7;
+}
+
+.sched-view__switch-thumb {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  transform: translateX(0);
+  transition: transform 0.12s ease;
+}
+
+.sched-view__switch--on .sched-view__switch-thumb {
+  transform: translateX(12px);
+}
+
+.sched-view__item-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: transparent;
+  border: 0;
+  color: var(--fg-muted, #71717a);
+  cursor: pointer;
+}
+
+.sched-view__item-delete:hover {
+  color: #ef4444;
+}
+
+/* ── "New Scheduled Task" Dialog Modal (Screenshot 1) ── */
+
+.sched-create-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(2px);
+  padding: 16px;
+  animation: sched-fade-in 0.12s ease-out;
+}
+
+.sched-create-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 460px;
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  padding: 18px 20px 20px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.7);
+  animation: sched-modal-scale 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sched-modal-scale {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.sched-create-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.sched-create-modal__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #ededed;
+  margin: 0;
+}
+
+.sched-create-modal__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: transparent;
+  border: 0;
+  color: #71717a;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.sched-create-modal__close:hover {
+  color: #ededed;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sched-create-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sched-create-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sched-create-modal__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #d4d4d8;
+}
+
+.sched-create-modal__input {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: #09090b;
+  border: 1px solid #27272a;
+  color: #ededed;
+  font-size: 13px;
+  font-family: inherit;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+
+.sched-create-modal__input:focus {
+  border-color: #3f3f46;
+}
+
+.sched-create-modal__input::placeholder {
+  color: #71717a;
+}
+
+/* Select wrapper */
+.sched-create-modal__select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 36px;
+  border-radius: 6px;
+  background: #09090b;
+  border: 1px solid #27272a;
+  box-sizing: border-box;
+}
+
+.sched-create-modal__field-icon {
+  position: absolute;
+  left: 10px;
+  color: #71717a;
+  pointer-events: none;
+}
+
+.sched-create-modal__select {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: 0;
+  color: #ededed;
+  font-size: 13px;
+  font-family: inherit;
+  padding: 0 28px 0 32px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.sched-create-modal__select-wrap--freq .sched-create-modal__select,
+.sched-create-modal__select-wrap--time .sched-create-modal__select {
+  padding-left: 12px;
+}
+
+.sched-create-modal__chevron {
+  position: absolute;
+  right: 10px;
+  color: #71717a;
+  pointer-events: none;
+  width: 12px;
+  height: 12px;
+}
+
+/* Schedule Row (Daily around 9:00 AM) */
+.sched-create-modal__schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sched-create-modal__select-wrap--freq {
+  flex: 1;
+}
+
+.sched-create-modal__select-wrap--time {
+  flex: 1.2;
+}
+
+.sched-create-modal__around {
+  font-size: 13px;
+  color: #a1a1aa;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* Textarea */
+.sched-create-modal__textarea {
+  width: 100%;
+  height: 120px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #09090b;
+  border: 1px solid #27272a;
+  color: #ededed;
+  font-size: 13px;
+  font-family: inherit;
+  resize: none;
+  box-sizing: border-box;
+  outline: none;
+  line-height: 1.45;
+  transition: border-color 0.12s ease;
+}
+
+.sched-create-modal__textarea:focus {
+  border-color: #3f3f46;
+}
+
+.sched-create-modal__textarea::placeholder {
+  color: #71717a;
+}
+
+/* Footer */
+.sched-create-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  gap: 12px;
+}
+
+.sched-create-modal__note {
+  font-size: 12px;
+  color: #71717a;
+}
+
+.sched-create-modal__submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 6px;
+  background: #0284c7;
+  border: 0;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.sched-create-modal__submit-btn:hover {
+  background: #0369a1;
+}

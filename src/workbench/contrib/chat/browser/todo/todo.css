@@ -1,0 +1,200 @@
+.todo-widget {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 40px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.todo-widget__button {
+  display: inline-flex;
+  max-width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 14px;
+  border: 1px solid color-mix(in srgb, var(--line-strong) 76%, var(--fg-muted));
+  border-radius: 17px;
+  background: color-mix(in srgb, var(--bg-2) 88%, var(--bg-3));
+  color: color-mix(in srgb, var(--fg-dim) 82%, var(--fg));
+  font: inherit;
+  font-size: var(--text-lg);
+  font-weight: 500;
+  line-height: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) ease,
+    background var(--duration-fast) ease,
+    border-color var(--duration-fast) ease;
+}
+
+.todo-widget__button:hover,
+.todo-widget__button:focus-visible {
+  color: var(--fg);
+}
+
+.todo-widget__button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.todo-widget__button:hover {
+  border-color: color-mix(in srgb, var(--line-strong) 72%, var(--fg-muted));
+  background: var(--bg-3);
+}
+
+.todo-widget__donut {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  color: var(--primary);
+}
+
+.codex-progress-donut__fill {
+  transition:
+    stroke-dashoffset 120ms ease-out,
+    opacity 120ms ease-out;
+}
+
+.todo-widget__progress-label {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.todo-widget__separator {
+  color: var(--fg-muted);
+  user-select: none;
+}
+
+.todo-widget__changes,
+.todo-widget__lines {
+  white-space: nowrap;
+}
+
+.todo-widget__changes {
+  color: color-mix(in srgb, var(--fg-dim) 68%, var(--fg));
+}
+
+.todo-widget__lines {
+  margin-left: -3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.todo-widget__lines--added {
+  color: var(--green);
+}
+
+.todo-widget__lines--removed {
+  color: var(--red);
+}
+
+.todo-card {
+  z-index: 10000;
+  display: flex;
+  width: min(320px, calc(100vw - 16px));
+  max-height: min(var(--radix-tooltip-content-available-height), calc(100vh - 16px));
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--line-strong) 72%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-2) 92%, transparent);
+  color: var(--fg);
+  box-shadow: 0 12px 38px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(14px);
+  transform-origin: var(--radix-tooltip-content-transform-origin);
+  animation: todo-tooltip-in 120ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.todo-card__list {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to bottom, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+}
+
+.todo-card__list::-webkit-scrollbar {
+  display: none;
+}
+
+.todo-card__task {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--fg-dim);
+}
+
+.todo-card__status {
+  display: flex;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: currentColor;
+}
+
+.todo-card__status svg {
+  display: block;
+  width: 12px;
+  height: 12px;
+}
+
+.todo-card__task--completed {
+  color: var(--fg-muted);
+}
+
+.todo-card__task--in_progress .todo-card__status {
+  color: var(--primary);
+}
+
+.todo-card__spinner {
+  animation: todo-spinner 1s linear infinite;
+}
+
+.todo-card__task-title {
+  min-width: 0;
+  max-width: 288px;
+  overflow-wrap: anywhere;
+  font-size: var(--text-md);
+  line-height: 16px;
+}
+
+.todo-widget__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@keyframes todo-tooltip-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes todo-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .todo-card,
+  .todo-card__spinner {
+    animation: none;
+  }
+}

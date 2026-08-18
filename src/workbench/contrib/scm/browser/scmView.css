@@ -1,0 +1,1165 @@
+/* Git-specific density is retained, while controls and interaction states use
+   the same semantic tokens as the rest of the application. */
+
+.scm-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  background-color: transparent;
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: var(--text-md);
+  user-select: none;
+  overflow: hidden;
+}
+
+.scm-header {
+  padding: var(--space-6) var(--space-7);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  color: var(--fg-dim);
+}
+
+.scm-list-row {
+  display: flex;
+  flex: 0 0 var(--scm-row-height);
+  align-items: center;
+  box-sizing: border-box;
+  cursor: pointer;
+  padding: 0 var(--space-2);
+  height: var(--scm-row-height);
+  min-height: var(--scm-row-height);
+  min-width: 0;
+  position: relative;
+  top: auto;
+  left: auto;
+  width: calc(100% - var(--space-4));
+  margin: 0 var(--space-2) var(--interactive-list-gap);
+  border-radius: var(--interactive-item-radius);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.scm-view .scm-list {
+  display: block;
+  height: auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.scm-list-row:hover {
+  background-color: var(--interactive-item-hover);
+}
+
+.scm-list-row.selected {
+  background-color: var(--interactive-item-active);
+  color: var(--fg);
+}
+
+.scm-icon-label {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: var(--scm-row-height);
+}
+
+.scm-file-icon {
+  display: flex;
+  flex: 0 0 16px;
+  align-items: center;
+  justify-content: center;
+  height: 16px;
+  margin-right: var(--space-3);
+}
+
+.scm-icon-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scm-icon-description {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 50%;
+  font-size: var(--text-sm);
+  opacity: 0.7;
+  margin-left: var(--space-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scm-count-badge {
+  background-color: var(--fg);
+  color: var(--bg);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  line-height: 11px;
+  min-width: 18px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.action-label {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--fg-dim);
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.action-label:hover {
+  background-color: var(--interactive-item-hover);
+  color: var(--fg);
+}
+
+.scm-provider > .body {
+  flex-grow: 1;
+  width: 100%;
+  overflow-y: auto;
+}
+
+.scm-body {
+  display: block;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.scm-section {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.scm-section > .scm-list,
+.scm-section > .scm-group-children,
+.scm-section .scm-group-children {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.scm-view .scm-provider {
+  display: flex;
+  flex-flow: row nowrap;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  height: var(--scm-row-height);
+  min-width: 0;
+  min-height: var(--scm-row-height);
+  align-items: center;
+  box-shadow: none;
+}
+
+.scm-view .resource,
+.scm-view .resource-group,
+.scm-view .history-item {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+}
+
+.scm-view .resource > .name,
+.scm-view .resource-group > .name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.scm-view .resource-group > .name {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scm-view .resource > .name > .scm-icon-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.scm-view .resource > .decoration-icon {
+  display: flex;
+  flex: 0 0 16px;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 100%;
+  margin-left: var(--space-2);
+}
+
+.scm-view .actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  min-width: 0;
+}
+
+.scm-view .scm-list-row {
+  line-height: var(--scm-row-height);
+  overflow: hidden;
+}
+
+.scm-view .scm-list-row.cursor-default {
+  cursor: default;
+}
+
+.scm-view .scm-list .scm-list-row .resource-group > .actions {
+  display: none;
+  max-width: fit-content;
+}
+
+.scm-view .scm-list .scm-list-row:hover .resource-group > .actions,
+.scm-view .scm-list .scm-list-row:focus-within .resource-group > .actions {
+  display: flex;
+}
+
+/* Commit rows contain fixed-height SVG graph segments. Do not let the list
+   flex layout shrink them into each other when the panel is narrow. */
+.scm-graph-item {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.scm-view .scm-graph-row {
+  display: flex;
+  flex: 1 1 auto;
+  height: var(--scm-row-height);
+  min-height: var(--scm-row-height);
+  min-width: 0;
+  width: 100%;
+  align-items: center;
+}
+
+.scm-view .scm-graph-row > .graph-container {
+  flex: 0 0 auto;
+  height: var(--scm-row-height);
+  min-height: var(--scm-row-height);
+}
+
+.scm-graph-summary-wrap {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-4) 0 var(--space-2);
+}
+
+.scm-graph-summary {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+}
+
+.scm-graph-list-row {
+  padding-right: var(--space-2);
+  padding-left: var(--space-2);
+  margin-bottom: 0;
+}
+
+.scm-ref-list {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+  max-width: min(260px, 48%);
+  margin-left: auto;
+  padding-right: var(--space-2);
+  gap: var(--space-2);
+  overflow: hidden;
+}
+
+.scm-view .scm-ref-list .scm-ref-pill {
+  --scm-ref-accent: var(--fg-dim);
+  display: inline-flex;
+  flex: 0 1 120px;
+  align-items: center;
+  height: 18px;
+  min-width: 0;
+  max-width: 132px;
+  padding: 0 var(--space-3);
+  overflow: hidden;
+  white-space: nowrap;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-xs);
+  background-color: color-mix(in srgb, var(--fg) 4%, var(--surface-raised));
+  color: var(--fg-dim);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.01em;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.scm-view .scm-ref-list .scm-ref-pill > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scm-ref-pill--head {
+  --scm-ref-accent: var(--fg);
+}
+
+.scm-ref-pill--local {
+  --scm-ref-accent: var(--fg-dim);
+}
+
+.scm-ref-pill--remote {
+  --scm-ref-accent: var(--fg-dim);
+}
+
+.scm-ref-pill--more {
+  --scm-ref-accent: var(--fg-dim);
+  flex: 0 0 auto;
+  width: auto;
+  padding-right: var(--space-2);
+  padding-left: var(--space-2);
+  color: var(--fg-muted);
+  background-color: color-mix(in srgb, var(--fg) 4%, var(--surface-raised));
+}
+
+.scm-ref-icon {
+  margin-right: var(--space-1);
+  flex-shrink: 0;
+  font-size: var(--text-2xs);
+  color: var(--scm-ref-accent, var(--fg-muted));
+}
+
+.scm-graph-list-row:hover .scm-ref-pill {
+  border-color: var(--line-strong);
+  background-color: color-mix(in srgb, var(--fg) 8%, var(--surface-raised));
+  color: var(--fg);
+}
+
+.scm-commit-tooltip .scm-ref-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-xs);
+  background-color: color-mix(in srgb, var(--fg) 5%, var(--surface-raised));
+  color: var(--fg-dim);
+  font-size: var(--text-xs);
+  word-break: break-all;
+}
+
+.scm-commit-tooltip .scm-ref-pill--head {
+  background-color: var(--fg);
+  border-color: var(--fg);
+  color: var(--bg);
+}
+
+.scm-commit-tooltip .scm-ref-icon {
+  margin-right: var(--space-2);
+  color: currentColor;
+  font-size: var(--text-sm);
+}
+
+.scm-expanded-commit {
+  display: flex;
+  margin: 0 var(--space-2);
+  padding-left: var(--space-2);
+  margin-top: 0;
+  border-bottom: 1px solid var(--surface-border-soft);
+  color: var(--fg);
+  font-size: var(--text-sm);
+}
+
+.scm-expanded-commit-files {
+  flex: 1;
+  overflow: hidden;
+  padding: var(--space-4) 0 var(--space-4);
+}
+
+.scm-group-children--clipped {
+  overflow: hidden;
+}
+
+.scm-inline-empty {
+  padding: var(--space-4) var(--space-6);
+  color: var(--fg-dim);
+}
+
+.scm-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-6) var(--space-3) var(--space-2);
+  box-sizing: border-box;
+  width: 100%;
+  cursor: pointer;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  background-color: transparent;
+  min-height: 24px;
+}
+
+.scm-section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.scm-repository-row {
+  width: 100%;
+  padding-left: var(--space-4);
+}
+
+.scm-leading-icon {
+  margin-right: var(--space-3);
+}
+
+.scm-icon-name--strong,
+.scm-resource-group-name {
+  font-weight: 600;
+}
+
+.scm-branch-description {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.scm-resource-group-row {
+  width: 100%;
+  height: 100%;
+  padding-right: var(--space-4);
+}
+
+.scm-resource-group-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.scm-section-header:hover {
+  color: var(--fg);
+}
+
+.scm-section-header--graph {
+  width: calc(100% - var(--space-4));
+  margin: 0 var(--space-2);
+  border-radius: var(--interactive-item-radius);
+}
+
+.scm-section-header--graph:hover {
+  background-color: var(--interactive-item-hover);
+}
+
+.scm-editor-container {
+  padding: 0 var(--space-6) var(--space-6) var(--space-6);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.scm-field-block {
+  padding: 0 var(--space-6) var(--space-6);
+}
+
+.scm-commit-input-wrap {
+  height: auto;
+  min-height: 68px;
+  align-items: stretch;
+  padding: var(--space-4);
+}
+
+.scm-commit-input {
+  width: 100%;
+  min-height: 58px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  resize: vertical;
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--text-md);
+}
+
+.scm-filter-input-wrap {
+  height: var(--control-height);
+}
+
+.scm-filter-icon {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+}
+
+.scm-filter-clear {
+  color: var(--fg-dim);
+}
+
+.scm-empty-state {
+  padding: var(--space-7) var(--space-6);
+  color: var(--fg-dim);
+  text-align: center;
+  font-size: var(--text-sm);
+}
+
+.scm-editor {
+  display: flex;
+  flex-direction: column;
+}
+
+.scm-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: var(--space-4);
+  background-color: var(--surface-raised);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: var(--text-md);
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.scm-textarea:focus {
+  border-color: var(--fg-dim);
+}
+
+.scm-textarea::placeholder {
+  color: var(--fg-muted);
+  opacity: 0.6;
+}
+
+.scm-action-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+}
+
+/* Modals */
+.scm-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: color-mix(in srgb, var(--bg) 68%, transparent);
+  backdrop-filter: blur(max(8px, var(--blur-amount)));
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: var(--space-11);
+}
+
+.scm-modal-card {
+  width: 90%;
+  max-width: 380px;
+  background-color: var(--surface-panel);
+  border: 1px solid var(--surface-border);
+  box-shadow: 0 20px 64px rgba(0, 0, 0, 0.42);
+  border-radius: var(--radius-surface);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.scm-branch-modal-header {
+  padding: var(--space-5) var(--space-6);
+}
+
+.scm-branch-modal-body {
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}
+
+.scm-branch-create {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.scm-branch-create .z-input-wrap {
+  flex: 1;
+}
+
+.scm-branch-create .z-button {
+  height: var(--control-height);
+  flex-shrink: 0;
+}
+
+.scm-branch-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.scm-branch-row {
+  min-height: var(--control-height);
+}
+
+.scm-branch-row-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.scm-branch-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scm-branch-current {
+  color: var(--fg-dim);
+  font-size: var(--text-2xs);
+}
+
+/* Custom Action Button (Commit button) matching VS Code */
+.scm-action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-6);
+  background-color: var(--fg);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--bg);
+  font-size: var(--text-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--duration-fast);
+  margin: 0 var(--space-6) var(--space-6) var(--space-6);
+  width: calc(100% - 24px);
+  box-sizing: border-box;
+}
+.scm-action-button:hover {
+  background-color: var(--fg-dim);
+}
+.scm-action-button:active {
+  background-color: var(--fg-muted);
+}
+.scm-action-button.disabled {
+  background-color: var(--bg-3);
+  color: var(--fg-dim);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.scm-action-button .codicon {
+  margin-right: var(--space-2);
+}
+
+/* Split Commit Button Design */
+.scm-split-button-container {
+  display: flex;
+  align-items: center;
+  margin: 0 var(--space-6) var(--space-6) var(--space-6);
+  width: calc(100% - 24px);
+  background-color: var(--fg);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-sizing: border-box;
+  transition:
+    background-color var(--duration-fast),
+    opacity var(--duration-fast);
+}
+
+.scm-split-button-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  flex: 1;
+  padding: var(--space-3) var(--space-6);
+  background-color: transparent;
+  border: none;
+  color: var(--bg);
+  font-size: var(--text-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast),
+    opacity var(--duration-fast);
+}
+
+.scm-split-button-main:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.scm-split-button-main.disabled,
+.scm-split-button-main:disabled {
+  cursor: not-allowed;
+  opacity: var(--disabled-opacity);
+  background-color: transparent;
+}
+
+.scm-split-button-separator {
+  width: 1px;
+  height: 18px;
+  background-color: rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+}
+
+.scm-split-button-wand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3) var(--space-5);
+  background-color: transparent;
+  border: none;
+  color: var(--bg);
+  font-size: var(--text-lg);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast),
+    transform var(--duration-fast);
+}
+
+.scm-split-button-wand .codicon {
+  color: var(--bg);
+  opacity: 0.9;
+}
+
+.scm-split-button-wand:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.scm-split-button-wand:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.scm-split-button-wand.disabled,
+.scm-split-button-wand:disabled {
+  cursor: not-allowed;
+  opacity: var(--disabled-opacity);
+  background-color: transparent;
+}
+
+.scm-split-button-wand.disabled .codicon,
+.scm-split-button-wand:disabled .codicon {
+  color: var(--bg);
+  opacity: var(--disabled-opacity);
+}
+
+/* Entire container disabled state */
+.scm-split-button-container.disabled {
+  background-color: var(--bg-3);
+  color: var(--fg-dim);
+  opacity: 0.75;
+}
+
+.scm-split-button-container.disabled .scm-split-button-main {
+  color: var(--fg-dim);
+  opacity: 1;
+}
+
+.scm-split-button-container.disabled .scm-split-button-wand {
+  color: var(--fg-dim);
+  background-color: transparent;
+  opacity: 1;
+}
+
+.scm-split-button-container.disabled .scm-split-button-wand .codicon {
+  color: var(--fg-dim);
+  opacity: 0.7;
+}
+
+.scm-split-button-container.disabled .scm-split-button-separator {
+  background-color: var(--line);
+}
+
+/* Visibility dropdown */
+.scm-dropdown-menu {
+  position: absolute;
+  right: var(--space-7);
+  top: 40px;
+  min-width: 200px;
+  background-color: var(--surface-panel);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+  z-index: 50;
+  padding: var(--space-2);
+  gap: var(--interactive-list-gap);
+}
+
+.scm-menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: var(--space-4);
+  min-height: 30px;
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  color: var(--fg);
+  font-size: var(--text-md);
+  cursor: pointer;
+  border: 0;
+  border-radius: var(--interactive-item-radius);
+}
+
+.scm-menu-item:hover {
+  background-color: var(--interactive-item-hover);
+  color: var(--fg);
+}
+
+.scm-menu-divider {
+  height: 1px;
+  background-color: var(--line-strong);
+  margin: var(--space-2) 0;
+}
+
+/* Hide scrollbars throughout ScmView while retaining scroll functionality. */
+.scm-view,
+.scm-view *,
+.scm-body,
+.scm-body *,
+.scm-list,
+.scm-list * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scm-view::-webkit-scrollbar,
+.scm-view *::-webkit-scrollbar,
+.scm-body::-webkit-scrollbar,
+.scm-body *::-webkit-scrollbar,
+.scm-list::-webkit-scrollbar,
+.scm-list *::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+/* ── Commit Tooltip (Exact VSCode .monaco-hover.workbench-hover style) ── */
+.scm-commit-tooltip {
+  background-color: var(--surface-panel);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-surface);
+  width: auto;
+  min-width: 320px;
+  max-width: min(540px, calc(100vw - 24px));
+  max-height: min(580px, calc(100vh - 24px));
+  color: var(--fg);
+  font-size: var(--text-md);
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  cursor: default;
+  user-select: text;
+}
+
+.scm-commit-tooltip-scrollable {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-6);
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scm-commit-tooltip::-webkit-scrollbar,
+.scm-commit-tooltip *::-webkit-scrollbar,
+.scm-commit-tooltip-scrollable::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.scm-commit-tooltip-author {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-6);
+  font-size: var(--text-md);
+}
+
+.scm-commit-tooltip .scm-commit-tooltip-author-name,
+.scm-commit-tooltip .scm-commit-tooltip-author-name:visited {
+  font-weight: 600;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.scm-commit-tooltip .scm-commit-tooltip-author-name:hover,
+.scm-commit-tooltip .scm-commit-tooltip-author-name:hover > span {
+  text-decoration: underline;
+}
+
+.scm-commit-tooltip-author-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.scm-commit-tooltip-divider {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: var(--space-6) 0;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.scm-commit-tooltip-stats {
+  font-size: var(--text-md);
+  line-height: 1.4;
+  color: var(--fg);
+}
+
+.scm-commit-tooltip-commands {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: var(--text-md);
+  line-height: 1.4;
+}
+
+.scm-commit-tooltip button.scm-commit-tooltip-cmd {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--cyan);
+  font: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.scm-commit-tooltip button.scm-commit-tooltip-cmd:hover {
+  text-decoration: none;
+  color: var(--accent);
+}
+
+.scm-commit-tooltip button.scm-commit-tooltip-cmd:hover > span {
+  text-decoration: underline;
+}
+
+.scm-commit-tooltip i.codicon,
+.scm-commit-tooltip .codicon,
+.scm-commit-tooltip-cmd:hover > i.codicon,
+.scm-commit-tooltip-cmd:hover > .codicon {
+  text-decoration: none;
+  display: inline-block;
+}
+
+.scm-commit-tooltip-cmd-space {
+  margin: 0 var(--space-2);
+}
+
+.scm-commit-tooltip-cmd-sep {
+  opacity: 0.8;
+  margin: 0 var(--space-1);
+}
+
+.commit-tooltip-markdown {
+  display: block;
+  width: 100%;
+  line-height: 1.5;
+  word-break: break-word;
+  color: inherit;
+}
+
+.commit-tooltip-markdown .markdown-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.commit-tooltip-markdown .markdown-body p {
+  margin: 0;
+  padding: 0;
+}
+
+.commit-tooltip-markdown .markdown-body h1,
+.commit-tooltip-markdown .markdown-body h2,
+.commit-tooltip-markdown .markdown-body h3,
+.commit-tooltip-markdown .markdown-body h4,
+.commit-tooltip-markdown .markdown-body h5,
+.commit-tooltip-markdown .markdown-body h6 {
+  margin: var(--space-3) 0 var(--space-1) 0;
+  color: var(--fg);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.commit-tooltip-markdown .markdown-body h1 {
+  font-size: var(--text-xl);
+}
+.commit-tooltip-markdown .markdown-body h2 {
+  font-size: var(--text-lg);
+}
+.commit-tooltip-markdown .markdown-body h3,
+.commit-tooltip-markdown .markdown-body h4,
+.commit-tooltip-markdown .markdown-body h5,
+.commit-tooltip-markdown .markdown-body h6 {
+  font-size: var(--text-md);
+}
+
+.commit-tooltip-markdown .markdown-body ul,
+.commit-tooltip-markdown .markdown-body ol {
+  margin: var(--space-1) 0;
+  padding-left: var(--space-8);
+}
+
+.commit-tooltip-markdown .markdown-body li {
+  margin-bottom: var(--space-1);
+  line-height: 1.45;
+}
+
+.commit-tooltip-markdown .markdown-body blockquote {
+  margin: var(--space-2) 0;
+  padding: var(--space-3) var(--space-6);
+  border-left: 3px solid var(--line-strong);
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: 0 4px 4px 0;
+  opacity: 0.9;
+}
+
+.commit-tooltip-markdown .markdown-body code {
+  background-color: rgba(255, 255, 255, 0.08);
+  padding: var(--space-1) var(--space-2);
+  border-radius: 3px;
+  font-family: var(--mono, monospace);
+  font-size: var(--text-xs);
+}
+
+.commit-tooltip-markdown .markdown-body pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.commit-tooltip-markdown .markdown-body .code-block {
+  margin: var(--space-3) 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background-color: var(--bg-3);
+}
+
+.commit-tooltip-markdown .markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-3) 0;
+  font-size: var(--text-xs);
+}
+
+.commit-tooltip-markdown .markdown-body th,
+.commit-tooltip-markdown .markdown-body td {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--line-strong);
+  text-align: left;
+}
+
+.commit-tooltip-markdown .markdown-body th {
+  background-color: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+
+.commit-tooltip-markdown .markdown-body hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: var(--space-4) 0;
+}
+
+.commit-tooltip-markdown .markdown-body a {
+  color: var(--cyan);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Guide lines matching ExplorerView. */
+.scm-view .ftree__subtree-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.scm-view .ftree__line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  z-index: 1;
+}
+
+.scm-view .ftree__line--active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+@keyframes scm-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spin,
+.codicon-modifier-spin {
+  animation: scm-spin 1s linear infinite;
+  display: inline-block;
+}
