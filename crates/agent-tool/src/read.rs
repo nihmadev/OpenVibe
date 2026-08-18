@@ -1,7 +1,4 @@
-use std::path::Path;
-
-const MAX_FILE_BYTES: u64 = 256 * 1024;
-const MAX_OUTPUT_CHARS: usize = 16_000;
+use workspace_fs::{resolve_path, MAX_FILE_BYTES, MAX_OUTPUT_CHARS};
 
 fn clip(text: &str, max: usize) -> String {
     if text.len() <= max {
@@ -16,15 +13,6 @@ fn clip(text: &str, max: usize) -> String {
             &text[..end],
             text.len() - end
         )
-    }
-}
-
-fn resolve_path(cwd: &str, p: &str) -> String {
-    let path = Path::new(p);
-    if path.is_absolute() {
-        p.to_string()
-    } else {
-        Path::new(cwd).join(p).to_string_lossy().to_string()
     }
 }
 

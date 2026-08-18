@@ -1,5 +1,3 @@
-use std::path::Path;
-
 /// Cap on directory entries returned to the model. Uncapped listings of
 /// folders like node_modules can dump tens of thousands of names into the
 /// conversation, instantly blowing the context window and triggering lossy
@@ -9,11 +7,7 @@ const MAX_ENTRIES: usize = 500;
 pub async fn tool_list_dir(cwd: &str, args: &serde_json::Value) -> Result<String, String> {
     let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
 
-    let resolved = if Path::new(path).is_absolute() {
-        path.to_string()
-    } else {
-        Path::new(cwd).join(path).to_string_lossy().to_string()
-    };
+    let resolved = workspace_fs::resolve_path(cwd, path);
 
     let mut entries = tokio::fs::read_dir(&resolved)
         .await
@@ -26,6 +20,9 @@ pub async fn tool_list_dir(cwd: &str, args: &serde_json::Value) -> Result<String
         .map_err(|e| format!("Failed to read entry: {e}"))?
     {
         let name = entry.file_name().to_string_lossy().to_string();
+        if workspace_fs::should_skip(&name) {
+            continue;
+        }
         if entry.file_type().await.map(|t| t.is_dir()).unwrap_or(false) {
             names.push(format!("{name}/"));
         } else {

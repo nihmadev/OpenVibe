@@ -2,11 +2,10 @@ use std::sync::atomic::Ordering;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, State};
 
-use crate::AppState;
-use agent::chat::ChatMessage;
-use agent::snapshot::{AgentFileChange, RollbackPreview, SnapshotEntry};
-use agent::sub_trace::{get_sub_trace, SubTraceEvent};
+use crate::{agent_config, AppState};
 use agent::Agent;
+use agent_api::{AgentFileChange, ChatMessage, RollbackPreview, SnapshotEntry, SubTraceEvent};
+use agent_tool::sub_trace::get_sub_trace;
 use config::Config;
 
 fn persist_agent_chat_state(
@@ -33,6 +32,7 @@ fn persist_agent_chat_state(
 
 #[tauri::command]
 pub async fn agent_new(state: State<'_, AppState>, cwd: String) -> Result<(), String> {
+    state.browser_manager.reset_agent_guard();
     let mut cfg = {
         let config_lock = state.config.lock().map_err(|e| e.to_string())?;
         config_lock.as_ref().cloned().unwrap_or_else(|| Config {
@@ -59,7 +59,7 @@ pub async fn agent_new(state: State<'_, AppState>, cwd: String) -> Result<(), St
         cfg.api_url = None;
     }
 
-    let agent_cfg = cfg.to_agent_config();
+    let agent_cfg = agent_config(&cfg);
     let agent = Agent::new(agent_cfg);
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     *agent_lock = Some(agent);
@@ -104,11 +104,26 @@ pub async fn agent_send(
     }
     .ok_or_else(|| "No agent created yet. Call agent_new first.".to_string())?;
 
+    let use_proxy = state
+        .projects
+        .lock()
+        .map_err(|e| e.to_string())
+        .and_then(|p| p.get_state("settings:useRegionalProxy").map_err(|e| e.to_string()))
+        .unwrap_or(Some("true".to_string()))
+        .unwrap_or_else(|| "true".to_string());
+
+    if use_proxy != "true" {
+        agent.config_mut().api_url = None;
+    } else if agent.config().api_url.is_none() {
+        agent.config_mut().api_url = Some("https://api.nihmadev.fun".to_string());
+    }
+
     if let Some(todo) = state.todo_context.lock().map_err(|e| e.to_string())?.clone() {
         agent.set_todo_context(Some(todo));
     }
 
-    let executor = agent_tool::AgentToolExecutor::with_mcp(state.mcp_manager.clone());
+    let executor =
+        agent_tool::AgentToolExecutor::with_mcp_and_browser(state.mcp_manager.clone(), state.browser_manager.clone());
 
     let emit = |event: &str, data: serde_json::Value| {
         let _ = app_handle.emit(event, data);
@@ -252,6 +267,7 @@ pub async fn agent_stop(state: State<'_, AppState>) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn agent_reset(state: State<'_, AppState>) -> Result<(), String> {
+    state.browser_manager.reset_agent_guard();
     *state.todo_context.lock().map_err(|e| e.to_string())? = None;
     let mut agent_lock = state.agent.lock().map_err(|e| e.to_string())?;
     if let Some(ref mut agent) = *agent_lock {
@@ -430,7 +446,7 @@ pub async fn agent_set_provider(
         if use_proxy != "true" {
             cfg.api_url = None;
         }
-        if let Some(origin) = agent::request::effective_origin(&cfg.to_agent_config().llm_config()) {
+        if let Some(origin) = llm::request::effective_origin(&agent_config(&cfg).llm_config()) {
             state.warmer.set_origin(origin).await;
             let warmer = state.warmer.clone();
             tauri::async_runtime::spawn(async move {

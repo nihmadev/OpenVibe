@@ -1,4 +1,4 @@
-use agent::definition::ToolDefinition;
+use agent_api::ToolDefinition;
 use tauri::State;
 
 #[tauri::command]
@@ -18,7 +18,8 @@ pub async fn tools_execute(
     };
 
     let cancel = std::sync::atomic::AtomicBool::new(false);
-    let executor = agent_tool::AgentToolExecutor::with_mcp(state.mcp_manager.clone());
+    let executor =
+        agent_tool::AgentToolExecutor::with_mcp_and_browser(state.mcp_manager.clone(), state.browser_manager.clone());
 
     let emit = |_: &str, _: serde_json::Value| {};
     agent_tool::execute_tool(&name, &args, &cwd, &cancel, &emit, &executor).await

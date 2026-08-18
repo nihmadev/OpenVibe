@@ -32,9 +32,13 @@ base64 = "0.22"
 regex = "1"
 reqwest = { version = "0.13", features = ["json", "http2"] }
 search = { path = "../crates/search" }
+workspace-fs = { package = "fs", path = "../crates/fs" }
 terminal = { path = "../crates/terminal" }
 agent = { path = "../crates/agent" }
+agent-api = { path = "../crates/agent-api" }
+llm = { path = "../crates/llm" }
 agent-tool = { path = "../crates/agent-tool" }
+browser = { path = "../crates/browser" }
 config = { path = "../crates/config" }
 chats = { path = "../crates/chats" }
 editor = { path = "../crates/editor" }
@@ -42,5 +46,5 @@ git = { path = "../crates/git" }
 git2 = "0.19"
 mcp = { path = "../crates/mcp" }
 lsp = { path = "../crates/lsp" }
+runtime = { path = "../crates/runtime" }
 tracing = "0.1"
-

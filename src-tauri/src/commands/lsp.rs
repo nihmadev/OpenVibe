@@ -38,7 +38,7 @@ pub async fn lsp_start_server(id: String, state: State<'_, AppState>) -> Result<
             tracing::info!("Installing LSP package: {}", package);
             state
                 .runtime_manager
-                .install_package(lsp::runtime::RuntimeType::Node, package)
+                .install_package(runtime::RuntimeType::Node, package)
                 .await
                 .map_err(|e| format!("Failed to install NPM package: {}", e))?;
         }
@@ -49,7 +49,7 @@ pub async fn lsp_start_server(id: String, state: State<'_, AppState>) -> Result<
         tracing::info!("Installing LSP package: gopls");
         state
             .runtime_manager
-            .install_package(lsp::runtime::RuntimeType::Go, "golang.org/x/tools/gopls@latest")
+            .install_package(runtime::RuntimeType::Go, "golang.org/x/tools/gopls@latest")
             .await
             .map_err(|e| format!("Failed to install Go package: {}", e))?;
     } else if id == "lua" {
@@ -59,21 +59,21 @@ pub async fn lsp_start_server(id: String, state: State<'_, AppState>) -> Result<
         tracing::info!("Installing LSP package: pyright");
         state
             .runtime_manager
-            .install_package(lsp::runtime::RuntimeType::Python, "pyright")
+            .install_package(runtime::RuntimeType::Python, "pyright")
             .await
             .map_err(|e| format!("Failed to install Python package: {}", e))?;
     } else if id == "ruby" {
         tracing::info!("Installing LSP package: solargraph");
         state
             .runtime_manager
-            .install_package(lsp::runtime::RuntimeType::Ruby, "solargraph")
+            .install_package(runtime::RuntimeType::Ruby, "solargraph")
             .await
             .map_err(|e| format!("Failed to install Ruby package: {}", e))?;
     } else if id == "csharp" {
         tracing::info!("Installing LSP package: csharp-ls");
         state
             .runtime_manager
-            .install_package(lsp::runtime::RuntimeType::Dotnet, "csharp-ls")
+            .install_package(runtime::RuntimeType::Dotnet, "csharp-ls")
             .await
             .map_err(|e| format!("Failed to install Dotnet package: {}", e))?;
     } else if id == "rust" {

@@ -1,4 +1,3 @@
-use search::walker;
 use serde::Serialize;
 use std::fs;
 use std::path::Path;
@@ -19,7 +18,7 @@ pub fn fs_list(dir: String) -> Result<Vec<FsEntry>, String> {
         .filter_map(|e| e.ok())
         .filter(|e| {
             let name = e.file_name().to_string_lossy().to_string();
-            !search::config::should_skip(&name)
+            !workspace_fs::should_skip(&name)
         })
         .map(|e| {
             let path = e.path();
@@ -104,8 +103,8 @@ pub async fn fs_find(
     root: String,
     query: String,
     limit: Option<usize>,
-) -> Result<Vec<search::types::FileMatch>, String> {
-    Ok(walker::find_files(&root, &query, limit.unwrap_or(30)))
+) -> Result<Vec<workspace_fs::FileMatch>, String> {
+    Ok(workspace_fs::find_files(&root, &query, limit.unwrap_or(30)))
 }
 
 #[tauri::command]
@@ -113,8 +112,8 @@ pub async fn fs_find_all(
     root: String,
     query: String,
     limit: Option<usize>,
-) -> Result<Vec<search::types::FileMatch>, String> {
-    Ok(walker::find_all(&root, &query, limit.unwrap_or(50)))
+) -> Result<Vec<workspace_fs::FileMatch>, String> {
+    Ok(workspace_fs::find_all(&root, &query, limit.unwrap_or(50)))
 }
 
 #[derive(Serialize)]

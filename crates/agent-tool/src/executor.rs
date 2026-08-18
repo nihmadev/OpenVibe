@@ -1,7 +1,7 @@
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 
-use agent::{config::LlmConfig, ToolDefFunction, ToolDefinition, ToolExecutor};
+use agent_api::{LlmConfig, ToolDefFunction, ToolDefinition, ToolExecutor};
 
 use crate::definition;
 use crate::execute::execute_tool;
@@ -9,7 +9,7 @@ use crate::execute::execute_tool;
 pub struct AgentToolExecutor {
     llm_config: Mutex<Option<LlmConfig>>,
     mcp_manager: Option<Arc<mcp::McpManager>>,
-    lsp_manager: Option<Arc<lsp::LspManager>>,
+    browser_manager: Option<Arc<browser::BrowserManager>>,
 }
 
 impl Default for AgentToolExecutor {
@@ -23,7 +23,7 @@ impl AgentToolExecutor {
         Self {
             llm_config: Mutex::new(None),
             mcp_manager: None,
-            lsp_manager: None,
+            browser_manager: None,
         }
     }
 
@@ -31,13 +31,23 @@ impl AgentToolExecutor {
         Self {
             llm_config: Mutex::new(None),
             mcp_manager: Some(mcp_manager),
-            lsp_manager: None,
+            browser_manager: None,
         }
     }
 
-    pub fn with_lsp(mut self, lsp_manager: Arc<lsp::LspManager>) -> Self {
-        self.lsp_manager = Some(lsp_manager);
-        self
+    pub fn with_mcp_and_browser(
+        mcp_manager: Arc<mcp::McpManager>,
+        browser_manager: Arc<browser::BrowserManager>,
+    ) -> Self {
+        Self {
+            llm_config: Mutex::new(None),
+            mcp_manager: Some(mcp_manager),
+            browser_manager: Some(browser_manager),
+        }
+    }
+
+    pub fn browser_manager(&self) -> Option<&Arc<browser::BrowserManager>> {
+        self.browser_manager.as_ref()
     }
 
     pub fn set_llm_config(&self, config: LlmConfig) {
@@ -86,7 +96,15 @@ impl ToolExecutor for AgentToolExecutor {
     fn is_read_only(&self, name: &str) -> bool {
         if matches!(
             name,
-            "read_file" | "list_dir" | "search_codebase" | "todo" | "web_search" | "fetch_url"
+            "read_file"
+                | "list_dir"
+                | "search_codebase"
+                | "todo"
+                | "web_search"
+                | "fetch_url"
+                | "list_skills"
+                | "read_skill"
+                | "read_skill_resource"
         ) {
             return true;
         }
@@ -127,6 +145,9 @@ impl ToolExecutor for AgentToolExecutor {
                     return Err("MCP Manager not available".to_string());
                 }
             }
+        }
+        if name.starts_with("browser_") {
+            return crate::browser::execute(name, args, emit, self).await;
         }
         execute_tool(name, args, cwd, cancel, emit, self).await
     }

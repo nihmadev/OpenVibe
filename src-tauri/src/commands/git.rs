@@ -6,6 +6,14 @@ fn not_found(e: &git::error::GitError) -> bool {
     matches!(e, git::error::GitError::NotFound(_))
 }
 
+async fn run_blocking_git<T, F>(operation: F) -> Result<T, String>
+where
+    T: Send + 'static,
+    F: FnOnce() -> Result<T, String> + Send + 'static,
+{
+    tauri::async_runtime::spawn_blocking(operation).await.map_err(|error| error.to_string())?
+}
+
 #[tauri::command]
 pub fn git_repo_info(path: String) -> Result<Option<RepoInfo>, String> {
     if path.is_empty() {
@@ -19,11 +27,11 @@ pub fn git_repo_info(path: String) -> Result<Option<RepoInfo>, String> {
 }
 
 #[tauri::command]
-pub fn git_status(path: String) -> Result<Vec<FileStatus>, String> {
+pub async fn git_status(path: String) -> Result<Vec<FileStatus>, String> {
     if path.is_empty() {
         return Ok(Vec::new());
     }
-    git::status::get_status(&path).map_err(|e| e.to_string())
+    run_blocking_git(move || git::status::get_status(&path).map_err(|e| e.to_string())).await
 }
 
 #[tauri::command]
@@ -84,12 +92,15 @@ pub fn git_commit(path: String, message: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn git_branches(path: String) -> Result<Vec<git::repository::BranchInfo>, String> {
+pub async fn git_branches(path: String) -> Result<Vec<git::repository::BranchInfo>, String> {
     if path.is_empty() {
         return Ok(Vec::new());
     }
-    let repo = git::repository::open(&path).map_err(|e| e.to_string())?;
-    git::repository::list_branches(&repo).map_err(|e| e.to_string())
+    run_blocking_git(move || {
+        let repo = git::repository::open(&path).map_err(|e| e.to_string())?;
+        git::repository::list_branches(&repo).map_err(|e| e.to_string())
+    })
+    .await
 }
 
 #[tauri::command]
@@ -101,11 +112,11 @@ pub fn git_commits(path: String, max_count: i32) -> Result<Vec<git::commit::Comm
 }
 
 #[tauri::command]
-pub fn git_graph(path: String, max_count: i32) -> Result<Vec<CommitGraphNode>, String> {
+pub async fn git_graph(path: String, max_count: i32) -> Result<Vec<CommitGraphNode>, String> {
     if path.is_empty() {
         return Ok(Vec::new());
     }
-    git::commit::build_graph(&path, max_count).map_err(|e| e.to_string())
+    run_blocking_git(move || git::commit::build_graph(&path, max_count).map_err(|e| e.to_string())).await
 }
 
 #[tauri::command]
@@ -117,12 +128,15 @@ pub fn git_publish_branch(path: String, branch: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn git_current_branch(path: String) -> Result<Option<String>, String> {
+pub async fn git_current_branch(path: String) -> Result<Option<String>, String> {
     if path.is_empty() {
         return Ok(None);
     }
-    let repo = git::repository::open(&path).map_err(|e| e.to_string())?;
-    git::repository::get_current_branch(&repo).map_err(|e| e.to_string())
+    run_blocking_git(move || {
+        let repo = git::repository::open(&path).map_err(|e| e.to_string())?;
+        git::repository::get_current_branch(&repo).map_err(|e| e.to_string())
+    })
+    .await
 }
 
 #[tauri::command]
@@ -202,7 +216,7 @@ pub async fn generate_commit_message(state: tauri::State<'_, crate::AppState>, p
         cfg.api_url = None;
     }
 
-    let llm_config = cfg.to_agent_config().llm_config();
+    let llm_config = crate::agent_config(&cfg).llm_config();
     let cancel = std::sync::atomic::AtomicBool::new(false);
     // Reuse the shared pooled client: a fresh Client here paid a full
     // DNS + TCP + TLS handshake on every commit-message generation.
@@ -219,7 +233,7 @@ pub async fn generate_commit_message(state: tauri::State<'_, crate::AppState>, p
     };
 
     let messages = vec![
-        agent::ChatMessage {
+        agent_api::ChatMessage {
             role: "system".to_string(),
             content: Some(serde_json::Value::String(system_prompt.to_string())),
             name: None,
@@ -229,7 +243,7 @@ pub async fn generate_commit_message(state: tauri::State<'_, crate::AppState>, p
             reasoning_name: None,
             usage: None,
         },
-        agent::ChatMessage {
+        agent_api::ChatMessage {
             role: "user".to_string(),
             content: Some(serde_json::Value::String(format!("Here is the git diff:\n\n{}", truncated_diff))),
             name: None,
@@ -241,7 +255,7 @@ pub async fn generate_commit_message(state: tauri::State<'_, crate::AppState>, p
         },
     ];
 
-    let turn = agent::request::stream_chat(
+    let turn = llm::request::stream_chat(
         &llm_config,
         messages,
         Vec::new(),

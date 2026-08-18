@@ -219,6 +219,25 @@ pub fn state_set(state: State<AppState>, key: String, value: String) -> Result<(
     // Toggling the regional proxy changes which origin chat requests connect
     // to — re-point the connection warmer and warm the new origin right away.
     if key == "settings:useRegionalProxy" {
+        if let Ok(mut config_lock) = state.config.lock() {
+            if let Some(ref mut cfg) = *config_lock {
+                if value != "true" {
+                    cfg.api_url = None;
+                } else if cfg.api_url.is_none() {
+                    cfg.api_url = Some("https://api.nihmadev.fun".to_string());
+                }
+            }
+        }
+        if let Ok(mut agent_lock) = state.agent.lock() {
+            if let Some(ref mut agent) = *agent_lock {
+                if value != "true" {
+                    agent.config_mut().api_url = None;
+                } else if agent.config().api_url.is_none() {
+                    agent.config_mut().api_url = Some("https://api.nihmadev.fun".to_string());
+                }
+            }
+        }
+
         let cfg = {
             let config_lock = state.config.lock().map_err(|e| e.to_string())?;
             config_lock.as_ref().cloned()
@@ -227,7 +246,7 @@ pub fn state_set(state: State<AppState>, key: String, value: String) -> Result<(
             if value != "true" {
                 cfg.api_url = None;
             }
-            if let Some(origin) = agent::request::effective_origin(&cfg.to_agent_config().llm_config()) {
+            if let Some(origin) = llm::request::effective_origin(&crate::agent_config(&cfg).llm_config()) {
                 let warmer = state.warmer.clone();
                 tauri::async_runtime::spawn(async move {
                     warmer.set_origin(origin).await;

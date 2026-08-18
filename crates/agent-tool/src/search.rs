@@ -1,50 +1,15 @@
 use std::path::Path;
 
-const MAX_FILE_BYTES: u64 = 256 * 1024;
-const MAX_OUTPUT_CHARS: usize = 16_000;
-
-fn clip(text: &str, max: usize) -> String {
-    if text.len() <= max {
-        text.to_string()
-    } else {
-        let mut end = max;
-        while !text.is_char_boundary(end) {
-            end -= 1;
-        }
-        format!(
-            "{}\n…[truncated, {} more chars]",
-            &text[..end],
-            text.len() - max
-        )
-    }
-}
-
-fn resolve_path(cwd: &str, p: &str) -> String {
-    let path = Path::new(p);
-    if path.is_absolute() {
-        p.to_string()
-    } else {
-        Path::new(cwd).join(p).to_string_lossy().to_string()
-    }
-}
+use workspace_fs::{clip, resolve_path, MAX_FILE_BYTES, MAX_OUTPUT_CHARS};
 
 const MAX_RESULTS: usize = 60;
 
-struct ScanOutcome {
-    results: Vec<String>,
-    skipped_large_files: usize,
-    hit_result_cap: bool,
-}
+type ScanOutcome = workspace_fs::TextScan;
 
 /// Walk `root` (a directory OR a single file) and collect matching lines.
 /// When `literal` is true the query is matched as a case-insensitive
 /// substring; otherwise it is applied as a case-insensitive regex.
-fn scan_files(root: &str, query: &str, literal: bool, skip: &[String]) -> ScanOutcome {
-    let mut outcome = ScanOutcome {
-        results: Vec::new(),
-        skipped_large_files: 0,
-        hit_result_cap: false,
-    };
+fn scan_files(root: &str, query: &str, literal: bool) -> ScanOutcome {
     let re = if literal {
         None
     } else {
@@ -52,77 +17,21 @@ fn scan_files(root: &str, query: &str, literal: bool, skip: &[String]) -> ScanOu
     };
     let q_lower = query.to_lowercase();
 
-    let match_file = |path: &std::path::Path, outcome: &mut ScanOutcome| {
-        if let Ok(meta) = std::fs::metadata(path) {
-            if meta.len() > MAX_FILE_BYTES {
-                outcome.skipped_large_files += 1;
-                return;
-            }
-        }
-        let text = match std::fs::read_to_string(path) {
-            Ok(t) => t,
-            Err(_) => return,
-        };
-        let path_str = path.to_string_lossy().to_string();
-        for (i, line) in text.lines().enumerate() {
-            if outcome.results.len() >= MAX_RESULTS {
-                outcome.hit_result_cap = true;
-                return;
-            }
-            let matched = if let Some(ref r) = re {
-                r.is_match(line)
-            } else {
-                line.to_lowercase().contains(&q_lower)
-            };
-            if matched {
-                outcome
-                    .results
-                    .push(format!("{}:{}: {}", path_str, i + 1, line));
-            }
-        }
-    };
-
-    let root_path = std::path::PathBuf::from(root);
-    // `root` may point directly at a file — search just that file instead of
-    // silently returning nothing (read_dir fails on files).
-    if root_path.is_file() {
-        match_file(&root_path, &mut outcome);
-        return outcome;
-    }
-
-    let mut dirs: Vec<std::path::PathBuf> = vec![root_path];
-    while let Some(dir) = dirs.pop() {
-        if outcome.results.len() >= MAX_RESULTS {
-            outcome.hit_result_cap = true;
-            break;
-        }
-        let entries = match std::fs::read_dir(&dir) {
-            Ok(e) => e,
-            Err(_) => continue,
-        };
-        for entry in entries.flatten() {
-            if outcome.results.len() >= MAX_RESULTS {
-                outcome.hit_result_cap = true;
-                break;
-            }
-            let name = entry.file_name().to_string_lossy().to_string();
-            if skip.iter().any(|s| s == &name) {
-                continue;
-            }
-            if let Ok(ft) = entry.file_type() {
-                if ft.is_dir() {
-                    dirs.push(entry.path());
-                } else if ft.is_file() {
-                    match_file(&entry.path(), &mut outcome);
-                }
-            }
-        }
-    }
-    outcome
+    workspace_fs::scan_text(Path::new(root), MAX_RESULTS, MAX_FILE_BYTES, |line| {
+        re.as_ref().map_or_else(
+            || line.to_lowercase().contains(&q_lower),
+            |re| re.is_match(line),
+        )
+    })
 }
 
 fn format_scan_output(query: &str, outcome: &ScanOutcome, note: Option<&str>) -> String {
-    let mut out = outcome.results.join("\n");
+    let mut out = outcome
+        .matches
+        .iter()
+        .map(|entry| format!("{}:{}: {}", entry.path.display(), entry.line, entry.content))
+        .collect::<Vec<_>>()
+        .join("\n");
     let mut footers: Vec<String> = Vec::new();
     if outcome.hit_result_cap {
         footers.push(format!(
@@ -143,7 +52,7 @@ fn format_scan_output(query: &str, outcome: &ScanOutcome, note: Option<&str>) ->
         out.push('\n');
         out.push_str(&footers.join("\n"));
     }
-    if outcome.results.is_empty() {
+    if outcome.matches.is_empty() {
         format!(
             "No results found for '{query}'{}",
             if footers.is_empty() {
@@ -175,30 +84,15 @@ pub async fn tool_search_codebase(cwd: &str, args: &serde_json::Value) -> Result
 
     let is_regex_query = regex::Regex::new(&format!("(?i){}", query)).is_ok();
 
-    let skip: Vec<String> = [
-        "node_modules",
-        ".git",
-        "dist",
-        "build",
-        ".next",
-        "out",
-        "target",
-    ]
-    .iter()
-    .map(|s| s.to_string())
-    .collect();
-
     let q = query.to_string();
     let root_clone = resolved_root.clone();
-    let skip_clone = skip.clone();
 
-    let regex_outcome = tokio::task::spawn_blocking(move || {
-        scan_files(&root_clone, &q, !is_regex_query, &skip_clone)
-    })
-    .await
-    .map_err(|e| format!("Search failed: {e}"))?;
+    let regex_outcome =
+        tokio::task::spawn_blocking(move || scan_files(&root_clone, &q, !is_regex_query))
+            .await
+            .map_err(|e| format!("Search failed: {e}"))?;
 
-    if !regex_outcome.results.is_empty() {
+    if !regex_outcome.matches.is_empty() {
         return Ok(format_scan_output(query, &regex_outcome, None));
     }
 
@@ -210,12 +104,11 @@ pub async fn tool_search_codebase(cwd: &str, args: &serde_json::Value) -> Result
     if is_regex_query && has_meta {
         let q = query.to_string();
         let root_clone = resolved_root.clone();
-        let skip_clone = skip.clone();
         let literal_outcome =
-            tokio::task::spawn_blocking(move || scan_files(&root_clone, &q, true, &skip_clone))
+            tokio::task::spawn_blocking(move || scan_files(&root_clone, &q, true))
                 .await
                 .map_err(|e| format!("Search failed: {e}"))?;
-        if !literal_outcome.results.is_empty() {
+        if !literal_outcome.matches.is_empty() {
             return Ok(format_scan_output(
                 query,
                 &literal_outcome,

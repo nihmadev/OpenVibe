@@ -1,10 +1,7 @@
 use crate::AppState;
-use agent::chat::ChatMessage;
-use agent::config::LlmConfig;
-use agent::definition::ToolDefinition;
-use agent::request::stream_chat;
-use agent::token::compute_context_usage;
-use agent::token::ContextUsage;
+use agent_api::{ChatMessage, LlmConfig, ToolDefinition};
+use llm::request::stream_chat;
+use llm::token::{compute_context_usage, ContextUsage};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};

@@ -1,4 +1,5 @@
 pub mod agent;
+pub mod browser;
 pub mod chats;
 pub mod clipboard;
 pub mod editor;

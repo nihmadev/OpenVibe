@@ -32,8 +32,22 @@ pub struct AppState {
     pub warmer: Arc<http_client::ConnectionWarmer>,
     pub warmer_stop_tx: Mutex<Option<watch::Sender<bool>>>,
     pub mcp_manager: Arc<mcp::McpManager>,
+    pub browser_manager: Arc<browser::BrowserManager>,
     pub lsp_manager: Arc<lsp::LspManager>,
-    pub runtime_manager: Arc<lsp::runtime::RuntimeManager>,
+    pub runtime_manager: Arc<runtime::RuntimeManager>,
+}
+
+pub(crate) fn agent_config(config: &Config) -> agent::AgentConfig {
+    agent::AgentConfig {
+        api_key: config.api_key.clone(),
+        base_url: config.base_url.clone(),
+        model: config.model.clone(),
+        cwd: config.cwd.clone(),
+        api_url: config.api_url.clone(),
+        provider_id: config.provider_id.clone(),
+        reasoning_effort: config.reasoning_effort.clone(),
+        prompt_cache_key: None,
+    }
 }
 
 impl AppState {
@@ -296,7 +310,7 @@ pub fn run() {
                 warm_cfg.api_url = None;
             }
             let initial_origin =
-                agent::request::effective_origin(&warm_cfg.to_agent_config().llm_config()).unwrap_or_default();
+                llm::request::effective_origin(&agent_config(&warm_cfg).llm_config()).unwrap_or_default();
             let warmer = http_client::ConnectionWarmer::new(shared_client.clone(), initial_origin);
             let (warmer_stop_tx, warmer_stop_rx) = watch::channel(false);
 
@@ -312,9 +326,19 @@ pub fn run() {
                 mcp_clone.init_and_autostart().await;
             });
 
+            // Isolated native Chromium/CDP runtime. Its profile and managed
+            // binary live in OpenVibe app data, never in the Tauri WebView.
+            let browser_manager = Arc::new(browser::BrowserManager::new(&app_dir));
+            let browser_prewarm = browser_manager.clone();
+            tauri::async_runtime::spawn(async move {
+                if let Err(error) = browser_prewarm.prewarm().await {
+                    tracing::warn!(%error, "browser runtime prewarm failed");
+                }
+            });
+
             // Pre-initialize agent if we have valid credentials to avoid first-request latency
             let initial_agent = if !cfg.api_key.is_empty() && !cfg.base_url.is_empty() {
-                Some(agent::Agent::new(cfg.to_agent_config()))
+                Some(agent::Agent::new(agent_config(&cfg)))
             } else {
                 None
             };
@@ -322,7 +346,7 @@ pub fn run() {
             // LSP Manager and Runtime Manager
             let runtimes_dir = app_dir.join("runtimes");
             let lsp_manager = Arc::new(lsp::LspManager::new(runtimes_dir.clone()));
-            let runtime_manager = Arc::new(lsp::runtime::RuntimeManager::new(runtimes_dir));
+            let runtime_manager = Arc::new(runtime::RuntimeManager::new(runtimes_dir));
 
             // Create state
             let state = AppState {
@@ -340,6 +364,7 @@ pub fn run() {
                 warmer,
                 warmer_stop_tx: Mutex::new(Some(warmer_stop_tx)),
                 mcp_manager,
+                browser_manager,
                 lsp_manager,
                 runtime_manager,
             };
@@ -373,6 +398,18 @@ pub fn run() {
             commands::agent::agent_set_cwd,
             commands::agent::agent_set_provider,
             commands::agent::agent_get_sub_trace,
+            // Isolated browser commands
+            commands::browser::browser_start,
+            commands::browser::browser_navigate_ui,
+            commands::browser::browser_history_ui,
+            commands::browser::browser_reload_ui,
+            commands::browser::browser_snapshot_ui,
+            commands::browser::browser_resize_ui,
+            commands::browser::browser_tabs_ui,
+            commands::browser::browser_set_manual_control,
+            commands::browser::browser_manual_pointer,
+            commands::browser::browser_manual_key,
+            commands::browser::browser_close,
             // FS commands
             commands::fs::fs_list,
             commands::fs::fs_read,
