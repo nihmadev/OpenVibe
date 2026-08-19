@@ -36,6 +36,7 @@ struct Session {
     active_target: String,
     active_session: String,
     manual_control: bool,
+    agent_input_blocked: bool,
     last_snapshot: Option<Value>,
     ui_stream: Option<tokio::task::JoinHandle<()>>,
     viewport: (u32, u32),

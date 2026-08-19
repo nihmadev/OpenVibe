@@ -15,7 +15,7 @@ Use this loop for browser work:
 
 Navigation and actions that can change page content refresh the snapshot automatically. If a ref becomes stale, take a new snapshot; never guess coordinates or reuse a ref from an older document.
 
-Switch to manual control for any login identifier, password, CAPTCHA, security question, passkey, recovery flow, or 2FA. Google sign-in is always manual. After manual takeover, do not perform agent actions until the user explicitly returns control.
+Switch to private manual control for any login identifier, password, CAPTCHA, security question, passkey, recovery flow, or 2FA. Google sign-in is always private and manual. After an authentication takeover, do not perform agent actions until the user explicitly returns control. Routine user clicks and scrolling are cooperative and do not reserve the browser; the agent may continue when no authentication flow is active.
 
 Ask the user for confirmation immediately before publishing content, sending a message, submitting a form with external effects, making a purchase, deleting remote data, accepting a legal agreement, or any other irreversible action. A general request to browse is not confirmation for a later irreversible step.
 

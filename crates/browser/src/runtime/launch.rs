@@ -179,6 +179,7 @@ impl BrowserManager {
             active_target: target_id,
             active_session: session_id,
             manual_control: false,
+            agent_input_blocked: false,
             last_snapshot: None,
             ui_stream: None,
             viewport: (1280, 800),

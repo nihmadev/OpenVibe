@@ -164,11 +164,9 @@ async fn opens_snapshots_clicks_and_types_with_real_chromium() {
         .expect("manual hover");
     let hover_snapshot = browser.snapshot(&emit).await.expect("hover snapshot");
     assert_eq!(hover_snapshot.result["snapshot"]["title"], "Hovered");
-    browser
-        .set_manual_control(false, &emit)
-        .await
-        .expect("return control after hover");
 
+    // Ordinary user interaction is cooperative: it must not reserve the
+    // browser or prevent the agent from continuing with a focused action.
     browser
         .fill(&input_ref, "openvibe", false, &emit)
         .await
@@ -186,6 +184,11 @@ async fn opens_snapshots_clicks_and_types_with_real_chromium() {
         .expect("snapshot elements")
         .iter()
         .any(|element| element["name"] == "Password" && element["secret"] == true));
+    let blocked = browser
+        .press("Tab", &emit)
+        .await
+        .expect_err("authentication control must stay private");
+    assert!(blocked.contains("authentication is under private user control"));
     assert!(events
         .lock()
         .expect("events lock")

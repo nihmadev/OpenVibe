@@ -50,8 +50,9 @@ impl BrowserManager {
                 || snapshot["elements"].as_array().is_some_and(|elements| {
                     elements.iter().any(|element| element["secret"] == true)
                 }));
-        if login_requires_manual && !session.manual_control {
+        if login_requires_manual && !session.agent_input_blocked {
             session.manual_control = true;
+            session.agent_input_blocked = true;
             emit(
                 "browser:manual-control",
                 json!({"manual":true,"sessionId":session.id,"reason":"authentication"}),

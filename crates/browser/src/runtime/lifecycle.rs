@@ -72,8 +72,8 @@ impl BrowserManager {
                     .to_string(),
             );
         }
-        if session.manual_control {
-            return Err("Browser is under manual user control. Wait for the user to return control explicitly".to_string());
+        if session.agent_input_blocked {
+            return Err("Browser authentication is under private user control. Wait for the user to finish and return control explicitly".to_string());
         }
         Ok(())
     }
