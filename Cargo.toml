@@ -2,18 +2,22 @@
 resolver = "2"
 members = [
     "src-tauri",
+    "crates/agent-api",
     "crates/agent",
     "crates/agent-tool",
+    "crates/browser",
     "crates/chats",
     "crates/config",
     "crates/db",
     "crates/editor",
+    "crates/fs",
     "crates/git",
     "crates/lsp",
+    "crates/llm",
     "crates/mcp",
-    "crates/scg2",
     "crates/search",
     "crates/terminal",
+    "crates/runtime",
 ]
 
 [profile.release]

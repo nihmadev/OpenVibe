@@ -1,0 +1,38 @@
+.servers-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.servers-panel__tabs {
+  margin-bottom: var(--space-4);
+}
+
+.servers-panel__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.servers-panel,
+.servers-panel__tabs,
+.servers-panel__content,
+.titlebar__mcp-server-list {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.servers-panel::-webkit-scrollbar,
+.servers-panel__tabs::-webkit-scrollbar,
+.servers-panel__content::-webkit-scrollbar,
+.titlebar__mcp-server-list::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.servers-panel__mcp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}

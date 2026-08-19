@@ -1,0 +1,394 @@
+.titlebar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 38px;
+  min-height: 38px;
+  background: var(--surface-underlay, var(--bg));
+  border-bottom: 1px solid var(--chrome-divider);
+  padding: 0 0 0 var(--space-6);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.titlebar__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  -webkit-app-region: no-drag;
+  flex: 1;
+  min-width: 200px;
+}
+
+.titlebar__center {
+  position: absolute;
+  left: 50%;
+  width: clamp(200px, calc(100% - 520px), 400px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  -webkit-app-region: no-drag;
+  justify-content: flex-end;
+  flex: 1;
+  min-width: 200px;
+}
+
+.titlebar__nav-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: 0;
+}
+
+/* Base look comes from .z-icon-button (zazaru-ui styles.css); only
+   titlebar-specific hide/show behavior lives here. */
+.titlebar__action-btn {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  border-radius: var(--radius-sm);
+  transition:
+    background var(--duration-fast) ease,
+    color var(--duration-fast) ease;
+}
+
+.titlebar__action-btn > svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  overflow: visible;
+}
+
+.titlebar__action-btn--active {
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.titlebar__action-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+}
+
+.titlebar__action-btn--hiding {
+  opacity: 0;
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: all var(--duration-normal) var(--ease-standard);
+}
+
+.titlebar__action-btn--showing {
+  animation: titlebar-btn-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes titlebar-btn-in {
+  from {
+    opacity: 0;
+    width: 0;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    width: 30px;
+    transform: scale(1);
+  }
+}
+
+.titlebar__search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background: color-mix(in srgb, var(--fg) 3%, transparent);
+  border: 1px solid var(--surface-border-soft);
+  border-radius: var(--radius-lg);
+  padding: 0 var(--space-6);
+  height: 28px;
+  min-width: 200px;
+  max-width: 400px;
+  width: 100%;
+  color: var(--fg-dim);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
+}
+
+.titlebar__search:hover {
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+  border-color: color-mix(in srgb, var(--fg) 10%, transparent);
+  box-shadow: none;
+}
+
+.titlebar__search:active {
+  transform: scale(0.99);
+}
+
+.titlebar__search > svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+.titlebar__search-text {
+  flex: 1;
+}
+
+.titlebar__search-kbd {
+  font-size: var(--text-2xs);
+  opacity: 0.6;
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.titlebar__controls {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.titlebar__btn {
+  width: 44px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--fg-muted);
+  border-radius: 0;
+  padding: 0;
+  transition: all var(--duration-normal) ease;
+}
+
+.titlebar__btn > svg {
+  width: 12px;
+  height: 12px;
+}
+
+.titlebar__btn:hover {
+  background: var(--bg-2);
+  color: var(--fg);
+}
+
+.titlebar__btn--close:hover {
+  background: var(--red);
+  color: var(--white);
+}
+
+/* ===== MCP STYLES ===== */
+.titlebar__mcp-container {
+  position: relative;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar__mcp-btn {
+  position: relative;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar__mcp-badge {
+  position: absolute;
+  top: 5px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  z-index: 2;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px var(--bg);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.titlebar__mcp-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.titlebar__mcp-dot--gray {
+  background-color: var(--fg-muted);
+}
+
+.titlebar__mcp-dot--green {
+  background-color: var(--color-success);
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 5px color-mix(in srgb, var(--color-success) 45%, transparent);
+}
+
+.titlebar__mcp-dot--yellow {
+  background-color: var(--color-warning);
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 5px color-mix(in srgb, var(--color-warning) 45%, transparent);
+}
+
+.titlebar__mcp-dot--red {
+  background-color: var(--color-error);
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 5px color-mix(in srgb, var(--color-error) 45%, transparent);
+}
+
+@keyframes mcp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.titlebar__mcp-dot--starting {
+  background-color: var(--bg);
+  border: 1.5px solid var(--line-strong);
+  border-top-color: var(--fg);
+  box-sizing: border-box;
+  box-shadow: 0 0 0 2px var(--bg);
+  animation: mcp-spin 1s linear infinite;
+}
+
+.titlebar__mcp-dropdown {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  box-shadow: var(--shadow-xl);
+  z-index: 100;
+}
+
+/* The dropdown is rendered inside the native titlebar drag region. Every
+   interactive element in it must opt out, otherwise clicks start moving the
+   window instead of activating MCP/LSP controls. */
+.titlebar__mcp-dropdown,
+.titlebar__mcp-dropdown * {
+  -webkit-app-region: no-drag;
+}
+
+.titlebar__mcp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-6);
+  border-bottom: 1px solid var(--line);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.titlebar__mcp-header-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.titlebar__mcp-refresh-btn {
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  cursor: pointer;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  transition: all var(--duration-fast) ease;
+}
+
+.titlebar__mcp-refresh-btn:hover {
+  background: var(--bg-3);
+  color: var(--fg);
+}
+
+.titlebar__mcp-server-list {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: var(--space-2) 0;
+  /* Hide scrollbar for IE, Edge and Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.titlebar__mcp-server-list::-webkit-scrollbar {
+  display: none;
+}
+
+.titlebar__mcp-empty {
+  padding: var(--space-7) var(--space-6);
+  text-align: center;
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+}
+
+.titlebar__mcp-server-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  transition: background var(--duration-fast) ease;
+}
+
+.titlebar__mcp-server-item:hover {
+  background: var(--bg-3);
+}
+
+.titlebar__mcp-server-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  overflow: hidden;
+}
+
+.titlebar__mcp-server-name {
+  font-weight: 500;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.titlebar__mcp-server-status {
+  font-size: var(--text-2xs);
+  color: var(--fg-dim);
+}
+
+.titlebar__mcp-toggle-btn {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--fg-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+}
+
+.titlebar__mcp-toggle-btn:hover {
+  background: var(--bg-3);
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+.titlebar__mcp-toggle-btn.active {
+  background: var(--bg-3);
+  color: var(--fg);
+  border-color: var(--line-strong);
+}

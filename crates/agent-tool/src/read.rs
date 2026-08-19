@@ -1,7 +1,4 @@
-use std::path::Path;
-
-const MAX_FILE_BYTES: u64 = 256 * 1024;
-const MAX_OUTPUT_CHARS: usize = 16_000;
+use workspace_fs::{resolve_path, MAX_FILE_BYTES, MAX_OUTPUT_CHARS};
 
 fn clip(text: &str, max: usize) -> String {
     if text.len() <= max {
@@ -16,15 +13,6 @@ fn clip(text: &str, max: usize) -> String {
             &text[..end],
             text.len() - end
         )
-    }
-}
-
-fn resolve_path(cwd: &str, p: &str) -> String {
-    let path = Path::new(p);
-    if path.is_absolute() {
-        p.to_string()
-    } else {
-        Path::new(cwd).join(p).to_string_lossy().to_string()
     }
 }
 
@@ -63,9 +51,31 @@ pub async fn tool_read_file(cwd: &str, args: &serde_json::Value) -> Result<Strin
         .await
         .map_err(|e| format!("Failed to read file: {e}"))?;
 
-    // No slicing requested: return the whole (clipped) file.
+    // No slicing requested: return the whole (clipped) file. When clipping,
+    // tell the model the exact line to continue from — a bare "use offset"
+    // hint without a number forces a guess-and-retry round-trip.
     if offset.is_none() && limit.is_none() {
-        return Ok(clip(&content, MAX_OUTPUT_CHARS));
+        if content.len() <= MAX_OUTPUT_CHARS {
+            return Ok(content);
+        }
+        let mut end = MAX_OUTPUT_CHARS;
+        while !content.is_char_boundary(end) {
+            end -= 1;
+        }
+        let shown = &content[..end];
+        let shown_lines = shown.lines().count();
+        let total_lines = content.lines().count();
+        // If the cut landed mid-line, that line is partial — continue from it
+        // (re-reading it whole) instead of skipping its remainder.
+        let next_offset = if shown.ends_with('\n') {
+            shown_lines + 1
+        } else {
+            shown_lines.max(1)
+        };
+        return Ok(format!(
+            "{shown}\n…[truncated] [showing lines 1-{shown_lines} of {total_lines}] \
+             [use offset={next_offset} to continue]"
+        ));
     }
 
     let lines: Vec<&str> = content.lines().collect();

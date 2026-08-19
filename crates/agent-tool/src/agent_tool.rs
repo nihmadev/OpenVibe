@@ -1,13 +1,11 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use agent::chat::ChatMessage;
-use agent::config::LlmConfig;
-use agent::prompt::agent_system_prompt;
-use agent::request::stream_chat;
-use agent::sub_trace::{store_sub_event, SubTraceEvent};
-use agent::ToolDefinition;
+use agent_api::{ChatMessage, LlmConfig, SubTraceEvent, ToolDefinition};
+use llm::request::stream_chat;
 
 use crate::definition::build_readonly_tool_definitions;
+use crate::sub_agent_prompt::agent_system_prompt;
+use crate::sub_trace::store_sub_event;
 use crate::{list_dir, read, run, search};
 
 // A research helper should converge quickly. Long autonomous explorations are

@@ -42,6 +42,7 @@ export default tseslint.config(
       "vscode/",
       "packages/",
       "venv/",
+      "1/",
       "*.rs",
       "venv_translate/",
     ],

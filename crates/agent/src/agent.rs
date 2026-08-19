@@ -1,11 +1,12 @@
 use std::collections::HashSet;
+use std::sync::atomic::AtomicU64;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use crate::chat::ChatMessage;
 use crate::config::AgentConfig;
 use crate::prompt::system_prompt;
-use crate::snapshot::{SnapshotEntry, UndoState};
+use crate::snapshot::UndoState;
+use agent_api::{ChatMessage, SnapshotEntry};
 
 pub struct Agent {
     pub messages: Vec<ChatMessage>,
@@ -22,8 +23,20 @@ pub struct Agent {
     pub last_cache_read_tokens: Option<usize>,
 }
 
+static SESSION_KEY_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+fn new_prompt_cache_key() -> String {
+    let epoch_nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let sequence = SESSION_KEY_COUNTER.fetch_add(1, Ordering::Relaxed);
+    format!("openvibe-{epoch_nanos:x}-{sequence:x}")
+}
+
 impl Agent {
-    pub fn new(config: AgentConfig) -> Self {
+    pub fn new(mut config: AgentConfig) -> Self {
+        config.prompt_cache_key = Some(new_prompt_cache_key());
         let system = system_prompt(&config.cwd);
         Self {
             messages: vec![ChatMessage {
@@ -48,8 +61,9 @@ impl Agent {
         }
     }
 
-    pub fn update_system_prompt(&mut self, scg2_context: Option<&str>) {
-        let mut system = crate::prompt::system_prompt_with_scg2(&self.config.cwd, scg2_context);
+    /// Rebuild the system prompt, preserving the todo context.
+    pub fn update_system_prompt(&mut self) {
+        let mut system = crate::prompt::system_prompt(&self.config.cwd);
         if let Some(todo) = &self.todo_context {
             system.push_str("\n\nCURRENT TODO CONTROL STATE (user-managed; follow it):\n");
             system.push_str(todo);
@@ -74,11 +88,15 @@ impl Agent {
     }
 
     pub fn set_todo_context(&mut self, context: Option<String>) {
+        if self.todo_context == context {
+            return; // idempotent: keep the system prompt byte-identical for prompt caches
+        }
         self.todo_context = context;
-        self.update_system_prompt(None);
+        self.update_system_prompt();
     }
 
     pub fn reset(&mut self) {
+        crate::project_tree::invalidate_cache(None);
         let system = system_prompt(&self.config.cwd);
         self.messages = vec![ChatMessage {
             role: "system".to_string(),
@@ -95,12 +113,14 @@ impl Agent {
         self.file_snapshots.clear();
         self.undo_state = None;
         self.todo_context = None;
+        self.config.prompt_cache_key = Some(new_prompt_cache_key());
         self.last_prompt_tokens = None;
         self.last_cache_creation_tokens = None;
         self.last_cache_read_tokens = None;
     }
 
     pub fn set_cwd(&mut self, cwd: String) {
+        crate::project_tree::invalidate_cache(Some(&self.config.cwd));
         self.config.cwd = cwd;
         let system = system_prompt(&self.config.cwd);
         self.messages = vec![ChatMessage {
@@ -118,6 +138,7 @@ impl Agent {
         self.file_snapshots.clear();
         self.undo_state = None;
         self.todo_context = None;
+        self.config.prompt_cache_key = Some(new_prompt_cache_key());
         self.last_prompt_tokens = None;
         self.last_cache_creation_tokens = None;
         self.last_cache_read_tokens = None;

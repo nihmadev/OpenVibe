@@ -93,7 +93,7 @@ impl ChatStore {
                  FROM messages WHERE chat_id = ? ORDER BY id ASC",
         )?;
 
-        let msgs: Vec<agent::chat::ChatMessage> = msg_stmt
+        let msgs: Vec<agent_api::ChatMessage> = msg_stmt
             .query_map(params![id], |row| {
                 Ok((
                     row.get::<_, String>(0)?,
@@ -119,7 +119,7 @@ impl ChatStore {
                     let content = content_json
                         .map(|s| serde_json::from_str(&s).unwrap_or(serde_json::Value::String(s)));
                     let tool_calls = tool_calls_json.and_then(|s| serde_json::from_str(&s).ok());
-                    agent::chat::ChatMessage {
+                    agent_api::ChatMessage {
                         role,
                         content,
                         name,
@@ -208,7 +208,7 @@ impl ChatStore {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use agent::snapshot::{AgentChangeStatus, FileSnapshot, SnapshotEntry};
+    use agent_api::{AgentChangeStatus, FileSnapshot, SnapshotEntry};
 
     fn record_with_snapshot() -> ChatRecord {
         ChatRecord {

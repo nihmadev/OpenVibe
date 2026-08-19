@@ -218,14 +218,15 @@ func (p *Proxy) buildUpstreamURL(r *http.Request, providerID, suffix string) (st
 	apiKey := r.Header.Get("x-api-key")
 
 	if strings.Contains(baseURL, "generativelanguage.googleapis.com") {
-		if strings.Contains(baseURL, "?") {
-			return baseURL + suffix, true
+		base := baseURL
+		if suffix == "/models" {
+			base = strings.TrimSuffix(base, "/openai")
 		}
 		sep := "?"
-		if strings.Contains(baseURL, "?") {
+		if strings.Contains(base, "?") {
 			sep = "&"
 		}
-		return baseURL + sep + "key=" + apiKey + suffix, false
+		return base + suffix + sep + "key=" + apiKey, true
 	}
 
 	if strings.Contains(baseURL, "models.github.ai") {
@@ -266,6 +267,9 @@ func (p *Proxy) handleChatCompletions(w http.ResponseWriter, r *http.Request, pr
 		}
 	} else if isGoogle {
 		upReq.Header.Del("Authorization")
+		if apiKey != "" {
+			upReq.Header.Set("x-goog-api-key", apiKey)
+		}
 	}
 
 	upRes, err := p.streamClient.Do(upReq)
@@ -349,6 +353,11 @@ func (p *Proxy) handleModels(w http.ResponseWriter, r *http.Request, providerID 
 		if apiKey != "" {
 			upReq.Header.Set("x-api-key", apiKey)
 			upReq.Header.Set("anthropic-version", "2023-06-01")
+		}
+	} else if isGoogle {
+		upReq.Header.Del("Authorization")
+		if apiKey != "" {
+			upReq.Header.Set("x-goog-api-key", apiKey)
 		}
 	} else if !isGoogle {
 		if apiKey != "" {

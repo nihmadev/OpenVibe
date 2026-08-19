@@ -1,5 +1,5 @@
 use crate::AppState;
-use agent::chat::ChatMessage;
+use agent_api::ChatMessage;
 use chats::{chrono_now, rand_suffix, ChatRecord, ChatSummary};
 use tauri::{Emitter, State};
 

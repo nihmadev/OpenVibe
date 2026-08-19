@@ -1,0 +1,26 @@
+:where([data-z-theme="high-contrast"], .z-theme-high-contrast) {
+  color-scheme: dark;
+  --z-color-canvas: #000000;
+  --z-color-surface: #000000;
+  --z-color-surface-raised: #0b0b0b;
+  --z-color-surface-sunken: #000000;
+  --z-color-surface-floating: #000000;
+  --z-color-surface-hover: #222222;
+  --z-color-surface-active: #333333;
+  --z-color-text: #ffffff;
+  --z-color-text-muted: #ffffff;
+  --z-color-text-subtle: #dedede;
+  --z-color-border: #ffffff;
+  --z-color-border-strong: #ffffff;
+  --z-color-accent: #ffffff;
+  --z-color-accent-text: #000000;
+  --z-color-danger: #ff8a8a;
+  --z-color-danger-hover: #ffb0b0;
+  --z-color-danger-text: #000000;
+  --z-color-focus: #ffe600;
+  --z-color-selection: #164d9a;
+  --z-color-backdrop: rgb(0 0 0 / 78%);
+  --z-elevation-1: 0 0 0 1px #ffffff;
+  --z-elevation-2: 0 0 0 2px #ffffff;
+  --z-elevation-3: 0 0 0 3px #ffffff;
+}

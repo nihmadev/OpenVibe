@@ -1,0 +1,91 @@
+/* Primitive tokens: raw scales. Override only when defining a brand. */
+:where(:root, [data-z-theme]) {
+  --z-primitive-space-0: 0;
+  --z-primitive-space-1: 0.125rem;
+  --z-primitive-space-2: 0.25rem;
+  --z-primitive-space-3: 0.375rem;
+  --z-primitive-space-4: 0.5rem;
+  --z-primitive-space-5: 0.625rem;
+  --z-primitive-space-6: 0.75rem;
+  --z-primitive-space-7: 1rem;
+  --z-primitive-space-8: 1.25rem;
+  --z-primitive-space-9: 1.5rem;
+  --z-primitive-space-10: 2rem;
+  --z-primitive-radius-1: 0.25rem;
+  --z-primitive-radius-2: 0.375rem;
+  --z-primitive-radius-3: 0.625rem;
+  --z-primitive-radius-4: 1rem;
+  --z-primitive-font-xs: 0.6875rem;
+  --z-primitive-font-sm: 0.75rem;
+  --z-primitive-font-md: 0.875rem;
+  --z-primitive-font-lg: 1rem;
+  --z-primitive-font-xl: 1.25rem;
+  --z-primitive-duration-fast: 100ms;
+  --z-primitive-duration-normal: 160ms;
+  --z-primitive-ease: cubic-bezier(0.2, 0, 0, 1);
+  --z-primitive-shadow-1: 0 1px 2px rgb(0 0 0 / 18%);
+  --z-primitive-shadow-2: 0 4px 12px rgb(0 0 0 / 24%);
+  --z-primitive-shadow-3: 0 10px 32px rgb(0 0 0 / 30%);
+
+  /* Semantic tokens: component code consumes this layer. */
+  --z-space-1: var(--z-primitive-space-1);
+  --z-space-2: var(--z-primitive-space-2);
+  --z-space-3: var(--z-primitive-space-3);
+  --z-space-4: var(--z-primitive-space-4);
+  --z-space-5: var(--z-primitive-space-5);
+  --z-space-6: var(--z-primitive-space-6);
+  --z-space-7: var(--z-primitive-space-7);
+  --z-space-8: var(--z-primitive-space-8);
+  --z-space-9: var(--z-primitive-space-9);
+  --z-space-10: var(--z-primitive-space-10);
+  --z-radius-control: var(--z-primitive-radius-2);
+  --z-radius-surface: var(--z-primitive-radius-3);
+  /* A canvas fills its parent; clipping belongs to the parent shell. */
+  --z-radius-canvas: 0;
+  --z-radius-floating: var(--z-primitive-radius-3);
+  --z-radius-round: 999px;
+  --z-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --z-font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+  --z-font-xs: var(--z-primitive-font-xs);
+  --z-font-sm: var(--z-primitive-font-sm);
+  --z-font-md: var(--z-primitive-font-md);
+  --z-font-lg: var(--z-primitive-font-lg);
+  --z-font-xl: var(--z-primitive-font-xl);
+  --z-duration-fast: var(--z-primitive-duration-fast);
+  --z-duration-normal: var(--z-primitive-duration-normal);
+  --z-ease: var(--z-primitive-ease);
+  --z-elevation-1: var(--z-primitive-shadow-1);
+  --z-elevation-2: var(--z-primitive-shadow-2);
+  --z-elevation-3: var(--z-primitive-shadow-3);
+  --z-control-height-sm: 1.75rem;
+  --z-control-height-md: 2.125rem;
+  --z-control-height-lg: 2.625rem;
+  --z-hit-area: 2rem;
+  --z-disabled-opacity: 0.48;
+
+  /* Component tokens: narrow, intentional customization points. */
+  --z-button-radius: var(--z-radius-control);
+  --z-field-radius: var(--z-radius-control);
+  --z-overlay-radius: var(--z-radius-surface);
+  --z-overlay-max-height: min(20rem, var(--radix-select-content-available-height, 20rem));
+  --z-list-row-height: 1.875rem;
+}
+
+:where([data-z-density="compact"], .z-density-compact) {
+  --z-control-height-sm: 1.5rem;
+  --z-control-height-md: 1.875rem;
+  --z-control-height-lg: 2.25rem;
+  --z-list-row-height: 1.625rem;
+  --z-density-padding: var(--z-space-4);
+}
+
+:where(:root, [data-z-density="comfortable"], .z-density-comfortable) {
+  --z-density-padding: var(--z-space-6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(:root, [data-z-theme]) {
+    --z-duration-fast: 0ms;
+    --z-duration-normal: 0ms;
+  }
+}

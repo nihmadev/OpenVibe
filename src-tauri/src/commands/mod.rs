@@ -1,4 +1,5 @@
 pub mod agent;
+pub mod browser;
 pub mod chats;
 pub mod clipboard;
 pub mod editor;
@@ -11,6 +12,5 @@ pub mod misc;
 pub mod models;
 pub mod projects;
 pub mod providers;
-pub mod scg2;
 pub mod terminals;
 pub mod tools;

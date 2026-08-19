@@ -1,0 +1,38 @@
+.tooltip-content {
+  z-index: 10000;
+  border-radius: var(--radius-sm, 6px);
+  padding: var(--space-1, 3px) var(--space-3, 8px);
+  font-size: var(--text-xs, 11px);
+  font-weight: 450;
+  line-height: 1.35;
+  color: var(--fg);
+  background: color-mix(in srgb, var(--bg-3) 90%, var(--bg-2) 10%);
+  border: 1px solid color-mix(in srgb, var(--line-strong) 70%, rgba(255, 255, 255, 0.08) 30%);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  user-select: none;
+  pointer-events: none;
+  animation-duration: 120ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+.tooltip-content[data-state="delayed-open"] {
+  animation-name: tooltip-scale-in;
+}
+
+.tooltip-arrow {
+  fill: color-mix(in srgb, var(--bg-3) 90%, var(--bg-2) 10%);
+}
+
+@keyframes tooltip-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

@@ -3,11 +3,10 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use crate::agent::Agent;
-use crate::chat::{ChatMessage, ToolCall, ToolCallFunction};
-use crate::executor::ToolExecutor;
-use crate::request::stream_chat;
+use agent_api::{ChatMessage, ToolCall, ToolCallFunction, ToolExecutor};
+use llm::request::stream_chat;
 
-const MAX_TURNS: usize = 25;
+const MAX_TURNS: usize = 100;
 
 /// Keep tool failures useful to the model as a diagnostic hint. The UI filters
 /// messages carrying this marker instead of rendering raw error output.
@@ -29,58 +28,53 @@ fn clean_tool_calls(tool_calls: Vec<ToolCall>) -> Vec<ToolCall> {
                 return None;
             }
             let args_str = call.function.arguments.clone();
-            if args_str.trim().is_empty() {
-                return Some(ToolCall {
-                    id: call.id,
-                    type_: "function".to_string(),
-                    function: ToolCallFunction {
-                        name,
-                        arguments: args_str,
-                        extra_fields: call.function.extra_fields,
-                    },
-                    extra_fields: call.extra_fields,
-                });
-            }
-            match serde_json::from_str::<serde_json::Value>(&args_str) {
-                Ok(mut parsed) if parsed.is_object() => {
-                    if let Some(obj) = parsed.as_object_mut() {
-                        if obj.contains_key("done") {
+
+            // Strip the spurious `done` flag some models attach to tool
+            // arguments. IMPORTANT: only re-serialize when we actually
+            // removed something — serde_json::Map is a BTreeMap, so an
+            // unconditional round-trip would alphabetize argument keys and
+            // make the stored history diverge from what the model generated
+            // (which also breaks provider-side prompt-cache prefix matching).
+            let arguments = if args_str.trim().is_empty() {
+                args_str
+            } else {
+                match serde_json::from_str::<serde_json::Value>(&args_str) {
+                    Ok(mut parsed)
+                        if parsed
+                            .as_object()
+                            .is_some_and(|obj| obj.contains_key("done")) =>
+                    {
+                        if let Some(obj) = parsed.as_object_mut() {
                             obj.remove("done");
-                            if obj.is_empty() {
-                                return None;
-                            }
                         }
+                        // Never drop the call entirely: a `{"done": true}`-only
+                        // payload still names a real tool. Execute it with
+                        // empty args so argument validation gives the model a
+                        // useful error (or the tool's defaults apply), instead
+                        // of silently ending the whole run mid-task.
+                        serde_json::to_string(&parsed).unwrap_or(args_str)
                     }
-                    let cleaned = serde_json::to_string(&parsed).unwrap_or(args_str);
-                    Some(ToolCall {
-                        id: call.id,
-                        type_: "function".to_string(),
-                        function: ToolCallFunction {
-                            name,
-                            arguments: cleaned,
-                            extra_fields: call.function.extra_fields,
-                        },
-                        extra_fields: call.extra_fields,
-                    })
+                    _ => args_str,
                 }
-                _ => Some(ToolCall {
-                    id: call.id,
-                    type_: "function".to_string(),
-                    function: ToolCallFunction {
-                        name,
-                        arguments: args_str,
-                        extra_fields: call.function.extra_fields,
-                    },
-                    extra_fields: call.extra_fields,
-                }),
-            }
+            };
+
+            Some(ToolCall {
+                id: call.id,
+                type_: "function".to_string(),
+                function: ToolCallFunction {
+                    name,
+                    arguments,
+                    extra_fields: call.function.extra_fields,
+                },
+                extra_fields: call.extra_fields,
+            })
         })
         .collect()
 }
 
-fn take_file_snapshot(path: &str) -> Option<crate::snapshot::FileSnapshot> {
+fn take_file_snapshot(path: &str) -> Option<agent_api::FileSnapshot> {
     let content = std::fs::read_to_string(path).ok();
-    Some(crate::snapshot::FileSnapshot {
+    Some(agent_api::FileSnapshot {
         path: path.to_string(),
         content,
     })
@@ -170,8 +164,15 @@ impl Agent {
         let cwd = self.config().cwd.clone();
         let llm_config = self.config().llm_config();
 
+        // True when the loop below ends because the turn budget ran out
+        // rather than because the model finished. Exhaustion must be
+        // reported explicitly — silently dropping an unfinished task looks
+        // to the user like the model "gave up halfway".
+        let mut turns_exhausted = true;
+
         for _turn in 0..MAX_TURNS {
             if self.cancel.load(Ordering::Relaxed) {
+                turns_exhausted = false;
                 emit("vibe:agent:stopped", serde_json::Value::Null);
                 break;
             }
@@ -182,6 +183,12 @@ impl Agent {
             // before the request is built.
             self.maybe_compact_context(client, emit).await;
 
+            // Profiles are derived from actual prior tool calls, never from
+            // language-specific keyword matching. A fresh session is full;
+            // later turns retain core tools plus used/unlocked capabilities.
+            let (_profile, turn_tool_defs) =
+                crate::tool_profile::select_tool_profile(&tool_defs, &self.messages);
+
             emit("vibe:agent:assistant-start", serde_json::Value::Null);
 
             // Coalesce streaming deltas. Leading edge: the very first chunk is
@@ -190,6 +197,8 @@ impl Agent {
             // text never stalls in the buffer when the model pauses or switches
             // to tool calls mid-stream.
             let debounce = Duration::from_millis(16);
+            let stream_started = std::time::Instant::now();
+            let first_delta_at = Arc::new(std::sync::OnceLock::new());
             let stream_epoch = std::time::Instant::now()
                 .checked_sub(debounce)
                 .unwrap_or_else(std::time::Instant::now);
@@ -207,7 +216,17 @@ impl Agent {
 
             let cb_chunk = {
                 let chunk_buf = chunk_buf.clone();
+                let first_delta_at = first_delta_at.clone();
                 move |chunk: &str| {
+                    let first = std::time::Instant::now();
+                    if first_delta_at.set(first).is_ok() {
+                        emit(
+                            "vibe:agent:stream-metrics",
+                            serde_json::json!({
+                                "ttftMs": first.duration_since(stream_started).as_millis() as u64,
+                            }),
+                        );
+                    }
                     if let Ok(mut sb) = chunk_buf.lock() {
                         sb.buf.push_str(chunk);
                         let now = std::time::Instant::now();
@@ -227,6 +246,10 @@ impl Agent {
             let cb_reasoning_name = {
                 let reason_name = reason_name.clone();
                 move |name: &str| {
+                    let name = name.trim();
+                    if name.is_empty() {
+                        return;
+                    }
                     if let Ok(mut state) = reason_name.lock() {
                         *state = Some(name.to_string());
                     }
@@ -240,7 +263,17 @@ impl Agent {
             let cb_reasoning = {
                 let reason_buf = reason_buf.clone();
                 let reason_name = reason_name.clone();
+                let first_delta_at = first_delta_at.clone();
                 move |chunk: &str| {
+                    let first = std::time::Instant::now();
+                    if first_delta_at.set(first).is_ok() {
+                        emit(
+                            "vibe:agent:stream-metrics",
+                            serde_json::json!({
+                                "ttftMs": first.duration_since(stream_started).as_millis() as u64,
+                            }),
+                        );
+                    }
                     if let Ok(mut sb) = reason_buf.lock() {
                         sb.buf.push_str(chunk);
                         let now = std::time::Instant::now();
@@ -345,7 +378,7 @@ impl Agent {
             let stream_fut = stream_chat(
                 &llm_config,
                 self.messages.clone(),
-                tool_defs.clone(),
+                turn_tool_defs,
                 &self.cancel,
                 client,
                 &cb_chunk,
@@ -369,6 +402,7 @@ impl Agent {
             let turn_result = match turn_result {
                 Ok(r) => r,
                 Err(e) => {
+                    turns_exhausted = false;
                     if e == "Aborted" {
                         emit("vibe:agent:stopped", serde_json::Value::Null);
                     } else {
@@ -385,6 +419,19 @@ impl Agent {
                 // Anthropic prompt caching metrics (None on other providers).
                 self.last_cache_creation_tokens = u.cache_creation_input_tokens;
                 self.last_cache_read_tokens = u.cache_read_input_tokens;
+                // Whole-stream generation speed (includes TTFT, so slightly
+                // conservative). Surfaced so slow turns are diagnosable:
+                // low tok/s with high promptTokens and zero cacheRead points
+                // at cold-prefix re-processing, not network issues.
+                let elapsed = stream_started.elapsed().as_secs_f64();
+                let ttft_ms = first_delta_at
+                    .get()
+                    .map(|first| first.duration_since(stream_started).as_millis() as u64);
+                let tokens_per_sec = if elapsed > 0.0 && u.completion_tokens > 0 {
+                    (u.completion_tokens as f64 / elapsed * 10.0).round() / 10.0
+                } else {
+                    0.0
+                };
                 emit(
                     "vibe:agent:usage",
                     serde_json::json!({
@@ -393,6 +440,9 @@ impl Agent {
                         "totalTokens": u.total_tokens,
                         "cacheCreationInputTokens": u.cache_creation_input_tokens,
                         "cacheReadInputTokens": u.cache_read_input_tokens,
+                        "tokensPerSec": tokens_per_sec,
+                        "streamSecs": (elapsed * 10.0).round() / 10.0,
+                        "ttftMs": ttft_ms,
                     }),
                 );
             }
@@ -440,6 +490,28 @@ impl Agent {
             });
 
             if cleaned_tool_calls.is_empty() {
+                // Output truncated by the provider's max-tokens limit: the
+                // answer is incomplete. Nudge the model to continue instead
+                // of presenting a cut-off message as the final answer.
+                if turn_result.finish_reason.as_deref() == Some("length") {
+                    self.messages.push(ChatMessage {
+                        role: "user".to_string(),
+                        content: Some(serde_json::Value::String(
+                            "[output-truncated] Your previous message was cut off by the \
+                             output token limit. Continue exactly where you stopped without \
+                             repeating what was already said."
+                                .to_string(),
+                        )),
+                        name: None,
+                        tool_call_id: None,
+                        tool_calls: None,
+                        reasoning_content: None,
+                        reasoning_name: None,
+                        usage: None,
+                    });
+                    continue;
+                }
+                turns_exhausted = false;
                 if !content_text.is_empty() {
                     emit("vibe:agent:done", serde_json::Value::Null);
                 } else if turn_result.content.trim().is_empty() {
@@ -606,12 +678,12 @@ impl Agent {
                         if let Some(snap) = snapshot {
                             let after_content = std::fs::read_to_string(&snap.path).ok();
                             let msg_idx = self.messages.len();
-                            self.file_snapshots.push(crate::snapshot::SnapshotEntry {
+                            self.file_snapshots.push(agent_api::SnapshotEntry {
                                 message_index: msg_idx,
                                 tool_call_id: call.id.clone(),
                                 snapshot: snap,
                                 after_content,
-                                status: crate::snapshot::AgentChangeStatus::Pending,
+                                status: agent_api::AgentChangeStatus::Pending,
                             });
                         }
                     }
@@ -637,7 +709,43 @@ impl Agent {
             }
         }
 
+        if turns_exhausted && !self.cancel.load(Ordering::Relaxed) {
+            // The loop ran out of turns while the model was still working.
+            // Leave a marker in the history so the model knows why it was
+            // interrupted, and tell the user explicitly instead of silently
+            // ending the run mid-task.
+            self.messages.push(ChatMessage {
+                role: "user".to_string(),
+                content: Some(serde_json::Value::String(format!(
+                    "[turn-limit] The agent run was paused after reaching the limit of \
+                     {MAX_TURNS} consecutive tool-use turns. The task may be unfinished. \
+                     Summarize progress and continue when the user asks."
+                ))),
+                name: None,
+                tool_call_id: None,
+                tool_calls: None,
+                reasoning_content: None,
+                reasoning_name: None,
+                usage: None,
+            });
+            emit(
+                "vibe:agent:error",
+                serde_json::json!({"text": format!(
+                    "Turn limit reached ({MAX_TURNS} consecutive tool-use turns). \
+                     The task may be unfinished — send a message (e.g. \"continue\") to resume."
+                )}),
+            );
+        }
+
         // Reset cancel flag for the next send cycle
         self.cancel.store(false, Ordering::Relaxed);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn tool_error_hint_includes_marker() {
+        assert!(super::tool_error_hint("boom".into()).starts_with("[tool-error]"));
     }
 }

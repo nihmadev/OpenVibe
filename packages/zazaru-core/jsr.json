@@ -1,0 +1,11 @@
+{
+  "name": "@zazaru/core",
+  "version": "0.0.1",
+  "license": "GPL-3.0-only",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "publish": {
+    "include": ["src/**/*.ts", "package.json", "jsr.json"]
+  }
+}

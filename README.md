@@ -1,8 +1,6 @@
-<p align="center">
-  <img src="public/icons/etc/icon.png" width="100" alt="Openvibe" />
+<p align="center" style="margin:0">
+  <img src="public/icons/etc/preview.png" width="80%" alt="OpenVibe" />
 </p>
-
-<h1 align="center">Openvibe</h1>
 
 <p align="center">
   <a href="https://github.com/nihmadev/OpenVibe">GitHub</a> ·
@@ -15,122 +13,123 @@
   <a href="https://github.com/nihmadev/OpenVibe/actions"><img src="https://img.shields.io/github/actions/workflow/status/nihmadev/OpenVibe/.github/workflows/build.yml?style=flat-square&logo=githubactions&label=build" alt="CI" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL%203.0-blue?style=flat-square" alt="License" /></a>
   <img src="https://img.shields.io/badge/React-18-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React 18" />
-  <img src="https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/TypeScript-6.0-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 6" />
   <img src="https://img.shields.io/badge/Rust-2021-000000?style=flat-square&logo=rust&logoColor=white" alt="Rust 2021" />
   <img src="https://img.shields.io/badge/Tauri-2.0-FFC131?style=flat-square&logo=tauri&logoColor=black" alt="Tauri 2" />
-  <img src="https://img.shields.io/badge/Vite-6.0-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/Vite-8.0-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 8" />
   <img src="https://img.shields.io/badge/SQLite-Bundled-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite" />
   <img src="https://img.shields.io/badge/MCP-Supported-8A2BE2?style=flat-square" alt="MCP Supported" />
 </p>
 
 ---
 
-Openvibe is an open-source agentic coding environment built for local execution, high responsiveness, and complete code control. Powered by a modular Rust workspace (11 specialized crates) and a lightweight Tauri 2 with React 18 frontend, Openvibe provides deep codebase understanding, subagent task execution, and seamless Model Context Protocol (MCP) integration without the heavy footprint of standard Electron applications.
+OpenVibe is an open-source, locally running agentic coding environment built with Tauri, Rust, React, and Monaco. It combines an AI conversation workspace, code editing, source control, terminal and language-server integration, MCP tools, sub-agent research, and an isolated agent-controlled browser in one lightweight desktop application.
 
----
+## Highlights
 
-## Architecture & Modular Crates
+- **Agentic development flow** — streamed reasoning and tool activity, multi-turn execution, todos, rollback, reviewable file changes, token usage, prompt caching, and automatic context compaction.
+- **Browser automation** — an isolated Chromium/CDP session that the agent can navigate, inspect, click, type into, and capture while the user can take over manual control when needed.
+- **Complete project workspace** — unified project/chat sidebar, Monaco editor and diff viewer, file tree, ignore-aware search, Git status and commit graph, LSP support, and a tabbed xterm.js terminal.
+- **Extensible tools** — built-in filesystem, shell, Git, web, browser, todo, skill, and research sub-agent tools plus dynamically discovered MCP tools.
+- **Provider freedom** — a bundled and refreshable `models.dev` catalog, first-class popular-provider templates, custom OpenAI-compatible endpoints, and local models through Ollama, LM Studio, or vLLM.
+- **Deep customization** — 40 bundled themes, separate light/dark palettes, theme import/export, 38 selectable UI languages, lazy-loaded UI/code fonts, configurable layout styling, zoom, and animation behavior.
 
-The core functionality of Openvibe is divided into 11 specialized Rust crates inside `crates/`:
+## Product Capabilities
 
-- **`crates/scg2`**: Smart Context Generation 2 (SCG2) engine. Performs background AST symbol parsing via Tree-Sitter (TypeScript, JavaScript, Rust, Python), builds graph dependency maps (`petgraph`), tracks recency decay metrics, boosts symbol relevance on editor hover/cursor telemetry, synchronizes compiler diagnostic errors/warnings, and formats context snippets for LLM prompts.
-- **`crates/agent`**: Async LLM streaming engine (`reqwest` + `tokio`). Handles Server-Sent Events (SSE) parsing, prompt assembly, token history truncation, thinking/reasoning stream extraction, request cancellation, and multi-turn execution loops.
-- **`crates/agent-tool`**: System tool executor (`read_file`, `write_file`, `edit_file`, `list_dir`, `run`, `search_codebase`, `agent` subagent) and dynamic bridge for Model Context Protocol tools (`mcp__<server>__<tool>`). Enforces explicit confirmation prompts for shell execution.
-- **`crates/mcp`**: Stdio transport MCP client (JSON-RPC 2.0). Controls MCP server process lifecycles, configuration parsing (`openvibe.toml`), tool discovery (`tools/list`), execution dispatch (`tools/call`), connection health tracking, and process recovery.
-- **`crates/search`**: Multithreaded codebase search with `.gitignore` parsing, regex and exact matching, line tokenization, syntax highlighting, and local code vector embeddings via `fastembed`.
-- **`crates/git`**: Native Git integration powered by `git2` (libgit2 Rust bindings). Manages workspace repository status, diff generation, staging index mutations, commit execution, and branch inspection.
-- **`crates/db`**: SQLite storage layer (`rusqlite` bundled in WAL mode). Manages workspace configurations, provider profiles, model settings, global application state, and per-project isolated conversation databases (`chats.db`).
-- **`crates/chats`**: Chat session management, message history persistence, context branching, message content editing, and SQLite serialization.
-- **`crates/terminal`**: Native terminal process runner (`std::process::Command` streaming stdio over Tauri IPC events directly to xterm.js).
-- **`crates/editor`**: Workspace document state, tab management, and active file editor synchronization.
-- **`crates/config`**: Configuration file serialization, default options, and runtime settings store.
+### Agent, Context, and Review
 
-### Auxiliary Services
+The agent uses a native incremental SSE pipeline for OpenAI- and Anthropic-style providers. Responses, reasoning, tool arguments, usage, cache statistics, time to first token, and throughput are emitted as structured events and rendered as one linear activity flow.
 
-- **`api/`**: Go proxy server (`main.go`, `proxy.go`, `updater.go`) handling API request forwarding, provider connection warmup, timeout management, health endpoints, and auto-update verification.
+- Token-aware compaction keeps the original task, recent turns, tool state, and file snapshots while reducing older conversation history.
+- Stable prompt-cache keys and moving cache breakpoints reduce repeated input processing on supported providers and proxies.
+- Focused tool profiles keep the prompt small by loading Git, web, research, browser, and per-server MCP schemas only when requested or used.
+- Successful agent edits retain before/after snapshots and can be inspected, accepted, rejected, or safely restored through Monaco diff views.
+- `@` file mentions, images, and document attachments add explicit context; inline previews keep that context visible in the conversation.
+- Configurable permission modes control shell, filesystem, browser, and other sensitive capabilities.
 
----
+### Integrated Browser
 
-## Technical Capabilities
+OpenVibe runs browser automation in an isolated Chromium process controlled over the Chrome DevTools Protocol. The Browser panel provides an address bar, navigation controls, multiple tabs, live page frames, agent-pointer visualization, and manual user control. Browser tools cover navigation, accessibility snapshots, clicks, text input, keyboard actions, hover, scrolling, history, tabs, screenshots, and waits. Navigation policy blocks privileged and local URL schemes before they reach Chromium.
 
-### SCG2 Context Indexing Engine
+### Workspace, Editor, Git, and Search
 
-Smart Context Generation 2 runs an asynchronous background worker that aggregates editor telemetry batches using a 500ms debouncing window. It extracts syntax trees, resolves module import paths into dependency graphs, boosts relevance ranks for active cursor symbols, tracks diagnostic warnings from compiler output, and dynamically compiles structured markdown context blocks for LLM system prompts.
+- The unified sidebar combines projects with expandable project conversations, pinned/recent chats, search, and project/chat actions.
+- Monaco provides multi-tab editing, cached document models, code and diff viewers, syntax highlighting, configurable typography, and image/video viewers.
+- Source control includes staged and unstaged groups, file actions, branch switching, diffs, commit creation, history, and a visual commit graph.
+- Source search and agent file access share bounded, ignore-aware filesystem traversal and path policy.
+- A lightweight real-time project tree supplies repository structure to the agent without the removed AST/vector indexing stack.
 
-### Agent Loop & Tool Calling
+### MCP, LSP, and Terminal
 
-- **Execution Engine**: Supports single and multi-step agent execution cycles.
-- **Built-in Tools**: `read_file`, `write_file`, `edit_file`, `list_dir`, `run`, `search_codebase`, and `agent` (subagent for multi-step codebase research).
-- **Command Security**: Destructive actions and terminal operations require explicit user approval.
-- **Context Boundaries**: Automatic sliding window token truncation to stay within model limits, combined with `@` file references and image attachment support for vision models.
+- Local MCP servers communicate over stdio/JSON-RPC 2.0; discovered tools are registered as `mcp__<server>__<tool>` and surfaced through live configuration and status views.
+- Language Server Protocol support manages server installation, processes, and editor connections for common development languages.
+- The integrated xterm.js terminal supports multiple native PTY sessions, shell detection, resizing, and real-time output streaming.
 
-### Model Context Protocol (MCP) Integration
+### Providers and Personalization
 
-- **Stdio Transport**: Full support for local MCP servers communicating over stdin/stdout via JSON-RPC 2.0.
-- **Automatic Registration**: Tools provided by running MCP servers are registered dynamically as `mcp__<server>__<tool>`.
-- **Status Monitoring**: Titlebar indicator reflecting real-time MCP server state (Green: All Running, Yellow: Partial, Red: Error/Stopped, Gray: Unconfigured) with popover management controls.
-- **Configuration File**: Configured through the UI settings or declared directly in `openvibe.toml` inside the workspace root.
+OpenVibe ships with a bundled `models.dev` provider/model snapshot, loads it lazily, caches updates locally, and refreshes it in the background. Popular services such as Anthropic, OpenAI, Google Gemini, DeepSeek, Groq, OpenRouter, Ollama, Mistral, xAI, AWS Bedrock, Azure OpenAI, GitHub Models, and many others have ready-to-use templates. Custom providers support arbitrary base URLs, headers, keys, model IDs, and parameters.
 
-### Code Editor & Integrated Terminal
+The Zazaru-based interface includes 40 bundled themes, editable light and dark color schemes, UI and code font selection, borders, radii, tabs, blur, zoom, animation controls, a modular icon system, and 38 selectable interface languages.
 
-- **Monaco Editor**: Multi-tab code view, syntax highlighting, line numbers, unsaved file diff indicators, customizable fonts/sizes, and split-pane layout side-by-side with chat.
-- **xterm.js Terminal**: Tabbed PTY sessions, automatic resizing via fit addon, shell detection (`bash`, `zsh`, `pwsh`, `cmd`), and real-time streaming over Rust process handles.
+## Architecture
 
-### Provider & Model Support
+OpenVibe has three runtime areas:
 
-- **33 Provider Presets**: Anthropic, OpenAI, Google Gemini, DeepSeek, Groq, OpenRouter, Ollama, Cerebras, Moonshot, Z.ai, Opencode Zen, GitHub Models, Together AI, Fireworks AI, Mistral AI, xAI (Grok), Cohere, Alibaba (Qwen), Azure OpenAI, AWS Bedrock, Hugging Face, Replicate, DeepInfra, Perplexity AI, Anyscale, Vercel AI Gateway, FalAI, Baseten, Hyperbolic, MiniMax, NVIDIA, SambaNova, SiliconCloud.
-- **OpenAI-Compatible Custom Endpoints**: Connect custom provider base URLs, custom headers, and API keys.
-- **Offline / Local Execution**: Native compatibility with local servers including Ollama, LM Studio, and vLLM.
+- the React/TypeScript renderer under `src/`, organized into dependency-ordered `base`, `platform`, and `workbench` layers;
+- the Tauri host under `src-tauri/`, which exposes thin commands and owns long-lived runtime managers;
+- focused Rust services under `crates/`, connected through explicit contracts and event sinks.
 
-### Customization & Localization
+The 16 Rust crates are:
 
-- **38 UI Languages**: English, Russian, German, French, Spanish, Chinese (Simplified/Traditional), Japanese, Korean, Italian, Portuguese, Arabic, Hindi, Turkish, Vietnamese, Polish, Ukrainian, and others.
-- **18 Themes**: Ayu, Carbonfox, Cursor, Dark, Default, Everforest, Flexoki, GitHub, Gruvbox (Standard, Medium, Soft), Kanagawa, Monokai, Nord, One Dark, Vercel, Vesper, Zenburn.
-- **Typography & Icons**: Integrated Google Fonts and extensive file/folder icon packs.
+- **`agent-api`** — shared agent messages, events, snapshots, tool definitions, and executor contracts.
+- **`llm`** — provider requests, transforms, cancellation, token accounting, and SSE decoding.
+- **`agent`** — orchestration, prompts, compaction, rollback, snapshots, summaries, and tool profiles.
+- **`agent-tool`** — filesystem, shell, Git, search, MCP, browser, web, todo, skill, and sub-agent tools.
+- **`browser`** — isolated Chromium installation/lifecycle, CDP, navigation, input, snapshots, tabs, and screencasts.
+- **`fs`** — shared path policy, ignore handling, bounded text scans, and filesystem walking.
+- **`runtime`** — downloadable language runtime installation and management.
+- **`search`** — cached bounded source search built on the shared filesystem boundary.
+- **`lsp`** — language-server process and protocol management.
+- **`mcp`** — MCP process lifecycle, JSON-RPC transport, tool discovery, and execution.
+- **`git`** — repository operations through libgit2.
+- **`db`** — project and application persistence through bundled SQLite.
+- **`chats`** — conversation storage and serialization.
+- **`terminal`** — terminal process lifecycle and streaming.
+- **`editor`** — document state and editor-oriented filesystem operations.
+- **`config`** — application and provider configuration types.
 
----
+The optional Go service under `api/` proxies provider requests, prewarms connections, handles timeouts and health checks, and supports update verification. See [docs/architecture.md](docs/architecture.md) for the complete dependency rules, runtime boundaries, and state/event flow.
 
-## Development & Usage
+## Development
 
-### Prerequisites
+### Requirements
 
-- **Node.js**: `>= 18`
-- **Rust**: Stable toolchain (`cargo`, `rustc`)
-- **Operating System**: Linux, macOS, or Windows
+- Node.js `>= 18`
+- Stable Rust toolchain (`cargo`, `rustc`)
+- Linux, macOS, or Windows
 
-### Installation
+The browser feature uses an installed Chrome/Chromium when available and can download a managed Chromium runtime on demand.
+
+### Install and Run
 
 ```bash
 git clone https://github.com/nihmadev/OpenVibe.git
 cd OpenVibe
 npm install
-```
-
-### Development Server
-
-```bash
 npm run dev
 ```
 
-Launches the Vite frontend dev server and runs the desktop app via `tauri dev`.
+`npm install` also copies Monaco runtime assets from the installed package. `npm run dev` starts the Vite renderer and Tauri desktop host.
 
-### Application Build
-
-```bash
-npm run build
-```
-
-Compiles the web frontend (`npm run build:src`) and generates the standalone native binary via Tauri (`npm run build:tauri`).
-
-### Verification & Testing
+### Build and Verify
 
 ```bash
-npm run check    # Run TypeScript, ESLint, and Prettier verifications
-npm test         # Run unit and integration tests via Vitest
+npm run build              # Build the renderer and native Tauri application
+npm run check              # Architecture, TypeScript, ESLint, and Biome checks
+npm test                   # Frontend unit and integration tests with Vitest
+cargo test --workspace     # Rust workspace tests
 ```
 
----
+## Changelog and License
 
-## License
-
-Distributed under the GNU General Public License v3.0 or later. See [LICENSE](LICENSE) for details.
+Release history is available in [CHANGELOG.md](CHANGELOG.md). OpenVibe is distributed under the GNU General Public License v3.0 or later; see [LICENSE](LICENSE).

@@ -1,4 +1,5 @@
 pub mod agent_tool;
+pub mod browser;
 pub mod definition;
 pub mod edit;
 pub mod execute;
@@ -8,6 +9,9 @@ pub mod list_dir;
 pub mod read;
 pub mod run;
 pub mod search;
+pub mod skills;
+mod sub_agent_prompt;
+pub mod sub_trace;
 pub mod todo;
 pub mod web;
 pub mod write;

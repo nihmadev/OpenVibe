@@ -2,9 +2,9 @@ use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 
 use crate::agent::Agent;
-use crate::chat::ChatMessage;
-use crate::config::{AgentConfig, LlmConfig};
-use crate::request::stream_chat;
+use crate::config::AgentConfig;
+use agent_api::{ChatMessage, LlmConfig};
+use llm::request::stream_chat;
 
 impl Agent {
     pub async fn summarize_with(
@@ -53,6 +53,7 @@ impl Agent {
             api_url: config.api_url.clone(),
             provider_id: config.provider_id.clone(),
             reasoning_effort: None,
+            prompt_cache_key: None,
         };
 
         let title_capture = title.clone();

@@ -1,25 +1,38 @@
 use crate::agent::Agent;
-use crate::chat::ChatMessage;
-use crate::request::stream_chat;
-use crate::token::compute_context_usage_with_last;
+use agent_api::ChatMessage;
+use llm::request::stream_chat;
+use llm::token::compute_context_usage_with_last;
 
 /// Marker prefix identifying an injected compaction summary message. The UI
 /// uses it to render the entry as a system notice instead of a user bubble.
 pub const COMPACT_MARKER: &str = "[context-compacted]";
 
 /// Compact when estimated context usage reaches this percentage.
-const COMPACT_THRESHOLD_PERCENT: usize = 80;
+/// Kept close to the emergency-trim threshold (90% in stream_chat) so
+/// compaction fires only when genuinely necessary: every compaction is
+/// lossy and destroys the model's working memory of file contents.
+const COMPACT_THRESHOLD_PERCENT: usize = 88;
 
-/// How many most recent messages survive compaction verbatim.
-const KEEP_RECENT: usize = 8;
+/// How many most recent messages survive compaction verbatim (upper bound;
+/// the token-aware tail sizing below may keep fewer on huge messages).
+const KEEP_RECENT: usize = 24;
+
+/// Token budget for the verbatim tail. Message COUNT alone is a bad proxy:
+/// eight tiny messages carry nothing, while eight big read_file results are
+/// the model's entire working set. Keep as many trailing messages as fit
+/// this budget (at least 2 so the last exchange always survives).
+const KEEP_RECENT_TOKEN_BUDGET: usize = 30_000;
 
 /// Minimum number of messages in the compactable middle range for the
 /// operation to be worth an extra LLM call.
 const MIN_COMPACTABLE: usize = 4;
 
 /// Per-message caps when building the transcript handed to the summarizer.
-const MAX_TOOL_RESULT_CHARS: usize = 700;
-const MAX_MESSAGE_CHARS: usize = 2000;
+/// Tool results carry the facts (file contents, command output) the
+/// summarizer must preserve; starving it below ~2K chars produces summaries
+/// that lose exact paths/identifiers and make the model "forget" mid-task.
+const MAX_TOOL_RESULT_CHARS: usize = 3000;
+const MAX_MESSAGE_CHARS: usize = 4000;
 /// Upper bound for the whole transcript (keeps the summarization request cheap).
 const MAX_TRANSCRIPT_CHARS: usize = 120_000;
 
@@ -104,6 +117,27 @@ fn build_transcript(messages: &[ChatMessage]) -> String {
     }
 }
 
+/// Index where the verbatim tail begins: walk backwards from the end keeping
+/// messages while both the message-count cap and the token budget allow.
+/// Always keeps at least the last 2 messages (the current exchange).
+fn compute_tail_start(messages: &[ChatMessage]) -> usize {
+    let total = messages.len();
+    let mut kept = 0usize;
+    let mut tokens = 0usize;
+    for msg in messages.iter().rev() {
+        if kept >= KEEP_RECENT {
+            break;
+        }
+        let msg_tokens = llm::token::estimate_tokens(std::slice::from_ref(msg));
+        if kept >= 2 && tokens + msg_tokens > KEEP_RECENT_TOKEN_BUDGET {
+            break;
+        }
+        tokens += msg_tokens;
+        kept += 1;
+    }
+    total.saturating_sub(kept)
+}
+
 fn summarizer_system_prompt() -> String {
     [
         "You are a conversation compaction engine inside an autonomous coding agent.",
@@ -130,7 +164,8 @@ fn summarizer_system_prompt() -> String {
         "- Base every statement STRICTLY on the transcript. Never invent files, APIs, or facts.",
         "- Prefer exact identifiers (paths, symbols, versions) over prose.",
         "- No preamble, no closing remarks — output the four sections only.",
-        "- Keep it under 600 words.",
+        "- Keep it under 900 words. Never sacrifice exact file paths, symbol names, or \
+         error messages for brevity.",
     ]
     .join("\n")
 }
@@ -159,7 +194,7 @@ impl Agent {
             None => return,
         };
 
-        let tail_start = total.saturating_sub(KEEP_RECENT);
+        let tail_start = compute_tail_start(&self.messages);
         // Compactable middle: everything after the first user message and
         // before the preserved tail.
         let range_start = first_user_idx + 1;
@@ -190,7 +225,7 @@ impl Agent {
                 // request still fits. trim_messages preserves the first user
                 // message (task anchor).
                 tracing::warn!("LLM context compaction failed; falling back to trim");
-                let trimmed = crate::transform::trim_messages(self.messages.clone(), KEEP_RECENT);
+                let trimmed = llm::transform::trim_messages(self.messages.clone(), KEEP_RECENT);
                 self.apply_new_messages(trimmed);
                 emit(
                     "vibe:agent:context-compaction-end",
@@ -362,7 +397,7 @@ impl Agent {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::chat::{ToolCall, ToolCallFunction};
+    use agent_api::{ToolCall, ToolCallFunction};
 
     fn msg(role: &str, text: &str) -> ChatMessage {
         ChatMessage {
@@ -420,6 +455,29 @@ mod tests {
         let text = content_to_text(&content);
         assert!(text.contains("look"));
         assert!(text.contains("[image attached]"));
+    }
+
+    #[test]
+    fn test_compute_tail_start_respects_message_cap() {
+        let msgs: Vec<ChatMessage> = (0..50)
+            .map(|i| msg("assistant", &format!("m{i}")))
+            .collect();
+        let start = compute_tail_start(&msgs);
+        assert_eq!(start, 50 - KEEP_RECENT);
+    }
+
+    #[test]
+    fn test_compute_tail_start_respects_token_budget() {
+        // Huge messages: the token budget must shrink the tail below KEEP_RECENT.
+        let big = "word ".repeat(20_000); // ~20K+ tokens each
+        let msgs: Vec<ChatMessage> = (0..10).map(|_| msg("assistant", &big)).collect();
+        let start = compute_tail_start(&msgs);
+        let kept = msgs.len() - start;
+        assert!(kept >= 2, "at least the last exchange survives");
+        assert!(
+            kept < KEEP_RECENT,
+            "token budget must cap the tail, kept={kept}"
+        );
     }
 
     #[test]

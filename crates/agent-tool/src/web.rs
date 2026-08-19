@@ -1,4 +1,4 @@
-use agent::config::LlmConfig;
+use agent_api::LlmConfig;
 use serde_json::Value;
 use std::sync::OnceLock;
 use std::time::Duration;

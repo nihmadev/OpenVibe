@@ -1,0 +1,209 @@
+import type React from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { appState } from "@/platform/storage/common/keyValueStore";
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+/** Visual animation style for a given UI slot */
+export type AnimStyle = "fade" | "slide" | "scale" | "fade-slide" | "none";
+
+export interface AnimationSettings {
+  /** Project tile hover animation */
+  projectHover: AnimStyle;
+  /** Switching active project (main content fade/slide) */
+  projectSwitch: AnimStyle;
+  /** Sidebar / session list open/close slide */
+  sidebarSlide: AnimStyle;
+  /** Context menu appearance */
+  contextMenu: AnimStyle;
+  /** Buttons and interactive elements */
+  buttons: AnimStyle;
+  /** Panels & modals appearing */
+  panelAppear: AnimStyle;
+  /** Global animation smoothness multiplier (0 = stopped, 0.5 = snappy, 1 = normal, 2 = smooth, 5 = ultra smooth) */
+  animMultiplier: string;
+}
+
+export type AnimKey = keyof AnimationSettings;
+type AnimationStyleKey = Exclude<AnimKey, "animMultiplier">;
+
+const ANIM_STYLE_KEYS: AnimationStyleKey[] = [
+  "projectHover",
+  "projectSwitch",
+  "sidebarSlide",
+  "contextMenu",
+  "buttons",
+  "panelAppear",
+];
+
+const DEFAULTS: AnimationSettings = {
+  projectHover: "fade",
+  projectSwitch: "fade",
+  sidebarSlide: "slide",
+  contextMenu: "fade",
+  buttons: "fade",
+  panelAppear: "fade",
+  animMultiplier: "1",
+};
+
+// Duration tables per style (fast/normal/slow)
+const DURATIONS: Record<AnimStyle, { fast: string; normal: string; slow: string }> = {
+  fade: { fast: "0.10s", normal: "0.16s", slow: "0.22s" },
+  slide: { fast: "0.12s", normal: "0.18s", slow: "0.24s" },
+  scale: { fast: "0.10s", normal: "0.16s", slow: "0.22s" },
+  "fade-slide": { fast: "0.12s", normal: "0.18s", slow: "0.24s" },
+  none: { fast: "0s", normal: "0s", slow: "0s" },
+};
+
+// Cadence belongs to the UI slot, not to the visual effect selected for it.
+// This prevents a sidebar set to "fade" from suddenly becoming as fast as a tooltip.
+const SLOT_DURATIONS: Record<(typeof ANIM_STYLE_KEYS)[number], string> = {
+  projectHover: "0.12s",
+  projectSwitch: "0.18s",
+  sidebarSlide: "0.30s",
+  contextMenu: "0.16s",
+  buttons: "0.12s",
+  panelAppear: "0.30s",
+};
+
+const EASING: Record<AnimStyle, string> = {
+  fade: "cubic-bezier(0.19, 1, 0.22, 1)",
+  slide: "cubic-bezier(0.19, 1, 0.22, 1)",
+  scale: "cubic-bezier(0.23, 1, 0.32, 1)",
+  "fade-slide": "cubic-bezier(0.19, 1, 0.22, 1)",
+  none: "linear",
+};
+
+// Keyframe names per style (used by CSS animations)
+export const ANIM_KEYFRAMES: Record<AnimStyle, string> = {
+  fade: "anim-fade",
+  slide: "anim-slide",
+  scale: "anim-scale",
+  "fade-slide": "anim-fade-slide",
+  none: "none",
+};
+
+// CSS variable names we inject into :root
+const CSS_VARS = {
+  projectHover: "--anim-project-hover",
+  projectSwitch: "--anim-project-switch",
+  sidebarSlide: "--anim-sidebar-slide",
+  contextMenu: "--anim-context-menu",
+  buttons: "--anim-buttons",
+  panelAppear: "--anim-panel-appear",
+} as const;
+
+export function applyAnimVars(settings: AnimationSettings): void {
+  const root = document.documentElement;
+  const parsedMultiplier = parseFloat(settings.animMultiplier);
+  const mult = Number.isFinite(parsedMultiplier) ? parsedMultiplier : 1;
+  for (const key of ANIM_STYLE_KEYS) {
+    if (!(key in CSS_VARS)) continue;
+    const cssVar = CSS_VARS[key as keyof typeof CSS_VARS];
+    const style = settings[key as keyof typeof settings] as AnimStyle;
+    const d = DURATIONS[style];
+    const e = EASING[style];
+    const kf = ANIM_KEYFRAMES[style];
+    function scaleDuration(orig: string): string {
+      if (mult === 0) return "0s";
+      if (mult === 1) return orig;
+      const sec = parseFloat(orig) * mult;
+      return `${sec.toFixed(3)}s`;
+    }
+    root.style.setProperty(`${cssVar}-fast`, `${scaleDuration(d.fast)} ${e}`);
+    root.style.setProperty(`${cssVar}-normal`, `${scaleDuration(d.normal)} ${e}`);
+    root.style.setProperty(`${cssVar}-slow`, `${scaleDuration(d.slow)} ${e}`);
+    root.style.setProperty(`${cssVar}-enabled`, style === "none" ? "0" : "1");
+    root.style.setProperty(`${cssVar}-keyframes`, kf);
+    root.style.setProperty(`${cssVar}-easing`, e);
+    root.style.setProperty(`${cssVar}-duration`, scaleDuration(style === "none" ? "0s" : SLOT_DURATIONS[key]));
+  }
+  const cssSafeMult = Math.max(mult, 0.01);
+  root.style.setProperty("--anim-multiplier", cssSafeMult.toString());
+}
+
+// ── Context ────────────────────────────────────────────────────────────────────
+
+interface AnimContextValue {
+  settings: AnimationSettings;
+  set: (key: AnimKey, value: AnimStyle) => void;
+  animMultiplier: string;
+  setAnimMultiplier: (value: string) => void;
+}
+
+const AnimContext = createContext<AnimContextValue | null>(null);
+
+const STORAGE_PREFIX = "settings:anim:";
+
+const VALID_STYLES = new Set<AnimStyle>(["fade", "slide", "scale", "fade-slide", "none"]);
+
+export function AnimationProvider({ children }: { children: React.ReactNode }) {
+  const [settings, setSettings] = useState<AnimationSettings>({ ...DEFAULTS });
+
+  // Load from persisted state on mount
+  useEffect(() => {
+    const keys = ANIM_STYLE_KEYS as AnimKey[];
+    Promise.all(
+      keys.map(async (k) => {
+        const val = await appState.get(STORAGE_PREFIX + k);
+        return [k, val] as const;
+      }),
+    ).then((entries) => {
+      appState.get(`${STORAGE_PREFIX}animMultiplier`).then((mult) => {
+        setSettings((prev) => {
+          const next = { ...prev };
+          for (const [k, val] of entries) {
+            if (val && VALID_STYLES.has(val as AnimStyle)) {
+              next[k] = val as AnimStyle;
+            }
+          }
+          if (mult) {
+            const parsed = parseFloat(mult as string);
+            if (!Number.isNaN(parsed) && parsed >= 0) {
+              next.animMultiplier = parsed.toString();
+            }
+          }
+          applyAnimVars(next);
+          return next;
+        });
+      });
+    });
+  }, []);
+
+  const set = useCallback((key: AnimKey, value: AnimStyle) => {
+    setSettings((prev) => {
+      const next = { ...prev, [key]: value };
+      applyAnimVars(next);
+      return next;
+    });
+    appState.set(STORAGE_PREFIX + key, value);
+  }, []);
+
+  const setAnimMultiplier = useCallback((value: string) => {
+    setSettings((prev) => {
+      const next = { ...prev, animMultiplier: value };
+      applyAnimVars(next);
+      return next;
+    });
+    appState.set(`${STORAGE_PREFIX}animMultiplier`, value);
+  }, []);
+
+  return (
+    <AnimContext.Provider
+      value={{
+        settings,
+        set,
+        animMultiplier: settings.animMultiplier,
+        setAnimMultiplier,
+      }}
+    >
+      {children}
+    </AnimContext.Provider>
+  );
+}
+
+export function useAnimations(): AnimContextValue {
+  const ctx = useContext(AnimContext);
+  if (!ctx) throw new Error("useAnimations must be inside AnimationProvider");
+  return ctx;
+}

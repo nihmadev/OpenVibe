@@ -5,6 +5,105 @@ All notable changes to OpenVibe will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.9](https://github.com/nihmadev/OpenVibe/compare/v1.3.8...v1.3.9) (2026-08-20)
+
+This is a major internal and visual rebuild of OpenVibe. The desktop renderer now uses a layered workbench architecture, the Rust backend is split into focused API, LLM, filesystem, runtime, and browser crates, and the application adopts a new Zazaru-based design. The release also introduces an isolated agent-controlled browser, a new project-and-chat sidebar, a redesigned conversation flow, and a substantially more resilient LLM pipeline.
+
+### Added
+
+- **Integrated browser and browser tools**
+  - Added the `browser` Rust crate for installing and running an isolated Chromium process through the Chrome DevTools Protocol (CDP), with explicit lifecycle, navigation-policy, tab, input, snapshot, screenshot, and screencast boundaries.
+  - Added a Browser workbench panel with an address bar, back/forward/reload controls, multiple tabs, live page frames, agent-pointer visualization, and a manual-control handoff between the user and agent.
+  - Added agent tools for opening and navigating pages, taking accessibility snapshots and screenshots, clicking, filling and typing, keyboard input, hovering, scrolling, history navigation, tab management, waiting, and closing the session.
+  - Added the built-in `browser-control` skill and made it mandatory before the first browser action; privileged and local URL schemes are rejected before navigation.
+  - Isolated private authentication control from agent input, added browser visibility events, paced screencast delivery, and paused UI frame streaming while the Browser panel is hidden.
+
+- **Layered frontend workbench architecture**
+  - Replaced the former feature-oriented renderer with dependency-ordered `base`, `platform`, and `workbench` layers and a dedicated desktop composition root.
+  - Introduced contribution boundaries for visible features and reusable services for agents, chats, files, providers, language servers, source control, terminals, and workspaces.
+  - Split pure contracts, browser implementations, Tauri adapters, and static data into explicit `common`, `browser`, `tauri`, and `data` modules.
+  - Added an automated architecture check that rejects upward layer imports and environment-specific dependencies from common modules.
+  - Added current architecture and data-flow documentation for the React renderer, Tauri host, Rust workspace, provider proxy, browser runtime, and IPC event ownership.
+
+- **Modular Rust service boundaries**
+  - Added `agent-api` for shared messages, events, snapshots, tool definitions, configuration, and executor contracts.
+  - Added `llm` for provider request construction, cancellation, transforms, token accounting, and tested OpenAI- and Anthropic-compatible SSE decoding.
+  - Added `fs` for shared path policy, ignore handling, bounded text scans, and filesystem walking used by search, editor, and agent tools.
+  - Added `runtime` for downloadable runtime installation and lifecycle management, extracted from the LSP crate.
+  - Reworked `src-tauri` as the composition root that wires focused crates and long-lived managers through thin commands and explicit event sinks.
+
+- **Zazaru UI and the new visual system**
+  - Added standalone `@zazaru/core` and `@zazaru/ui` packages with design tokens and Dark, Light, and High Contrast foundations.
+  - Added accessible primitives for buttons, inputs, number inputs, toggles, selects, fields and forms; layout and typography; lists and surfaces; dialogs, popovers, tooltips and menus; tabs, toolbars, command menus, trees and split panes; badges, callouts, progress, skeletons, empty states and tables.
+  - Added component, catalog, selection, and accessibility tests, Ladle stories, dashboard examples, Playwright visual tests, and checked-in visual baselines.
+  - Migrated the application away from the legacy shared UI kit and introduced semantic canvas/panel surfaces, unified control styling, and scoped context-menu styling.
+  - Split the monolithic icon set into domain modules and added registries for configurable icons plus shared tool glyphs.
+
+- **Agent execution, capabilities, and context**
+  - Replaced the previous run presentation with a linear event flow containing collapsible thinking, analysis groups, narration, tool activity, notices, errors, usage data, and a chat-history rail.
+  - Added native incremental SSE handling with instant first paint, time-to-first-token and throughput metrics, token usage, reasoning deltas, tool-call argument deltas, cache creation/read metrics, and robust frame accumulation for OpenAI- and Anthropic-style providers.
+  - Added token-aware conversation compaction that preserves the task, recent turns, tool state, and file snapshots, with a bounded lossy fallback when summarization fails.
+  - Added stable prompt-cache keys plus Anthropic cache breakpoints for system instructions, tool definitions, and the moving conversation prefix; expanded cache support for compatible proxies.
+  - Added focused tool profiles: core tools remain available while Git, web, research, browser, and per-server MCP schemas are loaded only after request or use, reducing prompt size on later turns.
+  - Added built-in skill discovery/resource tools and expanded the research sub-agent with its own prompt, tool metadata, progress events, and nested trace presentation.
+  - Added automatic continuation after provider output truncation and a recoverable pause with guidance when the agent reaches its turn limit.
+  - Replaced the old code graph context with a cached, ignore-aware real-time project tree that is invalidated when the working directory or files change.
+
+- **Agent file and search tools**
+  - Added bounded `offset`/`limit` slices and line metadata to `read_file` for large files.
+  - Added near-match diagnostics and replacement hints to `edit_file` when an exact patch cannot be applied.
+  - Added output item caps to `list_dir`, extended tool execution metadata, and aligned search with the shared filesystem policy and bounded scanning.
+
+### Improved
+
+- **Sidebar, chat, and composer**
+  - Consolidated project and conversation navigation into one redesigned sidebar with expandable project chats, pinned and recent conversations, search, rename/delete actions, project actions, compact limits, and loading/empty states.
+  - Removed the separate session list and project rail after their responsibilities moved into the sidebar.
+  - Refreshed conversation bubbles, composer layout and option menus, permission/capability disclosure, model display, prompt history and mentions, attachment handling, todo activity, rollback UI, empty-workspace state, and streamed tool presentation.
+  - Added inline image/document attachment previews and a full image viewer in the composer and message history.
+  - Added date grouping and migration logic for persisted chat history and hardened agent run lifecycle handling.
+
+- **Editor and workspace**
+  - Rebuilt Monaco model ownership around cached shared models, safe reference tracking, document refresh, and tests that prevent stale model disposal.
+  - Improved image and video viewers, diff/code-block integration, editor and file-tree surfaces, auxiliary panels, panel selection, search, terminal, loading, onboarding, welcome, titlebar, and fatal-error views.
+  - Stopped committing generated Monaco assets; they are copied from the installed package during setup instead.
+
+- **Settings, themes, providers, MCP, and LSP**
+  - Redesigned Preferences with clearer navigation and dedicated General, Design, Code, Models, Providers, Keybindings, and MCP surfaces.
+  - Expanded Design settings with separate light/dark theme editing and previews, custom accent/background/foreground colors, theme import/export/reset, UI and code fonts, border radius/style, tab style, blur, zoom, and per-surface animation controls.
+  - Lazy-loads selected UI/code fonts instead of bundling every font stylesheet into the initial renderer.
+  - Added lazy `models.dev` catalog initialization and caching, provider aliases/templates and logos, reasoning-effort discovery, and improved custom provider/model configuration.
+  - Refined MCP configuration and live status views and separated the LSP panel and store behind language-server service contracts.
+
+- **Source control and search**
+  - Redesigned the repository panel and commit graph with clearer staged/unstaged groups, branch switching, author and branch metadata, file actions, graph lanes, and interactive commit details.
+  - Fixed search so changing active filters immediately re-runs the query.
+  - Simplified source search to cached, ignore-aware bounded text search on the shared filesystem layer.
+
+- **Localization, previews, and assets**
+  - Reorganized the locale catalogs under the platform layer, synchronized the full catalog set with the new agent-flow strings and tool glyphs, and added English/Russian copy for the new browser, workbench, settings, provider, MCP, and sidebar surfaces.
+  - Refreshed desktop, Android, and iOS application icons, replaced the README hero media, and expanded the browser-mode desktop preview with richer sample workspaces and chats.
+
+### Fixed
+
+- Fixed Google Gemini proxy routing by constructing model/completion URLs before authentication parameters and forwarding the API key through the Google-specific header.
+- Preserved cached Monaco models without disposing models still referenced by another editor or document.
+- Kept agent working-directory state and project context synchronized across project switches, rollbacks, compaction, and repeated requests.
+- Improved streamed reasoning/tool-call parsing, usage accumulation, cancellation, output-limit recovery, and first-paint event ordering across provider formats.
+- Prevented stale search results after filter changes and hardened browser session, visibility, screencast, tab, and manual-control transitions with additional tests.
+
+### Removed
+
+- Removed the deprecated `scg2` AST/code-graph crate, Tauri commands, and editor tracker in favor of the lightweight project tree and live bounded search.
+- Removed vector embeddings/indexing and the vector-search integration test; the brief background-index implementation earlier in the development range was superseded before the final `1.3.9` state.
+- Removed committed Monaco runtime assets and the checked-in `packages/bin/act` binary.
+- Removed the former application bootstrap, feature-shell structure, legacy UI kit, project rail, and standalone session/scheduled-task navigation views after the workbench and sidebar migration.
+
+### Changed
+
+- Updated application and desktop package versions to `1.3.9`.
+- Updated the frontend toolchain and checks for the new renderer layout, including TypeScript, Vite, Vitest, ESLint, Biome, Tauri, React UI dependencies, and local Zazaru workspace packages.
+
 ## [1.3.8](https://github.com/nihmadev/OpenVibe/compare/v1.3.7...v1.3.8) (2026-08-02)
 
 This release gives agent edits a reviewable lifecycle, improves streaming responsiveness and prompt assistance, and reorganizes the frontend into feature-oriented modules with shared infrastructure.

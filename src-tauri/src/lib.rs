@@ -10,7 +10,11 @@ use std::path::Path;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::sync::Mutex;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{
+    menu::{MenuBuilder, MenuItemBuilder},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    AppHandle, Emitter, Manager, WindowEvent,
+};
 use tokio::sync::watch;
 
 pub struct AppState {
@@ -28,9 +32,22 @@ pub struct AppState {
     pub warmer: Arc<http_client::ConnectionWarmer>,
     pub warmer_stop_tx: Mutex<Option<watch::Sender<bool>>>,
     pub mcp_manager: Arc<mcp::McpManager>,
-    pub scg2_engine: Arc<scg2::Scg2Engine>,
+    pub browser_manager: Arc<browser::BrowserManager>,
     pub lsp_manager: Arc<lsp::LspManager>,
-    pub runtime_manager: Arc<lsp::runtime::RuntimeManager>,
+    pub runtime_manager: Arc<runtime::RuntimeManager>,
+}
+
+pub(crate) fn agent_config(config: &Config) -> agent::AgentConfig {
+    agent::AgentConfig {
+        api_key: config.api_key.clone(),
+        base_url: config.base_url.clone(),
+        model: config.model.clone(),
+        cwd: config.cwd.clone(),
+        api_url: config.api_url.clone(),
+        provider_id: config.provider_id.clone(),
+        reasoning_effort: config.reasoning_effort.clone(),
+        prompt_cache_key: None,
+    }
 }
 
 impl AppState {
@@ -159,14 +176,78 @@ impl AppState {
     }
 }
 
+fn focus_or_show_window(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window("main").or_else(|| app.webview_windows().values().next().cloned()) {
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+    }
+}
+
+fn toggle_window_visibility(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window("main").or_else(|| app.webview_windows().values().next().cloned()) {
+        if window.is_visible().unwrap_or(false) {
+            let _ = window.hide();
+        } else {
+            let _ = window.show();
+            let _ = window.unminimize();
+            let _ = window.set_focus();
+        }
+    }
+}
+
+fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    let show_item = MenuItemBuilder::with_id("show", "Open OpenVibe").build(app)?;
+    let quit_item = MenuItemBuilder::with_id("quit", "Quit OpenVibe").build(app)?;
+
+    let menu = MenuBuilder::new(app).item(&show_item).separator().item(&quit_item).build()?;
+
+    let mut builder = TrayIconBuilder::new()
+        .menu(&menu)
+        .tooltip("OpenVibe")
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id.as_ref() {
+            "show" => {
+                focus_or_show_window(app);
+            }
+            "quit" => {
+                app.exit(0);
+            }
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } = event {
+                toggle_window_visibility(tray.app_handle());
+            }
+        });
+
+    if let Some(tray_icon) = app.default_window_icon().cloned() {
+        builder = builder.icon(tray_icon);
+    }
+
+    builder.build(app)?;
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            focus_or_show_window(app);
+        }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_clipboard_manager::init())
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+            }
+        })
         .setup(move |app| {
+            let _ = setup_tray(app);
             let app_dir = dirs::data_dir().unwrap_or_else(|| std::path::PathBuf::from(".")).join("OpenVibe");
             let app_dir_str = app_dir.to_string_lossy().to_string();
 
@@ -229,7 +310,7 @@ pub fn run() {
                 warm_cfg.api_url = None;
             }
             let initial_origin =
-                agent::request::effective_origin(&warm_cfg.to_agent_config().llm_config()).unwrap_or_default();
+                llm::request::effective_origin(&agent_config(&warm_cfg).llm_config()).unwrap_or_default();
             let warmer = http_client::ConnectionWarmer::new(shared_client.clone(), initial_origin);
             let (warmer_stop_tx, warmer_stop_rx) = watch::channel(false);
 
@@ -245,16 +326,19 @@ pub fn run() {
                 mcp_clone.init_and_autostart().await;
             });
 
-            // SCG2 Engine
-            let scg2_engine = Arc::new(scg2::Scg2Engine::new(scg2::Scg2Config::default()));
-            let scg2_clone = scg2_engine.clone();
+            // Isolated native Chromium/CDP runtime. Its profile and managed
+            // binary live in OpenVibe app data, never in the Tauri WebView.
+            let browser_manager = Arc::new(browser::BrowserManager::new(&app_dir));
+            let browser_prewarm = browser_manager.clone();
             tauri::async_runtime::spawn(async move {
-                scg2_clone.start_background_worker().await;
+                if let Err(error) = browser_prewarm.prewarm().await {
+                    tracing::warn!(%error, "browser runtime prewarm failed");
+                }
             });
 
             // Pre-initialize agent if we have valid credentials to avoid first-request latency
             let initial_agent = if !cfg.api_key.is_empty() && !cfg.base_url.is_empty() {
-                Some(agent::Agent::new(cfg.to_agent_config()))
+                Some(agent::Agent::new(agent_config(&cfg)))
             } else {
                 None
             };
@@ -262,7 +346,7 @@ pub fn run() {
             // LSP Manager and Runtime Manager
             let runtimes_dir = app_dir.join("runtimes");
             let lsp_manager = Arc::new(lsp::LspManager::new(runtimes_dir.clone()));
-            let runtime_manager = Arc::new(lsp::runtime::RuntimeManager::new(runtimes_dir));
+            let runtime_manager = Arc::new(runtime::RuntimeManager::new(runtimes_dir));
 
             // Create state
             let state = AppState {
@@ -280,7 +364,7 @@ pub fn run() {
                 warmer,
                 warmer_stop_tx: Mutex::new(Some(warmer_stop_tx)),
                 mcp_manager,
-                scg2_engine,
+                browser_manager,
                 lsp_manager,
                 runtime_manager,
             };
@@ -314,6 +398,19 @@ pub fn run() {
             commands::agent::agent_set_cwd,
             commands::agent::agent_set_provider,
             commands::agent::agent_get_sub_trace,
+            // Isolated browser commands
+            commands::browser::browser_start,
+            commands::browser::browser_navigate_ui,
+            commands::browser::browser_history_ui,
+            commands::browser::browser_reload_ui,
+            commands::browser::browser_snapshot_ui,
+            commands::browser::browser_resize_ui,
+            commands::browser::browser_set_ui_stream_active,
+            commands::browser::browser_tabs_ui,
+            commands::browser::browser_set_manual_control,
+            commands::browser::browser_manual_pointer,
+            commands::browser::browser_manual_key,
+            commands::browser::browser_close,
             // FS commands
             commands::fs::fs_list,
             commands::fs::fs_read,
@@ -424,8 +521,6 @@ pub fn run() {
             commands::mcp::mcp_get_config,
             commands::mcp::mcp_save_config,
             commands::mcp::mcp_list_tools,
-            // SCG2 commands
-            commands::scg2::scg2_push_events,
             // LSP commands
             commands::lsp::get_lsp_servers,
             commands::lsp::lsp_start_server,

@@ -1,4 +1,3 @@
-use search::walker;
 use serde::Serialize;
 use std::collections::HashSet;
 use std::fs;
@@ -260,9 +259,9 @@ pub fn preload_types(cwd: &str) -> Result<PreloadTypesResult, String> {
     }
 
     // 6. Find local type declaration files in the project
-    let mut local_matches = walker::find_files(cwd, "**/*.d.ts", 45);
+    let mut local_matches = workspace_fs::find_files(cwd, "**/*.d.ts", 45);
     // Also include .ts files that commonly contain global declarations (e.g. types.ts)
-    local_matches.extend(walker::find_files(cwd, "types.ts", 5));
+    local_matches.extend(workspace_fs::find_files(cwd, "types.ts", 5));
 
     for file_match in local_matches {
         if seen_paths.contains(&file_match.path) {

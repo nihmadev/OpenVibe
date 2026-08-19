@@ -1,5 +1,4 @@
-use agent::chat::ChatMessage;
-use agent::snapshot::SnapshotEntry;
+use agent_api::{ChatMessage, SnapshotEntry};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

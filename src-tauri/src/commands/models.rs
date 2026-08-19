@@ -177,24 +177,36 @@ pub async fn models_fetch(
         }
     }
 
+    let is_google = base_url.contains("generativelanguage.googleapis.com");
+
     // Use custom models_url if provided, otherwise derive from base_url
     let url = if let Some(mu) = &models_url {
         if !mu.is_empty() {
             mu.clone()
         } else if is_github {
             format!("{}/catalog/models", base_url.trim_end_matches('/'))
+        } else if is_google {
+            let base = base_url.trim_end_matches('/').trim_end_matches("/openai");
+            format!("{}/models?key={}", base, api_key)
         } else {
             format!("{}/models", base_url.trim_end_matches('/'))
         }
     } else if is_github {
         format!("{}/catalog/models", base_url.trim_end_matches('/'))
+    } else if is_google {
+        let base = base_url.trim_end_matches('/').trim_end_matches("/openai");
+        format!("{}/models?key={}", base, api_key)
     } else {
         format!("{}/models", base_url.trim_end_matches('/'))
     };
 
     let mut headers = Vec::new();
     if !api_key.is_empty() {
-        headers.push(("Authorization".to_string(), format!("Bearer {}", api_key)));
+        if is_google {
+            headers.push(("x-goog-api-key".to_string(), api_key.clone()));
+        } else {
+            headers.push(("Authorization".to_string(), format!("Bearer {}", api_key)));
+        }
     }
     if is_github {
         headers.push(("Accept".to_string(), "application/vnd.github+json".to_string()));
@@ -239,14 +251,27 @@ async fn do_fetch(
 
     let mapped: Vec<serde_json::Value> = models
         .iter()
+        .filter(|m| {
+            // If Google supportedGenerationMethods is present, only include generateContent models
+            if let Some(methods) = m.get("supportedGenerationMethods").and_then(|v| v.as_array()) {
+                methods.iter().any(|method| method.as_str() == Some("generateContent"))
+            } else {
+                true
+            }
+        })
         .map(|m| {
-            let id = m.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
-            let name = match m.get("name").and_then(|v| v.as_str()) {
-                Some(n) => n.to_string(),
-                None => parse_model_name(&id),
-            };
+            let raw_id =
+                m.get("id").and_then(|v| v.as_str()).or_else(|| m.get("name").and_then(|v| v.as_str())).unwrap_or("");
+            let id = raw_id.strip_prefix("models/").unwrap_or(raw_id).to_string();
+            let name = m
+                .get("displayName")
+                .and_then(|v| v.as_str())
+                .or_else(|| m.get("name").and_then(|v| v.as_str()).filter(|n| !n.starts_with("models/")))
+                .map(|n| n.to_string())
+                .unwrap_or_else(|| parse_model_name(&id));
             serde_json::json!({ "id": id, "name": name })
         })
+        .filter(|m| !m["id"].as_str().unwrap_or("").is_empty())
         .collect();
 
     Ok(serde_json::json!({ "ok": true, "models": mapped }))
