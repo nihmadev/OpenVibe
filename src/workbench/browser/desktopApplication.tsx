@@ -38,7 +38,6 @@ interface WorkspaceWelcomeSlotProps {
   activeProject: string | null;
   handlePickProject: (id: string, callback: ProjectChangeCallback) => void | Promise<void>;
   handleAddProject: (callback: ProjectChangeCallback) => void | Promise<void>;
-  handleCloseProject: () => void;
   handleRemoveProject: (id: string, callback: ProjectChangeCallback) => void | Promise<void>;
   onProjectChange: ProjectChangeCallback;
   setSettingsOpen: (open: boolean) => void;
@@ -368,7 +367,6 @@ export function DesktopApplication({
             activeProject,
             handlePickProject,
             handleAddProject,
-            handleCloseProject,
             handleRemoveProject,
             onProjectChange,
             setSettingsOpen,
@@ -400,7 +398,6 @@ export function DesktopApplication({
           hoveredProject={hoveredProject}
           hoveredChats={hoveredChats}
           handleAddProject={handleAddProject}
-          handleCloseProject={handleCloseProject}
           handleRemoveProject={handleRemoveProject}
           onProjectChange={onProjectChange}
           setSettingsOpen={setSettingsOpen}

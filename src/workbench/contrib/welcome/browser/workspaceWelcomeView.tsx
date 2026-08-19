@@ -11,7 +11,6 @@ export function WorkspaceWelcomeView({
   activeProject,
   handlePickProject,
   handleAddProject,
-  handleCloseProject,
   handleRemoveProject,
   onProjectChange,
   setSettingsOpen,
@@ -30,7 +29,6 @@ export function WorkspaceWelcomeView({
           activeChatId={null}
           onPickProject={(id) => handlePickProject(id, onProjectChange)}
           onAddProject={() => handleAddProject(onProjectChange)}
-          onCloseProject={handleCloseProject}
           onRemoveProject={(id) => handleRemoveProject(id, onProjectChange)}
           onPickChat={(projectId) => {
             if (projectId) {

@@ -12,7 +12,6 @@ export interface WorkspaceWelcomeViewProps {
   activeProject: string | null;
   handlePickProject: (id: string, onProjectChange: WorkspaceChangeHandler) => void | Promise<void>;
   handleAddProject: (onProjectChange: WorkspaceChangeHandler) => void | Promise<void>;
-  handleCloseProject: () => void;
   handleRemoveProject: (id: string, onProjectChange: WorkspaceChangeHandler) => void | Promise<void>;
   onProjectChange: WorkspaceChangeHandler;
   setSettingsOpen: (open: boolean) => void;
