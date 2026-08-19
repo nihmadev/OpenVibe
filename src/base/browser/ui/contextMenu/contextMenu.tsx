@@ -18,9 +18,10 @@ interface Props {
   y: number;
   items: MenuItem[];
   onClose: () => void;
+  className?: string;
 }
 
-export function ContextMenu({ x, y, items, onClose }: Props): React.ReactElement {
+export function ContextMenu({ x, y, items, onClose, className }: Props): React.ReactElement {
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -78,7 +79,13 @@ export function ContextMenu({ x, y, items, onClose }: Props): React.ReactElement
   }
 
   return (
-    <div className={interactiveListClassName("ctxmenu")} style={style} ref={ref} role="menu" onKeyDown={onMenuKeyDown}>
+    <div
+      className={interactiveListClassName(`ctxmenu${className ? ` ${className}` : ""}`)}
+      style={style}
+      ref={ref}
+      role="menu"
+      onKeyDown={onMenuKeyDown}
+    >
       {items.map((item, i) => {
         if (!item.label) return <div className="ctxmenu__separator" role="separator" key={`separator-${i}`} />;
 
