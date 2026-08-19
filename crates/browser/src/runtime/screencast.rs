@@ -1,11 +1,11 @@
 use super::{BrowserEventPublisher, Session};
 use serde_json::json;
 use std::sync::{Arc, RwLock};
+use std::time::Duration;
 
-pub(super) async fn start_screencast(
-    session: &mut Session,
-    event_sink: Arc<RwLock<Option<BrowserEventPublisher>>>,
-) -> Result<(), String> {
+const UI_FRAME_INTERVAL: Duration = Duration::from_millis(33);
+
+pub(super) async fn stop_screencast(session: &mut Session) {
     if let Some(stream) = session.ui_stream.take() {
         stream.abort();
         let _ = session
@@ -17,6 +17,13 @@ pub(super) async fn start_screencast(
             )
             .await;
     }
+}
+
+pub(super) async fn start_screencast(
+    session: &mut Session,
+    event_sink: Arc<RwLock<Option<BrowserEventPublisher>>>,
+) -> Result<(), String> {
+    stop_screencast(session).await;
     let page_session = session.active_session.clone();
     let cdp = session.cdp.clone();
     let mut events = cdp.subscribe();
@@ -29,11 +36,31 @@ pub(super) async fn start_screencast(
         )
         .await?;
     session.ui_stream = Some(tokio::spawn(async move {
+        // Page.startScreencast produces another frame only after its previous
+        // frame is acknowledged. Pace those acknowledgements at roughly
+        // 30 fps so JPEG/base64 payloads cannot flood the desktop IPC queue.
+        // Other CDP events remain responsive while a frame is waiting.
+        let mut frame_clock = tokio::time::interval(UI_FRAME_INTERVAL);
+        frame_clock.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+        frame_clock.tick().await;
+        let mut pending_frame_ack = None;
         loop {
-            let event = match events.recv().await {
-                Ok(event) => event,
-                Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => continue,
-                Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+            let event = tokio::select! {
+                _ = frame_clock.tick(), if pending_frame_ack.is_some() => {
+                    if let Some(frame_id) = pending_frame_ack.take() {
+                        let _ = cdp.command_nowait(
+                            "Page.screencastFrameAck",
+                            json!({"sessionId":frame_id}),
+                            Some(&page_session),
+                        );
+                    }
+                    continue;
+                }
+                event = events.recv() => match event {
+                    Ok(event) => event,
+                    Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => continue,
+                    Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+                }
             };
             if event["sessionId"].as_str() != Some(&page_session) {
                 continue;
@@ -69,15 +96,7 @@ pub(super) async fn start_screencast(
             let Some(frame_id) = event["params"]["sessionId"].as_u64() else {
                 continue;
             };
-            // Chromium waits for this acknowledgement before producing the
-            // next screencast frame. Send it before base64/Tauri work and do
-            // not wait for the empty CDP response, otherwise the stream is
-            // effectively capped by two IPC round trips per frame.
-            let _ = cdp.command_nowait(
-                "Page.screencastFrameAck",
-                json!({"sessionId":frame_id}),
-                Some(&page_session),
-            );
+            pending_frame_ack = Some(frame_id);
             let data = event["params"]["data"].as_str().unwrap_or_default();
             let metadata = &event["params"]["metadata"];
             let width = metadata["deviceWidth"].as_f64().unwrap_or(0.0).round() as u32;
