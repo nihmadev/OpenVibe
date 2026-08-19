@@ -19,13 +19,11 @@ import type { BrowserViewProps } from "@/workbench/contrib/browser/common/browse
 import type {
   ChatViewProps,
   ComposerProps,
-  ConversationHistoryViewProps,
   EmptyWorkspaceViewProps,
   SubAgentViewProps,
   TodoViewProps,
 } from "@/workbench/contrib/chat/common/chat";
 import type { ExplorerViewProps } from "@/workbench/contrib/explorer/common/explorer";
-import type { ScheduledTasksViewProps } from "@/workbench/contrib/scheduledTasks/common/scheduledTask";
 import type { ScmViewProps } from "@/workbench/contrib/scm/common/scm";
 import type { SearchViewProps } from "@/workbench/contrib/search/common/search";
 import type { TerminalViewProps } from "@/workbench/contrib/terminal/common/terminal";
@@ -67,8 +65,6 @@ export interface WorkbenchContributions {
   EmptyWorkspaceView: React.ComponentType<EmptyWorkspaceViewProps>;
   SubAgentView: React.ComponentType<SubAgentViewProps>;
   TodoView: React.ComponentType<TodoViewProps>;
-  ConversationHistoryView: React.ComponentType<ConversationHistoryViewProps>;
-  ScheduledTasksView: React.ComponentType<ScheduledTasksViewProps>;
   ExplorerView: React.ComponentType<ExplorerViewProps>;
   SearchView: React.ComponentType<SearchViewProps>;
   ScmView: React.ComponentType<ScmViewProps>;
@@ -90,7 +86,6 @@ interface WorkbenchProps {
   hoveredProject?: Project | null;
   hoveredChats?: ChatSummary[];
   handleAddProject: (cb: ProjectChangeCallback) => void;
-  handleCloseProject: () => void;
   handleRemoveProject: (id: string, cb: ProjectChangeCallback) => void;
   onProjectChange: ProjectChangeCallback;
   setSettingsOpen: (open: boolean) => void;
@@ -146,7 +141,6 @@ export function Workbench({
   chatSideOpen,
   handlePickProject,
   handleAddProject,
-  handleCloseProject,
   handleRemoveProject,
   onProjectChange,
   setSettingsOpen,
@@ -200,8 +194,6 @@ export function Workbench({
     EmptyWorkspaceView,
     SubAgentView,
     TodoView,
-    ConversationHistoryView,
-    ScheduledTasksView,
     ExplorerView,
     SearchView,
     ScmView,
@@ -416,28 +408,7 @@ export function Workbench({
     [setItems, cwd],
   );
 
-  const [activeView, setActiveView] = useState<"chat" | "history" | "scheduled">("chat");
-
   const { editingProject, startEdit, cancelEdit, completeEdit } = useProjectEdit(setProjects);
-
-  const getAllProjectChats = useCallback(async () => {
-    const results: Array<{ project: Project | null; chat: ChatSummary }> = [];
-    for (const p of projects) {
-      try {
-        const pChats = await chatService.listForProject(p.id);
-        pChats
-          .filter((c) => c.messageCount > 0)
-          .forEach((chat) => {
-            results.push({ project: p, chat });
-          });
-      } catch {
-        /* ignore */
-      }
-    }
-    return results.sort(
-      (a, b) => (b.chat.updatedAt || b.chat.createdAt || 0) - (a.chat.updatedAt || a.chat.createdAt || 0),
-    );
-  }, [projects]);
 
   const handleProjectRemove = useCallback(
     (id: string) => {
@@ -448,22 +419,48 @@ export function Workbench({
 
   const handlePickChatFromSidebar = useCallback(
     async (projectId: string | null, chatId: string) => {
-      setActiveView("chat");
       if (projectId && projectId !== activeProject) {
         await handlePickProject(projectId, async (newFolder, pId) => {
           await onProjectChange(newFolder, pId);
-          handlePickChat(chatId, applyChatRecord);
+          await handlePickChat(chatId, applyChatRecord);
         });
       } else {
-        handlePickChat(chatId, applyChatRecord);
+        await handlePickChat(chatId, applyChatRecord);
       }
     },
     [activeProject, handlePickProject, onProjectChange, handlePickChat, applyChatRecord],
   );
 
+  const handleDeleteChatFromSidebar = useCallback(
+    async (projectId: string, chatId: string) => {
+      if (projectId !== activeProject) {
+        await handlePickProject(projectId, async (newFolder, pId) => {
+          await onProjectChange(newFolder, pId);
+          await handleCloseChat(chatId, applyChatRecord);
+        });
+        return;
+      }
+      await handleCloseChat(chatId, applyChatRecord);
+    },
+    [activeProject, applyChatRecord, handleCloseChat, handlePickProject, onProjectChange],
+  );
+
+  const handleRenameChatFromSidebar = useCallback(
+    async (projectId: string, chatId: string, title: string) => {
+      if (projectId !== activeProject) {
+        await handlePickProject(projectId, async (newFolder, pId) => {
+          await onProjectChange(newFolder, pId);
+          await chatService.rename(chatId, title);
+        });
+        return;
+      }
+      await chatService.rename(chatId, title);
+    },
+    [activeProject, handlePickProject, onProjectChange],
+  );
+
   const handleNewChatInProject = useCallback(
     async (projectId?: string) => {
-      setActiveView("chat");
       if (projectId && projectId !== activeProject) {
         await handlePickProject(projectId, async (newFolder, pId) => {
           await onProjectChange(newFolder, pId);
@@ -478,7 +475,6 @@ export function Workbench({
 
   return (
     <div className="app__body">
-      {/* Unified left sidebar (Antigravity 2.0 style) */}
       <SidebarView
         open={chatSideOpen}
         width={sidebarWidth}
@@ -486,17 +482,14 @@ export function Workbench({
         projects={projects}
         activeProjectId={activeProject}
         activeChatId={activeChat}
-        activeView={activeView}
-        onOpenHistory={() => setActiveView("history")}
-        onOpenScheduled={() => setActiveView("scheduled")}
         onPickProject={(id) => handlePickProject(id, onProjectChange)}
         onAddProject={() => handleAddProject(onProjectChange)}
-        onCloseProject={handleCloseProject}
         onRemoveProject={handleProjectRemove}
         onEditProject={startEdit}
         onPickChat={handlePickChatFromSidebar}
         onNewChat={handleNewChatInProject}
-        onDeleteChat={(id) => handleCloseChat(id, applyChatRecord)}
+        onDeleteChat={handleDeleteChatFromSidebar}
+        onRenameChat={handleRenameChatFromSidebar}
         onOpenSettings={() => (onOpenSettings ? onOpenSettings() : setSettingsOpen(true))}
         removingIds={removingIds}
       />
@@ -504,7 +497,7 @@ export function Workbench({
       {/* Main content area */}
       <div className="app__content">
         <div className={`layout${rightPanelExpanded ? " layout--right-panel-expanded" : ""}`}>
-          {/* Chat panel / History view / Scheduled tasks */}
+          {/* Chat panel */}
           <div
             ref={chatPanelRef}
             className={surfaceClassName("canvas", `layout__chat${items.length === 0 ? " layout__chat--empty" : ""}`)}
@@ -537,24 +530,7 @@ export function Workbench({
               ) : null}
             </div>
 
-            {activeView === "history" ? (
-              <ConversationHistoryView
-                projects={projects}
-                activeProjectId={activeProject}
-                activeChatId={activeChat}
-                onSelectChat={(projectId: string | null, chatId: string) => {
-                  handlePickChatFromSidebar(projectId, chatId);
-                }}
-                getAllProjectChats={getAllProjectChats}
-                onDeleteChat={(id: string) => handleCloseChat(id, applyChatRecord)}
-              />
-            ) : activeView === "scheduled" ? (
-              <ScheduledTasksView
-                activeProjectId={activeProject}
-                projectName={projects.find((p) => p.id === activeProject)?.name}
-                projects={projects}
-              />
-            ) : drillDownId ? (
+            {drillDownId ? (
               <SubAgentView items={drillItems} onBack={drillBack} cwd={cwd} />
             ) : (
               <>

@@ -3,7 +3,6 @@ import type { RunFileChangeSummary } from "@/workbench/services/agent/common/age
 import type { SendPayload } from "@/workbench/services/agent/common/sendPayload";
 import type { ChatSummary } from "@/workbench/services/chat/common/chat";
 import type { FileMatch } from "@/workbench/services/files/common/files";
-import type { Project } from "@/workbench/services/workspace/common/workspace";
 
 export type {
   AttachmentView,
@@ -77,15 +76,6 @@ export interface SubAgentViewProps {
   items: HistoryItem[];
   onBack: () => void;
   cwd?: string;
-}
-
-export interface ConversationHistoryViewProps {
-  projects: Project[];
-  activeProjectId: string | null;
-  activeChatId: string | null;
-  onSelectChat: (projectId: string | null, chatId: string) => void;
-  getAllProjectChats: () => Promise<Array<{ project: Project | null; chat: ChatSummary }>>;
-  onDeleteChat?: (chatId: string) => void;
 }
 
 export interface TodoViewProps {

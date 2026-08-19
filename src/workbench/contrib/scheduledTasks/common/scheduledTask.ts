@@ -20,12 +20,6 @@ export interface ScheduledTask {
   lastError?: string;
 }
 
-export interface ScheduledTasksViewProps {
-  activeProjectId?: string | null;
-  projectName?: string;
-  projects?: { id: string; name: string }[];
-}
-
 export function computeNextRun(task: Omit<ScheduledTask, "id" | "createdAt" | "runCount" | "nextRunAt">): number {
   const now = Date.now();
   if (task.scheduleType === "timer" && task.durationSeconds) {

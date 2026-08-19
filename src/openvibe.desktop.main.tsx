@@ -16,7 +16,6 @@ import { onBrowserSessionVisibility } from "@/workbench/contrib/browser/browser/
 import { BrowserPane } from "@/workbench/contrib/browser/browser/browserPane";
 import { ChatView } from "@/workbench/contrib/chat/browser/chatView/chatView";
 import { Composer } from "@/workbench/contrib/chat/browser/composer/composer";
-import { ConversationHistoryView } from "@/workbench/contrib/chat/browser/conversationHistoryView/conversationHistoryView";
 import { EmptyWorkspaceView } from "@/workbench/contrib/chat/browser/emptyWorkspace/emptyWorkspace";
 import { SubAgentView } from "@/workbench/contrib/chat/browser/subAgentView/subAgentView";
 import { TodoView } from "@/workbench/contrib/chat/browser/todo/todo";
@@ -24,7 +23,6 @@ import { ExplorerView } from "@/workbench/contrib/explorer/browser/fileTree/file
 import { McpSettingsPane } from "@/workbench/contrib/mcp/browser/mcpSettingsPane";
 import { PreferencesDialog } from "@/workbench/contrib/preferences/browser/preferencesDialog";
 import { QuickAccessDialog } from "@/workbench/contrib/quickAccess/browser/quickAccessDialog";
-import { ScheduledTasksView } from "@/workbench/contrib/scheduledTasks/browser/scheduledTasksView/scheduledTasksView";
 import { ScmView } from "@/workbench/contrib/scm/browser/scmView";
 import { SearchView } from "@/workbench/contrib/search/browser/searchView";
 import { TerminalView } from "@/workbench/contrib/terminal/browser/terminalView/terminalView";
@@ -88,8 +86,6 @@ const desktopContributions: DesktopContributions = {
     EmptyWorkspaceView,
     SubAgentView,
     TodoView,
-    ConversationHistoryView,
-    ScheduledTasksView,
     ExplorerView,
     SearchView,
     ScmView,
