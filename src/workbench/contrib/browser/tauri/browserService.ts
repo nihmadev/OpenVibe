@@ -7,6 +7,7 @@ export const browserService = {
   reload: () => invoke("browser_reload_ui"),
   snapshot: () => invoke("browser_snapshot_ui"),
   resize: (width: number, height: number) => invoke("browser_resize_ui", { width, height }),
+  setStreamActive: (active: boolean) => invoke("browser_set_ui_stream_active", { active }),
   tabs: (action: "list" | "new" | "select" | "close", targetId?: string, url?: string) =>
     invoke("browser_tabs_ui", { action, targetId, url }),
   setManualControl: (manual: boolean) => invoke("browser_set_manual_control", { manual }),

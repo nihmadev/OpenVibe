@@ -236,6 +236,13 @@ export function BrowserPane({ active }: BrowserViewProps): React.ReactElement {
     return () => window.clearTimeout(timer);
   }, [active, ready, stageSize.height, stageSize.width]);
 
+  useEffect(() => {
+    if (!ready) return;
+    void browserService.setStreamActive(active).catch((reason: unknown) => {
+      setError(formatBrowserError(reason));
+    });
+  }, [active, ready]);
+
   const submitAddress = (event: React.FormEvent) => {
     event.preventDefault();
     const draft = address.trim();
@@ -329,7 +336,9 @@ export function BrowserPane({ active }: BrowserViewProps): React.ReactElement {
     (kind: "move" | "down" | "up" | "wheel", event: React.MouseEvent | React.WheelEvent) => {
       if (!imageRef.current) return;
       const wasManual = manualRef.current;
-      if (!wasManual && kind === "up") return;
+      // Merely crossing or hovering the browser is not an intent to interact.
+      // A click, wheel gesture, or the toolbar button starts manual input.
+      if (!wasManual && (kind === "move" || kind === "up")) return;
       const now = performance.now();
       if (kind === "move" && lastPointerSend.current > 0 && now - lastPointerSend.current < 16) return;
       lastPointerSend.current = now;

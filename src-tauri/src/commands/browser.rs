@@ -17,7 +17,6 @@ pub async fn browser_start(app: AppHandle, state: State<'_, AppState>) -> Result
         let _ = event_app.emit(event, payload);
     }));
     let result = state.browser_manager.open_ui(&emit_from(&app)).await?;
-    state.browser_manager.start_ui_stream().await?;
     serde_json::to_value(result).map_err(|error| error.to_string())
 }
 
@@ -48,6 +47,11 @@ pub async fn browser_snapshot_ui(app: AppHandle, state: State<'_, AppState>) -> 
 #[tauri::command]
 pub async fn browser_resize_ui(state: State<'_, AppState>, width: u32, height: u32) -> Result<(), String> {
     state.browser_manager.resize_ui(width, height).await
+}
+
+#[tauri::command]
+pub async fn browser_set_ui_stream_active(state: State<'_, AppState>, active: bool) -> Result<(), String> {
+    state.browser_manager.set_ui_stream_active(active).await
 }
 
 #[tauri::command]

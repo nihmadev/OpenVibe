@@ -10,6 +10,7 @@ vi.mock("../tauri/browserService", () => ({
     close: vi.fn().mockResolvedValue(undefined),
     snapshot: vi.fn().mockResolvedValue(undefined),
     resize: vi.fn().mockResolvedValue(undefined),
+    setStreamActive: vi.fn().mockResolvedValue(undefined),
     navigate: vi.fn().mockResolvedValue(undefined),
     history: vi.fn().mockResolvedValue(undefined),
     reload: vi.fn().mockResolvedValue(undefined),
@@ -85,10 +86,10 @@ describe("BrowserPane", () => {
     await waitFor(() => {
       expect(calls).toEqual(["manual:true", "pointer:down", "pointer:up", "key:a"]);
     });
-    expect(view.getByRole("button", { name: "Вернуть агенту" })).toHaveAttribute("aria-pressed", "true");
+    expect(view.getByRole("button", { name: "Завершить ручной ввод" })).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("takes manual control on hover and forwards a real mouse move", async () => {
+  it("does not take manual control from a passive hover", async () => {
     const calls: string[] = [];
     vi.mocked(browserService.setManualControl).mockImplementationOnce(async (manual) => {
       calls.push(`manual:${manual}`);
@@ -108,8 +109,17 @@ describe("BrowserPane", () => {
     });
     fireEvent.mouseMove(view.getByRole("img"), { clientX: 120, clientY: 80 });
 
-    await waitFor(() => expect(calls).toEqual(["manual:true", "pointer:move"]));
-    expect(view.getByRole("button", { name: "Вернуть агенту" })).toHaveAttribute("aria-pressed", "true");
+    await waitFor(() => expect(calls).toEqual([]));
+    expect(view.getByRole("button", { name: "Управлять вручную" })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("streams frames only while the browser panel is visible", async () => {
+    vi.mocked(browserService.setStreamActive).mockClear();
+    const view = render(<BrowserPane active={false} />);
+
+    await waitFor(() => expect(browserService.setStreamActive).toHaveBeenLastCalledWith(false));
+    view.rerender(<BrowserPane active />);
+    await waitFor(() => expect(browserService.setStreamActive).toHaveBeenLastCalledWith(true));
   });
 
   it("coalesces live frames into the latest animation frame", async () => {

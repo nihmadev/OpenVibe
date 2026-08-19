@@ -1,4 +1,4 @@
-use super::screencast::start_screencast;
+use super::screencast::{start_screencast, stop_screencast};
 use super::snapshot::snapshot_url;
 use super::{BrowserEventSink, BrowserManager, BrowserToolResult};
 use crate::policy::validate_navigation_url;
@@ -66,11 +66,22 @@ impl BrowserManager {
     }
 
     pub async fn start_ui_stream(&self) -> Result<(), String> {
+        self.set_ui_stream_active(true).await
+    }
+
+    pub async fn set_ui_stream_active(&self, active: bool) -> Result<(), String> {
         let mut state = self.state.lock().await;
         let session = state
             .as_mut()
             .ok_or_else(|| "Browser is not open".to_string())?;
-        start_screencast(session, self.ui_event_sink.clone()).await
+        if active {
+            if session.ui_stream.is_none() {
+                start_screencast(session, self.ui_event_sink.clone()).await?;
+            }
+        } else {
+            stop_screencast(session).await;
+        }
+        Ok(())
     }
 
     pub async fn resize_ui(&self, width: u32, height: u32) -> Result<(), String> {
@@ -211,6 +222,9 @@ impl BrowserManager {
             .as_mut()
             .ok_or_else(|| "Browser is not open".to_string())?;
         session.manual_control = manual;
+        if !manual {
+            session.agent_input_blocked = false;
+        }
         emit(
             "browser:manual-control",
             json!({"manual":manual,"sessionId":session.id}),

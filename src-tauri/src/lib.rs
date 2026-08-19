@@ -405,6 +405,7 @@ pub fn run() {
             commands::browser::browser_reload_ui,
             commands::browser::browser_snapshot_ui,
             commands::browser::browser_resize_ui,
+            commands::browser::browser_set_ui_stream_active,
             commands::browser::browser_tabs_ui,
             commands::browser::browser_set_manual_control,
             commands::browser::browser_manual_pointer,
