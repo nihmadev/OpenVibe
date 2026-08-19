@@ -9,7 +9,7 @@ import { fileService } from "@/workbench/services/files/tauri/fileService";
 import { typeDefinitionService } from "@/workbench/services/languageServer/tauri/typeDefinitionService";
 import type { Project } from "@/workbench/services/workspace/common/workspace";
 import { workspaceService } from "@/workbench/services/workspace/tauri/workspaceService";
-import { browserPreviewProject, isBrowserDevPreview } from "./desktopPreview";
+import { browserPreviewProject, browserPreviewProjects, isBrowserDevPreview } from "./desktopPreview";
 
 export type WorkbenchInitializationResult = { ok: true; config: VibeConfig } | { ok: false; error: string };
 
@@ -54,7 +54,7 @@ export function useWorkbenchInitialization({
       setState({ kind: "ok" });
 
       if (isBrowserDevPreview) {
-        setProjects([browserPreviewProject]);
+        setProjects(browserPreviewProjects);
         setActiveProject(browserPreviewProject.id);
         setFolder(browserPreviewProject.path);
         setChats([]);

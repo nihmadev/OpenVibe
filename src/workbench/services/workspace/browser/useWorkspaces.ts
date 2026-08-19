@@ -199,6 +199,9 @@ export function useProjects() {
 
   // ── Periodic polling: auto-remove projects whose folders no longer exist ──
   useEffect(() => {
+    // The Vite-only desktop preview has no native filesystem bridge. Treating
+    // that as a missing folder makes its sample project repeatedly remove itself.
+    if (import.meta.env.DEV && typeof window !== "undefined" && !("__TAURI_INTERNALS__" in window)) return;
     if (projects.length === 0) return;
 
     const id = setInterval(() => {
