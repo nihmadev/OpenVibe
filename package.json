@@ -111,7 +111,7 @@
     "express": "^5.2.1",
     "framer-motion": "^13.1.0",
     "katex": "^0.17.0",
-    "lucide-react": "^1.24.0",
+    "lucide-react": "^1.33.0",
     "monaco-editor": "^0.55.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
